@@ -1,0 +1,16 @@
+# view AndroidManifest.xml #generated:59
+-keep class com.mycompany.who.Edit { <init>(...); }
+
+# view AndroidManifest.xml #generated:28
+-keep class com.mycompany.who.MainActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:52
+-keep class com.mycompany.who.SetingPage { <init>(...); }
+
+# view res/layout/edit.xml #generated:141
+# view res/layout/edit.xml #generated:98
+-keep class com.mycompany.who.View.ReSpinner { <init>(...); }
+
+# view AndroidManifest.xml #generated:45
+-keep class com.mycompany.who.Viewer { <init>(...); }
+

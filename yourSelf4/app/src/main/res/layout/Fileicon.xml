@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="fill_parent"
+	android:orientation="horizontal"
+	android:paddingLeft="10px"
+	android:paddingRight="30px"
+	android:paddingBottom="5px"
+	android:paddingTop="5px">
+
+	<ImageView
+		android:id="@+id/Fileicon"
+		android:layout_height="100px"
+		android:layout_width="100px"
+		android:layout_gravity="center"
+		android:paddingRight="10px"
+		android:scaleType="centerInside"/>
+
+	<TextView
+		android:id="@+id/Filename"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Medium Text"
+		android:textAppearance="?android:attr/textAppearanceSmall"
+		android:layout_gravity="center"
+		android:paddingStart="10dp"/>
+
+</LinearLayout>
+
