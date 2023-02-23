@@ -6,6 +6,7 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import java.util.concurrent.*;
 import android.text.*;
+import android.widget.*;
 
 public abstract class DrawerBase2 extends DrawerBase
 {
@@ -132,11 +133,11 @@ public abstract class DrawerBase2 extends DrawerBase
 		IsModify++;
 		isDraw=true;
 	    if(getDefaultDrawer()!=null)
-			( (EditDrawerListener)getDefaultDrawer()).onDraw(start,end, nodes,getText());
+			( (EditDrawerListener)getDefaultDrawer()).onDraw(start,end, nodes,this);
 		if(getDrawerList()!=null){
 			for(EditListener li:getDrawerList()){
 				if(li!=null)
-				    ( (EditDrawerListener)   li).onDraw(start,end,nodes,getText());
+				    ( (EditDrawerListener)   li).onDraw(start,end,nodes,this);
 	        }
 		}
 		IsModify--;
@@ -147,7 +148,7 @@ public abstract class DrawerBase2 extends DrawerBase
 	public class DefaultDrawerListener extends EditDrawerListener
 	{
 		@Override
-		public void onDraw(final int start, final int end, final ArrayList<wordIndex> nodes,Editable editor)
+		public void onDraw(final int start, final int end, final ArrayList<wordIndex> nodes,EditText self)
 		{
 			if(Delayed_Draw!=0){
 				Handler handler=new Handler();

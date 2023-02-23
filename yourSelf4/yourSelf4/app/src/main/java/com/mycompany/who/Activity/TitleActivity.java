@@ -6,7 +6,7 @@ import android.view.View.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
 import com.mycompany.who.Activity.*;
-import com.mycompany.who.Share.*;
+import com.mycompany.who.Share.Share;
 import com.mycompany.who.View.*;
 
 import android.view.View.OnClickListener;
@@ -16,6 +16,7 @@ import com.mycompany.who.*;
 public class TitleActivity extends EditActivity
 {
 	public static int TiHeight=125;
+	public static int ActionBarColor=0;
 	
 	@Override
 	public void TouchCollector()
@@ -50,7 +51,6 @@ public class TitleActivity extends EditActivity
 			EditFather.setY(0);
 			MainActivity.dismiss_DownBar(this);
 			can=true;
-	
 		}
 	}
     
@@ -70,6 +70,7 @@ public class TitleActivity extends EditActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		//BaseActivity.dismiss_Title_And_ActionBar(this);
+		BaseActivity.setActionBarColor(this,0xff222222);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
         //取消标题
 		super.onCreate(savedInstanceState);
@@ -85,8 +86,6 @@ public class TitleActivity extends EditActivity
 		setDis(true);
 		TitleButtonBar_URW();
 	}
-	
-	
 	
 	public void configMenu(){
 		ArrayAdapter<String> adpter= new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);

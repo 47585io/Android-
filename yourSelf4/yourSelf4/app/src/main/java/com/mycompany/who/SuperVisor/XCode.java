@@ -19,6 +19,8 @@ import com.mycompany.who.R;
 import com.mycompany.who.Share.Share;
 import java.util.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
+import android.graphics.drawable.Drawable;
+
 
 public class XCode extends RelativeLayout
 {
@@ -37,15 +39,24 @@ public class XCode extends RelativeLayout
 		super.onConfigurationChanged(config);
 	}
 
-	public void onPort()
-	{
+	public void onPort(){
 		EditFather.getBackground().draw(new Canvas());
 	}
-	public void onLand()
-	{
+	public void onLand(){
 		EditFather.getBackground().draw(new Canvas());
+	}
 
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event)
+	{
+		int AndKey= keyPool.putkey(keyCode);
+		if(AndKey!=-1){
+			Runnable run= keysRunnar.get(AndKey);
+			run.run();
+		}
+		return super.onKeyUp(keyCode, event);
 	}
+	
 
 	public int WindowHeight=300;
 
@@ -59,18 +70,22 @@ public class XCode extends RelativeLayout
 	private ThreadPoolExecutor pool=null;
 	private CodeEdit Historyid;
 	protected ArrayList<Extension> Extensions;
+	protected KeyPool keyPool;
+	private HashMap<String,Runnable> keysRunnar;
 
 	public XCode(Context cont)
 	{
 		super(cont);
 		Extensions = new ArrayList<>();
 		EditCollect = new EditList();
+		keyPool = new KeyPool();
+		keysRunnar = new HashMap<>();
 		init(cont);
 		CodeEdit.Enabled_Format = true;
 		CodeEdit.Enabled_Drawer = true;
 		CodeEdit.Enabled_Complete = true;
 		CodeEdit.Enabled_MakeHTML = true;
-		configWindow();
+		config();
 	}
 	protected void init(Context cont)
 	{
@@ -80,6 +95,10 @@ public class XCode extends RelativeLayout
 		ForEdit = EditFather.findViewById(R.id.meditLinearLayout);
 	    mWindow = EditFather.findViewById(R.id.mWindow);
 		addView(EditFather);
+	}
+	protected void config(){
+		mWindow.setOnItemClickListener(new onMyWindowClick());
+		mWindow.setOnItemLongClickListener(new onMyWindowLongClick());
 	}
 	
 	public void addView(String name)
@@ -100,26 +119,21 @@ public class XCode extends RelativeLayout
 		}
 		EditCollect.addAEdit(page, ForEdit);
 	}
-	public void tabView(int index)
-	{
+	public void tabView(int index){
 		EditCollect.tabAEdit(index, ForEdit);
 	}
-	public void removeView(int index)
-	{
+	public void removeView(int index){
 		EditCollect.delAEdit(index, ForEdit);
 	}
-	public void delAll()
-	{
+	public void delAll(){
 		EditCollect.delAll(ForEdit);
 	}
-	public void refresh(Spinner EditNames)
-	{
+	public void refresh(Spinner EditNames){
 		EditCollect.refresh(getContext(), EditNames);
 		EditNames.setSelection(EditCollect.getNowIndex());
 	}
 
-	protected CodeEdit creatAEdit()
-	{
+	protected CodeEdit creatAEdit(){
 		CodeEdit Edit=new RCodeEdit(getContext());
 		return Edit;
 	}
@@ -127,6 +141,7 @@ public class XCode extends RelativeLayout
 	{
 		Edit.setPool(pool);
 		for(Extension e:Extensions){
+			e.oninit(Edit);
 		    Edit.getFinderList().add(e.getFinder());
 			Edit.getDrawerList().add(e.getDrawer());
 			Edit.getFormatorList().add(e.getFormator());
@@ -146,28 +161,24 @@ public class XCode extends RelativeLayout
 			re.close();
 			Edit.IsModify--;
 		}	
-	
 	}
 
-	protected void configWindow()
-	{
-		mWindow.setOnItemClickListener(new onMyWindowClick());
-		mWindow.setOnItemLongClickListener(new onMyWindowLongClick());
-	}
 	public void configWallpaper(String picture, int alpha)
 	{
 		Backgroud d = new Backgroud(picture);
 		d.setAlpha(alpha);
 		EditFather. setBackgroundDrawable(d);
 	}
-	
-
-	public EditList getEditList()
+	public void configWallpaper(int id, int alpha)
 	{
+		Drawable d= new Backgroud(getContext().getResources(),id);
+		d.setAlpha(alpha);
+		EditFather. setBackgroundDrawable(d);
+	}
+	public EditList getEditList(){
 		return EditCollect;
 	}
-	public void setPool(ThreadPoolExecutor pool)
-	{
+	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
 	}
 	protected int MeasureWindowHeight()
@@ -186,7 +197,6 @@ public class XCode extends RelativeLayout
 		}
 		return height;
 	}
-
 	
 	class RCodeEdit extends CodeEdit{
 		
@@ -234,6 +244,7 @@ public class XCode extends RelativeLayout
 			return pos;
 		}
 	}
+	
 	class onMyWindowClick implements OnItemClickListener{
 
 		@Override
@@ -286,6 +297,7 @@ public class XCode extends RelativeLayout
 		public String name;
 		public String path;
 		public int id;
+		public abstract void oninit(EditText self)
 		public abstract EditListener getFinder()
 		public abstract EditListener getDrawer()
 		public abstract EditListener getFormator()

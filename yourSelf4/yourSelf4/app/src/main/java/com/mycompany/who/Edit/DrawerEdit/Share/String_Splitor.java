@@ -68,6 +68,8 @@ public class String_Splitor
 		return count;
 	}
 	public static String getNStr(String src,int n){
+		if(n<=0)
+			return "";
 		StringBuffer arr= new StringBuffer();
 		while(n-- !=0){
 			arr.append(src);
@@ -104,20 +106,25 @@ public class String_Splitor
 	}
 	
 	public static int getBeforeBindow(String text,int index,String st,String en){
+		//用栈把前括号一个个收起来，每遇到一个后括号pop一个，直至遇到指定的后括号
 		int now=0;
 		Stack<Integer> stack=new Stack<>();
-		while(now!=-1){
+		while(now<text.length()){
 			now++;
 			int start = text.indexOf(st,now);
 			int end = text.indexOf(en,now);
-			now=Array_Splitor.getmin(0,index,start,end);
-			if(now==index-en.length() &&stack.size()>0){
+			now=Array_Splitor.getmin(0,text.length(),start,end);
+		    //继续向后找前括号或后括号
+			if(now==index &&stack.size()>0){
+				//遇到指定的后括号，pop
 				return stack.pop();
 			}
 			else if(end==now&&stack.size()>0){
+				//最近的前括号已经对应一个最近的后括号，pop
 				stack.pop();
 			}
 			else if(start==now){
+				//遇到前括号，push
 				stack.push(start);
 			}
 			
@@ -125,6 +132,31 @@ public class String_Splitor
 		return -1;
 	}
 	
-	
+	public static int getAfterBindow(String text,int index,String st,String en){
+		//用栈把后括号一个个收起来，每遇到一个前括号pop一个，直至遇到指定的前括号
+		int now=text.length();
+		Stack<Integer> stack=new Stack<>();
+		while(now>-1){
+			now--;
+			int start = text.lastIndexOf(st,now);
+			int end = text.lastIndexOf(en,now);
+			now=Array_Splitor.getmax(0,text.length(),start,end);
+		    //继续向前找前括号或后括号
+			if(now==index &&stack.size()>0){
+				//遇到指定的前括号，pop
+				return stack.pop();
+			}
+			else if(start==now&&stack.size()>0){
+				//最近的前括号已经对应一个最近的后括号，pop
+				stack.pop();
+			}
+			else if(end==now){
+				//遇到后括号，push
+				stack.push(start);
+			}
+
+		}
+		return -1;
+	}
 	
 }

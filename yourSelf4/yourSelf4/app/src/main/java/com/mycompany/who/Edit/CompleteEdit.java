@@ -101,13 +101,13 @@ public class CompleteEdit extends FormatEdit
 			    ((EditCompletorListener)li).onBeforeSearchWord(libs,libs2);
 		}
 
-		if(pool==null){
+		if(getPool()==null){
 			words = NoPoolA(wantBefore, wantAfter, before, after, libs);
 			words2 = NoPoolA(wantBefore, wantAfter, before, after, libs2);
 		}
 		else{
-		    words = poolA(wantBefore, wantAfter, before, after, pool, libs);
-		    words2 = poolA(wantBefore, wantAfter, before, after, pool, libs2);
+		    words = poolA(wantBefore, wantAfter, before, after, getPool(), libs);
+		    words2 = poolA(wantBefore, wantAfter, before, after, getPool(), libs2);
 		}
 		
 		for(EditListener li:mlistenerCS){

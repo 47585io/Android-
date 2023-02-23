@@ -13,8 +13,7 @@ public class Backgroud extends Drawable
 		mPaint = new Paint();
 		bit= BitmapFactory.decodeFile(picture);
 	}
-	public Backgroud(Resources rouse,int id){
-		
+	public Backgroud(Resources rouse,int id){	
 		mPaint = new Paint();
 		bit = BitmapFactory.decodeResource(rouse,id);
 	}
@@ -25,12 +24,28 @@ public class Backgroud extends Drawable
 		Rect rect = getBounds();
 		int width = bit.getWidth();
 		int height= bit.getHeight();
-		if(rect.width()>rect.height()&&width<height) //横屏且宽高不匹配，旋转270度
+		int rwidth = rect.width();
+		int rheight= rect.height();
+		
+		//让背景铺满控件
+		float biliW = rwidth/(float)width;
+		float biliH = rheight/(float)height;
+		//求得控件大小相对于背景的比例，选择大的比例缩放图片
+		if(biliW>biliH) 
+			bit=getScaleBitmap(bit,biliW);
+		else
+			bit=getScaleBitmap(bit,biliH);
+		
+		if(rwidth>rheight&&width<height) //横屏且宽高不匹配，旋转270度
 			bit=getRotateBitmap(bit,270);
-		else if(rect.width()<rect.height()&&width>height) //竖屏且宽高不匹配，旋转90度
+		else if(rwidth<rheight&&width>height) //竖屏且宽高不匹配，旋转90度
 			bit=getRotateBitmap(bit,90);
 			//每一轮次旋转360度
-		p1.drawBitmap(bit,0,0,mPaint);
+		
+		int x = 0-(bit.getWidth()-rwidth)/2;
+		int y = 0-(bit.getHeight()-rheight)/2;
+		//最后让背景居中
+		p1.drawBitmap(bit,x,y,mPaint);
 	}
 
 	@Override

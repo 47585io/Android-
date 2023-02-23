@@ -92,6 +92,7 @@ public class MainActivity extends DownBarActivity
 					log.e(HTML,true);
 				break;
 			case 3:
+				Edit.startFormat(0,Edit.getText().length());
 				break;
 			case 4:
 				break;

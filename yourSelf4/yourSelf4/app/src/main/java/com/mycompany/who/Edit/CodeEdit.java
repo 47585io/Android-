@@ -7,6 +7,7 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import android.view.*;
 
 public abstract class CodeEdit extends CoCoEdit
 {

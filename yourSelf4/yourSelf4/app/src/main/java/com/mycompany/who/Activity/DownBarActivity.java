@@ -4,12 +4,13 @@ import android.view.*;
 import android.view.View.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
-import com.mycompany.who.Share.*;
+import com.mycompany.who.Share.Share;
 import com.mycompany.who.SuperVisor.*;
 import com.mycompany.who.View.*;
 import java.io.*;
 
 import android.view.View.OnClickListener;
+import com.mycompany.who.Share.*;
 
 public class DownBarActivity extends TitleActivity
 {

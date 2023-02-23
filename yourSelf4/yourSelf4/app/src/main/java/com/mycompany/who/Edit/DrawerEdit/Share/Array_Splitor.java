@@ -8,13 +8,24 @@ public class Array_Splitor
 	public static int getmin(int start,int end,int ... arr){
 		int min=2122222222;
 		for(int tmp:arr){
-			if(tmp<min&&tmp>start&&tmp<end){
+			if(tmp<min&&tmp>=start&&tmp<=end){
 				min=tmp;
 			}
 		}
 		if(min==2122222222)
 			return -1;
 		return min;
+	}
+	public static int getmax(int start,int end,int ... arr){
+		int max=-2122222222;
+		for(int tmp:arr){
+			if(tmp>max&&tmp>=start&&tmp<=end){
+				max=tmp;
+			}
+		}
+		if(max==2122222222)
+			return -1;
+		return max;
 	}
 	
 	public static ArrayList<String> And_Same(ArrayList<String> d1,ArrayList<String> d2){
@@ -186,7 +197,7 @@ public class Array_Splitor
 	
 	
 	
-	public static<T> int getMiddle(ArrayList<T> list, int low, int high,Comparator<T> com) {
+	protected static<T> int getMiddle(ArrayList<T> list, int low, int high,Comparator<T> com) {
 		T tmp = list.get(low); // 数组的第一个值作为中轴（分界点或关键数据）
 		while (low < high) {
 			while (low < high && com.compare(list.get(high),tmp)>=0) {
@@ -225,7 +236,7 @@ public class Array_Splitor
 		return low; // 返回中点的位置
 	}
 
-	public static<T> void unckSort(ArrayList<T> list,int low,int high,Comparator<T> com) {
+	protected static<T> void unckSort(ArrayList<T> list,int low,int high,Comparator<T> com) {
 		if(low < high) {
 			int middle = getMiddle(list,low,high,com);    // 将list数组一分为二
 			unckSort(list,low,middle-1,com);    // 对左边进行递归排序

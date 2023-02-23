@@ -19,13 +19,12 @@ public class CoCoEdit extends CompleteEdit
 	public static int CursorRect_Color=0x25616263;
 	public boolean isUR;
 	
-	public float size=15; 
 	private int lineCount;
 	public EditText lines;
 	
-	private static KeyListener listener;
-	private ArrayList<EditListener> mlistenerCan;
-	private wordIndex historyPos;
+	protected static KeyListener listener;
+	protected ArrayList<EditListener> mlistenerCan;
+	protected wordIndex historyPos;
 	
 	public CoCoEdit(Context cont)
 	{
@@ -48,6 +47,7 @@ public class CoCoEdit extends CompleteEdit
 		lines.setLineSpacing(1.4f, 1.4f);
 		lines.setFocusable(false);
 		lines.setWidth((int)size);
+		lines.setBackground(null);
 	}
 	
 	@Override
@@ -80,7 +80,7 @@ public class CoCoEdit extends CompleteEdit
 		getLineBounds(lines, bounds);
 		for(EditListener li:getCanvaserList())
 		    if(li!=null)
-			    ((EditCanvaserListener)li).onDraw(canvas,paint,bounds,historyPos);
+			    ((EditCanvaserListener)li).onDraw(this,canvas,paint,bounds,historyPos);
 		super.onDraw(canvas);
     }
 	
@@ -222,6 +222,7 @@ public class CoCoEdit extends CompleteEdit
 	{
 		historyPos.start=(int) p2.getX();
 		historyPos.end=(int) p2.getY();
+		onDraw(new Canvas());
 		//拦截事件进行放大
 		if (p2.getPointerCount() == 2 && p2.getHistorySize() != 0)
 		{
@@ -411,7 +412,7 @@ public class CoCoEdit extends CompleteEdit
 	{
 
 		@Override
-		public void onDraw(Canvas canvas, TextPaint paint,Rect bounds,wordIndex historyPos)
+		public void onDraw(EditText self,Canvas canvas, TextPaint paint,Rect bounds,wordIndex historyPos)
 		{
 			//设置画笔的描边宽度值
 			paint.setStrokeWidth(0.2f);

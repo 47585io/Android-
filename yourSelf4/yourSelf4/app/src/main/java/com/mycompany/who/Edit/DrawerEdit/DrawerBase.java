@@ -12,8 +12,8 @@ public abstract class DrawerBase extends EditText
 {
 	
 	//一百行代码实现代码染色
-	protected static Words WordLib = new Words();
-	protected OtherWords WordLib2;
+	public static Words WordLib = new Words();
+	public OtherWords WordLib2;
 	public boolean isDraw=false;
 	public int IsModify=0;
 	public boolean IsModify2=false;
@@ -25,7 +25,9 @@ public abstract class DrawerBase extends EditText
 	public static boolean Enabled_MakeHTML=false;
 	public static int Selected_Color=0x75515a6b;
 	public static int Text_Color=0xffabb2bf;
-	protected int tryLines=2;
+	public int tryLines=2;
+	
+	public float size=15; 
 	
 	public DrawerBase(Context cont){
 	 	super(cont);
@@ -38,7 +40,7 @@ public abstract class DrawerBase extends EditText
 		setBackgroundResource(0);
 		setTypeface(Typeface.MONOSPACE);
 		setHighlightColor(Selected_Color);
-		setTextSize(15);
+		setTextSize(size);
 		setLetterSpacing(0.01f);
 		setLineSpacing(1.4f,1.4f);
 	}

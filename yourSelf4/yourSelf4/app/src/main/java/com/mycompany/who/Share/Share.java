@@ -1,20 +1,13 @@
 package com.mycompany.who.Share;
-import android.content.*;
-import android.graphics.*;
-import android.net.*;
-import android.os.*;
 import android.widget.*;
+import android.net.*;
+import android.webkit.*;
 import com.mycompany.who.*;
 import com.mycompany.who.Edit.*;
 import java.io.*;
-import android.webkit.*;
-import android.view.View.*;
-import android.view.*;
-import com.mycompany.who.Edit.DrawerEdit.Share.*;
 
 public class Share
 {
-	
 	public static void setEdit(CodeEdit Edit,String name){
 		//如果是一个文本文件，编辑器该采用怎样的染色和提示呢？
 		int icon= getFileIcon(name);
@@ -82,21 +75,6 @@ public class Share
 
 		return getFileIcon(f.getName());
 	}
-	
-	public static void setImage(ImageView v,String name){
-		Uri.Builder h=new Uri.Builder();
-		h.path(name);
-		Uri b=h.build();
-		v.setImageURI(b);	
-	}
-
-	public static void setToWeb(WebView web,String path){
-		WebSettings setting = web.getSettings();
-		setting.setDomStorageEnabled(true);
-		setting.setAllowFileAccess(true);
-		setting.setAllowFileAccessFromFileURLs(true);
-		web.loadUrl(path);
-	}
 
 	public static boolean isImage(String name){	
 		name=name.toLowerCase();
@@ -121,10 +99,21 @@ public class Share
 			return false;
 		return true;
 	}
-	
-	
 
+	
+	
+	public static void setImage(ImageView v,String name){
+		Uri.Builder h=new Uri.Builder();
+		h.path(name);
+		Uri b=h.build();
+		v.setImageURI(b);	
+	}
+
+	public static void setToWeb(WebView web,String path){
+		WebSettings setting = web.getSettings();
+		setting.setDomStorageEnabled(true);
+		setting.setAllowFileAccess(true);
+		setting.setAllowFileAccessFromFileURLs(true);
+		web.loadUrl(path);
+	}
 }
-
-
-

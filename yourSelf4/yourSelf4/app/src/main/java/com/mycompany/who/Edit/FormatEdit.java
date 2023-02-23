@@ -11,7 +11,7 @@ import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 public class FormatEdit extends DrawerHTML
 {
 	public static boolean Enabled_Format=false;
-	public boolean isFormat=false;
+	protected boolean isFormat=false;
 	protected EditDate stack;
 	
 	protected ArrayList<EditListener> mlistenerMS;
@@ -69,7 +69,7 @@ public class FormatEdit extends DrawerHTML
 	public ArrayList<EditListener> getInsertorList(){
 		return mlistenerIS;
 	}
-
+	
 	@Override
 	public void clearListener()
 	{
@@ -132,17 +132,22 @@ public class FormatEdit extends DrawerHTML
 	class DefaultFormatorListener extends EditFormatorListener
 	{
 
+		public String START="{";
+		public String END="}";
+		public String SPILT="\n";
+		public String INSERT=" ";
+		public int CaCa=4;
+		
 		public  int dothing_Run(Editable editor, int nowIndex)
 		{
 			String src= editor.toString();
-			int nextIndex= src.indexOf('\n', nowIndex + 1);
+			int nextIndex= src.indexOf(SPILT, nowIndex + 1);
 			//从上次的\n接着往后找一个\n
 
 			//如果到了另一个代码块，不直接缩进
-			int start_bindow = src.indexOf('{', nowIndex + 1);
-			int end_bindow=src.indexOf('}', nowIndex + 1);
-			int close_tag=src.indexOf("</", nextIndex + 1);
-
+			int start_bindow = src.indexOf(START, nowIndex + 1);
+			int end_bindow=src.indexOf(END, nowIndex + 1);
+			
 			if (nowIndex == -1 || nextIndex == -1)
 				return -1;
 
@@ -150,34 +155,35 @@ public class FormatEdit extends DrawerHTML
 			nowCount = String_Splitor. calaN(src, nowIndex + 1);
 			nextCount = String_Splitor. calaN(src, nextIndex + 1);
 			//统计\n之后的分隔符数量
-
-			if (end_bindow < nextIndex && end_bindow != -1)
-			{
-				//如果当前的nextindex出了代码块，将}设为前面的代码块中与{相同位置
-				int index= String_Splitor.getBeforeBindow(src, end_bindow + 1, "{", "}");
-				int linestart=tryLine_Start(src, index);
-				int noline= tryAfterIndex(src, linestart);
-				int bindowstart=tryLine_Start(src, end_bindow);
-				int nobindow=tryAfterIndex(src, bindowstart);
-				if (nobindow - bindowstart != noline - linestart)
-				{		
-					editor.replace(bindowstart, nobindow, String_Splitor.getNStr(" ", noline - linestart));
-					return nextIndex + (noline - linestart) - (nobindow - bindowstart);
-				}
-				return nextIndex;
-			}
 			
 			String is= src.substring(tryLine_Start(src, nextIndex + 1), tryLine_End(src, nextIndex + 1));
 			//如果下个的分隔符数量小于当前的，缩进至与当前的相同的位置
-			if (nowCount >= nextCount && is.indexOf('{') == -1)
+			if (nowCount >= nextCount && is.indexOf(START) == -1)
 			{
+				if (end_bindow < nextIndex && end_bindow != -1)
+				{
+					//如果当前的nextindex出了代码块，将}设为前面的代码块中与{相同位置
+					int index= String_Splitor.getBeforeBindow(src, end_bindow , START, END);
+					int linestart=tryLine_Start(src, index);
+					int noline= tryAfterIndex(src, linestart);
+					int bindowstart=tryLine_Start(src, end_bindow);
+					int nobindow=tryAfterIndex(src, bindowstart);
+					if (nobindow - bindowstart != noline - linestart)
+					{		
+						editor.replace(bindowstart, nobindow, String_Splitor.getNStr(INSERT, noline - linestart));
+						return nextIndex + (noline - linestart) - (nobindow - bindowstart);
+					}
+					editor.insert(nextIndex + 1, String_Splitor. getNStr(INSERT, noline - linestart-CaCa));
+					return nextIndex;
+				}
 				if (start_bindow < nextIndex && start_bindow != -1)
 				{
 					//如果它是{之内的，并且缩进位置小于{，则将其缩进至{内
-					editor.insert(nextIndex + 1, String_Splitor. getNStr(" ", nowCount - nextCount + 4));
+					editor.insert(nextIndex + 1, String_Splitor. getNStr(INSERT, nowCount - nextCount + CaCa));
 					return nextIndex;
 				}
-				editor.insert(nextIndex + 1, String_Splitor. getNStr(" ", nowCount - nextCount));
+	
+				editor.insert(nextIndex + 1, String_Splitor. getNStr(INSERT, nowCount - nextCount));
 				return nextIndex;
 			}
 
@@ -190,9 +196,9 @@ public class FormatEdit extends DrawerHTML
 		public int dothing_Start(Editable editor, int nowIndex)
 		{
 			String src= editor.toString();
-			nowIndex = src.lastIndexOf('\n', nowIndex - 1);
+			nowIndex = src.lastIndexOf(SPILT, nowIndex - 1);
 			if (nowIndex == -1)
-				nowIndex = src.indexOf('\n');
+				nowIndex = src.indexOf(SPILT);
 			return nowIndex;
 			//返回now之前的\n
 		}
@@ -200,7 +206,6 @@ public class FormatEdit extends DrawerHTML
 		@Override
 		public int dothing_End(Editable editor, int beforeIndex)
 		{
-
 			return -1;
 		}
 
@@ -240,7 +245,7 @@ public class FormatEdit extends DrawerHTML
 							case '/':
 								if (src.charAt(nowIndex - 1) == '<')
 								{
-									int index= String_Splitor.getBeforeBindow(src, nowIndex + 1, "<", "</");
+									int index= String_Splitor.getBeforeBindow(src, nowIndex-1, "<", "</");
 									wordIndex j= tryWordAfter(src, index);
 									editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");
 									return j.end + 1;

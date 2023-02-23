@@ -8,12 +8,12 @@ import android.view.View.*;
 import android.widget.*;
 import com.mycompany.who.Edit.*;
 import android.content.res.*;
+import android.graphics.*;
 
 public class BaseActivity extends Activity
 {
 	protected boolean can=false;
-	InputorDialog input;
-	public static Resources res;
+	protected InputorDialog input;
 	
 	protected void onCreate(Bundle savedInstanceState)
     {
@@ -23,7 +23,6 @@ public class BaseActivity extends Activity
 	        dismiss_Title_And_ActionBar(this);
 		    dismiss_DownBar(this);
 		}
-		res=getResources();
     }
 
 	public static void dismiss_Title_And_ActionBar(Activity act){
@@ -31,9 +30,8 @@ public class BaseActivity extends Activity
         //取消标题
         act.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 								 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		//取消状态栏	
+		//取消状态栏		
 	}
-
 	public static void dismiss_DownBar(Activity act){
 		//隐藏底部工具栏
 	    act.getWindow().getDecorView().setSystemUiVisibility(
@@ -41,8 +39,11 @@ public class BaseActivity extends Activity
 			| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 			| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 	}
+	public static void setActionBarColor(Activity act,int color){
+	    Window window = act.getWindow();
+	    window.setStatusBarColor(color);
+	}
 	
-
 	public void onWindowFocusChanged(boolean hasFocus)
 	{
         //被切换到后台及切回前台窗口焦点都会变化，而只有切回才重新隐藏系统UI控件

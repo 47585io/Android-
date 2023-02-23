@@ -13,6 +13,8 @@ import com.mycompany.who.Edit.DrawerEdit.DrawerBase.*;
 import com.mycompany.who.Edit.DrawerEdit.*;
 import android.text.*;
 import android.graphics.*;
+import java.security.cert.*;
+import android.widget.*;
 
 public class EditActivity extends BaseActivity3
 {
@@ -41,8 +43,8 @@ public class EditActivity extends BaseActivity3
 	{
 		super.configActivity();
 		Code.setPool(getPool());
-		Code.configWallpaper("/storage/emulated/0/DCIM/bili/f3.jpg",40);
-		Code.addAExtension(new As());
+		Code.configWallpaper(R.drawable.f3,40);
+		//Code.addAExtension(new ForXML());
 	}
 
 	protected ThreadPoolExecutor getPool()
@@ -50,161 +52,135 @@ public class EditActivity extends BaseActivity3
 		return null;
 	}
 
-
-	class As extends XCode.Extension
+	
+	class ForXML extends XCode.Extension
 	{
-		String text="";
-		class f extends DrawerBase.DoAnyThing{
 
-				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
-				{
-					nodes.add(new wordIndex(0,src.length(),Colors.color_attr));
-					return src.length();
-				}
-			}
-
+		public void oninit(EditText self){
+			ArrayList<EditListener> FS= ((CodeEdit)self).getFormatorList();
+			FS.clear();
+			FS.add(new FormatorForXML());
+		}
+		
 		@Override
 		public EditListener getFinder()
 		{
-			
-			return new EditFinderListener(){
-
-				@Override
-				public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
-				{
-					
-					totalList.add(new DrawerBase.DoAnyThing(){
-
-							@Override
-							public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
-							{
-								if(nowWord.toString().equals(" <style"))
-									text="OK";
-								return 0;
-							}
-						});
-					
-				}
-
-				@Override
-				public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
-				{
-					totalList.add(new f());
-					
-				}
-
-				@Override
-				public void OnClearFindWord(TreeSet<String> vector)
-				{
-					// TODO: Implement this method
-				}
-
-				@Override
-				public void OnClearDrawWord(int start, int end, String text, ArrayList<wordIndex> nodes)
-				{
-					// TODO: Implement this method
-				}
-			};
+			// TODO: Implement this method
+			return null;
 		}
 
 		@Override
 		public EditListener getDrawer()
 		{
-			
-			return new EditDrawerListener(){
-
-				@Override
-				public void onDraw(int start, int end, ArrayList<wordIndex> nodes,Editable editor)
-				{
-					editor.append("Test1");
-					
-				}
-			};
+			// TODO: Implement this method
+			return null;
 		}
 
 		@Override
 		public EditListener getFormator()
 		{
 			
-			return new EditFormatorListener(){
-
-				@Override
-				public int dothing_Run(Editable editor, int nowIndex)
-				{
-					editor.append("Test2");
-					return nowIndex+=10;
-				}
-
-				@Override
-				public int dothing_Start(Editable editor, int nowIndex)
-				{
-					// TODO: Implement this method
-					return 0;
-				}
-
-				@Override
-				public int dothing_End(Editable editor, int beforeIndex)
-				{
-					// TODO: Implement this method
-					return 0;
-				}
-			};
-			
-			
+			return null;
 		}
 
 		@Override
 		public EditListener getInsertor()
 		{
-			
-			return new EditInsertorListener(){
-
-				@Override
-				public int dothing_insert(Editable editor, int nowIndex)
-				{
-					editor.append("Test3");
-					return 0;
-				}
-			};
-			
+			// TODO: Implement this method
+			return null;
 		}
 
 		@Override
 		public EditListener getCompletor()
 		{
-			
-			return new EditCompletorListener(){
-
-				@Override
-				public void onBeforeSearchWord(ArrayList<Collection<String>> libs1, ArrayList<String[]> libs2)
-				{
-					// TODO: Implement this method
-				}
-
-				@Override
-				public void onFinishSearchWord(ArrayList<ArrayList<String>> words1, ArrayList<ArrayList<String>> words2, ArrayList<Icon> adpter)
-				{
-					adpter.add(new Icon(R.drawable.file_type_pic,"hello world!"));
-					
-				}
-			};
+			// TODO: Implement this method
+			return null;
 		}
 
 		@Override
 		public EditListener getCanvaser()
 		{
-			return new EditCanvaserListener(){
+			// TODO: Implement this method
+			return null;
+		}
+		
+		class FormatorForXML extends EditFormatorListener
+		{
 
-				@Override
-				public void onDraw(Canvas canvas, TextPaint paint, Rect bounds,wordIndex historyPos)
+			@Override
+			public int dothing_Run(Editable editor, int nowIndex)
+			{
+				String src= editor.toString();
+				int nextIndex= src.indexOf('\n', nowIndex + 1);
+				//从上次的\n接着往后找一个\n
+
+				//如果到了另一个代码块，不直接缩进
+				int start_bindow = src.indexOf("<", nowIndex + 1);
+				int end_bindow=src.indexOf("/", nowIndex + 1);
+				
+				if (nowIndex == -1 || nextIndex == -1)
+					return -1;
+
+				int nowCount,nextCount;
+				nowCount = String_Splitor. calaN(src, nowIndex + 1);
+				nextCount = String_Splitor. calaN(src, nextIndex + 1);
+				//统计\n之后的分隔符数量
+
+				if (end_bindow < nextIndex && end_bindow != -1)
 				{
-					paint.setColor(0xffffffff);
-					canvas.drawRect(historyPos.start,historyPos.end,historyPos.start+100,historyPos.end+100,paint);
-					
-				//test
+					//如果当前的nextindex出了代码块，将}设为前面的代码块中与{相同位置
+					int index= String_Splitor.getBeforeBindow(src, end_bindow , "<", "/");
+					int linestart=DrawerBase. tryLine_Start(src, index);
+					int noline= DrawerBase. tryAfterIndex(src, linestart);
+					int bindowstart=DrawerBase. tryLine_Start(src, end_bindow);
+					int nobindow=DrawerBase. tryAfterIndex(src, bindowstart);
+					if (nobindow - bindowstart != noline - linestart)
+					{		
+						editor.replace(bindowstart, nobindow, String_Splitor.getNStr(" ", noline - linestart));
+						return nextIndex + (noline - linestart) - (nobindow - bindowstart);
+					}
+					return nextIndex;
 				}
-			};
+
+				String is= src.substring(DrawerBase. tryLine_Start(src, nextIndex + 1), DrawerBase. tryLine_End(src, nextIndex + 1));
+				//如果下个的分隔符数量小于当前的，缩进至与当前的相同的位置
+				if (nowCount >= nextCount && is.indexOf('<') == -1)
+				{
+					if (start_bindow < nextIndex && start_bindow != -1)
+					{
+						//如果它是{之内的，并且缩进位置小于{，则将其缩进至{内
+						editor.insert(nextIndex + 1, String_Splitor. getNStr(" ", nowCount - nextCount + 4));
+						return nextIndex;
+					}
+					editor.insert(nextIndex + 1, String_Splitor. getNStr(" ", nowCount - nextCount));
+					return nextIndex;
+				}
+
+				return nextIndex;
+				//下次从这个\n开始
+				
+			}
+
+			@Override
+			public int dothing_Start(Editable editor, int nowIndex)
+			{
+				String src= editor.toString();
+				nowIndex = src.lastIndexOf('\n', nowIndex - 1);
+				if (nowIndex == -1)
+					nowIndex = src.indexOf('\n');
+				return nowIndex;
+				//返回now之前的\n
+			
+			}
+
+			@Override
+			public int dothing_End(Editable editor, int beforeIndex)
+			{
+				// TODO: Implement this method
+				return 0;
+			}
+
+			
 		}
 	}
 	
