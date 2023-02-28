@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+ 
+	<!--myActivityTheme-->
+	<style name="myTheme" >
+	
+	
+		<item name="android:windowAnimationStyle">@style/myactiTheme</item>
+		<!--窗口切换动画为@style/myactiTheme-->
+			</style>
+
+
+	<!--@style/myactiTheme-->
+	<style name="myactiTheme">
+		<item name="android:activityOpenEnterAnimation">@anim/actTab</item>
+		
+		<item name="android:activityCloseEnterAnimation">@anim/actTab</item>
+
+			<!--4个动画全部都是@anim/actTab-->
+	</style>
+</resources>
