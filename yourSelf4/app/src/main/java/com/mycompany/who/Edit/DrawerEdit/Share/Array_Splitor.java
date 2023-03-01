@@ -28,7 +28,7 @@ public class Array_Splitor
 		return max;
 	}
 	
-	public static ArrayList<String> And_Same(ArrayList<String> d1,ArrayList<String> d2){
+	public static<T> Collection<T> And_Same(Collection<T> d1,Collection<T> d2){
 		//合并相同元素
 		if(d1==null&&d2==null){
 			return null;
@@ -37,10 +37,10 @@ public class Array_Splitor
 			return d2;
 		if(d2==null)
 			return d1;
-		ArrayList<String> end = new ArrayList<String>();
-		for(Object o: d1){
-			if(d2.contains((String)o))
-				end.add((String)o);
+		ArrayList<T> end = new ArrayList<>();
+		for(T o: d1){
+			if(d2.contains(o))
+				end.add(o);
 		}
 		return end;
 	}
@@ -115,8 +115,6 @@ public class Array_Splitor
 			return null;
 		return words;
 	}
-
-
 	public static ArrayList<String> indexsOf(String str,Collection<String> keyword,int start,Idea i) {	
 		//查找集合中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.size()==0)
@@ -166,33 +164,10 @@ public class Array_Splitor
 	}
 	
 	public static Idea getNo(){
-		return new Idea(){
-
-			@Override
-			public boolean can(String s,String want,int start)
-			{
-				if(s.toLowerCase().indexOf(want.toLowerCase(),start)==start){
-					//字符串出现位置必须在start
-					return true;
-				}
-				return false;
-			}
-		};
+		return new INo();
 	}
-	
 	public static Idea getyes(){
-		return new Idea(){
-
-			@Override
-			public boolean can(String s,String want,int start)
-			{
-				if(s.toLowerCase().indexOf(want.toLowerCase(),start)!=-1){
-					////字符串出现位置可以在start后
-					return true;
-				}
-				return false;
-			}
-		};
+		return new Iyes();
 	}
 	
 	
@@ -257,10 +232,35 @@ public class Array_Splitor
 			unckSort(str,0,str.size()-1,com);
 		}
 	}
+	
+	
 	abstract public static class Idea
 	{
 		public abstract boolean can(String s,String want,int start);
-
+	}
+	
+	
+	public static class INo extends Idea{
+		@Override
+		public boolean can(String s,String want,int start)
+		{
+			if(s.toLowerCase().indexOf(want.toLowerCase(),start)==start){
+				//字符串出现位置必须在start
+				return true;
+			}
+			return false;
+		}
+	}
+	public static class Iyes extends Idea{
+		@Override
+		public boolean can(String s,String want,int start)
+		{
+			if(s.toLowerCase().indexOf(want.toLowerCase(),start)!=-1){
+				////字符串出现位置可以在start后
+				return true;
+			}
+			return false;
+		}
 	}
 	
 }

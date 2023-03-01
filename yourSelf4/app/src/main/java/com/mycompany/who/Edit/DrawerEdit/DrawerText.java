@@ -47,7 +47,7 @@ public class DrawerText extends DrawerBase2
 							saveChar(src,nowIndex,src.length(),Colors.color_zhu,nodes);
 							nowIndex=src.length()-1;
 						}
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}
 
@@ -73,7 +73,7 @@ public class DrawerText extends DrawerBase2
 							saveChar(src,nowIndex,src.length(),Colors.color_str,nodes);
 							nowIndex=src.length()-1;
 						}
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}		
 					else if(src.charAt(nowIndex)=='\''){
@@ -88,7 +88,7 @@ public class DrawerText extends DrawerBase2
 							saveChar(src,nowIndex,endIndex+1,Colors.color_str,nodes);
 							nowIndex=endIndex;
 						}
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}	
 
@@ -106,7 +106,7 @@ public class DrawerText extends DrawerBase2
 						//否则如果当前的字符是一个数字，就把它加进nodes
 						//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
 						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_number));
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}	
 					else if(Array_Splitor.indexOf(src.charAt(nowIndex),getFuhao())!=-1){	
@@ -116,7 +116,7 @@ public class DrawerText extends DrawerBase2
 						//这是为了保留换行空格等
 							nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
 
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						//清空之前累计的字符串
 						return nowIndex;
 					}

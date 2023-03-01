@@ -127,8 +127,8 @@ public class DrawerCSS extends DrawerJava
 						node.b=Colors.color_cssid;
 						nodes.add(node);
 					    getHistoryVillber().add(src.substring(node.start,node.end));
-						nowIndex=node.end - 1;
-						return nowIndex;
+						return node.end - 1;
+						
 					}
 					else if (src.charAt(nowIndex) == '.' && !String_Splitor.indexOfNumber(src.charAt(nowIndex - 1)) && !String_Splitor.indexOfNumber(src.charAt(nowIndex + 1)))
 					{
@@ -137,8 +137,7 @@ public class DrawerCSS extends DrawerJava
 						getBeforetype().add(src.substring(node.start,node.end));
 						node.b=Colors.color_csscla;
 						nodes.add(node);
-						nowIndex=node.end - 1;
-						return nowIndex;
+						return node.end - 1;
 					}
 					return -1;
 				}
@@ -156,11 +155,13 @@ public class DrawerCSS extends DrawerJava
 					if(String_Splitor.IsAtoz(src.charAt(nowIndex + 1))&& src.charAt(tryLine_End(src, nowIndex) - 1) == '{'){
 						 if(getHistoryVillber().contains(nowWord.toString())){
 						     nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_cssid));
-						     return nowIndex;
+						     nowWord.delete(0,nowWord.length());
+							 return nowIndex;
 						 }
 						 else if(getBeforetype().contains(nowWord.toString())){
 							 nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_csscla));
-							return nowIndex;
+							 nowWord.delete(0,nowWord.length());
+							 return nowIndex;
 						 }
 					}
 					
@@ -184,7 +185,7 @@ public class DrawerCSS extends DrawerJava
 					{
 						//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
 						nodes.add(new wordIndex(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_tag));
-						nowWord.replace(0, nowWord.length(), "");
+						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
 					return -1;
@@ -204,7 +205,7 @@ public class DrawerCSS extends DrawerJava
 					{
 						//如果当前累计的字符串是一个属性并且后面没有a～z这些字符，就把它加进nodes
 						nodes.add(new wordIndex(nowIndex - nowWord.length() + 1, nowIndex + 1,Colors. color_attr));
-						nowWord.replace(0, nowWord.length(), "");
+						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
 					return -1;
@@ -227,16 +228,14 @@ public class DrawerCSS extends DrawerJava
 							node.b=Colors.color_cssfl;
 							getAttribute().add(src.substring(node.start, node.end));
 							nodes.add(node);
-							nowIndex=node.end - 1;
-							return nowIndex;
+							return node.end - 1;
 						}
 						else{
 							node=tryWordForCSS(src, nowIndex - 1);
 							node.b=Colors.color_attr;
 							getAttribute().add(src.substring(node.start, node.end));
 							nodes.add(node);
-							nowIndex=node.end - 1;
-							return nowIndex;
+							return node.end - 1;
 						}
 					}
 					return -1;
@@ -261,7 +260,7 @@ public class DrawerCSS extends DrawerJava
 						nodes.add(node);
 						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
 						getLastfunc().add(src.substring(node.start,node.end));
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}
 					return -1;
@@ -282,7 +281,7 @@ public class DrawerCSS extends DrawerJava
 						nodes.add(node);
 						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
 						getThoseObject().add(src.substring(node.start,node.end));
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}
 					return -1;

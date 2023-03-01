@@ -21,9 +21,9 @@ import com.mycompany.who.Edit.DrawerEdit.Base.*;
 public class CoCoEdit extends CompleteEdit 
 {
 	public static int CursorRect_Color=0x25616263;
-	public boolean isUR=false;
+	protected boolean isUR=false;
 	public Edit lines;
-	protected ArrayList<EditListener> mlistenerCan;
+	private ArrayList<EditListener> mlistenerCan;
 	
 	public CoCoEdit(Context cont)
 	{
@@ -59,7 +59,6 @@ public class CoCoEdit extends CompleteEdit
 		super.clearListener();
 	}
 	
-	
 	@Override
 	protected void onDraw(Canvas canvas)
 	{
@@ -79,15 +78,7 @@ public class CoCoEdit extends CompleteEdit
 	{
 		//为什么不直接在最后的函数中设置一个IsModify2，这是因为并非所有子类onTextChanged中都判断是否IsModify，例如记录Uedo或Redo
 		//为什么还要IsModify，这是因为有些函数修改时根本一次都不想调onTextChanged
-		if (!isDraw&&!isFormat){
-			
-		if (lengthAfter != 0)
-		{
-			ArrayList<Integer> indexs = null;
-			indexs = String_Splitor.indexsOf("\n", text.toString().substring(start, start + lengthAfter));	
-			addLines(indexs.size());
-		}
-		}
+		
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 	}
 
@@ -194,141 +185,7 @@ public class CoCoEdit extends CompleteEdit
 	    lines.setWidth((lines.getLineCount()+"").length()*(int)lines.getTextSize());
 		lines.setTextSize(size);
 	}
-	public int Uedo_(EditDate.Token token)
-	{
-		IsModify++;
-		isUR=true;
-		int endSelection=0;
-		if (token != null)
-		{
-			//范围限制
-			if(token.start<0)
-				token.start=0;
-			if(token.end>getText().length())
-				token.end=getText().length();
-				
-			if (token.src == "")
-			{
-				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end).toString());
-				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
-				getText().delete(token.start, token.end);	
-				endSelection=token.start;
-			}
-			else if (token.start == token.end)
-			{
-				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
-				stack.Reput(token.start, token.start + token.src.length(), "");
-				getText().insert(token.start, token.src);
-				endSelection=token.start + token.src.length();
-			}
-			else
-			{
-				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
-				//另外的，则是反向替换某个字符串
-			    getText().replace(token.start, token.end, token.src);
-				endSelection=token.start + token.src.length();
-			}
-		}
-		isUR=false;
-		IsModify--;
-		return endSelection;
-	}
-
-	public int Redo_(EditDate.Token token)
-	{
-		IsModify++;
-		isUR=true;
-		int endSelection=0;
-		if (token != null)
-		{
-			if(token.start<0)
-				token.start=0;
-			if(token.end>getText().length())
-				token.end=getText().length();
-				
-			if (token.src == "")
-			{
-				stack.put(token.start, token.start , getText().subSequence(token.start, token.end).toString());
-				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
-				getText().delete(token.start, token.end);
-				endSelection=token.start;
-			}
-			else if (token.start == token.end)
-			{
-				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
-				stack.put(token.start, token.start + token.src.length(), "");
-				getText().insert(token.start, token.src);
-				endSelection=token.start + token.src.length();
-			}
-			else
-			{
-				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
-				//另外的，则是反向替换某个字符串
-			    getText().replace(token.start, token.end, token.src);
-				endSelection=token.start + token.src.length();
-		    }
-		}
-		isUR=false;
-		IsModify--;
-		return endSelection;
-	}
-
-	public void Uedo()
-	{
-		//批量Uedo
-		if(stack==null)
-			return;
-		
-		EditDate.Token token;	
-		int endSelection;
-		try
-		{
-			while (true)
-			{
-				token=stack.getLast();
-				endSelection=Uedo_(token);
-				setSelection(endSelection);
-				//设置光标位置
-				EditDate.Token token2=stack.seeLast();
-				if (token2 == null)
-					return;
-				else if (token2.start == token.end)	
-					continue;
-				//如果token位置紧挨着，持续Uedo	
-				else
-					break;
-			}
-		}
-		catch (Exception e)
-		{}
-	}
-	public void Redo()
-	{
-		//批量Redo
-		if(stack==null)
-			return;
-		
-		EditDate.Token token;
-		int endSelection;
-		try
-		{
-			while (true)
-			{
-				token=stack.getNext();
-				endSelection=Redo_(token);
-				setSelection(endSelection);
-				EditDate.Token token2=stack.seeNext();
-				if (token2 == null)
-					return;
-				else if ( token2.start == token.end)	
-					continue;
-				else
-					break;
-			}
-		}
-		catch (Exception e)
-		{}
-	}
+	
 	
 	class DefaultCanvaser extends EditCanvaserListener
 	{

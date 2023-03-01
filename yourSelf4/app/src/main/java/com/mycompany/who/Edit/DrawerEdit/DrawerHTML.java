@@ -39,7 +39,7 @@ public class DrawerHTML extends DrawerCSS
 		return tmp;
 	}
 
-	public ArrayList<wordIndex> reDrawHTML(int start, int end, String text)
+	protected ArrayList<wordIndex> reDrawHTML(int start, int end, String text)
 	{
 
 		ArrayList<wordIndex> nodes=new ArrayList<>();

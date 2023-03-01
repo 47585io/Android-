@@ -15,8 +15,9 @@ import com.mycompany.who.Edit.DrawerEdit.Base.*;
 import android.util.*;
 import android.content.res.*;
 import com.mycompany.who.Activity.*;
+import android.text.*;
 
-public class EditGroup extends LinearLayout
+public class EditGroup extends RelativeLayout
 {
 	
 	//为提升编辑器效率，增加EditGroup
@@ -25,10 +26,9 @@ public class EditGroup extends LinearLayout
 	
 	public static int WindowHeight=300;
 	public static int WindowWidth=600;
-	public static int MaxLine=150;
+	public static int MaxLine=500;
 	private int EditFlag=0;
 	
-	protected RelativeLayout EditFather;
 	protected ScrollView EditScro;
 	protected HorizontalScrollView EdithScro;
 	protected LinearLayout ForEdit;
@@ -36,6 +36,7 @@ public class EditGroup extends LinearLayout
 	protected Edit EditLines;
 	protected ListView mWindow;
 	
+	private EditBuilder builder;
 	private ArrayList<CodeEdit> EditList;
 	private Stack<Stack<Integer>> Last;
 	private Stack<Stack<Integer>> Next;
@@ -61,13 +62,13 @@ public class EditGroup extends LinearLayout
 		Last=new Stack<>();
 		Next=new Stack<>();
 		Last.add(new Stack<Integer>());
+		builder=new EditBuilder();
 		Extensions = new ArrayList<>();
 		keyPool = new KeyPool();
 		keysRunnar = new HashMap<>();
 	}
 	protected void init2(Context cont)
 	{	
-		EditFather=new RelativeLayout(cont);
 		EditScro=new ScrollView(cont);
 		EdithScro=new HorizontalScrollView(cont);
 		ForEdit=new LinearLayout(cont);
@@ -75,13 +76,13 @@ public class EditGroup extends LinearLayout
 		EditLines=new Edit(cont);
 		mWindow=new ListView(cont);
 		
-		EditFather.addView(EditScro);
-		EditFather.addView(mWindow);
+		addView(EditScro);
+		addView(mWindow);
 		EditScro.addView(EdithScro);
 		EdithScro.addView(ForEdit);
 		ForEdit.addView(EditLines);
 		ForEdit.addView(ForEditSon);
-		addView(EditFather);
+
 	}
 	protected void config(){
 		EditLines.setFocusable(false);
@@ -92,13 +93,19 @@ public class EditGroup extends LinearLayout
 		mWindow.setOnItemLongClickListener(new onMyWindowLongClick());
 	}
 	
+	public EditBuilder getEditBuilder(){
+		return builder;
+	}
+	public ArrayList<CodeEdit> getEditList(){
+		return EditList;
+	}
+	
 	public void AddEdit(String name){
 		RCodeEdit Edit= creatAEdit(name);
 		Edit.index=EditList.size();
 		EditList.add(Edit);
 		ForEditSon.addView(Edit);
 	}
-	
 	protected RCodeEdit creatAEdit(String name){
 		RCodeEdit Edit;
 		if(EditList.size()==0){
@@ -140,12 +147,12 @@ public class EditGroup extends LinearLayout
 			super(cont,Edit);
 			can=true;
 		}
-
+		
 		@Override
-		public void onPutUR(){
-			Last.get(Last.size()-2).push(index);
-			//监听器优先调用，所以Last先开一个空间让我push
-			//onTextChange紧跟其后再开一个空间
+		protected void onPutUR(EditDate.Token token){
+			Last.peek().push(index);
+			//监听器优先调用，所以Last会先开一个空间让我push
+			//每一轮次onTextChanged执行后紧跟其后再开一个空间
 		}		
 		@Override
 		public ListView getWindow(){
@@ -156,20 +163,14 @@ public class EditGroup extends LinearLayout
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
 			if(!can){
-				//First load，Return
 				//在构造对象前，会调用一次onTextChanged
-				can=true;
 				return;
 			}
 			if(IsModify!=0||IsModify2)
 				return ;
 			//已经被修改，不允许再修改
 		
-			if(EditFlag==0)
-				Last.push(new Stack<Integer>());
-			EditFlag++;
-			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
-	        //先开辟一个空间，待之后存储
+			EditFlag++;		
 			
 			int lineCount= getLineCount();
 			if(lineCount> MaxLine){
@@ -188,10 +189,11 @@ public class EditGroup extends LinearLayout
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
 				if(EditList.size()-1<=index)
-					AddEdit(""+EditList.get(index).laugua);
+					AddEdit("");
 				//若无编辑器，则添加一个
 				EditList.get(index+1).getText().insert(0,src);
 				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
+				//不难看出，这样递归回调，最后会回到第一个编辑器
 
 				if(start+lengthAfter<j.start){
 					requestFocus();
@@ -208,10 +210,15 @@ public class EditGroup extends LinearLayout
 			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				//否则正常调用
 			}
+			
 			EditFlag--;
-			if(EditFlag==0)
+			if(EditFlag==0){
 				reLines(calaEditLines());
+				Last.push(new Stack<Integer>());
+			}
 			//最后一个编辑器计算行
+			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
+	        //先开辟一个空间，待之后存储
 		}
 
 		@Override
@@ -224,11 +231,11 @@ public class EditGroup extends LinearLayout
 			wordIndex pos = Edit.getScrollCursorPos(offset, EdithScro.getScrollX() - Edit.lines.getWidth(), EditScro.getScrollY()-calaEditHeight(index));
 			//start真实位置还少一个lines
 			//Window必须在re内
-			if (pos.start + mWindow.getWidth() > EditFather.getWidth() || pos.start < 0)
-				pos.start = EditFather. getWidth() - mWindow.getWidth();
+			if (pos.start + mWindow.getWidth() > getWidth() || pos.start < 0)
+				pos.start = getWidth() - mWindow.getWidth();
 			//如果x超出屏幕，总是设置在最右侧
 
-			if (pos.end + mWindow.getHeight() +  Edit.getLineHeight() * 2 > EditFather.getHeight())
+			if (pos.end + mWindow.getHeight() +  Edit.getLineHeight() * 2 > getHeight())
 				pos.end = pos.end - mWindow.getHeight() - Edit.getLineHeight();
 			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
 			else
@@ -249,37 +256,130 @@ public class EditGroup extends LinearLayout
 		}
 	}
 	
-	public void reDraw(){
-		for(CodeEdit e:EditList){
-			e.reDraw(0,e.getText().length());
+	public class EditBuilder{
+		
+		private wordIndex start;
+		private wordIndex end;
+		
+		public EditBuilder(){
+			start=new wordIndex(0,0,(byte)0);
+			end=new wordIndex(0,0,(byte)0);
 		}
-	}
-	public void Format(){
-		Last.add(new Stack<Integer>());
-		for(CodeEdit e:EditList)
-		    e.startFormat(0,e.getText().length());
-	}
-	
-	public void Uedo(){
-		Stack<Integer> last= Last.get(Last.size()-2);
-		Last.remove(Last.size()-2);
-		Next.push(last);
-		for(int l:last)
-		    EditList.get(l).Uedo();
-		EditList.get(0). reLines(calaEditLines());
-	}
-	public void Redo(){
-		Stack<Integer> next= Next.pop();
-		Last.push(next);
-		for(int l:next)
-		    EditList.get(l).Redo();
-		EditList.get(0).reLines(calaEditLines());
-	}
+		private void calaIndex(int index){
+			//将start转换为 起始编辑器下标+起始位置
+			for(CodeEdit e:EditList){
+				if(index- e.getText().length()<0){
+					start.start=((RCodeEdit)e).index;
+					start.end=index;
+					return;
+				}
+				index-=e.getText().length();
+				//每次index减当前Edit.len，若长度小于0，则就是当前Edit，index就是start
+			}
+		}
+		private void calaRange(int start,int end){
+			//将start～end的范围转换为 起始编辑器下标+起始位置～末尾编辑器下标+末尾位置
+			calaIndex(start);
+			calaIndex(end);
+		}
 
-	
-	public ArrayList<CodeEdit> getEditList(){
-		return EditList;
+		public wordIndex searchWord(String wordIndex){
+			wordIndex node = new wordIndex(0,0,(byte)0);
+			
+		}
+
+		public void setLuagua(String luagua){
+			for(CodeEdit e:EditList)
+			    e.setLuagua(luagua);
+		}
+		
+		public String reDraw(){
+			StringBuilder builder=new StringBuilder();
+			for(CodeEdit e:EditList){
+				String HTML= e.reDraw(0,e.getText().length());
+				builder.append(HTML);
+			}
+			return builder.toString();
+		}
+		public String reDraw(int start,int end){
+			calaRange(start,end);
+			final StringBuilder builder=new StringBuilder();
+			DoForAnyOnce d= new DoForAnyOnce(){
+				
+				@Override
+				void doOnce(int start, int end, CodeEdit Edit)
+				{
+					String HTML= Edit.reDraw(start,end);
+					builder.append(HTML);
+				}
+			};
+			d.dofor(this.start,this.end);
+			return builder.toString();
+		}
+		public void Format(){
+			Last.add(new Stack<Integer>());
+			for(CodeEdit e:EditList){
+				e.Format(0,e.getText().length());
+				e.reDraw(0,e.getText().length());
+			}
+		}
+		public void Format(int start,int end){
+			calaRange(start,end);
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				void doOnce(int start, int end, CodeEdit Edit)
+				{
+					int cale= Edit.Format(start,end);
+					Edit.reDraw(start,end+cale);
+				}
+			};
+			d.dofor(this.start,this.end);
+		}
+		public void Insert(int index){
+			calaIndex(index);
+			EditList.get(start.start).Insert(start.end);
+		}
+		
+		public void Uedo(){
+			//与顺序无关的Uedo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
+	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
+			if(Last.size()<2)
+				return;
+			Stack<Integer> last= Last.get(Last.size()-2);
+			Last.remove(Last.size()-2);
+			Next.push(last);
+			for(int l:last)
+				EditList.get(l).Uedo();
+			EditList.get(0). reLines(calaEditLines());
+		}
+		public void Redo(){
+			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
+			if(Next.size()<1)
+				return;
+			Stack<Integer> next= Next.pop();
+			Last.push(next);
+			for(int l:next)
+				EditList.get(l).Redo();
+			EditList.get(0).reLines(calaEditLines());
+		}
+		
+		abstract class DoForAnyOnce{
+			public void dofor(wordIndex start,wordIndex end){
+				doOnce(start.end,EditList.get(start.start).getText().length(),EditList.get(start.start++));
+				//第一个编辑器的开头是start.end，结尾是它的长度
+				for(;start.start<end.start;start.start++){
+					doOnce(0,EditList.get(start.start).getText().length(),EditList.get(start.start));
+					//中间编辑器的开头是0,结尾是它的长度
+				}
+				doOnce(0,end.end,EditList.get(end.start));
+				//最后一个编辑器的开头是0，结尾是end.end
+			}
+			abstract void doOnce(int start,int end,CodeEdit Edit)
+		}
+		
 	}
+	
 	
 	class onMyWindowClick implements OnItemClickListener{
 
@@ -344,11 +444,12 @@ public class EditGroup extends LinearLayout
 		    line+=e.getLineCount();
 		return line;
 	}
-
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool=pool;
+		for(CodeEdit e:EditList){
+			e.setPool(pool);
+		}
 	}
-	
 	
 	
 	public void addAExtension(Extension extension)

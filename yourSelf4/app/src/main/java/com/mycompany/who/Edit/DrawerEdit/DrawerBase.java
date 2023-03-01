@@ -14,11 +14,11 @@ public abstract class DrawerBase extends Edit
 {
 	
 	//一百行代码实现代码染色
-	public static Words WordLib = new Words();
-	public OtherWords WordLib2;
-	public boolean isDraw=false;
-	public int IsModify;
-	public boolean IsModify2;
+	protected static Words WordLib = new Words();
+	protected OtherWords WordLib2;
+	protected boolean isDraw=false;
+	protected int IsModify;
+	protected boolean IsModify2;
 	//你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
 	//IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
 	//IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
@@ -27,7 +27,7 @@ public abstract class DrawerBase extends Edit
 	public static boolean Enabled_MakeHTML=false;
 	
 	public int tryLines=2;
-	public String laugua;
+	protected String laugua;
 	
 	public DrawerBase(Context cont){
 	 	super(cont);
@@ -40,6 +40,7 @@ public abstract class DrawerBase extends Edit
 	}
 	public DrawerBase(Context cont,AttributeSet set){
 		super(cont,set);
+		WordLib2=new OtherWords(6);
 	}
 	public void reSet(){
 		config();
@@ -48,7 +49,7 @@ public abstract class DrawerBase extends Edit
 	abstract protected ArrayList<wordIndex> FindFor(int start,int end,String text)
 	abstract protected void Drawing(int start,int end,ArrayList<wordIndex> nodes)
 	
-	public String getToDraw(int start,int end){
+	protected String getToDraw(int start,int end){
 		IsModify++;
 		isDraw=true;
 		//获取选中文本
@@ -64,7 +65,7 @@ public abstract class DrawerBase extends Edit
 		return text;
 	}
 
-	public ArrayList<wordIndex> startFind(String src,ArrayList<DoAnyThing> totalList){
+	protected ArrayList<wordIndex> startFind(String src,ArrayList<DoAnyThing> totalList){
 		//开始查找，为了保留换行空格等，只replace单词本身，而不是src文本
 		//Spanned本质是用html样式替换原字符串
 		//html中，多个连续空格会压缩成一个，换行会替换成空格
@@ -92,7 +93,7 @@ public abstract class DrawerBase extends Edit
 		return nodes;
 	}
 
-	public void Draw(int start,int end,ArrayList<wordIndex> nodes){
+	protected void Draw(int start,int end,ArrayList<wordIndex> nodes){
 		//反向染色，前面不受后面已有Spanned影响
 		IsModify++;
 		isDraw=true;
@@ -110,7 +111,7 @@ public abstract class DrawerBase extends Edit
 		IsModify--;
 	}
 	
-	public static String getHTML(ArrayList<wordIndex> nodes,String text){
+	protected static String getHTML(ArrayList<wordIndex> nodes,String text){
 		//中间函数，用于生成HTML文本
 		StringBuffer arr = new StringBuffer();
 		int index=0;
@@ -128,20 +129,23 @@ public abstract class DrawerBase extends Edit
 		return arr.toString();
 	}
 
-	public void clearRepeatNode(ArrayList<wordIndex> nodes){
+	protected void clearRepeatNode(ArrayList<wordIndex> nodes){
 		//清除优先级低且位置重复的node
 		int i,j;
 		for(i=0;i<nodes.size();i++){
 			wordIndex now = nodes.get(i);
+			if(now.start==now.end){
+				nodes.remove(i--);
+				continue;
+			}
 			for(j=i+1;j<nodes.size();j++){
 				if( nodes.get(j).equals(now)){
-					nodes.remove(j);
-					j--;
+					nodes.remove(j--);
 				}
 			}
 		}
 	}
-	public void offsetNode(ArrayList<wordIndex> nodes,int start){
+	protected void offsetNode(ArrayList<wordIndex> nodes,int start){
 		for(wordIndex node:nodes){
 			node.start+=start;
 			node.end+=start;
@@ -168,8 +172,8 @@ public abstract class DrawerBase extends Edit
 		return HTML;
 	}
 	
-	public SpannableStringBuilder reDrawOtherText(String text){
-		ArrayList<wordIndex> nodes = FindFor(0,text.length(),text);
+	public SpannableStringBuilder reDrawOtherText(int start,int end,String text){
+		ArrayList<wordIndex> nodes = FindFor(start,end,text);
 		return Colors.colorText(text,nodes);
 	}
 	
@@ -268,7 +272,7 @@ public abstract class DrawerBase extends Edit
 		int index=nowIndex-1;
 	    wordIndex tmp = new wordIndex(0,0,(byte)0);
 		try{
-			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),WordLib.fuhao)==-1)
+			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
 				index--;
 			tmp.start=index+1;
 			tmp.end=nowIndex;
@@ -282,7 +286,7 @@ public abstract class DrawerBase extends Edit
 	    wordIndex tmp = new wordIndex(0,0,(byte)0);
 		try{
 			tmp.start=index;
-			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),WordLib.fuhao)==-1)
+			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
 				index++;
 			tmp.end=index;
 		}catch(Exception e){

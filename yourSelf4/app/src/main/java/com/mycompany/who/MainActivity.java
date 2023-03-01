@@ -23,7 +23,7 @@ public class MainActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
+		//pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
 		Group=new EditGroup(this);
 		setContentView(Group);
 		Group.AddEdit(".java");
@@ -35,16 +35,16 @@ public class MainActivity extends Activity
 	{
 		switch(item.getItemId()){
 			case 0:
-				Group.Uedo();
+				Group.getEditBuilder().Uedo();
 				break;
 			case 1:
-				Group.Redo();
+				Group.getEditBuilder().Redo();
 				break;
 			case 2:
-				Group.Format();
+				Group.getEditBuilder().Format();
 				break;
 			case 3:
-				Group.reDraw();
+				Group.getEditBuilder().reDraw();
 				break;
 		}
 		return super.onOptionsItemSelected(item);

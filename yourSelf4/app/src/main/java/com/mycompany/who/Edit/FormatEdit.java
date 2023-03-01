@@ -9,6 +9,9 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import com.mycompany.who.Edit.Share.*;
 import android.util.*;
+import android.graphics.*;
+import java.util.concurrent.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public class FormatEdit extends DrawerHTML
 {
@@ -16,8 +19,8 @@ public class FormatEdit extends DrawerHTML
 	protected boolean isFormat=false;
 	protected EditDate stack;
 	
-	protected ArrayList<EditListener> mlistenerMS;
-	protected ArrayList<EditListener> mlistenerIS;
+	private ArrayList<EditListener> mlistenerMS;
+	private ArrayList<EditListener> mlistenerIS;
 
 	public FormatEdit(Context cont)
 	{
@@ -40,6 +43,12 @@ public class FormatEdit extends DrawerHTML
 	}
 	public FormatEdit(Context cont,AttributeSet set){
 		super(cont,set);
+		this.stack = new EditDate();
+		mlistenerMS=new ArrayList<>();
+		mlistenerIS=new ArrayList<>();
+		mlistenerMS.add(new DefaultFormatorListener());
+		mlistenerIS.add(new DefaultInsertorListener());
+		
 	}
 	@Override
 	public void reSet()
@@ -56,23 +65,25 @@ public class FormatEdit extends DrawerHTML
 		if (IsModify!=0||IsModify2)
 			return;
 		//如果正被修改，则不允许修改
-
-		//format前就染色
-		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 		
+		int cale=0;
+		//format后增加的字数
 		if (lengthAfter != 0)
 		{      
 		   	    IsModify2=true;
 				if (Enabled_Format)
 				{		
 					//是否启用自动format
-					startInsert(start);
-					if (text.toString().indexOf('\n', start) != -1)
-						startFormat(start, start + lengthAfter);	
+					Insert(start);
+					if (text.toString().indexOf('\n', start) != -1){
+						cale= Format(start,start+lengthAfter);	
+					}
 				}
 				IsModify2=false;
-	
 		}
+		
+		//format后才染色
+		super.onTextChanged(text, start, lengthBefore,lengthAfter+cale);
 		
 	}
 	
@@ -92,10 +103,27 @@ public class FormatEdit extends DrawerHTML
 	}
 	
 
-	public void startFormat(int start, int end)
+	public int Format(int start, int end)
 	{
 		IsModify++;
 		isFormat = true;
+		//为提升效率，将原文本和目标文本装入buffer
+		//您可以直接通过测量buffer.getSrc()的下标来修改buffer内部
+		String buffer = null;
+		if(getPool()==null)
+		    buffer= FormatOtherText(start,end,getText().toString());
+		else
+			buffer=FormatOtherTextPool(start,end,getText().toString(),getPool());
+		getText().replace(start,end,buffer);
+		//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
+		isFormat = false;
+		IsModify--;
+		return buffer.length()-(end-start);
+		//返回较原文本增加的字符数
+	}
+	public String FormatOtherText(int start,int end,String src)
+	{
+		EditFormatorListener.ModifyBuffer buffer=new EditFormatorListener.ModifyBuffer(start,src,src.substring(start,end));
 		for (EditListener total:getFormatorList())
 		{
 			if(total==null)
@@ -104,22 +132,58 @@ public class FormatEdit extends DrawerHTML
 			int nowIndex=start;
 			try
 			{
-				nowIndex =((EditFormatorListener) total).dothing_Start(getText(), nowIndex,start,end);
+				nowIndex =((EditFormatorListener) total).dothing_Start(buffer, nowIndex,start,end);
 	            for (;nowIndex < end && nowIndex != -1;)
 				{
 					beforeIndex = nowIndex;
-			        nowIndex = ((EditFormatorListener) total).dothing_Run(getText(), nowIndex);
+			        nowIndex = ((EditFormatorListener) total).dothing_Run(buffer, nowIndex);
 		        }
-				nowIndex = ((EditFormatorListener) total).dothing_End(getText(), beforeIndex,start,end);			
+				nowIndex = ((EditFormatorListener) total).dothing_End(buffer, beforeIndex,start,end);			
 			}
 			catch (Exception e)
 			{}
 		}
-		isFormat = false;
-		IsModify--;
+		return buffer.toString();
+	}
+	public String FormatOtherTextPool(final int start,final int end,String src,ThreadPoolExecutor pool)
+	{
+		ArrayList<Future<Integer>> results = new ArrayList<>();
+		final EditFormatorListener.ModifyBuffer buffer=new EditFormatorListener.ModifyBuffer(start,src,src.substring(start,end));
+
+		for (final EditListener total:getFormatorList())
+		{
+			if(total==null)
+				continue;
+			try
+			{
+				Callable<Integer> ca = new Callable<Integer>(){
+
+					@Override
+					public Integer call() throws Exception
+					{
+						int beforeIndex = 0;
+						int nowIndex=start;
+						nowIndex =((EditFormatorListener) total).dothing_Start(buffer, nowIndex,start,end);
+						for (;nowIndex < end && nowIndex != -1;)
+						{
+							beforeIndex = nowIndex;
+							nowIndex = ((EditFormatorListener) total).dothing_Run(buffer, nowIndex);
+						}
+						nowIndex = ((EditFormatorListener) total).dothing_End(buffer, beforeIndex,start,end);			
+						
+						return 0;
+					}
+				};
+				results.add( pool.submit(ca));
+			}
+			catch (Exception e)
+			{}
+		}
+		FuturePool.FutureGet(results);
+		return buffer.toString();
 	}
 	
-	public void startInsert(int index)
+	public void Insert(int index)
 	{
 		IsModify++;
 		isFormat = true;
@@ -151,9 +215,9 @@ public class FormatEdit extends DrawerHTML
 		public String INSERT=" ";
 		public int CaCa=4;
 		
-		public  int dothing_Run(Editable editor, int nowIndex)
+		public  int dothing_Run(ModifyBuffer editor,int nowIndex)
 		{
-			String src= editor.toString();
+			String src=editor.getSrc();
 			int nextIndex= src.indexOf(SPILT, nowIndex + 1);
 			//从上次的\n接着往后找一个\n
 
@@ -208,10 +272,10 @@ public class FormatEdit extends DrawerHTML
 		}
 
 		@Override
-		public int dothing_Start(Editable editor, int nowIndex,int start,int end)
+		public int dothing_Start(ModifyBuffer editor, int nowIndex,int start,int end)
 		{
-			reSAll(start,end,"\t","    ");
-			String src= editor.toString();
+			editor. reSAll("\t","    ");
+			String src= editor.getSrc();
 			nowIndex = src.lastIndexOf(SPILT, nowIndex - 1);
 			if (nowIndex == -1)
 				nowIndex = src.indexOf(SPILT);
@@ -220,7 +284,7 @@ public class FormatEdit extends DrawerHTML
 		}
 
 		@Override
-		public int dothing_End(Editable editor, int beforeIndex,int start,int end)
+		public int dothing_End(ModifyBuffer editor, int beforeIndex,int start,int end)
 		{
 			
 			return -1;
@@ -291,7 +355,7 @@ public class FormatEdit extends DrawerHTML
 		while (nowIndex != -1)
 		{
 			//从起始位置开始，反向把字符串中的want替换为to
-			editor.replace(nowIndex + start, nowIndex + start + 1, to);	
+			editor.replace(nowIndex + start, nowIndex + start + want.length(), to);	
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
 		isFormat = false;

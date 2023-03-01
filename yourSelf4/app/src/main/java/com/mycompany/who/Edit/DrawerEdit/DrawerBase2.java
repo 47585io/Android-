@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 import android.text.*;
 import android.widget.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public abstract class DrawerBase2 extends DrawerBase
 {
@@ -36,6 +37,9 @@ public abstract class DrawerBase2 extends DrawerBase
 	}
 	public DrawerBase2(Context cont,AttributeSet set){
 		super(cont,set);
+		mlistenerD=new DefaultDrawerListener();
+		mlistenerFS=new ArrayList<>();
+		mlistenerDS=new ArrayList<>();
 	}
 	@Override
 	public void reSet()
@@ -96,7 +100,6 @@ public abstract class DrawerBase2 extends DrawerBase
 	}
 	
 	protected ArrayList<wordIndex> FindForGroup(ArrayList<EditListener> m,final int start,final int end,final String text,ThreadPoolExecutor pool){
-		ArrayList<wordIndex> nodes = new ArrayList<>();
 		ArrayList<Future<ArrayList<wordIndex>>> results= new ArrayList<>();
 		for(final EditListener li:m){
 			if(li==null)
@@ -109,18 +112,9 @@ public abstract class DrawerBase2 extends DrawerBase
 					return FindForLi(li,start,end,text);
 				}
 			};
-			results.add( pool.submit(ca));
+			results.add(pool.submit(ca));
 		}
-		try
-		{
-			for (Future<ArrayList<wordIndex>> result:results)
-				nodes.addAll(result.get());
-		}
-		catch (ExecutionException e)
-		{}
-		catch (InterruptedException e)
-		{}
-		return nodes;
+		return FuturePool.FutureGetAll(results);
 	}
 	
 	protected ArrayList<wordIndex> FindForLi(EditListener li,int start,int end,String text){
@@ -138,7 +132,7 @@ public abstract class DrawerBase2 extends DrawerBase
 		return nodes;
 	}
 	
-
+	
 	@Override
 	protected void Drawing(int start, int end, ArrayList<wordIndex> nodes)
 	{

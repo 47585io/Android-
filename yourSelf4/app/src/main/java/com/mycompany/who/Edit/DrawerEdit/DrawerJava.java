@@ -42,13 +42,13 @@ public class DrawerJava extends DrawerXML
 					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&src.charAt(nowIndex+1)!='_'&&Array_Splitor.indexOf(nowWord.toString(),getKeyword())!=-1){
 						//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
 						nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_key));
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
 					else if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&Array_Splitor.indexOf(nowWord.toString(),getConstword())!=-1){
 						//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
 						nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_const));
-						nowWord.replace(0,nowWord.length(),"");
+						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}		
 
@@ -72,7 +72,7 @@ public class DrawerJava extends DrawerXML
 					    if(getLastfunc().contains(nowWord.toString())){
 							//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
 						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_func));
-						    nowWord.replace(0,nowWord.length(),"");
+						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
 					}
@@ -91,7 +91,7 @@ public class DrawerJava extends DrawerXML
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个变量并且后面没有a～z和（ 这些字符，就把它加进nodes
 						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_villber));
-						    nowWord.replace(0,nowWord.length(),"");
+						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
 					}
@@ -110,7 +110,7 @@ public class DrawerJava extends DrawerXML
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个对象并且后面没有a～z和（ 这些字符，就把它加进nodes
 						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_obj));
-						    nowWord.replace(0,nowWord.length(),"");
+						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
 					}
@@ -130,7 +130,7 @@ public class DrawerJava extends DrawerXML
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个类型并且后面没有a～z和（ 这些字符，就把它加进nodes
 						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_type));
-						    nowWord.replace(0,nowWord.length(),"");
+						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 
 						}
@@ -223,7 +223,7 @@ public class DrawerJava extends DrawerXML
 						   ||WordLib.keyword[index]=="interface"){
 							wordIndex tmp=tryWordAfter(src,nowIndex+1);
 							getBeforetype().add(src.substring(tmp.start,tmp.end));
-							return nowIndex;
+							return tmp.end-1;
 						}
 
 					}

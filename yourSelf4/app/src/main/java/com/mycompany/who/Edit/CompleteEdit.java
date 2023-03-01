@@ -10,12 +10,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import com.mycompany.who.R;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public class CompleteEdit extends FormatEdit
 {
 
 	public static boolean Enabled_Complete=false;
-	public int Search_Bit=0xefffffff;
+	private int Search_Bit=0xefffffff;
 	private ArrayList<EditListener> mlistenerCS;
 	
 	public CompleteEdit(Context cont)
@@ -181,7 +182,7 @@ public class CompleteEdit extends FormatEdit
 			//每次把一个任务加进池子，然后得到Future
 		}
 
-		return FutureGet(results);
+		return FuturePool. FutureGet(results);
 	}
 
 	protected  ArrayList< ArrayList<String>> poolA(final String wantBefore, final String wantAfter, final int before, final int after, ThreadPoolExecutor pool, Collection<String[]> libs)
@@ -210,21 +211,7 @@ public class CompleteEdit extends FormatEdit
 			//每次把一个任务加进池子，然后得到Future
 		}
 
-		return FutureGet(results);
-	}
-	protected ArrayList< ArrayList<String>> FutureGet(ArrayList<Future<ArrayList<String>>> results){
-		ArrayList< ArrayList<String>> words=new ArrayList<>();
-		for(Future<ArrayList<String>> result:results){
-			try
-			{
-				words.add(result.get());
-			}
-			catch (ExecutionException e)
-			{}
-			catch (InterruptedException e)
-			{}
-		}
-		return words;
+		return FuturePool. FutureGet(results);
 	}
 	
 	
@@ -239,7 +226,7 @@ public class CompleteEdit extends FormatEdit
 		if (!wantAfter.equals("") && words != null)
 		//如果前字符串搜索结果不为空并且后字符串不为空，就从之前的搜索结果中再次搜索
 		    words = Array_Splitor.indexsOf(wantAfter, words, after, iyes);
-		else if (!wantAfter.equals("") && words == null)
+		else if (!wantAfter.equals("") && wantBefore.equals(""))
 		{
 			//如果前字符串为空，但后字符串不为空，则只从后字符串开始搜索
 			words = Array_Splitor.indexsOf(wantAfter, target, after, iyes);
@@ -257,7 +244,7 @@ public class CompleteEdit extends FormatEdit
 		    words = Array_Splitor.indexsOf(wantBefore, target, before, ino);
 		if (!wantAfter.equals("") && words != null)
 		    words = Array_Splitor.indexsOf(wantAfter, words, after, iyes);
-		else if (!wantAfter.equals("") && words == null)
+		else if (!wantAfter.equals("") && wantBefore.equals(""))
 		{
 			words = Array_Splitor.indexsOf(wantAfter, target, after, iyes);
 		}

@@ -10,6 +10,7 @@ import java.util.concurrent.*;
 import android.view.*;
 import android.text.style.*;
 import android.util.*;
+import com.mycompany.who.Edit.Share.*;
 
 public abstract class CodeEdit extends CoCoEdit
 {
@@ -34,15 +35,147 @@ public abstract class CodeEdit extends CoCoEdit
 		}catch(Exception e){}
 	}
 
-	
-	@Override
-	protected void onSelectionChanged(int selStart, int selEnd)
+	public int Uedo_(EditDate.Token token)
 	{
+		IsModify++;
+		isUR=true;
+		int endSelection=0;
+		if (token != null)
+		{
+			//范围限制
+			if(token.start<0)
+				token.start=0;
+			if(token.end>getText().length())
+				token.end=getText().length();
+			ongetUR(token);
+
+			if (token.src == "")
+			{
+				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end).toString());
+				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
+				getText().delete(token.start, token.end);	
+				endSelection=token.start;
+			}
+			else if (token.start == token.end)
+			{
+				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
+				stack.Reput(token.start, token.start + token.src.length(), "");
+				getText().insert(token.start, token.src);
+				endSelection=token.start + token.src.length();
+			}
+			else
+			{
+				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
+				//另外的，则是反向替换某个字符串
+			    getText().replace(token.start, token.end, token.src);
+				endSelection=token.start + token.src.length();
+			}
+		}
+		isUR=false;
+		IsModify--;
+		return endSelection;
+	}
+
+	public int Redo_(EditDate.Token token)
+	{
+		IsModify++;
+		isUR=true;
+		int endSelection=0;
+		if (token != null)
+		{
+			if(token.start<0)
+				token.start=0;
+			if(token.end>getText().length())
+				token.end=getText().length();
+			ongetUR(token);
+
+			if (token.src == "")
+			{
+				stack.put(token.start, token.start , getText().subSequence(token.start, token.end).toString());
+				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
+				getText().delete(token.start, token.end);
+				endSelection=token.start;
+			}
+			else if (token.start == token.end)
+			{
+				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
+				stack.put(token.start, token.start + token.src.length(), "");
+				getText().insert(token.start, token.src);
+				endSelection=token.start + token.src.length();
+			}
+			else
+			{
+				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
+				//另外的，则是反向替换某个字符串
+			    getText().replace(token.start, token.end, token.src);
+				endSelection=token.start + token.src.length();
+		    }
+		}
+		isUR=false;
+		IsModify--;
+		return endSelection;
+	}
+
+	public void Uedo()
+	{
+		//批量Uedo
+		if(stack==null)
+			return;
+
+		EditDate.Token token;	
+		int endSelection;
+		try
+		{
+			while (true)
+			{
+				token=stack.getLast();
+				endSelection=Uedo_(token);
+				setSelection(endSelection);
+				//设置光标位置
+				EditDate.Token token2=stack.seeLast();
+				if (token2 == null)
+					return;
+				else if (token2.start == token.end)	
+					continue;
+				//如果token位置紧挨着，持续Uedo	
+				else
+					break;
+			}
+		}
+		catch (Exception e)
+		{}
+	}
+	public void Redo()
+	{
+		//批量Redo
+		if(stack==null)
+			return;
+
+		EditDate.Token token;
+		int endSelection;
+		try
+		{
+			while (true)
+			{
+				token=stack.getNext();
+				endSelection=Redo_(token);
+				setSelection(endSelection);
+				EditDate.Token token2=stack.seeNext();
+				if (token2 == null)
+					return;
+				else if ( token2.start == token.end)	
+					continue;
+				else
+					break;
+			}
+		}
+		catch (Exception e)
+		{}
 	}
 	
-	
-	public void onPutUR(){
-		
+	protected void ongetUR(EditDate.Token token){
+	}
+	protected void onPutUR(EditDate.Token token){
 	}
 	
 	class DefaultText implements TextWatcher
@@ -94,14 +227,14 @@ public abstract class CodeEdit extends CoCoEdit
 					//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 					//从现在start开始，插入start～start+count之间的字符串
 					stack.put(start, start, str.toString().substring(start , start + count));
-					onPutUR();
+					onPutUR(stack.seeLast());
 				}
 				if (after != 0)
 				{
 					//如果还插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
 					//删除现在start～start+after之间的字符串
 					stack.put(start, start + after, "");
-					onPutUR();
+					onPutUR(stack.seeLast());
 				}					
 
 			}
@@ -117,7 +250,21 @@ public abstract class CodeEdit extends CoCoEdit
 		 *  count 输入字符串的数量（输入一个emoji表情，count打印结果是2）
 		 */
 		@Override
-		public void onTextChanged(CharSequence str, int start, int count, int after)
+		public void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+		{
+			if (!isDraw&&lengthAfter != 0){
+				ArrayList<Integer> indexs = null;
+				indexs = String_Splitor.indexsOf("\n", text.toString().substring(start, start + lengthAfter));	
+				addLines(indexs.size());
+				//增加行
+			}
+		}
+
+		/**
+		 *  editable 输入结束呈现在输入框中的信息
+		 */
+		@Override
+		public void afterTextChanged(Editable p1)
 		{
 			if (IsModify!=0||IsModify2)
 				return;
@@ -135,15 +282,6 @@ public abstract class CodeEdit extends CoCoEdit
 				getWindow().setX(-9999);
 				getWindow().setY(-9999);
 			}
-
-		}
-
-		/**
-		 *  editable 输入结束呈现在输入框中的信息
-		 */
-		@Override
-		public void afterTextChanged(Editable p1)
-		{
 		}
 		
 	}
