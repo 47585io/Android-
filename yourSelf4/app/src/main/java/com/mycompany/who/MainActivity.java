@@ -13,21 +13,26 @@ import android.view.animation.*;
 import com.mycompany.who.SuperVisor.*;
 import android.os.*;
 import android.app.*;
+import java.security.cert.*;
+import com.mycompany.who.Edit.Share.*;
 
 public class MainActivity extends Activity 
 {
 	private EditGroup Group;
 	protected ThreadPoolExecutor pool;
+	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		//pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
+		pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
 		Group=new EditGroup(this);
 		setContentView(Group);
+		Group.setExtension(new ArrayList<XCode.Extension>());
 		Group.AddEdit(".java");
 		Group.setPool(pool);
+		Group.getEditBuilder().setRunner(EditRunnerFactory.getCanvasRunner());
 	}
 
 	@Override
@@ -44,7 +49,8 @@ public class MainActivity extends Activity
 				Group.getEditBuilder().Format();
 				break;
 			case 3:
-				Group.getEditBuilder().reDraw();
+				String src= Group.getEditBuilder().reDraw();
+				log.e(src,true);
 				break;
 		}
 		return super.onOptionsItemSelected(item);

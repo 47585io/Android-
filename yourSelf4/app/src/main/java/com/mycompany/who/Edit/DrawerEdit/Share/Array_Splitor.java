@@ -28,21 +28,15 @@ public class Array_Splitor
 		return max;
 	}
 	
-	public static<T> Collection<T> And_Same(Collection<T> d1,Collection<T> d2){
+	public static<T> void And_Same(Collection<T> d1,Collection<T> d2,Collection<T> end){
 		//合并相同元素
 		if(d1==null&&d2==null){
-			return null;
+			return;
 		}
-		if(d1==null)
-			return d2;
-		if(d2==null)
-			return d1;
-		ArrayList<T> end = new ArrayList<>();
 		for(T o: d1){
 			if(d2.contains(o))
 				end.add(o);
 		}
-		return end;
 	}
 	
 	public static void delSame(Collection<String> dst,Collection<String> src){
@@ -101,7 +95,7 @@ public class Array_Splitor
 		return -1;
 	}
 
-    public static ArrayList<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
+	public static ArrayList<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
 		//查找数组中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.length==0)
 			return null;
@@ -129,6 +123,7 @@ public class Array_Splitor
 			return null;
 		return words;
 	}
+	
 
 	
 	public static void sort(ArrayList<String> words){

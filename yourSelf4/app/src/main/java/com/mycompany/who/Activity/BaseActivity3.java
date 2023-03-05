@@ -67,26 +67,6 @@ public class BaseActivity3 extends BaseActivity2
 	public void configActivity(){
 		
 	}
-	public void openFloatWindow(int x,int y,int width,int height){
-		/*v.setAlpha(1);
-		 AnimatorSet set=new AnimatorSet();
-		 ObjectAnimator oa=ObjectAnimator.ofFloat(v,"translationX",v.getX(),x);
-		 ObjectAnimator ob=ObjectAnimator.ofFloat(v,"translationY",v.getY(),y);
-		 set.play(oa).with(ob);
-		 set.start();*/
-		floatWindow.layout(x,y,x+width,y+height);
-	}	
-	public void openFloatWindow(float x,float y){
-		/*v.setAlpha(1);
-		 AnimatorSet set=new AnimatorSet();
-		 ObjectAnimator oa=ObjectAnimator.ofFloat(v,"translationX",v.getX(),x);
-		 ObjectAnimator ob=ObjectAnimator.ofFloat(v,"translationY",v.getY(),y);
-		 set.play(oa).with(ob);
-		 set.start();*/
-		floatWindow.setX(x);
-		floatWindow.setY(y);
-	}	
-
 	protected void clearFloatWindow(){
 		
 	}

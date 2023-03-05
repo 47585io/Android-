@@ -17,7 +17,7 @@ public class Edit extends EditText
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
 	public static int Text_Color=0xffabb2bf;
-	public int Text_Size=15;
+	public float Text_Size=15;
 	
 	public Edit(Context cont){
 		super(cont);

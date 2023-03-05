@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.DrawerEdit.Base;
+package com.mycompany.who.Edit.DrawerEdit.Share;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -30,6 +30,18 @@ public class FuturePool
 		catch (InterruptedException e)
 		{}
 		return date;
+	}
+	
+	public static<T> void FuturePop(Collection<Future<T>> results){
+		try
+		{
+			for (Future<T> result:results)
+				result.get();
+		}
+		catch (ExecutionException e)
+		{}
+		catch (InterruptedException e)
+		{}
 	}
 	
 	public static<T> ArrayList<Future<T>> addTotals(Collection<Callable<T>> totals,ThreadPoolExecutor pool){

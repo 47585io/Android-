@@ -27,7 +27,9 @@ public class EditGroup extends RelativeLayout
 	public static int WindowHeight=300;
 	public static int WindowWidth=600;
 	public static int MaxLine=500;
+	public String path;
 	private int EditFlag=0;
+	private int historyId;
 	
 	protected ScrollView EditScro;
 	protected HorizontalScrollView EdithScro;
@@ -41,20 +43,27 @@ public class EditGroup extends RelativeLayout
 	private Stack<Stack<Integer>> Last;
 	private Stack<Stack<Integer>> Next;
 	private ThreadPoolExecutor pool=null;
-	private CodeEdit historyId;
-	private ArrayList<Extension> Extensions;
-	private KeyPool keyPool;
-	private HashMap<String,Runnable> keysRunnar;
+	private ArrayList<XCode.Extension> Extensions;
 	
 	public EditGroup(Context cont){
 		super(cont);
 		init();
 		init2(cont);
-		CodeEdit.Enabled_Format = true;
-		CodeEdit.Enabled_Drawer = true;
-		CodeEdit.Enabled_Complete = true;
-		CodeEdit.Enabled_MakeHTML = true;
 		config();
+	}
+	public EditGroup(Context cont,AttributeSet set){
+		super(cont,set);
+		init();
+		init2(cont);
+		config();
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if( ((EditGroup)obj).path.equals(path))
+			return true;
+		return false;
 	}
 	
 	protected void init(){
@@ -63,11 +72,8 @@ public class EditGroup extends RelativeLayout
 		Next=new Stack<>();
 		Last.add(new Stack<Integer>());
 		builder=new EditBuilder();
-		Extensions = new ArrayList<>();
-		keyPool = new KeyPool();
-		keysRunnar = new HashMap<>();
 	}
-	protected void init2(Context cont)
+	private void init2(Context cont)
 	{	
 		EditScro=new ScrollView(cont);
 		EdithScro=new HorizontalScrollView(cont);
@@ -75,14 +81,13 @@ public class EditGroup extends RelativeLayout
 		ForEditSon=new LinearLayout(cont);
 		EditLines=new Edit(cont);
 		mWindow=new ListView(cont);
-		
-		addView(EditScro);
+
+		addView(EdithScro);
 		addView(mWindow);
-		EditScro.addView(EdithScro);
-		EdithScro.addView(ForEdit);
+		EdithScro.addView(EditScro);
+		EditScro.addView(ForEdit);
 		ForEdit.addView(EditLines);
 		ForEdit.addView(ForEditSon);
-
 	}
 	protected void config(){
 		EditLines.setFocusable(false);
@@ -91,6 +96,10 @@ public class EditGroup extends RelativeLayout
 		mWindow.setDivider(null);
 		mWindow.setOnItemClickListener(new onMyWindowClick());
 		mWindow.setOnItemLongClickListener(new onMyWindowLongClick());
+		CodeEdit.Enabled_Format = true;
+		CodeEdit.Enabled_Drawer = true;
+		CodeEdit.Enabled_Complete = true;
+		CodeEdit.Enabled_MakeHTML = true;
 	}
 	
 	public EditBuilder getEditBuilder(){
@@ -111,32 +120,35 @@ public class EditGroup extends RelativeLayout
 		if(EditList.size()==0){
 	        Edit = new RCodeEdit(getContext());
 			configEdit(Edit,name);
+			Edit.lines=EditLines;
+			path=name;
 		}
-		else
+		else{
 			Edit= new RCodeEdit(getContext(),(RCodeEdit)(EditList.get(0)));
-		Edit.lines=EditLines;
+			setExtentionForEdit(Edit);
+		}
+		Edit.setOnClickListener(new Click());
 		return Edit;
 	}
 	protected void configEdit(CodeEdit Edit,String name)
 	{
 		Edit.setPool(pool);
-		for(Extension e:Extensions){
-			e.oninit(Edit);
-		    Edit.getFinderList().add(e.getFinder());
-			Edit.getDrawerList().add(e.getDrawer());
-			Edit.getFormatorList().add(e.getFormator());
-			Edit.getInsertorList().add(e.getInsertor());
-			Edit.getCompletorList().add(e.getCompletor());
-			Edit.getCanvaserList().add(e.getCanvaser());
-		}
+		setExtentionForEdit(Edit);
 		com.mycompany.who.Share.Share.setEdit(Edit,name);
+	}
+	private void setExtentionForEdit(CodeEdit Edit){
+		for(XCode.Extension e:Extensions){
+			e.oninit(Edit);
+		  		Edit.getCompletorList().add(e.C());
+			Edit.getCanvaserList().add(e.V());
+		}
 	}
 	
 	
 	class RCodeEdit extends CodeEdit{
 
 		public int index;	
-		public boolean can;
+		private boolean can;
 		//别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数中赋值
 		
 		public RCodeEdit(Context cont){
@@ -225,7 +237,7 @@ public class EditGroup extends RelativeLayout
 	 	public wordIndex calc(CodeEdit Edit)
 		{
 			//请求测量
-			historyId=Edit;
+			historyId=((RCodeEdit)Edit).index;
 			//本次窗口谁请求，单词给谁
 			int offset=Edit.getSelectionStart();
 			wordIndex pos = Edit.getScrollCursorPos(offset, EdithScro.getScrollX() - Edit.lines.getWidth(), EditScro.getScrollY()-calaEditHeight(index));
@@ -249,15 +261,25 @@ public class EditGroup extends RelativeLayout
 			else
 				prams.height = WindowHeight;
 			prams.width = WindowWidth;
-			
+
 			mWindow.setLayoutParams(prams);
 
 			return pos;
 		}
 	}
 	
+	class Click implements OnClickListener
+	{
+		@Override
+		public void onClick(View p1)
+		{
+			historyId=((RCodeEdit) p1).index;
+			mWindow.setX(-9999);
+		}
+	}
+	
 	public class EditBuilder{
-		
+		//通过EditBuilder直接操作Edit
 		private wordIndex start;
 		private wordIndex end;
 		
@@ -282,15 +304,24 @@ public class EditGroup extends RelativeLayout
 			calaIndex(start);
 			calaIndex(end);
 		}
-
-		public wordIndex searchWord(String wordIndex){
-			wordIndex node = new wordIndex(0,0,(byte)0);
-			
+		
+		public wordIndex searchWord(String word){
+			for(CodeEdit e:EditList){
+				start.end= e.getText().toString().indexOf(word);
+				if(start.end!=-1){
+					start.start=((RCodeEdit)(e)).index;
+					return start;
+				}
+			}
+			return null;
 		}
-
 		public void setLuagua(String luagua){
 			for(CodeEdit e:EditList)
 			    e.setLuagua(luagua);
+		}
+		public void setRunner(EditListenerRunner Runner){
+			for(CodeEdit Edit:EditList)
+			    Edit.setRunner(Runner);
 		}
 		
 		public String reDraw(){
@@ -389,7 +420,7 @@ public class EditGroup extends RelativeLayout
 			//如果点击了就插入单词并关闭窗口
 			WordAdpter adapter = (WordAdpter) p1.getAdapter();
 			Icon icon = (Icon) adapter.getItem(p3);
-			CodeEdit Edit = historyId;
+			CodeEdit Edit = EditList.get(historyId);
 			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
 			mWindow.setX(-9999);
 			mWindow.setY(-9999);
@@ -401,14 +432,14 @@ public class EditGroup extends RelativeLayout
 		{
 			//如果长按了就去到单词第一次出现的地方
 			Icon icon = (Icon) p1.getAdapter().getItem(p3);
-			CodeEdit Edit = historyId;
-			int index= Edit.getText().toString().indexOf(icon.getName());
-			if (index != -1)
+			wordIndex node= builder.searchWord(icon.getName());
+			if (node!=null)
 			{
-				wordIndex pos = Edit.getCursorPos(index);
+				CodeEdit Edit = EditList.get( node.start);
+				wordIndex pos = Edit.getCursorPos(node.end);
 				EdithScro.setScrollX(pos.start);
-				EditScro.setScrollY(pos.end);   	
-				Edit.setSelection(index, index + icon.getName().length());
+				EditScro.setScrollY(pos.end+calaEditHeight(((RCodeEdit)(Edit)).index));   	
+				Edit.setSelection(node.end, node.end + icon.getName().length());
 			}
 			return true;
 		}
@@ -444,43 +475,21 @@ public class EditGroup extends RelativeLayout
 		    line+=e.getLineCount();
 		return line;
 	}
+	
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool=pool;
 		for(CodeEdit e:EditList){
 			e.setPool(pool);
 		}
 	}
-	
-	
-	public void addAExtension(Extension extension)
-	{
-		Extensions.add(extension);
-	}
-	public void delAExtension(int i)
-	{
-		Extensions.remove(i);
-	}
-	public void clearExtension(){
-		Extensions.clear();
-	}
-	public void setExtension(ArrayList<Extension> E){
+	public void setExtension(ArrayList<XCode.Extension> E){
 		Extensions=E;
 	}
-
-	public static abstract class Extension
-	{
-		public String name;
-		public String path;
-		public int id;
-		public abstract void oninit(EditText self)
-		public abstract EditListener getFinder()
-		public abstract EditListener getDrawer()
-		public abstract EditListener getFormator()
-		public abstract EditListener getInsertor()
-	  	public abstract EditListener getCompletor()
-		public abstract EditListener getCanvaser()
+	public void delExtension(int... hashCodes){
+		for(CodeEdit e:EditList)
+		    e.DelListener(hashCodes);
 	}
-
+	
 	@Override
 	protected void onConfigurationChanged(Configuration config)
 	{

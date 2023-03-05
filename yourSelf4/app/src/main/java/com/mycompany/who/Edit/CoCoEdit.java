@@ -23,41 +23,57 @@ public class CoCoEdit extends CompleteEdit
 	public static int CursorRect_Color=0x25616263;
 	protected boolean isUR=false;
 	public Edit lines;
-	private ArrayList<EditListener> mlistenerCan;
+	private ArrayList<EditListener> mlistenerVS;
 	
 	public CoCoEdit(Context cont)
 	{
 		super(cont);
-		mlistenerCan=new ArrayList<>();
-		mlistenerCan.add(new DefaultCanvaser());
+		mlistenerVS=new ArrayList<>();
+		mlistenerVS.add(new DefaultCanvaser());
 		this.lines=new Edit(cont);	
 		lines.setFocusable(false);
 	}
 	public CoCoEdit(Context cont,CoCoEdit Edit){
 		super(cont,Edit);
-		mlistenerCan=Edit.mlistenerCan;
+		mlistenerVS=new ArrayList<>();
+		mlistenerVS.add(new DefaultCanvaser());
 		this.lines=Edit.lines;
+		Runner=Edit.Runner;
 	}
 	public CoCoEdit(Context cont,AttributeSet set){
 		super(cont,set);
+		mlistenerVS=new ArrayList<>();
+		mlistenerVS.add(new DefaultCanvaser());
+		this.lines=new Edit(cont);	
+		lines.setFocusable(false);
 	}
 	@Override
 	public void reSet()
 	{
 		super.reSet();
 		lines.config();
-		mlistenerCan.add(new DefaultCanvaser());
+		mlistenerVS.add(new DefaultCanvaser());
 	}
 	
 	public ArrayList<EditListener> getCanvaserList(){
-		return mlistenerCan;
+		return mlistenerVS;
 	}
 	@Override
 	public void clearListener()
 	{
-		mlistenerCan.clear();
+		mlistenerVS.clear();
 		super.clearListener();
 	}
+	public void DelListener(EditListener... lis){
+		for(EditListener li:lis){
+			mlistenerCS.remove(li);
+			mlistenerVS.remove(li);
+		}
+	}
+	public void DelListener(int... hashCodes){
+		
+	}
+	
 	
 	@Override
 	protected void onDraw(Canvas canvas)
@@ -67,9 +83,10 @@ public class CoCoEdit extends CompleteEdit
 		int lines= getLayout().getLineForOffset(getSelectionStart());
 		Rect bounds = new Rect();
 		getLineBounds(lines, bounds);
-		for(EditListener li:getCanvaserList())
-		    if(li!=null)
-			    ((EditCanvaserListener)li).onDraw(this,canvas,paint,bounds);
+		if(Runner!=null){
+		    for(EditListener li:getCanvaserList())
+		        Runner.CanvaserForLi(this,canvas,paint,bounds,(EditCanvaserListener)li);
+		}
 		super.onDraw(canvas);
     }
 	
@@ -132,8 +149,8 @@ public class CoCoEdit extends CompleteEdit
 	    pos.start=bounds.centerX();
 		pos.end=bounds.centerY();
 	    
-		int nowN=fromy_getLineOffset(pos.end);
-		pos.start=(int)((offset-nowN)*Text_Size);
+		int index= tryLine_Start(getText().toString(),offset);
+		pos.start=(int)( (offset- index)*Text_Size);
 		
 		return pos;
 	}
@@ -181,13 +198,14 @@ public class CoCoEdit extends CompleteEdit
 	}
 	
 	public void zoomBy(float size){
+		Text_Size=size;
 		setTextSize(size);
 	    lines.setWidth((lines.getLineCount()+"").length()*(int)lines.getTextSize());
 		lines.setTextSize(size);
 	}
 	
 	
-	class DefaultCanvaser extends EditCanvaserListener
+	public static class DefaultCanvaser extends EditCanvaserListener
 	{
 
 		@Override
@@ -201,9 +219,10 @@ public class CoCoEdit extends CompleteEdit
 			
 			paint.setColor(CursorRect_Color);
 			canvas.drawRect(bounds,paint);
-			
 		}
-		
+	}
+	public EditListener getDefultCanvaser(){
+		return new DefaultCanvaser();
 	}
 
 }

@@ -5,6 +5,7 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public class DrawerCSS extends DrawerJava
 {
@@ -22,16 +23,15 @@ public class DrawerCSS extends DrawerJava
 	public void setLuagua(String name)
 	{
 		if(name.equals("css"))
-			setDefaultFinder(new FinderCSS());
+			setFinder(new FinderCSS());
 		super.setLuagua(name);
 	}
 	
 	
 
-	public void clearRepeatNodeForCSS(ArrayList<wordIndex> nodes){
+	public void clearRepeatNodeForCSS(String src,ArrayList<wordIndex> nodes){
 		//清除优先级低且位置重复的node
 		int i;
-		String src = getText().toString();
 		for(i=0;i<nodes.size();i++){
 			wordIndex now = nodes.get(i);
 			if(src.substring(now.start,now.end).equals("-")){
@@ -220,7 +220,8 @@ public class DrawerCSS extends DrawerJava
 				{
 					wordIndex node;
 					if (src.charAt(nowIndex) == '='
-						|| src.charAt(nowIndex) == ':'){
+						|| src.charAt(nowIndex) == ':'
+						){
 						int i=src.indexOf('{',nowIndex);
 						if (i<tryLine_End(src, nowIndex)&&i!=-1)
 						{
@@ -295,13 +296,13 @@ public class DrawerCSS extends DrawerJava
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
 		@Override
-		public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			AnyThingForCSS CSSThings = new AnyThingForCSS();
 
@@ -322,15 +323,15 @@ public class DrawerCSS extends DrawerJava
 		}
 
 		@Override
-		public void OnClearFindWord(TreeSet<String> vector)
+		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
 		@Override
-		public void OnClearDrawWord(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
 		{
-			clearRepeatNodeForCSS(nodes);
+			clearRepeatNodeForCSS(text,nodes);
 		}
 	}
 }

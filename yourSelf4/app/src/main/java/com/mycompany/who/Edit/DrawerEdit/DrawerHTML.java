@@ -5,6 +5,8 @@ import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
+import com.mycompany.who.Edit.DrawerEdit.DrawerBase.*;
 
 public class DrawerHTML extends DrawerCSS
 {
@@ -25,21 +27,21 @@ public class DrawerHTML extends DrawerCSS
 	public void setLuagua(String name)
 	{
 		if (name.equals("html"))
-			setDefaultFinder(new FinderHTML());
+			setFinder(new FinderHTML());
 		super.setLuagua(name);
 	}
 
 	protected ArrayList<wordIndex> getNodes(String text, String Lua, int now)
 	{
-		EditListener finder=getDefaultFinder();
+		EditListener finder=getFinder();
 		setLuagua(Lua);
-		ArrayList<wordIndex> tmp= FindFor(0, 0, text);
+		ArrayList<wordIndex> tmp= FindFor(0,0,text);
 		offsetNode(tmp, now);
-		setDefaultFinder(finder);
+		setFinder(finder);
 		return tmp;
 	}
 
-	protected ArrayList<wordIndex> reDrawHTML(int start, int end, String text)
+	protected ArrayList<wordIndex> reDrawHTML(int start,int end,String text)
 	{
 
 		ArrayList<wordIndex> nodes=new ArrayList<>();
@@ -99,8 +101,14 @@ public class DrawerHTML extends DrawerCSS
 		catch (Exception e)
 		{}
 		//那最后一段在哪个tag内呢？
-		//只要看前一个tag即可
-		int min = Array_Splitor.getmax(0,text.length(), css, js, css_end, js_end);
+		//只要看下个tag
+		String s=getText().toString();
+		css = s.indexOf("<style", now+start);
+		js = s.indexOf("<script", now+start);
+		css_end = s.indexOf("</style", now+start);
+		js_end = s.indexOf("</script", now+start);
+		
+		int min = Array_Splitor.getmin(0,s.length(), css, js, css_end, js_end);
 		try
 		{
 			if (min == -1)
@@ -111,27 +119,27 @@ public class DrawerHTML extends DrawerCSS
 			}	
 			else if (css == min)
 			{
-				tmp = getNodes(text.substring(now, text.length()), "css", now);
+				tmp = getNodes(text.substring(now, text.length()), "xml", now);
 				nodes.addAll(tmp);
-				//如果是css起始tag，将之后的css染色
+				//如果是css起始tag，将之前的xml染色
 			}
 			else if (js == min)
 			{
-				tmp = getNodes(text.substring(now, text.length()), "js", now);
+				tmp = getNodes(text.substring(now, text.length()), "xml", now);
 				nodes.addAll(tmp);
-				//如果是js起始tag，将之后的js染色
+				//如果是js起始tag，将之前的xml染色
 			}
 			else if (css_end == min)
 			{
-				tmp = getNodes(text.substring(now, text.length()), "xml", now);
+				tmp = getNodes(text.substring(now, text.length()), "css", now);
 				nodes.addAll(tmp);
-				//如果是css结束tag，将之后的xml染色
+				//如果是css结束tag，将之前的css染色
 			}
 			else if (js_end == min)
 			{
-				tmp = getNodes(text.substring(now, text.length()), "xml", now);
+				tmp = getNodes(text.substring(now, text.length()), "java", now);
 				nodes.addAll(tmp);
-				//如果是js结束tag，将之后的xml染色
+				//如果是js结束tag，将之前的js染色
 			}
 		}
 		catch (Exception e)
@@ -144,27 +152,28 @@ public class DrawerHTML extends DrawerCSS
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList, Words WordLib, OtherWords WordLib2)
+		{
+			// TODO: Implement this method
+		}
+		
+
+		@Override
+		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 
 		}
 
 		@Override
-		public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
 		{
 
 		}
 
 		@Override
-		public void OnClearFindWord(TreeSet<String> vector)
+		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
 		{
-
-		}
-
-		@Override
-		public void OnClearDrawWord(int start, int end, String text, ArrayList<wordIndex> nodes)
-		{
-			nodes.addAll(reDrawHTML(start, end, text));
+			nodes.addAll(reDrawHTML(start,end,text));
 		}
 
 

@@ -7,21 +7,27 @@
 
 	<ScrollView
 		android:id="@+id/meditScrollView"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent">
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
 
 		<HorizontalScrollView
 			android:id="@+id/meditHorizontalScrollView"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
 
+			
 			<LinearLayout
 				android:id="@+id/meditLinearLayout"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"
-				android:minWidth="100px"
-				android:minHeight="50px"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
 				android:padding="0px">
+				
+				<com.mycompany.who.Edit.DrawerEdit.Base.Edit
+					android:id="@+id/meditLines"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					
+					/>
 				
 				<LinearLayout
 					android:orientation="vertical"
@@ -30,21 +36,20 @@
 					android:layout_height="wrap_content"
 					/>
 
+				<ListView
+					android:id="@+id/mWindow"
+					android:layout_width="600px"
+					android:layout_height="300px"
+					android:divider="@null"
+					android:background="#FF1E2126"
+					android:translationX="-9999px">
+				</ListView>
 			</LinearLayout>
 
 		</HorizontalScrollView>
 
 	</ScrollView>
 
-	<ListView
-		android:id="@+id/mWindow"
-		android:layout_width="600px"
-		android:layout_height="300px"
-		android:divider="@null"
-		android:background="#FF1E2126"
-		android:translationX="-9999px">
-
-	</ListView>
 
 </RelativeLayout>
 

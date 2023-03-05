@@ -25,7 +25,7 @@ public class BaseActivity2 extends BaseActivity
 		super.onCreate(savedInstanceState);
 	}
 
-	public abstract class onmyTouchListener implements OnTouchListener
+	public static abstract class TouchCollector implements OnTouchListener
 	{
 		@Override
 		public boolean onTouch(View p1, MotionEvent p2)
@@ -46,21 +46,17 @@ public class BaseActivity2 extends BaseActivity
 		//鼠标收集
 	}
 
-	public void setOnTouchListenrS(View ... S){
+	public static void setOnTouchListenrS(View ... S){
 		for(View s:S){
-			s.setOnTouchListener(new onmyTouchListener(){
+			s.setOnTouchListener(new TouchCollector(){
 
 					@Override
 					public boolean ontouch(View p1, MotionEvent p2)
 					{
-						if(p2.getAction()==MotionEvent.ACTION_DOWN)
-						    whenTouchView();
 						return false;
 					}
 				});
 		}
 	}
-	
-	public void whenTouchView(){}
 	
 }

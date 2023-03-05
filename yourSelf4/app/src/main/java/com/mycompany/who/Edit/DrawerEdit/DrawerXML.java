@@ -5,6 +5,7 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public class DrawerXML extends DrawerText
 {
@@ -22,7 +23,7 @@ public class DrawerXML extends DrawerText
 	public void setLuagua(String name)
 	{
 		if(name=="xml")
-			setDefaultFinder( new FinderXML());
+			setFinder( new FinderXML());
 		super.setLuagua(name);
 	}
 	
@@ -74,13 +75,20 @@ public class DrawerXML extends DrawerText
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnClearFindNodes(int start, int end, String text, ArrayList<wordIndex> nodes)
+		{
+			// TODO: Implement this method
+		}
+		
+
+		@Override
+		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
 		@Override
-		public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			AnyThingForXML AllThings = new AnyThingForXML();
 
@@ -95,16 +103,12 @@ public class DrawerXML extends DrawerText
 		}
 
 		@Override
-		public void OnClearFindWord(TreeSet<String> vector)
+		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
-		@Override
-		public void OnClearDrawWord(int start,int end,String text, ArrayList<wordIndex> nodes)
-		{
-			
-		}
+		
 	}
 	
 }

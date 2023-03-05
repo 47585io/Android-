@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.DrawerEdit.Share;
+package com.mycompany.who.Edit.DrawerEdit.Base;
 
 import java.util.*;
 import com.mycompany.who.*;

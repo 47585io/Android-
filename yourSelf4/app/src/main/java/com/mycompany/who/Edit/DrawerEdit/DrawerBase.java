@@ -27,7 +27,7 @@ public abstract class DrawerBase extends Edit
 	public static boolean Enabled_MakeHTML=false;
 	
 	public int tryLines=2;
-	protected String laugua;
+	public String laugua;
 	
 	public DrawerBase(Context cont){
 	 	super(cont);
@@ -36,7 +36,6 @@ public abstract class DrawerBase extends Edit
 	public DrawerBase(Context cont,DrawerBase Edit){
 		super(cont,Edit);
 		this.WordLib2=Edit.WordLib2;	
-		laugua=Edit.laugua;
 	}
 	public DrawerBase(Context cont,AttributeSet set){
 		super(cont,set);
@@ -49,7 +48,7 @@ public abstract class DrawerBase extends Edit
 	abstract protected ArrayList<wordIndex> FindFor(int start,int end,String text)
 	abstract protected void Drawing(int start,int end,ArrayList<wordIndex> nodes)
 	
-	protected String getToDraw(int start,int end){
+	public String getToDraw(int start,int end){
 		IsModify++;
 		isDraw=true;
 		//获取选中文本
@@ -65,7 +64,7 @@ public abstract class DrawerBase extends Edit
 		return text;
 	}
 
-	protected ArrayList<wordIndex> startFind(String src,ArrayList<DoAnyThing> totalList){
+	public static ArrayList<wordIndex> startFind(String src,ArrayList<DoAnyThing> totalList){
 		//开始查找，为了保留换行空格等，只replace单词本身，而不是src文本
 		//Spanned本质是用html样式替换原字符串
 		//html中，多个连续空格会压缩成一个，换行会替换成空格
@@ -93,7 +92,7 @@ public abstract class DrawerBase extends Edit
 		return nodes;
 	}
 
-	protected void Draw(int start,int end,ArrayList<wordIndex> nodes){
+	public void Draw(int start,int end,ArrayList<wordIndex> nodes){
 		//反向染色，前面不受后面已有Spanned影响
 		IsModify++;
 		isDraw=true;
@@ -102,7 +101,7 @@ public abstract class DrawerBase extends Edit
 		String text = editor.toString().substring(start,end);
 		
 		try{
-		    SpannableStringBuilder builder= Colors.colorText(text,nodes);
+		    SpannableStringBuilder builder= Colors.ForeColorText(text,nodes);
 			//在Edit中的真实下标开始，将范围内的单词染色
 			editor.replace(start,end,builder);
 	
@@ -111,7 +110,7 @@ public abstract class DrawerBase extends Edit
 		IsModify--;
 	}
 	
-	protected static String getHTML(ArrayList<wordIndex> nodes,String text){
+	public static String getHTML(ArrayList<wordIndex> nodes,String text){
 		//中间函数，用于生成HTML文本
 		StringBuffer arr = new StringBuffer();
 		int index=0;
@@ -119,17 +118,17 @@ public abstract class DrawerBase extends Edit
 		for(wordIndex node:nodes){
 			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
 			if(node.start>index)
-				arr.append(Colors.textColor(text.substring(index,node.start),Colors. Default_));
-			arr.append(Colors.  textColor(text.substring(node.start,node.end),Colors.fromByteToColorS(node.b)));
+				arr.append(Colors.textForeColor(text.substring(index,node.start),Colors. Default_));
+			arr.append(Colors.  textForeColor(text.substring(node.start,node.end),Colors.fromByteToColorS(node.b)));
 			index=node.end;
 		}
 		if(index<text.length())
-			arr.append(Colors.  textColor(text.substring(index,text.length()),Colors.Default_));
+			arr.append(Colors.  textForeColor(text.substring(index,text.length()),Colors.Default_));
 		arr.append("<br><br><br><hr><br><br></body></html>");
 		return arr.toString();
 	}
 
-	protected void clearRepeatNode(ArrayList<wordIndex> nodes){
+	public static void clearRepeatNode(ArrayList<wordIndex> nodes){
 		//清除优先级低且位置重复的node
 		int i,j;
 		for(i=0;i<nodes.size();i++){
@@ -145,7 +144,7 @@ public abstract class DrawerBase extends Edit
 			}
 		}
 	}
-	protected void offsetNode(ArrayList<wordIndex> nodes,int start){
+	public static void offsetNode(ArrayList<wordIndex> nodes,int start){
 		for(wordIndex node:nodes){
 			node.start+=start;
 			node.end+=start;
@@ -159,10 +158,12 @@ public abstract class DrawerBase extends Edit
 		final ArrayList<wordIndex> nodes;
 	    String HTML = null;
 		if(text==null)
-			return null;
+			return "";
 
 		try{
 			nodes=FindFor(start,end,text);
+			if(nodes==null)
+				return "";
 			Drawing(start,end,nodes);
 			if(Enabled_MakeHTML){
 				HTML= getHTML(nodes,text);
@@ -173,8 +174,12 @@ public abstract class DrawerBase extends Edit
 	}
 	
 	public SpannableStringBuilder reDrawOtherText(int start,int end,String text){
-		ArrayList<wordIndex> nodes = FindFor(start,end,text);
-		return Colors.colorText(text,nodes);
+		ArrayList<wordIndex> nodes = FindFor(start,end,text.substring(start,end));
+		return Colors.ForeColorText(text,nodes);
+	}
+	public String HTML(int start,int end,String text){	
+		ArrayList<wordIndex> nodes = FindFor(start,end,text.substring(start,end));
+		return getHTML(nodes,text);	
 	}
 	
 	@Override
@@ -223,7 +228,6 @@ public abstract class DrawerBase extends Edit
 		}
 		return tmp;
 	}
-
 
 	public static wordIndex tryWordAfter(String src,int index){
 		//试探后面的单词
@@ -299,6 +303,7 @@ public abstract class DrawerBase extends Edit
 		public abstract int dothing(String src,StringBuffer nowWord,int nowIndex,ArrayList<wordIndex> nodes);
 		//修饰符非常重要，之前没写public，总是会函数执行异常
 	}
+	
 	
 	//根据不同情况，返回不同的单词
 	

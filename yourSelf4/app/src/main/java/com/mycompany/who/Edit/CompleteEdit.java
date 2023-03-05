@@ -11,40 +11,57 @@ import java.util.concurrent.*;
 import com.mycompany.who.R;
 import android.util.*;
 import com.mycompany.who.Edit.DrawerEdit.Base.*;
+import android.graphics.*;
 
 public class CompleteEdit extends FormatEdit
 {
-
+	public final EditCompletorBoxes boxes=new EditCompletorBoxes();
 	public static boolean Enabled_Complete=false;
-	private int Search_Bit=0xefffffff;
-	private ArrayList<EditListener> mlistenerCS;
-	
+	private static int Search_Bit=0xefffffff;
+	protected ArrayList<EditListener> mlistenerCS;
+
 	public CompleteEdit(Context cont)
 	{
 		super(cont);	
 		mlistenerCS = new ArrayList<>();
-		mlistenerCS.add(new DefaultCompletListener());
+		trimListener();
 	}
-	public CompleteEdit(Context cont,CompleteEdit Edit){
-		super(cont,Edit);
-		mlistenerCS=Edit.mlistenerCS;
-		Search_Bit=Edit.Search_Bit;
+	public CompleteEdit(Context cont, CompleteEdit Edit)
+	{
+		super(cont, Edit);
+		mlistenerCS = new ArrayList<>();
+		trimListener();
+		Search_Bit = Edit.Search_Bit;
 	}
-    public CompleteEdit(Context cont,AttributeSet set){
-		super(cont,set);
+    public CompleteEdit(Context cont, AttributeSet set)
+	{
+		super(cont, set);
+		mlistenerCS = new ArrayList<>();
+		trimListener();
 	}
+	private void trimListener()
+	{
+		mlistenerCS.add(boxes.getVillBox());
+		mlistenerCS.add(boxes.getObjectBox());
+		mlistenerCS.add(boxes.getFuncBox());
+		mlistenerCS.add(boxes.getTypeBox());
+		mlistenerCS.add(boxes.getKeyBox());
+		mlistenerCS.add(boxes.getTagBox());
+		mlistenerCS.add(boxes.getDefaultBox());
+	}
+
 	@Override
 	public void reSet()
 	{
 		super.reSet();
-		mlistenerCS.add(new DefaultCompletListener());
 	}
-	
+
 	@Override
 	public void setLuagua(String name)
 	{
 		super.setLuagua(name);
-		switch(name){
+		switch (name)
+		{
 			case "xml":
 				Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_key, Colors.color_const, Colors.color_func, Colors.color_villber, Colors.color_obj, Colors.color_type);
 				break;
@@ -58,12 +75,12 @@ public class CompleteEdit extends FormatEdit
 				Search_Bit = 0xefffffff;
 				break;
 			case "text":
-				Search_Bit=0;
+				Search_Bit = 0;
 				break;
 		}
 	}
-	
-	
+
+
 	public ArrayList<EditListener> getCompletorList()
 	{
 		return mlistenerCS;
@@ -83,139 +100,31 @@ public class CompleteEdit extends FormatEdit
 		String wantBefore= getWord(index);
 		String wantAfter = getAfterWord(index);
 		//获得光标前后的单词，并开始查找
-		ArrayList<Icon> Icons = new ArrayList<>();
-
-		try
-		{
-			SearchWords(Icons, wantBefore, wantAfter, 0, wantBefore.length(), pool);
+		ArrayList<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS,pool);
+		if(Icons!=null){
+		    WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
+		    Window.setAdapter(adapter);
 		}
-		catch (ExecutionException e)
-		{}
-		catch (InterruptedException e)
-		{}
-
-		WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
-		Window.setAdapter(adapter);
-
 	}
-
-	protected void SearchWords(ArrayList<Icon> adapter, String wantBefore, String wantAfter, int before, int after, ThreadPoolExecutor pool) throws InterruptedException, ExecutionException
-	{
-		ArrayList<ArrayList<String>> words;
-		ArrayList<ArrayList<String>> words2;
-		ArrayList<Collection<String>> libs = new ArrayList<>();
-		ArrayList<String[]> libs2 = new ArrayList<>();
-
-		for(EditListener li:getCompletorList()){
-			if(li!=null)
-			    ((EditCompletorListener)li).onBeforeSearchWord(libs,libs2);
-		}
-
-		if(getPool()==null){
-			words = NoPoolA(wantBefore, wantAfter, before, after, libs);
-			words2 = NoPoolA(wantBefore, wantAfter, before, after, libs2);
-		}
-		else{
-		    words = poolA(wantBefore, wantAfter, before, after, getPool(), libs);
-		    words2 = poolA(wantBefore, wantAfter, before, after, getPool(), libs2);
-		}
+	protected ArrayList<Icon>  SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
 		
-		for(EditListener li:mlistenerCS){
-			if(li!=null)
-			    ((EditCompletorListener)li).onFinishSearchWord(words,words2,adapter);
-		}
-	}
-	
-	protected ArrayList< ArrayList<String>> NoPoolA(final String wantBefore, final String wantAfter, final int before, final int after, ArrayList<Collection<String>> libs)
-	{
-		ArrayList< ArrayList<String>> words=new ArrayList<>();
-		for (Collection<String> lib:libs)
-		{
-			ArrayList<String> word = SearchOnce(wantBefore, wantAfter, lib, before, after);
-			if (word != null)
+		if(Runner==null)
+			return null;
+			
+		EditListenerItrator.RunLi<ArrayList<Icon>> run = new EditListenerItrator.RunLi<ArrayList<Icon>>(){
+
+			@Override
+			public ArrayList<Icon> run(EditListener li)
 			{
-				Array_Splitor.sort(word);
-				Array_Splitor.sort2(word);
+				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,(EditCompletorListener)li);
 			}
-			words.add(word);
-		}
-		return words;
-	}
-	protected ArrayList< ArrayList<String>> NoPoolA(final String wantBefore, final String wantAfter, final int before, final int after, Collection<String[]> libs)
-	{
-		//这里最后一个参数为什么不用ArrayList，因为如果与上个类型重复了，构不成重载
-		ArrayList< ArrayList<String>> words=new ArrayList<>();
-		for (String[] lib:libs)
-		{
-			ArrayList<String> word = SearchOnce(wantBefore, wantAfter, lib, before, after);
-			if (word != null)
-			{
-				Array_Splitor.sort(word);
-				Array_Splitor.sort2(word);
-			}
-			words.add(word);
-		}
-		return words;
-	}
-	protected ArrayList< ArrayList<String>> poolA(final String wantBefore, final String wantAfter, final int before, final int after, ThreadPoolExecutor pool, ArrayList< Collection<String>> libs)
-	{
-		//利用多线程同时在不同集合中找单词
-		ArrayList<Future<ArrayList<String>>> results=new ArrayList<>();
-		for (final Collection<String> lib:libs)
-		{
-			Callable<ArrayList<String>> ca=new Callable<ArrayList<String>>(){
-
-				@Override
-				public ArrayList<String> call() throws Exception
-				{
-					ArrayList<String> words;
-					words = SearchOnce(wantBefore, wantAfter, lib, before, after);
-					if (words != null)
-					{
-						Array_Splitor.sort(words);
-						Array_Splitor.sort2(words);
-					}
-					return words;
-				}
-			};
-			results.add(pool.submit(ca));
-			//每次把一个任务加进池子，然后得到Future
-		}
-
-		return FuturePool. FutureGet(results);
-	}
-
-	protected  ArrayList< ArrayList<String>> poolA(final String wantBefore, final String wantAfter, final int before, final int after, ThreadPoolExecutor pool, Collection<String[]> libs)
-	{
-		//这里最后一个参数为什么不用ArrayList，因为如果与上个类型重复了，构不成重载
-		//利用多线程同时在不同集合中找单词
-		ArrayList<Future<ArrayList<String>>> results=new ArrayList<>();
-		for (final String[] lib:libs)
-		{
-			Callable<ArrayList<String>> ca=new Callable<ArrayList<String>>(){
-
-				@Override
-				public ArrayList<String> call() throws Exception
-				{
-					ArrayList<String> words;
-					words = SearchOnce(wantBefore, wantAfter, lib, before, after);
-					if (words != null)
-					{
-						Array_Splitor.sort(words);
-						Array_Splitor.sort2(words);
-					}
-					return words;
-				}
-			};
-			results.add(pool.submit(ca));
-			//每次把一个任务加进池子，然后得到Future
-		}
-
-		return FuturePool. FutureGet(results);
+		};
+		if(pool==null)
+			return EditListenerItrator.foreach(Group,run);
+		return EditListenerItrator.foreach(Group,run,pool);
 	}
 	
-	
-	protected ArrayList<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
+	public static ArrayList<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
 	{
 		ArrayList<String> words=null;
 		Array_Splitor. Idea ino = Array_Splitor.getNo();
@@ -234,7 +143,7 @@ public class CompleteEdit extends FormatEdit
 		return words;
 	}
 
-	protected ArrayList<String> SearchOnce(String wantBefore, String wantAfter, Collection<String> target, int before, int after)
+	public static ArrayList<String> SearchOnce(String wantBefore, String wantAfter, Collection<String> target, int before, int after)
 	{
 		//同上
 		ArrayList<String> words=null;
@@ -251,11 +160,13 @@ public class CompleteEdit extends FormatEdit
 		return words;
 	}
 
-	protected void addSomeWord(ArrayList<String> words, ArrayList<Icon> adapter, byte flag)
+	public static void addSomeWord(ArrayList<String> words, ArrayList<Icon> adapter, byte flag)
 	{
 		//排序并添加一组的单词块
 		if (words == null || words.size() == 0)
 			return;
+		Array_Splitor.sort(words);
+		Array_Splitor.sort2(words);
 		int icon = Share.getWordIcon(flag);
 		for (String word: words)
 		{
@@ -315,80 +226,162 @@ public class CompleteEdit extends FormatEdit
 
 	}
 
-	
-    class DefaultCompletListener extends EditCompletorListener
-	{
 
-		@Override
-		public void onBeforeSearchWord(ArrayList<Collection<String>> libs, ArrayList<String[]> libs2)
+    class EditCompletorBoxes
+	{ 
+	    public EditListener getKeyBox()
 		{
-			if (Share.getbit(Search_Bit, Colors.color_villber))
-				libs.add(getHistoryVillber());
-			if (Share.getbit(Search_Bit, Colors.color_func))
-				libs.add(getLastfunc());
-			if (Share.getbit(Search_Bit, Colors.color_type))
-				libs.add(getBeforetype());
-			if (Share.getbit(Search_Bit, Colors.color_tag))
-				libs.add(getTag());
-			if (Share.getbit(Search_Bit, Colors.color_attr))
-				libs.add(getAttribute());
-			if (Share.getbit(Search_Bit, Colors.color_obj))
-				libs.add(getThoseObject());
-			
-			if (Share.getbit(Search_Bit, Colors.color_key))
-				libs2.add(getKeyword());
-			if (Share.getbit(Search_Bit, Colors.color_const))
-				libs2.add(getConstword());
-			if (Share.getbit(Search_Bit, Colors.color_tag))
-				libs2.add(getIknowtag());
-			
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					return toColletion(getKeyword());
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_key);
+				}
+			};
+		}
+		public EditListener getDefaultBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					ArrayList<String> words=new ArrayList<>();
+					if (Share.getbit(Search_Bit, Colors.color_attr))
+						words.addAll(getAttribute());
+					if(Share.getbit(Search_Bit, Colors.color_const))
+					    words.addAll(toColletion(getConstword()));
+					
+					return words;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_default);
+				}
+			};
 		}
 
-		@Override
-		public void onFinishSearchWord(ArrayList<ArrayList<String>> words1, ArrayList<ArrayList<String>> words2,ArrayList<Icon> adapter)
+		public EditListener getVillBox()
 		{
-			int i=0,j=0;
-			if (Share.getbit(Search_Bit, Colors.color_villber)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_villber);
-				i++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_func)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_func);
-				i++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_type)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_type);
-				i++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_tag)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_tag);
-				i++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_attr)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_default);
-				i++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_obj)){
-			    addSomeWord(words1.get(i), adapter, Share.icon_obj);
-				i++;
-			}
+			return new EditCompletorListener(){
 
-			if (Share.getbit(Search_Bit, Colors.color_key)){
-			    addSomeWord(words2.get(j), adapter, Share.icon_key);
-				j++;
-		    }
-			if (Share.getbit(Search_Bit, Colors.color_const)){
-			    addSomeWord(words2.get(j), adapter, Share.icon_default);
-				j++;
-			}
-			if (Share.getbit(Search_Bit, Colors.color_tag)){
-			    addSomeWord(words2.get(j), adapter, Share.icon_tag);
-				j++;
-			}
-			
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					if (Share.getbit(Search_Bit, Colors.color_villber))
+					    return getHistoryVillber();
+					return null;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_villber);
+				}
+			};
 		}
-	
+
+
+		public EditListener getFuncBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					if (Share.getbit(Search_Bit, Colors.color_func))
+					    return getLastfunc();
+					return null;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_func);
+				}
+			};
+		}
+
+
+		public EditListener getObjectBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					if (Share.getbit(Search_Bit, Colors.color_obj))
+						return getThoseObject();
+					return null;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_obj);
+				}
+			};
+		}
+
+		public EditListener getTypeBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					if (Share.getbit(Search_Bit, Colors.color_type))
+					    return getBeforetype();
+					return null;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_type);
+				}
+			};
+		}
+
+		public EditListener getTagBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				public Collection<String> onBeforeSearchWord()
+				{
+					if (Share.getbit(Search_Bit, Colors.color_tag))
+					{
+						ArrayList<String> words=new ArrayList<>();
+						words.addAll(toColletion(getIknowtag()));
+						words.addAll(getTag());	
+						return words;
+					}
+					return null;
+				}
+
+				@Override
+				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				{
+					addSomeWord(word, adpter, Share.icon_tag);
+				}
+			};
+		}
 	}
+
+	public EditCompletorBoxes getCompletorBox(){
+		return new EditCompletorBoxes();
+	}
+	
 
 }
 

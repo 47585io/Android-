@@ -2,10 +2,11 @@ package com.mycompany.who.Edit.DrawerEdit;
 
 import android.content.*;
 import com.mycompany.who.Edit.DrawerEdit.Share.*;
-import com.mycompany.who.Edit.DrawerEdit.Share.Colors.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.Colors.*;
 import java.util.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
 public class DrawerJava extends DrawerXML
 {
@@ -22,8 +23,8 @@ public class DrawerJava extends DrawerXML
 	@Override
 	public void setLuagua(String name)
 	{
-		if(name.equals("java"))
-			setDefaultFinder( new FinderJava());
+		if(name.equals("java")||name.equals("js"))
+			setFinder( new FinderJava());
 		super.setLuagua(name);
 	}
 	
@@ -244,7 +245,7 @@ public class DrawerJava extends DrawerXML
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			AnyThingForJava AllThings = new AnyThingForJava();
 
@@ -258,7 +259,7 @@ public class DrawerJava extends DrawerXML
 		}
 
 		@Override
-		public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			AnyThingForJava AllThings = new AnyThingForJava();
 
@@ -276,7 +277,7 @@ public class DrawerJava extends DrawerXML
 		}
 
 		@Override
-		public void OnClearFindWord(TreeSet<String> vector)
+		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
 		{
 			Array_Splitor. delSame(getLastfunc(),getKeyword());
 			//函数名不可是关键字，但可以和变量或类型重名	
@@ -300,7 +301,7 @@ public class DrawerJava extends DrawerXML
 		}
 
 		@Override
-		public void OnClearDrawWord(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
 		{
 			clearRepeatNode(nodes);	
 		}

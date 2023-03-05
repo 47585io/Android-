@@ -12,7 +12,7 @@ import android.graphics.*;
 
 public class BaseActivity extends Activity
 {
-	protected boolean can=false;
+	protected static boolean can=false;
 	protected InputorDialog input;
 	
 	protected void onCreate(Bundle savedInstanceState)
@@ -53,7 +53,7 @@ public class BaseActivity extends Activity
     }
 	
 	
-	public class InputorDialog extends Dialog{
+	public static class InputorDialog extends Dialog{
 		
 		private WhenInputEnter listener;
 		public EditText text;

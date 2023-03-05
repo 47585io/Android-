@@ -1,9 +1,11 @@
-package com.mycompany.who.Edit.DrawerEdit.Share;
+package com.mycompany.who.Edit.DrawerEdit.Base;
 
 import android.text.*;
 import android.text.style.*;
 
 import java.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Share.*;
+import android.widget.*;
 
 public class Colors
 {
@@ -108,37 +110,62 @@ public class Colors
 	public final static byte color_cssfl=15;
 	
 	
-	public static SpannableStringBuilder colorText(String src,ArrayList<wordIndex> nodes){
+	public static SpannableStringBuilder ForeColorText(String src,ArrayList<wordIndex> nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
-//i未起始字符索引，j 为结束字符索引
+        //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes)
 		    styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	    return styled;	
 	}
-
-
-	public static Spanned colorText(String text,String color) {
+	public static void ForeColorText(Editable editor,ArrayList<wordIndex> nodes){
+		for(wordIndex node:nodes)
+		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	}
+	public static void ForeColorText(SpannableStringBuilder editor,ArrayList<wordIndex> nodes){
+		for(wordIndex node:nodes)
+		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	}
+	public static Spanned ForeColorText(String text,String color) {
 		//返回具有样式的Spanned
 		//因效率问题，已禁用
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
 	}
-	public static String textColor(String src,String color){
-		//返回原文转换成保留格式的HTML文本
-		String target="";
-		int tmp =src.indexOf('\n');
-		target=src.replaceAll("<","&lt;");
-		target=target.replaceAll(">","&gt;");
-		//替换被HTML解析的字符
-		target="<pre style='display:inline-block;color:"+color+";'>"+target+"</pre>";
-
-		if(tmp!=-1 && tmp<src.length()-1){
-		    target="<br/>"+target;
-		}
-		else if(tmp!=-1){
-			target+="<br/>";	
-		}
-		//如果有换行在最后，就在最后加一个"<br/>"，否则在最前面加
-		return target;
+	
+	public static SpannableStringBuilder BackColorText(String src,ArrayList<wordIndex> nodes){
+		SpannableStringBuilder styled = new SpannableStringBuilder(src);
+        //i未起始字符索引，j 为结束字符索引
+		for(wordIndex node:nodes)
+		    styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	    return styled;	
+	}
+	public static void BackColorText(Editable editor,ArrayList<wordIndex> nodes){
+		for(wordIndex node:nodes)
+		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	}
+	public static void BackColorText(SpannableStringBuilder editor,ArrayList<wordIndex> nodes){
+		for(wordIndex node:nodes)
+		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
 	
+	public static String textForeColor(String src,String fgcolor){
+		src=Replace(src);
+		return "<pre style='display:inline;color:"+fgcolor+";'>"+src+"</pre>";
+	}
+	public static String textBackColor(String src,String bgcolor){
+		src=Replace(src);
+		return "<pre style='display:inline;background-color:"+bgcolor+";'>"+src+"</pre>";
+	}
+	public static String textColor(String src,String fgcolor,String bgcolor){
+		src=Replace(src);
+		return "<pre style='display:inline;"+"color:"+ fgcolor+";background-color:"+bgcolor+";'>"+src+"</pre>";
+	}
+	protected static String Replace(String src){
+		src=src.replaceAll("<","&lt;");
+		src=src.replaceAll(">","&gt;");
+		src=src.replaceAll("\t","    ");
+		src=src.replaceAll(" ","&nbsp;");
+		src=src.replaceAll("\n","<br/>");
+		//替换被HTML解析的字符
+		return src;
+	}
 }

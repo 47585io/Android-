@@ -25,6 +25,7 @@ public abstract class CodeEdit extends CoCoEdit
 	}	
 	public CodeEdit(Context cont,AttributeSet set){
 		super(cont,set);
+		addTextChangedListener(new DefaultText());
 	}
 	
 	@Override
@@ -284,6 +285,9 @@ public abstract class CodeEdit extends CoCoEdit
 			}
 		}
 		
+	}
+	public TextWatcher getDefultTextListener(){
+		return new DefaultText();
 	}
 
 	abstract public ListView getWindow();

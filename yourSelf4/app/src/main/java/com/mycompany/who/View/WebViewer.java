@@ -56,9 +56,9 @@ public class WebViewer extends WebView
 			    zoomBy((float)1.05);
 			else 
 				zoomBy((float)0.95);
-			
-				
-			}
+
+
+		}
 
 		super.onTouchEvent(p2);
 		return true;

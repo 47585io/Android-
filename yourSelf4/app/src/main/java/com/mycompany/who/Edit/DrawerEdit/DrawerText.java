@@ -5,6 +5,8 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import android.util.*;
+import com.mycompany.who.Edit.DrawerEdit.Base.*;
+import com.mycompany.who.Edit.DrawerEdit.DrawerBase.*;
 
 public class DrawerText extends DrawerBase2
 {
@@ -14,6 +16,7 @@ public class DrawerText extends DrawerBase2
 	public DrawerText(Context cont,DrawerText Edit)
 	{
 		super(cont,Edit);
+		setLuagua(Edit.laugua);
 	}
 	public DrawerText(Context cont,AttributeSet set){
 		super(cont,set);
@@ -21,7 +24,7 @@ public class DrawerText extends DrawerBase2
 	public void setLuagua(String name){
 		laugua=name;
 		if(name.equals("text"))
-		    setDefaultFinder(new FinderText());
+		    setFinder(new FinderText());
 	}
 	
 	class AnyThingForText{
@@ -158,14 +161,15 @@ public class DrawerText extends DrawerBase2
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
+		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
 		@Override
-		public void OnDrawWord(ArrayList<DrawerBase.DoAnyThing> totalList,TreeSet<String> vector)
-	   	{
+		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList, Words WordLib, OtherWords WordLib2)
+		{
+			// TODO: Implement this method
 			AnyThingForText AllThings = new AnyThingForText();
 			totalList.add(AllThings.getGoTo_zhuShi());
 			totalList.add(AllThings.getGoTo_Str());
@@ -173,13 +177,13 @@ public class DrawerText extends DrawerBase2
 		}
 
 		@Override
-		public void OnClearFindWord(TreeSet<String> vector)
+		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
 		{
 			
 		}
 
 		@Override
-		public void OnClearDrawWord(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
 		{
 			
 		}
