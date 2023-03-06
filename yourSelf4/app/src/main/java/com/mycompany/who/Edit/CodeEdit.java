@@ -23,10 +23,7 @@ public abstract class CodeEdit extends CoCoEdit
 		super(cont,Edit);
 		addTextChangedListener(new DefaultText());
 	}	
-	public CodeEdit(Context cont,AttributeSet set){
-		super(cont,set);
-		addTextChangedListener(new DefaultText());
-	}
+	
 	
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
@@ -179,7 +176,7 @@ public abstract class CodeEdit extends CoCoEdit
 	protected void onPutUR(EditDate.Token token){
 	}
 	
-	class DefaultText implements TextWatcher
+	public class DefaultText implements TextWatcher
 	{
 		
 		/**

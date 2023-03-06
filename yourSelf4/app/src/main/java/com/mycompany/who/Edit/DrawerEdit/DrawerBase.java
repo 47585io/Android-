@@ -29,20 +29,13 @@ public abstract class DrawerBase extends Edit
 	public int tryLines=2;
 	public String laugua;
 	
-	public DrawerBase(Context cont){
+	DrawerBase(Context cont){
 	 	super(cont);
 		WordLib2=new OtherWords(6);
 	}
-	public DrawerBase(Context cont,DrawerBase Edit){
+	DrawerBase(Context cont,DrawerBase Edit){
 		super(cont,Edit);
 		this.WordLib2=Edit.WordLib2;	
-	}
-	public DrawerBase(Context cont,AttributeSet set){
-		super(cont,set);
-		WordLib2=new OtherWords(6);
-	}
-	public void reSet(){
-		config();
 	}
 
 	abstract protected ArrayList<wordIndex> FindFor(int start,int end,String text)

@@ -51,12 +51,6 @@ public class EditGroup extends RelativeLayout
 		init2(cont);
 		config();
 	}
-	public EditGroup(Context cont,AttributeSet set){
-		super(cont,set);
-		init();
-		init2(cont);
-		config();
-	}
 
 	@Override
 	public boolean equals(Object obj)
@@ -139,7 +133,7 @@ public class EditGroup extends RelativeLayout
 	private void setExtentionForEdit(CodeEdit Edit){
 		for(XCode.Extension e:Extensions){
 			e.oninit(Edit);
-		  		Edit.getCompletorList().add(e.C());
+		  	Edit.getCompletorList().add(e.C());
 			Edit.getCanvaserList().add(e.V());
 		}
 	}
@@ -225,7 +219,7 @@ public class EditGroup extends RelativeLayout
 			
 			EditFlag--;
 			if(EditFlag==0){
-				reLines(calaEditLines());
+				reLines(builder.calaEditLines());
 				Last.push(new Stack<Integer>());
 			}
 			//最后一个编辑器计算行
@@ -240,7 +234,7 @@ public class EditGroup extends RelativeLayout
 			historyId=((RCodeEdit)Edit).index;
 			//本次窗口谁请求，单词给谁
 			int offset=Edit.getSelectionStart();
-			wordIndex pos = Edit.getScrollCursorPos(offset, EdithScro.getScrollX() - Edit.lines.getWidth(), EditScro.getScrollY()-calaEditHeight(index));
+			wordIndex pos = Edit.getScrollCursorPos(offset, EdithScro.getScrollX() - Edit.lines.getWidth(), EditScro.getScrollY()-builder.calaEditHeight(index));
 			//start真实位置还少一个lines
 			//Window必须在re内
 			if (pos.start + mWindow.getWidth() > getWidth() || pos.start < 0)
@@ -409,6 +403,21 @@ public class EditGroup extends RelativeLayout
 			abstract void doOnce(int start,int end,CodeEdit Edit)
 		}
 		
+		public int calaEditHeight(int index){
+			int height=0;
+			while(--index >-1){
+				height+=EditList.get(index).getHeight();
+			}
+			return height;
+		}
+		public int calaEditLines(){
+			int line=0;
+			for(Edit e:EditList)
+				line+=e.getLineCount();
+			return line;
+		}
+		
+		
 	}
 	
 	
@@ -438,7 +447,7 @@ public class EditGroup extends RelativeLayout
 				CodeEdit Edit = EditList.get( node.start);
 				wordIndex pos = Edit.getCursorPos(node.end);
 				EdithScro.setScrollX(pos.start);
-				EditScro.setScrollY(pos.end+calaEditHeight(((RCodeEdit)(Edit)).index));   	
+				EditScro.setScrollY(pos.end+builder.calaEditHeight(((RCodeEdit)(Edit)).index));   	
 				Edit.setSelection(node.end, node.end + icon.getName().length());
 			}
 			return true;
@@ -462,19 +471,6 @@ public class EditGroup extends RelativeLayout
 
 		return height;
 	}
-	private int calaEditHeight(int index){
-		int height=0;
-		while(--index >-1){
-			height+=EditList.get(index).getHeight();
-		}
-		return height;
-	}
-	private int calaEditLines(){
-		int line=0;
-		for(Edit e:EditList)
-		    line+=e.getLineCount();
-		return line;
-	}
 	
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool=pool;
@@ -485,10 +481,7 @@ public class EditGroup extends RelativeLayout
 	public void setExtension(ArrayList<XCode.Extension> E){
 		Extensions=E;
 	}
-	public void delExtension(int... hashCodes){
-		for(CodeEdit e:EditList)
-		    e.DelListener(hashCodes);
-	}
+	
 	
 	@Override
 	protected void onConfigurationChanged(Configuration config)

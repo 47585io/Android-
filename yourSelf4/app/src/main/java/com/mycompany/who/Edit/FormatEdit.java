@@ -13,7 +13,7 @@ import android.graphics.*;
 import java.util.concurrent.*;
 import com.mycompany.who.Edit.DrawerEdit.Base.*;
 
-public class FormatEdit extends DrawerHTML
+public class FormatEdit extends DrawerEnd
 {
 	public static boolean Enabled_Format=false;
 	protected boolean isFormat=false;
@@ -36,21 +36,7 @@ public class FormatEdit extends DrawerHTML
 		mlistenerM = new DefaultFormatorListener();
 		mlistenerI = new DefaultInsertorListener();
 	}
-	public FormatEdit(Context cont, AttributeSet set)
-	{
-		super(cont, set);
-		this.stack = new EditDate();
-		mlistenerM = new DefaultFormatorListener();
-		mlistenerI = new DefaultInsertorListener();
-	}
-	@Override
-	public void reSet()
-	{
-		super.reSet();
-		mlistenerM = new DefaultFormatorListener();
-		mlistenerI = new DefaultInsertorListener();
-	}
-
+	
 
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
@@ -86,7 +72,18 @@ public class FormatEdit extends DrawerHTML
 	{
 		super.clearListener();
 	}
-
+	public void setFormator(EditListener li){
+		mlistenerM=li;
+	}
+	public void setInsertor(EditListener li){
+		mlistenerI=li;
+	}
+	public EditListener getFormator(){
+		return mlistenerM;
+	}
+	public EditListener getInsertor(){
+		return mlistenerI;
+	}
 
 	public int Format(int start, int end)
 	{

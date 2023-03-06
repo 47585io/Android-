@@ -73,14 +73,7 @@ public class XCode extends RelativeLayout
 		public Extension(){
 			ids=new ArrayList<>();
 		}
-		public void Destroy(EditGroup... Groups){
-			Object[] arr=ids.toArray();
-			for(Object o:arr){
-				for(EditGroup Group:Groups){
-					Group.delExtension(o);
-				}
-			}	
-		}
+		
 		
 		public abstract void oninit(EditText self)
 		public abstract EditListener getFinder()

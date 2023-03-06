@@ -129,7 +129,11 @@ public abstract class EditListenerItrator
 		    if(((EditListener)li).name.equals(name))
 				lis.remove(li);
 	}
-
+	public static void DelListener(ArrayList<EditListener> lis,EditListener l){
+		for(Object li:lis.toArray())
+		    if(li.equals(l))
+				lis.remove(li);
+	}
 	public static void DelListener(ArrayList<EditListener> lis,int hashCode){
 		for(Object li:lis.toArray())
 		    if(li.hashCode()==hashCode)

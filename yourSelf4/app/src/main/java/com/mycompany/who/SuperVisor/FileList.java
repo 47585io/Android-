@@ -26,7 +26,7 @@ public class FileList
 		refreshDate();
 	}
 
-	public void refresh(Context cont, ListView filelist)
+	public ArrayList<Icon> refresh(Context cont)
 	{	  
 		ArrayList<Icon> tmp  = new ArrayList<Icon>();
 		tmp.add(new Icon(Share.getFileIcon("打开夹"), ".."));
@@ -34,8 +34,7 @@ public class FileList
 		{
 			tmp.add(new Icon(Share.getFileIcon(c), c.getName()));
 		}
-		WordAdpter adpter = new WordAdpter<>(cont, tmp,R.layout.Fileicon);	
-		filelist.setAdapter(adpter);	
+		return tmp;
 	}
 	public void refreshDate(){
 		List<File> l=  Arrays.asList( nowDir.listFiles());

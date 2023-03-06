@@ -19,31 +19,18 @@ public abstract class DrawerBase2 extends DrawerBase
 	protected EditListener mlistenerF;
 	protected EditListener mlistenerD;
 	protected EditListenerRunner Runner;
-	protected ThreadPoolExecutor pool;
-
-	public DrawerBase2(Context cont)
+	
+	DrawerBase2(Context cont)
 	{
 		super(cont);
 		mlistenerD = new DefaultDrawerListener();
 	}
-	public DrawerBase2(Context cont, DrawerBase2 Edit)
+	DrawerBase2(Context cont, DrawerBase2 Edit)
 	{
 		super(cont, Edit);
 		mlistenerD = new DefaultDrawerListener();
 		//为了保证内存安全，listener正式分开使用
-		pool = Edit. pool;
-	}
-	public DrawerBase2(Context cont, AttributeSet set)
-	{
-		super(cont, set);
-		mlistenerD = new DefaultDrawerListener();
-	}
-	@Override
-	public void reSet()
-	{
-		super.reSet();
-		clearListener();
-		mlistenerD = new DefaultDrawerListener();
+		Runner=Edit.getRunner();
 	}
 
 	public void clearListener()
@@ -76,14 +63,7 @@ public abstract class DrawerBase2 extends DrawerBase
 	{
 		return Runner;
 	}
-	public void setPool(ThreadPoolExecutor pool)
-	{
-		this.pool = pool;
-	}
-	public ThreadPoolExecutor getPool()
-	{
-		return pool;
-	}
+	
 
 	protected ArrayList<wordIndex> FindFor(int start, int end, String text)
 	{
@@ -103,8 +83,10 @@ public abstract class DrawerBase2 extends DrawerBase
 		isDraw = false;
 	}
 
+	abstract public void setLuagua(String Lua);
 
-	public class DefaultDrawerListener extends EditDrawerListener
+	
+	public static class DefaultDrawerListener extends EditDrawerListener
 	{
 		@Override
 		public void onDraw(final int start, final int end, final ArrayList<wordIndex> nodes, final EditText self)
@@ -129,7 +111,7 @@ public abstract class DrawerBase2 extends DrawerBase
 	}
 
 	
-	protected EditListener getDefaultDrawer(){
+	protected static EditListener getDefaultDrawer(){
 		return new DefaultDrawerListener();
 	}
 	

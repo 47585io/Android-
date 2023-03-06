@@ -19,7 +19,8 @@ public class CompleteEdit extends FormatEdit
 	public static boolean Enabled_Complete=false;
 	private static int Search_Bit=0xefffffff;
 	protected ArrayList<EditListener> mlistenerCS;
-
+	protected ThreadPoolExecutor pool;
+	
 	public CompleteEdit(Context cont)
 	{
 		super(cont);	
@@ -31,14 +32,10 @@ public class CompleteEdit extends FormatEdit
 		super(cont, Edit);
 		mlistenerCS = new ArrayList<>();
 		trimListener();
+		pool = Edit. pool;
 		Search_Bit = Edit.Search_Bit;
 	}
-    public CompleteEdit(Context cont, AttributeSet set)
-	{
-		super(cont, set);
-		mlistenerCS = new ArrayList<>();
-		trimListener();
-	}
+    
 	private void trimListener()
 	{
 		mlistenerCS.add(boxes.getVillBox());
@@ -50,11 +47,6 @@ public class CompleteEdit extends FormatEdit
 		mlistenerCS.add(boxes.getDefaultBox());
 	}
 
-	@Override
-	public void reSet()
-	{
-		super.reSet();
-	}
 
 	@Override
 	public void setLuagua(String name)
@@ -84,6 +76,14 @@ public class CompleteEdit extends FormatEdit
 	public ArrayList<EditListener> getCompletorList()
 	{
 		return mlistenerCS;
+	}
+	public void setPool(ThreadPoolExecutor pool)
+	{
+		this.pool = pool;
+	}
+	public ThreadPoolExecutor getPool()
+	{
+		return pool;
 	}
 	public void clearListener()
 	{
@@ -227,7 +227,7 @@ public class CompleteEdit extends FormatEdit
 	}
 
 
-    class EditCompletorBoxes
+    public class EditCompletorBoxes
 	{ 
 	    public EditListener getKeyBox()
 		{

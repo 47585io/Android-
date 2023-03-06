@@ -38,21 +38,6 @@ public class CoCoEdit extends CompleteEdit
 		mlistenerVS=new ArrayList<>();
 		mlistenerVS.add(new DefaultCanvaser());
 		this.lines=Edit.lines;
-		Runner=Edit.Runner;
-	}
-	public CoCoEdit(Context cont,AttributeSet set){
-		super(cont,set);
-		mlistenerVS=new ArrayList<>();
-		mlistenerVS.add(new DefaultCanvaser());
-		this.lines=new Edit(cont);	
-		lines.setFocusable(false);
-	}
-	@Override
-	public void reSet()
-	{
-		super.reSet();
-		lines.config();
-		mlistenerVS.add(new DefaultCanvaser());
 	}
 	
 	public ArrayList<EditListener> getCanvaserList(){
@@ -63,15 +48,6 @@ public class CoCoEdit extends CompleteEdit
 	{
 		mlistenerVS.clear();
 		super.clearListener();
-	}
-	public void DelListener(EditListener... lis){
-		for(EditListener li:lis){
-			mlistenerCS.remove(li);
-			mlistenerVS.remove(li);
-		}
-	}
-	public void DelListener(int... hashCodes){
-		
 	}
 	
 	
@@ -221,7 +197,7 @@ public class CoCoEdit extends CompleteEdit
 			canvas.drawRect(bounds,paint);
 		}
 	}
-	public EditListener getDefultCanvaser(){
+	public static EditListener getDefultCanvaser(){
 		return new DefaultCanvaser();
 	}
 

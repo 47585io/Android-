@@ -171,12 +171,12 @@ public class EditRunnerFactory
 				return adapter;
 
 			try{
-				lib = ((EditCompletorListener)li).onBeforeSearchWord();
+				lib = li.onBeforeSearchWord();
 				if (lib != null && lib.size() != 0)
 				{
 					words =CompleteEdit. SearchOnce(wantBefore, wantAfter, lib, before, after);
 				}
-				((EditCompletorListener)li).onFinishSearchWord(words, adapter);
+				li.onFinishSearchWord(words, adapter);
 			}catch(Exception e){
 				Log.e("Completing Error", li.toString());
 			}
