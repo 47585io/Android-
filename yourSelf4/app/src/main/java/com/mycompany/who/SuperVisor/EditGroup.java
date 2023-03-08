@@ -24,9 +24,12 @@ public class EditGroup extends RelativeLayout
 	//编辑器卡顿主要原因是单个编辑器文本过多造成的遍历刷新卡顿
 	//解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
 	
+	//编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
+	//解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
+	
 	public static int WindowHeight=300;
 	public static int WindowWidth=600;
-	public static int MaxLine=2000;
+	public static int MaxLine=5000;
 	public String path;
 	private int EditFlag=0;
 	private int historyId;
@@ -132,6 +135,22 @@ public class EditGroup extends RelativeLayout
 	}
 	
 	
+	/*关键代码*/
+	protected void trimToFather(){
+		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
+		int height=builder.calaEditHeight(EditList.size())+1000;
+		int width=builder.calaEditWidth()+1000;
+		trim(ForEditSon,width,height);
+		trim(ForEdit,width,height);
+		//为两个Edit的父元素扩展空间
+	}
+	protected void trim(ViewGroup Father,int width,int height){
+		//调整空间
+		ViewGroup.LayoutParams p = Father.getLayoutParams();
+		p.width=width;
+		p.height=height;
+		Father.setLayoutParams(p);
+	}
 	
 	class RCodeEdit extends CodeEdit{
 
@@ -158,14 +177,25 @@ public class EditGroup extends RelativeLayout
 		public ListView getWindow(){
 			return mWindow;
 		}
-		
+
+
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
+
 			if(!can){
 				//在构造对象前，会调用一次onTextChanged
 				return;
 			}
+			
+			trimToFather();
+			//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
+			//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
+			//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
+			//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的
+			//由于onTextChanged是文本变化后调用的，所以文本是对的
+			//另外的，text参数其实就是EditText内部的SpanbleStringBuilder，它们是同步的
+			
 			if(IsModify!=0||IsModify2)
 				return ;
 			//已经被修改，不允许再修改
@@ -219,6 +249,7 @@ public class EditGroup extends RelativeLayout
 			//最后一个编辑器计算行
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 	        //先开辟一个空间，待之后存储
+		
 		}
 
 		@Override
@@ -402,11 +433,7 @@ public class EditGroup extends RelativeLayout
 		}
 		
 		public int calaEditHeight(int index){
-			int height=0;
-			while(--index >-1){
-				height+=EditList.get(index).getHeight();
-			}
-			return height;
+			return calaEditLines()*EditLines.getLineHeight();
 		}
 		public int calaEditLines(){
 			int line=0;
@@ -414,7 +441,15 @@ public class EditGroup extends RelativeLayout
 				line+=e.getLineCount();
 			return line;
 		}
-		
+		public int calaEditWidth(){
+			int width=0;
+			for(Edit e:EditList){
+				int w=e.maxWidth();
+				if(w>width)
+					width=w;
+			}
+			return width;
+		}
 		
 	}
 	

@@ -54,12 +54,44 @@ public class Edit extends EditText
 		return indexs.size()+1;
 	}
 	
-	
-	final public int getLineStart(int lineCount){
-		if(lineCount==1)
-			return 0;
+	public int maxHeight(){
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		return indexs.get(lineCount -2);
+		if(indexs==null)
+			return 0;
+		return (indexs.size()+1)*getLineHeight();
+	}
+	
+	public int maxWidth(){
+		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
+		if(indexs==null)
+			return 0;
+		float width=0;
+		int last=0;
+		for(int i: indexs){
+			float w=(i-last)*getTextSize();
+			if(w>width)
+				width=w;
+			last=i;
+		}
+		return (int)width;
+	}
+	
+	public wordIndex WAndH(){
+		wordIndex size=new wordIndex();
+		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
+		if(indexs==null)
+			return size;
+		float width=0;
+		int last=0;
+		for(int i: indexs){
+			float w=(i-last)*getTextSize();
+			if(w>width)
+				width=w;
+			last=i;
+		}
+		size.start=(int)width;
+		size.end=(indexs.size()+1)*getLineHeight();
+		return size;
 	}
 
 	final public wordIndex subLines(int startLine){
