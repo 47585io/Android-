@@ -42,12 +42,12 @@ public class String_Splitor
 		}
 		return null;
 	}
-	public static ArrayList<Integer> indexsOf(String str,String text){
+	public static List<Integer> indexsOf(String str,String text){
 		//查找文本中所有出现str的index
 		if(str.length()==0||text.length()==0)
 			return null;
 		int index = 0-str.length();
-		ArrayList<Integer> indexs = new ArrayList<Integer>();
+		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
 		    index = text.indexOf(str,index+str.length());
 			if(index==-1)
@@ -56,11 +56,11 @@ public class String_Splitor
 		}
 		return indexs;
 	}
-	public static ArrayList<Integer> indexsOf(char c,String text){
+	public static List<Integer> indexsOf(char c,String text){
 		//查找文本中所有出现str的index
 		
 		int index = 0;
-		ArrayList<Integer> indexs = new ArrayList<Integer>();
+		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
 		    index = text.indexOf(c,index);
 			if(index==-1)

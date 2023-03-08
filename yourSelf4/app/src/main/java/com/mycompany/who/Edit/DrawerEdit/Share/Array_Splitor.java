@@ -95,11 +95,11 @@ public class Array_Splitor
 		return -1;
 	}
 
-	public static ArrayList<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
+	public static List<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
 		//查找数组中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.length==0)
 			return null;
-	    ArrayList<String> words = new ArrayList<String>();
+	    List<String> words = new ArrayList<String>();
 		for(String word:keyword){
 			if(i.can(word,str,start)){
 				words.add(word);
@@ -109,11 +109,11 @@ public class Array_Splitor
 			return null;
 		return words;
 	}
-	public static ArrayList<String> indexsOf(String str,Collection<String> keyword,int start,Idea i) {	
+	public static List<String> indexsOf(String str,Collection<String> keyword,int start,Idea i) {	
 		//查找集合中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.size()==0)
 			return null;
-	    ArrayList<String> words = new ArrayList<String>();
+	    List<String> words = new ArrayList<String>();
 		for(String word:keyword){
 			if(i.can(word,str,start)){
 				words.add(word);
@@ -126,9 +126,9 @@ public class Array_Splitor
 	
 
 	
-	public static void sort(ArrayList<String> words){
+	public static void sort(List<String> words){
 		//按长度排序
-		words.sort(new Comparator<String>(){
+		Collections.sort(words,new Comparator<String>(){
 				@Override
 				public int compare(String p1, String p2)
 				{
@@ -141,9 +141,9 @@ public class Array_Splitor
 			});
 	}
 
-	public static void sort2(ArrayList<String> words){
+	public static void sort2(List<String> words){
 		//将大写字符放后面
-		words.sort(new Comparator<String>(){
+	    Collections.sort(words,new Comparator<String>(){
 				@Override
 				public int compare(String p1, String p2)
 				{
@@ -167,7 +167,7 @@ public class Array_Splitor
 	
 	
 	
-	protected static<T> int getMiddle(ArrayList<T> list, int low, int high,Comparator<T> com) {
+	protected static<T> int getMiddle(List<T> list, int low, int high,Comparator<T> com) {
 		T tmp = list.get(low); // 数组的第一个值作为中轴（分界点或关键数据）
 		while (low < high) {
 			while (low < high && com.compare(list.get(high),tmp)>=0) {
@@ -206,7 +206,7 @@ public class Array_Splitor
 		return low; // 返回中点的位置
 	}
 
-	protected static<T> void unckSort(ArrayList<T> list,int low,int high,Comparator<T> com) {
+	protected static<T> void unckSort(List<T> list,int low,int high,Comparator<T> com) {
 		if(low < high) {
 			int middle = getMiddle(list,low,high,com);    // 将list数组一分为二
 			unckSort(list,low,middle-1,com);    // 对左边进行递归排序
@@ -220,7 +220,7 @@ public class Array_Splitor
 	}
 
 
-	public static<T>  void quick(ArrayList<T> str,Comparator<T> com) {
+	public static<T>  void quick(List<T> str,Comparator<T> com) {
 		if(str.size() > 0) {
 			// 查看数组是否为空
 			//开始分裂排序

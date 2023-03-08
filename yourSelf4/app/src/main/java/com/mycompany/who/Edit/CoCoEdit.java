@@ -23,7 +23,7 @@ public class CoCoEdit extends CompleteEdit
 	public static int CursorRect_Color=0x25616263;
 	protected boolean isUR=false;
 	public Edit lines;
-	private ArrayList<EditListener> mlistenerVS;
+	private List<EditListener> mlistenerVS;
 	
 	public CoCoEdit(Context cont)
 	{
@@ -35,12 +35,11 @@ public class CoCoEdit extends CompleteEdit
 	}
 	public CoCoEdit(Context cont,CoCoEdit Edit){
 		super(cont,Edit);
-		mlistenerVS=new ArrayList<>();
-		mlistenerVS.add(new DefaultCanvaser());
+		mlistenerVS=Edit.getCanvaserList();
 		this.lines=Edit.lines;
 	}
 	
-	public ArrayList<EditListener> getCanvaserList(){
+	public List<EditListener> getCanvaserList(){
 		return mlistenerVS;
 	}
 	@Override
@@ -88,24 +87,24 @@ public class CoCoEdit extends CompleteEdit
 			}
 		}
 	}
-	public void addLines(int count){
+	final public void addLines(int count){
 		while (count-->0)
 		{
 			addALine();
 		} 	 	 
 	}
-	public void delLines(int count){
+	final public void delLines(int count){
 		while (count-->0)
 		{
 			delALine();
 		} 	 	 
 	}
-	public void addALine()
+	final public void addALine()
 	{
 		lines.append(lines.getLineCount()+"\n");
 		lines.setWidth((lines.getLineCount()+ "").length() * (int)lines.getTextSize());
 	}
-	public void delALine()
+	final public void delALine()
 	{
 		String src = lines.getText().toString();
 		int end = src.lastIndexOf('\n', src.length() - 2);
@@ -114,7 +113,14 @@ public class CoCoEdit extends CompleteEdit
 		lines.setWidth((lines.getLineCount() + "").length() * (int)lines.getTextSize());
 	}
 	
-	public wordIndex getCursorPos(int offset)
+	public void zoomBy(float size){
+		Text_Size=size;
+		setTextSize(size);
+	    lines.setWidth((lines.getLineCount()+"").length()*(int)lines.getTextSize());
+		lines.setTextSize(size);
+	}
+	
+	final public wordIndex getCursorPos(int offset)
 	{
 		//获取光标坐标
 		int lines= getLayout().getLineForOffset(offset);
@@ -124,13 +130,13 @@ public class CoCoEdit extends CompleteEdit
 		getLineBounds(lines, bounds);
 	    pos.start=bounds.centerX();
 		pos.end=bounds.centerY();
-	    
+
 		int index= tryLine_Start(getText().toString(),offset);
 		pos.start=(int)( (offset- index)*Text_Size);
-		
+
 		return pos;
 	}
-	public wordIndex getRawCursorPos(int offset, int width, int height)
+	final public wordIndex getRawCursorPos(int offset, int width, int height)
 	{
 		//获取绝对光标坐标
 		wordIndex pos = getCursorPos(offset);
@@ -138,7 +144,7 @@ public class CoCoEdit extends CompleteEdit
 		pos.end=pos.end % height;
 		return pos;
 	}
-	public wordIndex getScrollCursorPos(int offset, int scrollx, int scrolly)
+	final public wordIndex getScrollCursorPos(int offset, int scrollx, int scrolly)
 	{
 		//获取存在滚动条时的绝对光标坐标
 		//当前屏幕起始0相当于scroll滚动量,然后用cursorpos-scroll，就是当前屏幕光标绝对坐标	
@@ -148,12 +154,12 @@ public class CoCoEdit extends CompleteEdit
 		return pos;
 	}
 
-	public int fromy_getLineOffset(int y)
+	final public int fromy_getLineOffset(int y)
 	{
 		float xLine;
 		int nowN = 0;
 		xLine=y / getLineHeight();
-	
+
 		while (xLine-- > 0)
 		{
 			nowN=tryLine_End(getText().toString(), nowN + 1);
@@ -161,7 +167,7 @@ public class CoCoEdit extends CompleteEdit
 		}
 		return nowN;
 	}
-	public int fromPos_getCharOffset(int x, int y)
+	final public int fromPos_getCharOffset(int x, int y)
 	{
 		//从坐标获取光标位置
 		int xCount=(int)(x / getTextSize());
@@ -173,12 +179,6 @@ public class CoCoEdit extends CompleteEdit
 		return Line;
 	}
 	
-	public void zoomBy(float size){
-		Text_Size=size;
-		setTextSize(size);
-	    lines.setWidth((lines.getLineCount()+"").length()*(int)lines.getTextSize());
-		lines.setTextSize(size);
-	}
 	
 	
 	public static class DefaultCanvaser extends EditCanvaserListener

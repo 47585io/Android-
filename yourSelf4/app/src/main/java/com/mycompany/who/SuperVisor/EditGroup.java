@@ -26,7 +26,7 @@ public class EditGroup extends RelativeLayout
 	
 	public static int WindowHeight=300;
 	public static int WindowWidth=600;
-	public static int MaxLine=500;
+	public static int MaxLine=2000;
 	public String path;
 	private int EditFlag=0;
 	private int historyId;
@@ -39,11 +39,11 @@ public class EditGroup extends RelativeLayout
 	protected ListView mWindow;
 	
 	private EditBuilder builder;
-	private ArrayList<CodeEdit> EditList;
+	private EditFactory2 mfactory;
+	private List<CodeEdit> EditList;
 	private Stack<Stack<Integer>> Last;
 	private Stack<Stack<Integer>> Next;
 	private ThreadPoolExecutor pool=null;
-	private ArrayList<XCode.Extension> Extensions;
 	
 	public EditGroup(Context cont){
 		super(cont);
@@ -66,6 +66,8 @@ public class EditGroup extends RelativeLayout
 		Next=new Stack<>();
 		Last.add(new Stack<Integer>());
 		builder=new EditBuilder();
+		mfactory=new EditFactory2();
+		
 	}
 	private void init2(Context cont)
 	{	
@@ -99,7 +101,7 @@ public class EditGroup extends RelativeLayout
 	public EditBuilder getEditBuilder(){
 		return builder;
 	}
-	public ArrayList<CodeEdit> getEditList(){
+	public List<CodeEdit> getEditList(){
 		return EditList;
 	}
 	
@@ -118,8 +120,7 @@ public class EditGroup extends RelativeLayout
 			path=name;
 		}
 		else{
-			Edit= new RCodeEdit(getContext(),(RCodeEdit)(EditList.get(0)));
-			setExtentionForEdit(Edit);
+			Edit= new RCodeEdit(getContext(),(EditList.get(0)));	
 		}
 		Edit.setOnClickListener(new Click());
 		return Edit;
@@ -127,16 +128,9 @@ public class EditGroup extends RelativeLayout
 	protected void configEdit(CodeEdit Edit,String name)
 	{
 		Edit.setPool(pool);
-		setExtentionForEdit(Edit);
 		com.mycompany.who.Share.Share.setEdit(Edit,name);
 	}
-	private void setExtentionForEdit(CodeEdit Edit){
-		for(XCode.Extension e:Extensions){
-			e.oninit(Edit);
-		  	Edit.getCompletorList().add(e.C());
-			Edit.getCanvaserList().add(e.V());
-		}
-	}
+	
 	
 	
 	class RCodeEdit extends CodeEdit{
@@ -149,7 +143,7 @@ public class EditGroup extends RelativeLayout
 			super(cont);
 			can=true;
 		}
-		public RCodeEdit(Context cont,RCodeEdit Edit){
+		public RCodeEdit(Context cont,CodeEdit Edit){
 			super(cont,Edit);
 			can=true;
 		}
@@ -317,6 +311,10 @@ public class EditGroup extends RelativeLayout
 			for(CodeEdit Edit:EditList)
 			    Edit.setRunner(Runner);
 		}
+		public void setPool(ThreadPoolExecutor pool){
+			for(CodeEdit Edit:EditList)
+			    Edit.setPool(pool);
+		}
 		
 		public String reDraw(){
 			StringBuilder builder=new StringBuilder();
@@ -453,6 +451,28 @@ public class EditGroup extends RelativeLayout
 			return true;
 		}
 	}
+	
+	class EditFactory2 extends EditFactory
+	{
+
+		@Override
+		public CodeEdit GetEdit(Context cont, String Lua, ThreadPoolExecutor pool)
+		{
+			RCodeEdit Edit = new RCodeEdit(cont);
+			Edit.index=EditList.size();
+			Edit.setLuagua(Lua);
+			Edit.setPool(pool);
+			Edit.setRunner(EditRunnerFactory.getCanvasRunner());
+			return Edit;
+		}
+
+		@Override
+		public CodeEdit GetFormEdit(CodeEdit Edit)
+		{
+			RCodeEdit E=new RCodeEdit(Edit.getContext(),Edit);
+			return E;
+		}
+	}
 
 	private int MeasureWindowHeight()
 	{
@@ -474,12 +494,7 @@ public class EditGroup extends RelativeLayout
 	
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool=pool;
-		for(CodeEdit e:EditList){
-			e.setPool(pool);
-		}
-	}
-	public void setExtension(ArrayList<XCode.Extension> E){
-		Extensions=E;
+		builder.setPool(pool);
 	}
 	
 	

@@ -17,24 +17,22 @@ public class FormatEdit extends DrawerEnd
 {
 	public static boolean Enabled_Format=false;
 	protected boolean isFormat=false;
-	protected EditDate stack;
-
+	public static int MaxCount=19999;
+	
 	protected EditListener mlistenerM;
 	protected EditListener mlistenerI;
 
 	public FormatEdit(Context cont)
 	{
 		super(cont);
-		this.stack = new EditDate();
 		mlistenerM = new DefaultFormatorListener();
 		mlistenerI = new DefaultInsertorListener();
 	}
 	public FormatEdit(Context cont, FormatEdit Edit)
 	{
 		super(cont, Edit);
-		this.stack = new EditDate();
-		mlistenerM = new DefaultFormatorListener();
-		mlistenerI = new DefaultInsertorListener();
+		mlistenerM=Edit.getFormator();
+		mlistenerI=Edit.getInsertor();
 	}
 	
 
@@ -54,7 +52,7 @@ public class FormatEdit extends DrawerEnd
 			{		
 				//是否启用自动format
 				Insert(start);
-				if (text.toString().indexOf('\n', start) != -1)
+				if (lengthAfter<MaxCount&&text.toString().indexOf('\n', start) != -1)
 				{
 					cale = Format(start, start + lengthAfter);	
 				}
@@ -107,6 +105,7 @@ public class FormatEdit extends DrawerEnd
 
 	public void Insert(int index)
 	{
+		//插入字符
 		IsModify++;
 		isFormat = true;
 		if(Runner!=null)
@@ -118,7 +117,7 @@ public class FormatEdit extends DrawerEnd
 
 
 
-	public static class DefaultFormatorListener extends EditFormatorListener
+	final public static class DefaultFormatorListener extends EditFormatorListener
 	{
 
 		public String START="{";

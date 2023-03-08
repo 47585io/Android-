@@ -3,11 +3,10 @@ package com.mycompany.who.Edit.DrawerEdit.Base;
 import java.util.*;
 import com.mycompany.who.*;
 
-public class OtherWords
+public class OtherWords extends Words
 {
-	
-	
-	public ArrayList<TreeSet<String>> mdates;
+
+	public List<TreeSet<String>> mdates;
 	
 	public OtherWords(int size){
 		mdates=new ArrayList<>();

@@ -4,8 +4,8 @@ import java.security.*;
 
 public class KeyPool
 {
-	ArrayList<Integer> pool;
-	HashMap<Integer,int[]> values;
+	List<Integer> pool;
+	Map<Integer,int[]> values;
 	public KeyPool(){
 		pool=new ArrayList<>();
 		values=new HashMap<>();

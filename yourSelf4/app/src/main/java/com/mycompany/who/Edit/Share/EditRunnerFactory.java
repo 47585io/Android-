@@ -30,14 +30,13 @@ public class EditRunnerFactory
 	{
 
 		@Override
-		public ArrayList<wordIndex> FindForLi(int start, int end, String text, Words WorLib, OtherWords WorLib2, EditFinderListener li)
+		public void FindForLi(int start, int end, String text, Words WorLib,List<wordIndex> nodes,SpannableStringBuilder builder, EditFinderListener li)
 		{
 			// TODO: Implement this method
-			return null;
 		}
 
 		@Override
-		public void DrawingForLi(int start, int end, ArrayList<wordIndex> nodes, EditText self, EditDrawerListener li)
+		public void DrawingForLi(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder, Editable editor, EditDrawerListener li)
 		{
 			// TODO: Implement this method
 		}
@@ -56,7 +55,7 @@ public class EditRunnerFactory
 		}
 
 		@Override
-		public ArrayList<Icon> CompeletForLi(String wantBefore, String wantAfter, int before, int after, EditCompletorListener li)
+		public List<Icon> CompeletForLi(String wantBefore, String wantAfter, int before, int after,EditCompletorListener li)
 		{
 			// TODO: Implement this method
 			return null;
@@ -72,38 +71,37 @@ public class EditRunnerFactory
 	public static class DR extends BaseRunner
 	{
 		@Override
-		public ArrayList<wordIndex> FindForLi(int start, int end, String text, Words WordLib, OtherWords WordLib2, EditFinderListener li)
+		public void FindForLi(int start, int end, String text, Words WordLib, List<wordIndex> nodes,SpannableStringBuilder builder, EditFinderListener li)
 		{
-			ArrayList<DrawerBase. DoAnyThing> totalList =new ArrayList<>() ;
-			ArrayList<wordIndex> nodes = null;
 			if (!EditListener.Enabled(li))
-				return null;
-
+				return;
+			
+			List<DrawerBase. DoAnyThing> totalList =new ArrayList<>() ;
+			
 			try
 			{
-				li.OnFindWord(totalList, WordLib, WordLib2);
-				DrawerBase. startFind(text, totalList);
+				li.OnFindWord(totalList, WordLib);
+				DrawerBase. startFind(text, totalList,nodes);
 				totalList.clear();
-				li.OnClearFindWord(WordLib, WordLib2);
-				li.OnFindNodes(totalList,WordLib,WordLib2);
-				nodes =DrawerBase. startFind(text, totalList);
+				li.OnClearFindWord(WordLib);
+				li.OnFindNodes(totalList,WordLib);
+				DrawerBase. startFind(text, totalList,nodes);
 				li.OnClearFindNodes(start, end, text, nodes);
+				li.setSapns(text,nodes,builder);
 			}
 			catch (Exception e)
 			{
 				Log.e("Finding Error", li.toString());
-				return null;
 			}
-			return nodes;
 		}
 
 		@Override
-		public void DrawingForLi(int start, int end, ArrayList<wordIndex> nodes, EditText self, EditDrawerListener li)
+		public void DrawingForLi(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder, Editable editor, EditDrawerListener li)
 		{
 			try
 			{
 				if (EditListener.Enabled(li))
-			        li.onDraw(start, end, nodes, self);
+			        li.onDraw(start, end, nodes,builder, editor);
 			}
 			catch (Exception e)
 			{
@@ -162,13 +160,13 @@ public class EditRunnerFactory
 	{
 
 		@Override
-		public ArrayList<Icon>  CompeletForLi(String wantBefore,String wantAfter,int before,int after,EditCompletorListener li)
+		public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,EditCompletorListener li)
 		{
 			Collection<String> lib;
-			ArrayList<String> words = null;
-			ArrayList<Icon> adapter=new ArrayList<>();
+			List<String> words = null;
+			List<Icon> Adapter=new ArrayList<>();
 			if(!EditListener.Enabled(li))
-				return adapter;
+				return null;
 
 			try{
 				lib = li.onBeforeSearchWord();
@@ -176,16 +174,16 @@ public class EditRunnerFactory
 				{
 					words =CompleteEdit. SearchOnce(wantBefore, wantAfter, lib, before, after);
 				}
-				li.onFinishSearchWord(words, adapter);
+				li.onFinishSearchWord(words, Adapter);
 			}catch(Exception e){
 				Log.e("Completing Error", li.toString());
 			}
-			return adapter;
+			return Adapter;
 		}
 
 	}
 	
-	public static class VR extends CR
+	final public static class VR extends CR
 	{
 
 		@Override

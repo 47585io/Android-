@@ -12,10 +12,13 @@ import com.mycompany.who.Edit.DrawerEdit.Base.*;
 import android.graphics.*;
 import com.mycompany.who.Edit.Share.*;
 
+/*
+   在基类上开一些接口
+   另外的，复杂的函数我都设置成了final
+*/
 public abstract class DrawerBase2 extends DrawerBase
 {
-	public static int Delayed_Draw = 0;
-
+	
 	protected EditListener mlistenerF;
 	protected EditListener mlistenerD;
 	protected EditListenerRunner Runner;
@@ -28,8 +31,8 @@ public abstract class DrawerBase2 extends DrawerBase
 	DrawerBase2(Context cont, DrawerBase2 Edit)
 	{
 		super(cont, Edit);
-		mlistenerD = new DefaultDrawerListener();
-		//为了保证内存安全，listener正式分开使用
+		mlistenerF=Edit.getFinder();
+		mlistenerD=Edit.getDrawer();
 		Runner=Edit.getRunner();
 	}
 
@@ -65,22 +68,23 @@ public abstract class DrawerBase2 extends DrawerBase
 	}
 	
 
-	protected ArrayList<wordIndex> FindFor(int start, int end, String text)
+	protected void FindFor(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)
 	{
+		Ep.start();
 		if(Runner!=null)
-		    return Runner.FindForLi(start, end, text, WordLib, WordLib2, (EditFinderListener)getFinder());
-		return null;
+		    Runner.FindForLi(start, end, text, WordLib, nodes,builder, (EditFinderListener)mlistenerF);
 	}
 
 	@Override
-	protected void Drawing(int start, int end, ArrayList<wordIndex> nodes)
+	protected void Drawing(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder)
 	{
 		IsModify++;
 		isDraw = true;
 		if(Runner!=null)
-		    Runner.DrawingForLi(start, end, nodes, this, (EditDrawerListener)getDrawer());
+		    Runner.DrawingForLi(start, end, nodes,builder, getText(),(EditDrawerListener)getDrawer());
 	   	IsModify--;
 		isDraw = false;
+		Ep.stop();
 	}
 
 	abstract public void setLuagua(String Lua);
@@ -88,26 +92,13 @@ public abstract class DrawerBase2 extends DrawerBase
 	
 	public static class DefaultDrawerListener extends EditDrawerListener
 	{
-		@Override
-		public void onDraw(final int start, final int end, final ArrayList<wordIndex> nodes, final EditText self)
-		{
-			if (Delayed_Draw != 0)
-			{
-				Handler handler=new Handler();
-				handler.postDelayed(new Runnable(){
 
-						@Override
-						public void run()
-						{
-							((DrawerBase)self). Draw(start, end, nodes);
-						}
-					}, Delayed_Draw);
-				/*把一个字符的颜色先重置为白色，然后再短暂延迟后再染色，
-				 就出现了高亮，就是那种会发光的感觉！*/
-			}
-			else
-				((DrawerBase)self). Draw(start, end, nodes);
+		@Override
+		public void onDraw(final int start, final int end, List<wordIndex> nodes, SpannableStringBuilder builder, Editable editor)
+		{
+			editor.replace(start, end, builder);
 		}
+	
 	}
 
 	

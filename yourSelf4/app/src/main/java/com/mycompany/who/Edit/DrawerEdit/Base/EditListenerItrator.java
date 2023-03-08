@@ -23,7 +23,7 @@ public abstract class EditListenerItrator
 			return;
 		}
 		
-		ArrayList<Future<Boolean>> results = new ArrayList<>();
+		List<Future<Boolean>> results = new ArrayList<>();
 		for(final EditListener li:lis){
 			Callable<Boolean> ca = new Callable<Boolean>(){
 
@@ -41,10 +41,10 @@ public abstract class EditListenerItrator
 		FuturePool.FuturePop(results);
 	}
 	
-	public static<T> ArrayList<T> foreach(Collection<EditListener> lis,final RunLi<ArrayList<T>> Callback){
+	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback){
 		if(lis==null)
 			return null;
-		ArrayList<T> r=new ArrayList<>();
+		List<T> r=new ArrayList<>();
 		for(EditListener li:lis){
 			try{
 				r.addAll( Callback.runSelf(li));
@@ -53,19 +53,19 @@ public abstract class EditListenerItrator
 		return r;
 	}
 	
-	public static<T> ArrayList<T> foreach(Collection<EditListener> lis,final RunLi<ArrayList<T>> Callback,ThreadPoolExecutor pool){
+	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback,ThreadPoolExecutor pool){
 		if(lis==null)
 			return null;
 		if(pool==null){
 			return foreach(lis,Callback);
 		}
 
-		ArrayList<Future<ArrayList<T>>> results = new ArrayList<>();
+		List<Future<List<T>>> results = new ArrayList<>();
 		for(final EditListener li:lis){
-			Callable<ArrayList<T>> ca = new Callable<ArrayList<T>>(){
+			Callable<List<T>> ca = new Callable<List<T>>(){
 
 				@Override
-				public ArrayList<T> call()
+				public List<T> call()
 				{
 					try{
 						return Callback.runSelf(li);
@@ -78,10 +78,10 @@ public abstract class EditListenerItrator
 		return FuturePool.FutureGetAll(results);
 	}
 	
-	public static<T> ArrayList<T> foreach(final RunLi<T> Callback,Collection<EditListener> lis,boolean is){
+	public static<T> List<T> foreach(final RunLi<T> Callback,Collection<EditListener> lis,boolean is){
 		if(lis==null)
 			return null;
-		ArrayList<T> r=new ArrayList<>();
+		List<T> r=new ArrayList<>();
 		for(EditListener li:lis){
 			try{
 				r.add( Callback.runSelf(li));
@@ -89,14 +89,14 @@ public abstract class EditListenerItrator
 		}
 		return r;
 	}
-	public static<T> ArrayList<T> foreach(final RunLi<T> Callback,ThreadPoolExecutor pool,Collection<EditListener> lis){
+	public static<T> List<T> foreach(final RunLi<T> Callback,ThreadPoolExecutor pool,Collection<EditListener> lis){
 		if(lis==null)
 			return null;
 		if(pool==null){
 			return foreach(Callback,lis,false);
 		}
 
-		ArrayList<Future<T>> results = new ArrayList<>();
+		List<Future<T>> results = new ArrayList<>();
 		for(final EditListener li:lis){
 			Callable<T> ca = new Callable<T>(){
 
@@ -124,19 +124,21 @@ public abstract class EditListenerItrator
 		}
 	}
 	
-	public static void DelListener(ArrayList<EditListener> lis,String name){
+	public static void DelListener(List<EditListener> lis,String name){
 		for(Object li:lis.toArray())
 		    if(((EditListener)li).name.equals(name))
 				lis.remove(li);
 	}
-	public static void DelListener(ArrayList<EditListener> lis,EditListener l){
+	public static void DelListener(List<EditListener> lis,EditListener l){
 		for(Object li:lis.toArray())
 		    if(li.equals(l))
 				lis.remove(li);
 	}
-	public static void DelListener(ArrayList<EditListener> lis,int hashCode){
+	public static void DelListener(List<EditListener> lis,int hashCode){
 		for(Object li:lis.toArray())
 		    if(li.hashCode()==hashCode)
 				lis.remove(li);
 	}
+	
+	
 }

@@ -17,7 +17,7 @@ public class FileList
 {
 
 	private File nowDir;
-	private ArrayList<File> sortFilelist;
+	private List<File> sortFilelist;
 	private String End_Path="/storage/emulated/0";
 
 	public FileList(){
@@ -26,9 +26,9 @@ public class FileList
 		refreshDate();
 	}
 
-	public ArrayList<Icon> refresh(Context cont)
+	public List<Icon> refresh(Context cont)
 	{	  
-		ArrayList<Icon> tmp  = new ArrayList<Icon>();
+		List<Icon> tmp  = new ArrayList<Icon>();
 		tmp.add(new Icon(Share.getFileIcon("打开夹"), ".."));
 		for (File c:sortFilelist)
 		{
@@ -107,8 +107,8 @@ public class FileList
 
 	}
 
-	public void sortFile(ArrayList<File> list){
-		ArrayList<File> tmp = new ArrayList<>();
+	public void sortFile(List<File> list){
+		List<File> tmp = new ArrayList<>();
 		for(int i=0;i<list.size();i++){
 			if(!list.get(i).isDirectory()){
 				tmp.add(list.get(i));

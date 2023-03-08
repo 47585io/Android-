@@ -8,14 +8,14 @@ import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
 import android.util.*;
 import com.mycompany.who.Edit.DrawerEdit.Base.*;
+import java.util.concurrent.*;
 
 
 public abstract class DrawerBase extends Edit
 {
 	
 	//一百行代码实现代码染色
-	protected static Words WordLib = new Words();
-	protected OtherWords WordLib2;
+	protected OtherWords WordLib;
 	protected boolean isDraw=false;
 	protected int IsModify;
 	protected boolean IsModify2;
@@ -25,46 +25,37 @@ public abstract class DrawerBase extends Edit
 	//这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_MakeHTML=false;
+	public static int Delayed_Draw = 0;
 	
+	protected ThreadPoolExecutor pool;
 	public int tryLines=2;
 	public String laugua;
 	
+	/* tmp */
+	String HTML;
+	SpannableStringBuilder buider;
+	
 	DrawerBase(Context cont){
 	 	super(cont);
-		WordLib2=new OtherWords(6);
+		WordLib=new OtherWords(6);
 	}
 	DrawerBase(Context cont,DrawerBase Edit){
 		super(cont,Edit);
-		this.WordLib2=Edit.WordLib2;	
+		pool = Edit. pool;
+		this.WordLib=Edit.WordLib;	
 	}
 
-	abstract protected ArrayList<wordIndex> FindFor(int start,int end,String text)
-	abstract protected void Drawing(int start,int end,ArrayList<wordIndex> nodes)
+	abstract protected void FindFor(int start,int end,String text,List<wordIndex> nodes,SpannableStringBuilder builder)
+	abstract protected void Drawing(int start,int end,List<wordIndex> nodes,SpannableStringBuilder builder)
 	
-	public String getToDraw(int start,int end){
-		IsModify++;
-		isDraw=true;
-		//获取选中文本
-		if(end-start==0)
-			return null;
-		String text = getText().toString().substring(start,end);
-		if(text.length()==0)
-			return null;
-		getText().replace(start,end,text);
-		//清除上次的颜料
-		isDraw=false;
-		IsModify--;
-		return text;
-	}
 
-	public static ArrayList<wordIndex> startFind(String src,ArrayList<DoAnyThing> totalList){
+	final public static void startFind(String src,List<DoAnyThing> totalList,List<wordIndex> nodes){
 		//开始查找，为了保留换行空格等，只replace单词本身，而不是src文本
 		//Spanned本质是用html样式替换原字符串
 		//html中，多个连续空格会压缩成一个，换行会替换成空格
 		//防止重复（覆盖），只遍历一次
 		StringBuffer nowWord = new StringBuffer();
 		int nowIndex;
-		ArrayList<wordIndex> nodes = new ArrayList<wordIndex>();
 		for(nowIndex=0;nowIndex<src.length();nowIndex++){
 			nowWord.append(src.charAt(nowIndex));
 			//每次追加一个字符，交给totalList中的任务过滤
@@ -82,10 +73,9 @@ public abstract class DrawerBase extends Edit
 				}catch(Exception e){}
 			}
 		}
-		return nodes;
 	}
 
-	public void Draw(int start,int end,ArrayList<wordIndex> nodes){
+	final public void Draw(int start,int end,List<wordIndex> nodes){
 		//反向染色，前面不受后面已有Spanned影响
 		IsModify++;
 		isDraw=true;
@@ -103,7 +93,7 @@ public abstract class DrawerBase extends Edit
 		IsModify--;
 	}
 	
-	public static String getHTML(ArrayList<wordIndex> nodes,String text){
+	final public static String getHTML(List<wordIndex> nodes,String text){
 		//中间函数，用于生成HTML文本
 		StringBuffer arr = new StringBuffer();
 		int index=0;
@@ -121,7 +111,7 @@ public abstract class DrawerBase extends Edit
 		return arr.toString();
 	}
 
-	public static void clearRepeatNode(ArrayList<wordIndex> nodes){
+	public static void clearRepeatNode(List<wordIndex> nodes){
 		//清除优先级低且位置重复的node
 		int i,j;
 		for(i=0;i<nodes.size();i++){
@@ -137,42 +127,81 @@ public abstract class DrawerBase extends Edit
 			}
 		}
 	}
-	public static void offsetNode(ArrayList<wordIndex> nodes,int start){
+	final public static void offsetNode(List<wordIndex> nodes,int start){
 		for(wordIndex node:nodes){
 			node.start+=start;
 			node.end+=start;
 		}
 	}
 	
-	public String reDraw(final int start,final int end){
-		//立即进行一次默认的完整的染色
-		
-		String text = getToDraw(start,end);
-		final ArrayList<wordIndex> nodes;
-	    String HTML = null;
-		if(text==null)
-			return "";
+	final public String reDraw(final int start,final int end){
+		//立即进行一次默认的完整的染色	
+		Runnable run = new Runnable(){
+			@Override
+			public void run()
+			{
+				final String text = getText().subSequence(start,end).toString();
+				final List<wordIndex> nodes=new ArrayList<>();
+				final SpannableStringBuilder builder = new SpannableStringBuilder();
+				if(text==null)
+				    return;
+				try{
+				    FindFor(start,end,text,nodes,builder);//寻找nodes
+					if(nodes.size()!=0){
+					    Runnable run= new Runnable(){
 
-		try{
-			nodes=FindFor(start,end,text);
-			if(nodes==null)
-				return "";
-			Drawing(start,end,nodes);
-			if(Enabled_MakeHTML){
-				HTML= getHTML(nodes,text);
+							@Override
+							public void run()
+							{
+								Drawing(start,end,nodes,builder);//为nodes染色
+							}
+						};
+						if(Delayed_Draw==0)
+							post(run);
+						else
+							postDelayed(run,Delayed_Draw);
+					}
+				}catch(Exception e){}
 			}
-		}catch(Exception e){}
-
-		return HTML;
+		};
+		if(pool!=null)
+		    pool.submit(run);
+		else
+			run.run();
+			//如果有pool，在子线程中执行
+			//否则直接执行
+		return "";
 	}
 	
-	public SpannableStringBuilder reDrawOtherText(int start,int end,String text){
-		ArrayList<wordIndex> nodes = FindFor(start,end,text.substring(start,end));
-		return Colors.ForeColorText(text,nodes);
+	public void prepare(final int start,final int end,final String text){
+		//准备指定文本的颜料
+		Runnable run = new Runnable(){
+
+			@Override
+			public void run()
+			{
+				final List<wordIndex> nodes=new ArrayList<>();
+				final SpannableStringBuilder builder = new SpannableStringBuilder();
+				FindFor(start,end,text.substring(start,end),nodes,builder);
+				DrawerBase. this.buider=builder;
+				HTML= getHTML(nodes,text.substring(start,end));
+			}
+		};
+		if(pool!=null)
+		    pool.submit(run);
+		else
+			run.run();
 	}
-	public String HTML(int start,int end,String text){	
-		ArrayList<wordIndex> nodes = FindFor(start,end,text.substring(start,end));
-		return getHTML(nodes,text);	
+	public void GetString(StringBuilder HTML,SpannableStringBuilder builder){
+		//获取准备好了的文本
+		if(this.HTML!=null){
+		    HTML.append(this.HTML);
+			this.HTML=null;
+		}
+		if(this.buider!=null){
+		    builder.append(this.buider);
+			this.buider=null;
+		}
 	}
 	
 	@Override
@@ -206,14 +235,25 @@ public abstract class DrawerBase extends Edit
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 
 	}
-	public static wordIndex tryWord(String src,int index){
+	
+	public void setPool(ThreadPoolExecutor pool)
+	{
+		this.pool = pool;
+	}
+	public ThreadPoolExecutor getPool()
+	{
+		return pool;
+	}
+	
+	
+	final public static wordIndex tryWord(String src,int index){
 		//试探前面的单词
-		wordIndex tmp = new wordIndex(0,0,(byte)0);
+		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor. indexOf(src.charAt(index),DrawerBase. WordLib.fuhao)!=-1)
+			while(Array_Splitor. indexOf(src.charAt(index),Words.fuhao)!=-1)
 				index--;
 			tmp.end=index+1;
-			while(Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
+			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
 				index--;
 			tmp.start=index+1;
 		}catch(Exception e){
@@ -221,15 +261,15 @@ public abstract class DrawerBase extends Edit
 		}
 		return tmp;
 	}
-
-	public static wordIndex tryWordAfter(String src,int index){
+	
+	final public static wordIndex tryWordAfter(String src,int index){
 		//试探后面的单词
-		wordIndex tmp = new wordIndex(0,0,(byte)0);
+		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)!=-1)
+			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)!=-1)
 				index++;
 			tmp.start=index;
-			while(Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
+			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -237,17 +277,17 @@ public abstract class DrawerBase extends Edit
 		}
 		return tmp;
 	}
-	public static int tryAfterIndex(String src,int index){
+	final public static int tryAfterIndex(String src,int index){
 		//试探后面的下一个非分隔符
 		while(index<src.length()
 			  &&src.charAt(index)!='<'
 			  &&src.charAt(index)!='>'
-			  &&Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.spilt)!=-1){
+			  &&Array_Splitor.indexOf(src.charAt(index),Words.spilt)!=-1){
 			index++;
 		}
 		return index;
 	}
-	public static int tryLine_Start(String src,int index){
+	final public static int tryLine_Start(String src,int index){
 		//试探当前下标所在行的起始
 		int start= src.lastIndexOf('\n',index-1);	
 		if(start==-1)
@@ -256,7 +296,7 @@ public abstract class DrawerBase extends Edit
 			start+=1;
 		return start;
 	}
-	public static int tryLine_End(String src,int index){
+	final public static int tryLine_End(String src,int index){
 		//试探当前下标所在行的末尾
 		int end=src.indexOf('\n',index);
 		if(end==-1)
@@ -264,12 +304,12 @@ public abstract class DrawerBase extends Edit
 		return end;
 	}
 	
-	public static wordIndex tryWordSplit(String src,int nowIndex){
+	final public static wordIndex tryWordSplit(String src,int nowIndex){
 		//试探纯单词
 		int index=nowIndex-1;
-	    wordIndex tmp = new wordIndex(0,0,(byte)0);
+	    wordIndex tmp = Ep.get();
 		try{
-			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
+			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
 				index--;
 			tmp.start=index+1;
 			tmp.end=nowIndex;
@@ -278,12 +318,12 @@ public abstract class DrawerBase extends Edit
 		}
 		return tmp;
 	}
-	public static wordIndex tryWordSplitAfter(String src,int index){
+	final public static wordIndex tryWordSplitAfter(String src,int index){
 		//试探纯单词
-	    wordIndex tmp = new wordIndex(0,0,(byte)0);
+	    wordIndex tmp = Ep.get();
 		try{
 			tmp.start=index;
-			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),DrawerBase.WordLib.fuhao)==-1)
+			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -292,8 +332,8 @@ public abstract class DrawerBase extends Edit
 		return tmp;
 	}
 	
-	public static abstract class DoAnyThing{
-		public abstract int dothing(String src,StringBuffer nowWord,int nowIndex,ArrayList<wordIndex> nodes);
+	public static interface DoAnyThing{
+		public abstract int dothing(String src,StringBuffer nowWord,int nowIndex,List<wordIndex> nodes);
 		//修饰符非常重要，之前没写public，总是会函数执行异常
 	}
 	
@@ -319,23 +359,23 @@ public abstract class DrawerBase extends Edit
 		return WordLib.zhu_key_value;
 	}
 	public TreeSet<String> getLastfunc(){
-		return WordLib2.mdates.get(0);
+		return WordLib.mdates.get(0);
 	}
 	public TreeSet<String> getHistoryVillber(){
-		return WordLib2.mdates.get(1);
+		return WordLib.mdates.get(1);
 	}
 	public TreeSet<String> getThoseObject(){
-		return WordLib2.mdates.get(2);
+		return WordLib.mdates.get(2);
 	}
 	public TreeSet<String> getBeforetype(){
-		return WordLib2.mdates.get(3);
+		return WordLib.mdates.get(3);
 	}
 
 	public TreeSet<String> getTag(){
-		return WordLib2.mdates.get(4);
+		return WordLib.mdates.get(4);
 	}
 	public TreeSet<String> getAttribute(){
-		return WordLib2.mdates.get(5);
+		return WordLib.mdates.get(5);
 	}
 	
 }

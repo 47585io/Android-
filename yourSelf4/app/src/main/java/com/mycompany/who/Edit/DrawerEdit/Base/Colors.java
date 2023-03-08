@@ -110,18 +110,18 @@ public class Colors
 	public final static byte color_cssfl=15;
 	
 	
-	public static SpannableStringBuilder ForeColorText(String src,ArrayList<wordIndex> nodes){
+	public static SpannableStringBuilder ForeColorText(String src,List<wordIndex> nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes)
 		    styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	    return styled;	
 	}
-	public static void ForeColorText(Editable editor,ArrayList<wordIndex> nodes){
+	public static void ForeColorText(Editable editor,List<wordIndex> nodes){
 		for(wordIndex node:nodes)
 		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
-	public static void ForeColorText(SpannableStringBuilder editor,ArrayList<wordIndex> nodes){
+	public static void ForeColorText(SpannableStringBuilder editor,List<wordIndex> nodes){
 		for(wordIndex node:nodes)
 		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
@@ -131,18 +131,18 @@ public class Colors
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
 	}
 	
-	public static SpannableStringBuilder BackColorText(String src,ArrayList<wordIndex> nodes){
+	public static SpannableStringBuilder BackColorText(String src,List<wordIndex> nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes)
 		    styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	    return styled;	
 	}
-	public static void BackColorText(Editable editor,ArrayList<wordIndex> nodes){
+	public static void BackColorText(Editable editor,List<wordIndex> nodes){
 		for(wordIndex node:nodes)
 		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
-	public static void BackColorText(SpannableStringBuilder editor,ArrayList<wordIndex> nodes){
+	public static void BackColorText(SpannableStringBuilder editor,List<wordIndex> nodes){
 		for(wordIndex node:nodes)
 		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}

@@ -22,7 +22,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取注释
 			return new DoAnyThing(){		
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					String key = String_Splitor.indexOfKey(src,nowIndex,get_zhu());
 					if(key!=null){
@@ -51,7 +51,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取字符串
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					if(src.charAt(nowIndex)=='"'){
 						//如果它是一个"，一直找到对应的"
@@ -71,7 +71,9 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 					else if(src.charAt(nowIndex)=='\''){
 						//如果它是'字符，将之后的字符加进来
 						if(src.charAt(nowIndex+1)=='\\'){
-							nodes.add(new wordIndex(nowIndex,nowIndex+4,Colors.color_str));
+							wordIndex node= Ep.get();
+							node.set(nowIndex,nowIndex+4,Colors.color_str);
+							nodes.add(node);
 							nowIndex+=3;	
 						}
 
@@ -92,22 +94,26 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取字符
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					if(String_Splitor. indexOfNumber(src.charAt(nowIndex))){
 						//否则如果当前的字符是一个数字，就把它加进nodes
 						//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
-						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_number));
+						wordIndex node= Ep.get();
+						node.set(nowIndex,nowIndex+1,Colors.color_number);
+						nodes.add(node);
 						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}	
 					else if(Array_Splitor.indexOf(src.charAt(nowIndex),getFuhao())!=-1){	
 						//否则如果它是一个特殊字符，就更不可能了，清空之前累计的字符串
-						if(Array_Splitor.indexOf(src.charAt(nowIndex),getSpilt())==-1)
+						if(Array_Splitor.indexOf(src.charAt(nowIndex),getSpilt())==-1){
 						//如果它不是会被html文本压缩的字符，将它自己加进nodes
 						//这是为了保留换行空格等
-							nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
-
+						    wordIndex node= Ep.get();
+							node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
+							nodes.add(node);
+						}
 						nowWord.delete(0,nowWord.length());
 						//清空之前累计的字符串
 						return nowIndex;
@@ -121,7 +127,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					//如果后面还有英文字符，它应该不是任意单词
 					//为了节省时间，将更简单的条件放前面，触发断言机制
@@ -132,27 +138,35 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			};
 		}
 
-		public void saveChar(String src,int nowIndex,int nextindex,byte wantColor,ArrayList<wordIndex> nodes){
+		public void saveChar(String src,int nowIndex,int nextindex,byte wantColor,List<wordIndex> nodes){
 			int startindex=nowIndex;
 			for(;nowIndex<nextindex;nowIndex++){
 				//保留特殊字符
 				if(Array_Splitor.indexOf(src.charAt(nowIndex),getSpilt())!=-1){
-					nodes.add(new wordIndex(startindex,nowIndex,wantColor));
+					wordIndex node= Ep.get();
+					node.set(startindex,nowIndex,wantColor);
+					nodes.add(node);
 					startindex=nowIndex+1;
 				}
 			}
-			nodes.add(new wordIndex(startindex,nextindex,wantColor));
-
+			wordIndex node= Ep.get();
+			node.set(startindex,nextindex,wantColor);
+			nodes.add(node);
+			
 		}
 	}
 	
+	
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
 	
 	//XML工厂
 	class AnyThingForXML extends AnyThingForText{
 		public DoAnyThing getDraw_Tag(){
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					//简单的一个xml方案
 					wordIndex node;
@@ -172,7 +186,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 		public DoAnyThing getDraw_Attribute(){
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					wordIndex node;
 					if(src.charAt(nowIndex)=='='
@@ -193,27 +207,35 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 	}
 	
 	
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
+	
 	//Java工厂
-	public class AnyThingForJava extends AnyThingForText{
+	final public class AnyThingForJava extends AnyThingForText{
 
 		//不回溯的NoSans块，用已有信息完成判断
 		public DoAnyThing getNoSans_Keyword(){
 			//获取关键字和保留字
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					//找到一个单词 或者 未找到单词就遇到特殊字符，就把之前累计字符串清空
 					//为了节省时间，将更简单的条件放前面，触发&&的断言机制
 					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&src.charAt(nowIndex+1)!='_'&&Array_Splitor.indexOf(nowWord.toString(),getKeyword())!=-1){
 						//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
-						nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_key));
+						wordIndex node= Ep.get();
+						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_key);
+						nodes.add(node);
 						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
 					else if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&Array_Splitor.indexOf(nowWord.toString(),getConstword())!=-1){
 						//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
-						nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_const));
+						wordIndex node= Ep.get();
+						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_const);
+						nodes.add(node);
 						nowWord.delete(0,nowWord.length());
 						return nowIndex;
 					}		
@@ -231,13 +253,15 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取函数
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					int afterIndex=tryAfterIndex(src,nowIndex+1);
 					if(src.charAt(afterIndex)=='('){
 					    if(getLastfunc().contains(nowWord.toString())){
 							//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
-						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_func));
+							wordIndex node= Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_func);
+							nodes.add(node);
 						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
@@ -250,13 +274,15 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获得变量
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getHistoryVillber().contains(nowWord.toString())){
 						int afterIndex=tryAfterIndex(src,nowIndex+1);
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个变量并且后面没有a～z和（ 这些字符，就把它加进nodes
-						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_villber));
+							wordIndex node= Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_villber);
+							nodes.add(node);
 						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
@@ -269,13 +295,15 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取对象
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getThoseObject().contains(nowWord.toString())){
 						int afterIndex=tryAfterIndex(src,nowIndex+1);
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个对象并且后面没有a～z和（ 这些字符，就把它加进nodes
-						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_obj));
+							wordIndex node= Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_obj);
+							nodes.add(node);
 						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 						}
@@ -289,13 +317,15 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取类型
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getBeforetype().contains(nowWord.toString())){
 						int afterIndex=tryAfterIndex(src,nowIndex+1);
 						if(src.charAt(afterIndex)!='('){
 							//否则如果当前累计的字符串是一个类型并且后面没有a～z和（ 这些字符，就把它加进nodes
-						    nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_type));
+							wordIndex node= Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_type);
+							nodes.add(node);
 						    nowWord.delete(0,nowWord.length());
 						    return afterIndex-1;
 
@@ -312,7 +342,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//试探函数
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					wordIndex node;
 					if(src.charAt(nowIndex)=='('){
@@ -330,7 +360,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//试探变量和类型
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{					 
 					wordIndex node; 
 					if((src.charAt(nowIndex)=='=')){
@@ -360,7 +390,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//试探对象
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					wordIndex node;
 					if(src.charAt(nowIndex)=='.'&&!String_Splitor.indexOfNumber(src.charAt(nowIndex+2))){
@@ -376,7 +406,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//试探类型
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{	
 				   	if(!String_Splitor.IsAtoz(src.charAt(nowIndex+1))){
 						int index = Array_Splitor.indexOf(nowWord.toString(),WordLib.keyword);
@@ -405,37 +435,43 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 		}
 	}
 	
-	
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
+//	___________________________________________________________________________________________________________________________
 	
 	//CSS工厂
-	class AnyThingForCSS extends AnyThingForText
+	final class AnyThingForCSS extends AnyThingForText
 	{
 		public DoAnyThing getCSSDrawer()
 		{
 			return new DoAnyThing(){
 
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
-					wordIndex node=new wordIndex(0, 0, (byte)0);
+					wordIndex node,node2;
 					if (src.charAt(nowIndex) == '#')
 					{
-						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
-						node=tryWordAfterCSS(src, nowIndex + 1);
-						node.b=Colors.color_cssid;
+						node=Ep.get();
+						node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 						nodes.add(node);
-					    getHistoryVillber().add(src.substring(node.start,node.end));
-						return node.end - 1;
+						node2=tryWordAfterCSS(src, nowIndex + 1);
+						node2.b=Colors.color_cssid;
+						nodes.add(node2);
+					    getHistoryVillber().add(src.substring(node2.start,node2.end));
+						return node2.end - 1;
 
 					}
 					else if (src.charAt(nowIndex) == '.' && !String_Splitor.indexOfNumber(src.charAt(nowIndex - 1)) && !String_Splitor.indexOfNumber(src.charAt(nowIndex + 1)))
 					{
-						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
-						node=tryWordAfterCSS(src, nowIndex + 1);
-						getBeforetype().add(src.substring(node.start,node.end));
-						node.b=Colors.color_csscla;
+						node=Ep.get();
+						node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 						nodes.add(node);
-						return node.end - 1;
+						node2=tryWordAfterCSS(src, nowIndex + 1);
+						getBeforetype().add(src.substring(node2.start,node2.end));
+						node2.b=Colors.color_csscla;
+						nodes.add(node2);
+						return node2.end - 1;
 					}
 					return -1;
 				}
@@ -447,17 +483,21 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			return new DoAnyThing(){
 
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					//为了节省时间，将更简单的条件放前面，触发&&的断言机制
 					if(String_Splitor.IsAtoz(src.charAt(nowIndex + 1))&& src.charAt(tryLine_End(src, nowIndex) - 1) == '{'){
 						if(getHistoryVillber().contains(nowWord.toString())){
-							nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_cssid));
+							wordIndex node=Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_cssid);
+							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
 							return nowIndex;
 						}
 						else if(getBeforetype().contains(nowWord.toString())){
-							nodes.add(new wordIndex(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_csscla));
+							wordIndex node=Ep.get();
+							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_csscla);
+							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
 							return nowIndex;
 						}
@@ -474,7 +514,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取Tag
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 
 					if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1))
@@ -482,7 +522,9 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 						&&(getTag().contains(nowWord.toString()) || Array_Splitor.indexOf(nowWord.toString(), getIknowtag()) != -1))
 					{
 						//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
-						nodes.add(new wordIndex(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_tag));
+						wordIndex node=Ep.get();
+						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_tag);
+						nodes.add(node);
 						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
@@ -495,14 +537,16 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取属性
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					int afterIndex=tryAfterIndex(src, nowIndex + 1);
 
 					if ( !String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && src.charAt(afterIndex) != '('&&getAttribute().contains(nowWord) )
 					{
 						//如果当前累计的字符串是一个属性并且后面没有a～z这些字符，就把它加进nodes
-						nodes.add(new wordIndex(nowIndex - nowWord.length() + 1, nowIndex + 1,Colors. color_attr));
+						wordIndex node=Ep.get();
+						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_attr);
+						nodes.add(node);
 						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
@@ -514,7 +558,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 		{
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 					wordIndex node;
 					if (src.charAt(nowIndex) == '='
@@ -544,7 +588,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 		public wordIndex tryWordForCSS(String src, int index)
 		{
 			//试探前面的单词
-			wordIndex tmp = new wordIndex(0, 0, (byte)0);
+			wordIndex tmp = Ep.get();
 			try
 			{
 				while (Array_Splitor. indexOf(src.charAt(index), getFuhao()) != -1)
@@ -556,7 +600,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			}
 			catch (Exception e)
 			{
-				return new wordIndex(0, 0, (byte)0);
+				return Ep.get();
 			}
 			return tmp;
 		}
@@ -564,7 +608,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 		public wordIndex tryWordAfterCSS(String src, int index)
 		{
 			//试探后面的单词
-			wordIndex tmp = new wordIndex(0, 0, (byte)0);
+			wordIndex tmp = Ep.get();
 			try
 			{
 				while (Array_Splitor.indexOf(src.charAt(index), getFuhao()) != -1)
@@ -576,7 +620,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			}
 			catch (Exception e)
 			{
-				return new wordIndex(0, 0, (byte)0);
+				return Ep.get();
 			}
 			return tmp;
 		}
@@ -588,7 +632,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取函数
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 
 					if(src.charAt(nowIndex)=='('){
@@ -596,7 +640,9 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 						wordIndex node = tryWord(src,nowIndex);
 						node.b=Colors.color_func;
 						nodes.add(node);
-						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
+						wordIndex node2=Ep.get();
+						node2.set(nowIndex,nowIndex+1,Colors.color_fuhao);
+						nodes.add(node2);
 						getLastfunc().add(src.substring(node.start,node.end));
 						nowWord.delete(0,nowWord.length());
 						return nowIndex;
@@ -609,7 +655,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 			//获取对象
 			return new DoAnyThing(){
 				@Override
-				public int dothing(String src, StringBuffer nowWord, int nowIndex, ArrayList<wordIndex> nodes)
+				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{
 
 					if(src.charAt(nowIndex)=='.'){
@@ -617,7 +663,9 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 						wordIndex node = tryWord(src,nowIndex);
 						node.b=Colors.color_obj;
 						nodes.add(node);
-						nodes.add(new wordIndex(nowIndex,nowIndex+1,Colors.color_fuhao));
+						wordIndex node2=Ep.get();
+						node2.set(nowIndex,nowIndex+1,Colors.color_fuhao);
+						nodes.add(node2);
 						getThoseObject().add(src.substring(node.start,node.end));
 						nowWord.delete(0,nowWord.length());
 						return nowIndex;

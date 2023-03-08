@@ -15,11 +15,15 @@ import android.graphics.*;
 
 public class CompleteEdit extends FormatEdit
 {
-	public final EditCompletorBoxes boxes=new EditCompletorBoxes();
+	private final EditCompletorBoxes boxes=new EditCompletorBoxes();
+	public static EPool3 Epp;
 	public static boolean Enabled_Complete=false;
 	private static int Search_Bit=0xefffffff;
-	protected ArrayList<EditListener> mlistenerCS;
-	protected ThreadPoolExecutor pool;
+	protected List<EditListener> mlistenerCS;
+	
+	static{
+		Epp=new EPool3();
+	}
 	
 	public CompleteEdit(Context cont)
 	{
@@ -30,14 +34,13 @@ public class CompleteEdit extends FormatEdit
 	public CompleteEdit(Context cont, CompleteEdit Edit)
 	{
 		super(cont, Edit);
-		mlistenerCS = new ArrayList<>();
-		trimListener();
-		pool = Edit. pool;
+		mlistenerCS=Edit.getCompletorList();
 		Search_Bit = Edit.Search_Bit;
 	}
     
-	private void trimListener()
+	public void trimListener()
 	{
+		mlistenerCS.clear();
 		mlistenerCS.add(boxes.getVillBox());
 		mlistenerCS.add(boxes.getObjectBox());
 		mlistenerCS.add(boxes.getFuncBox());
@@ -73,18 +76,11 @@ public class CompleteEdit extends FormatEdit
 	}
 
 
-	public ArrayList<EditListener> getCompletorList()
+	public List<EditListener> getCompletorList()
 	{
 		return mlistenerCS;
 	}
-	public void setPool(ThreadPoolExecutor pool)
-	{
-		this.pool = pool;
-	}
-	public ThreadPoolExecutor getPool()
-	{
-		return pool;
-	}
+	
 	public void clearListener()
 	{
 		getCompletorList().clear();
@@ -93,28 +89,30 @@ public class CompleteEdit extends FormatEdit
 
 	//多线程
 
-	public void openWindow(ListView Window, int index, ThreadPoolExecutor pool)
+	final public void openWindow(ListView Window, int index, ThreadPoolExecutor pool)
 	{
 		if (!Enabled_Complete)
 			return;
 		String wantBefore= getWord(index);
 		String wantAfter = getAfterWord(index);
 		//获得光标前后的单词，并开始查找
-		ArrayList<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS,pool);
+		Epp.start();
+		List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS,pool);
 		if(Icons!=null){
 		    WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
 		    Window.setAdapter(adapter);
 		}
+		Epp.stop();
 	}
-	protected ArrayList<Icon>  SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
+	final private List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
 		
 		if(Runner==null)
 			return null;
-			
-		EditListenerItrator.RunLi<ArrayList<Icon>> run = new EditListenerItrator.RunLi<ArrayList<Icon>>(){
+		
+		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
 
 			@Override
-			public ArrayList<Icon> run(EditListener li)
+			public List<Icon> run(EditListener li)
 			{
 				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,(EditCompletorListener)li);
 			}
@@ -124,9 +122,9 @@ public class CompleteEdit extends FormatEdit
 		return EditListenerItrator.foreach(Group,run,pool);
 	}
 	
-	public static ArrayList<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
+	final public static List<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
 	{
-		ArrayList<String> words=null;
+		List<String> words=null;
 		Array_Splitor. Idea ino = Array_Splitor.getNo();
 		Array_Splitor. Idea iyes = Array_Splitor.getyes();
 		if (!wantBefore.equals(""))
@@ -143,10 +141,10 @@ public class CompleteEdit extends FormatEdit
 		return words;
 	}
 
-	public static ArrayList<String> SearchOnce(String wantBefore, String wantAfter, Collection<String> target, int before, int after)
+	final public static List<String> SearchOnce(String wantBefore, String wantAfter, Collection<String> target, int before, int after)
 	{
 		//同上
-		ArrayList<String> words=null;
+		List<String> words=null;
 		Array_Splitor. Idea ino = Array_Splitor.getNo();
 		Array_Splitor. Idea iyes = Array_Splitor.getyes();
 		if (!wantBefore.equals(""))
@@ -160,7 +158,7 @@ public class CompleteEdit extends FormatEdit
 		return words;
 	}
 
-	public static void addSomeWord(ArrayList<String> words, ArrayList<Icon> adapter, byte flag)
+	final public static void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
 	{
 		//排序并添加一组的单词块
 		if (words == null || words.size() == 0)
@@ -170,7 +168,9 @@ public class CompleteEdit extends FormatEdit
 		int icon = Share.getWordIcon(flag);
 		for (String word: words)
 		{
-			Icon token = new Icon(icon, word);
+			Icon token = Epp.get();
+			token.setIcon(icon);
+			token.setName(word);
 			token.setflag(flag);
 		    adapter.add(token);
 		}
@@ -178,7 +178,7 @@ public class CompleteEdit extends FormatEdit
 	}
 
 
-	public String getWord(int offset)
+	final public String getWord(int offset)
 	{
 		//获得光标前的纯单词
 	    wordIndex node = tryWordSplit(getText().toString(), offset);
@@ -188,7 +188,7 @@ public class CompleteEdit extends FormatEdit
 
 		return want;
 	}
-	public String getAfterWord(int offset)
+	final public String getAfterWord(int offset)
 	{
 		//获得光标后面的纯单词
 		wordIndex node = tryWordSplitAfter(getText().toString(), offset);
@@ -227,8 +227,9 @@ public class CompleteEdit extends FormatEdit
 	}
 
 
-    public class EditCompletorBoxes
+    final public class EditCompletorBoxes
 	{ 
+	    
 	    public EditListener getKeyBox()
 		{
 			return new EditCompletorListener(){
@@ -240,7 +241,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_key);
 				}
@@ -253,7 +254,7 @@ public class CompleteEdit extends FormatEdit
 				@Override
 				public Collection<String> onBeforeSearchWord()
 				{
-					ArrayList<String> words=new ArrayList<>();
+					List<String> words=new ArrayList<>();
 					if (Share.getbit(Search_Bit, Colors.color_attr))
 						words.addAll(getAttribute());
 					if(Share.getbit(Search_Bit, Colors.color_const))
@@ -263,7 +264,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_default);
 				}
@@ -283,7 +284,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_villber);
 				}
@@ -304,7 +305,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_func);
 				}
@@ -325,7 +326,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_obj);
 				}
@@ -345,7 +346,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_type);
 				}
@@ -361,7 +362,7 @@ public class CompleteEdit extends FormatEdit
 				{
 					if (Share.getbit(Search_Bit, Colors.color_tag))
 					{
-						ArrayList<String> words=new ArrayList<>();
+						List<String> words=new ArrayList<>();
 						words.addAll(toColletion(getIknowtag()));
 						words.addAll(getTag());	
 						return words;
@@ -370,7 +371,7 @@ public class CompleteEdit extends FormatEdit
 				}
 
 				@Override
-				public void onFinishSearchWord(ArrayList<String> word, ArrayList<Icon> adpter)
+				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
 					addSomeWord(word, adpter, Share.icon_tag);
 				}
@@ -382,6 +383,21 @@ public class CompleteEdit extends FormatEdit
 		return new EditCompletorBoxes();
 	}
 	
+	public static class EPool3 extends EPool<Icon>
+	{
+
+		@Override
+		public Icon creat()
+		{
+			return new Icon();
+		}
+
+		@Override
+		public void resetE(Icon E)
+		{
+		}
+
+	}
 
 }
 

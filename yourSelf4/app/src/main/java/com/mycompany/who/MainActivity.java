@@ -29,7 +29,6 @@ public class MainActivity extends Activity
 		pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
 		Group=new EditGroup(this);
 		setContentView(Group);
-		Group.setExtension(new ArrayList<XCode.Extension>());
 		Group.AddEdit(".java");
 		Group.setPool(pool);
 		Group.getEditBuilder().setRunner(EditRunnerFactory.getCanvasRunner());

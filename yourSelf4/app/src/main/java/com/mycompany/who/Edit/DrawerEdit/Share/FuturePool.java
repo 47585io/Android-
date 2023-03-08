@@ -4,8 +4,8 @@ import java.util.concurrent.*;
 
 public class FuturePool
 {
-	public static<T> ArrayList<T> FutureGet(Collection<Future<T>> results){
-		ArrayList<T> date = new ArrayList<>();
+	public static<T> List<T> FutureGet(Collection<Future<T>> results){
+		List<T> date = new ArrayList<>();
 		try
 		{
 			for (Future<T> result:results)
@@ -18,11 +18,11 @@ public class FuturePool
 		return date;
 	}
 	
-	public static<T> ArrayList<T> FutureGetAll(Collection<Future<ArrayList< T>>> results){
-		ArrayList<T> date = new ArrayList<>();
+	public static<T> List<T> FutureGetAll(Collection<Future<List< T>>> results){
+		List<T> date = new ArrayList<>();
 		try
 		{
-			for (Future<ArrayList< T>> result:results)
+			for (Future<List< T>> result:results)
 				date.addAll(result.get());
 		}
 		catch (ExecutionException e)
@@ -44,8 +44,8 @@ public class FuturePool
 		{}
 	}
 	
-	public static<T> ArrayList<Future<T>> addTotals(Collection<Callable<T>> totals,ThreadPoolExecutor pool){
-		ArrayList<Future<T>> results= new ArrayList<>();
+	public static<T> List<Future<T>> addTotals(Collection<Callable<T>> totals,ThreadPoolExecutor pool){
+		List<Future<T>> results= new ArrayList<>();
 		for(Callable<T> total:totals)
 		    results.add(pool.submit(total));
 		return results;

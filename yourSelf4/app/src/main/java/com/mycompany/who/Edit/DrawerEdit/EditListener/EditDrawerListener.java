@@ -7,6 +7,6 @@ import android.widget.*;
 
 public abstract class EditDrawerListener extends EditListener
 {
-	abstract public void onDraw(int start, int end, ArrayList<wordIndex> nodes,EditText self);
+	abstract public void onDraw(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder,Editable editor);
 }
 	

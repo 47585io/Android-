@@ -29,7 +29,7 @@ public class XCode extends RelativeLayout
 {
 	
 	private PageList mEditGroupPages;
-	private ArrayList<XCode.Extension> Extensions;
+	private List<XCode.Extension> Extensions;
 	
 	private KeyPool keyPool;
 	private HashMap<String,Runnable> keysRunnar;
@@ -45,14 +45,10 @@ public class XCode extends RelativeLayout
 	private void init(Context cont){
 		mEditGroupPages = new PageList(cont);
 		Extensions = new ArrayList<>();
-	}
-	
+	}	
 	public PageList getEditGroupPages(){
 		return mEditGroupPages;
 	}
-	
-	
-	
 	
 	public void addAExtension(Extension extension)
 	{
@@ -60,7 +56,6 @@ public class XCode extends RelativeLayout
 	}
 	public void delAExtension(Extension e)
 	{
-		
 		Extensions.remove(e);
 	}
 	
@@ -68,12 +63,11 @@ public class XCode extends RelativeLayout
 	{
 		public String name;
 		public String path;
-		public ArrayList<Integer> ids;
+		public List<Integer> ids;
 		
 		public Extension(){
 			ids=new ArrayList<>();
 		}
-		
 		
 		public abstract void oninit(EditText self)
 		public abstract EditListener getFinder()
@@ -120,5 +114,23 @@ public class XCode extends RelativeLayout
 			return V;
 		}
 	}
+	
+	
+	
+	interface EditItrator{
+		public void Config(CodeEdit Edit);
+	}
+	private void forech(EditItrator tor){
+		int i;
+		for(i=0;i<mEditGroupPages.getChildCount();){
+			View v= mEditGroupPages.getChildAt(i);
+			if(v instanceof EditGroup){
+				List<CodeEdit> EditList = ((EditGroup)v).getEditList();
+				for(CodeEdit Edit:EditList)
+				    tor.Config(Edit);
+			}
+		}
+	}
+	
 	
 }

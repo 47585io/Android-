@@ -7,16 +7,15 @@ import java.util.concurrent.*;
 public abstract class EditCompletorListener extends EditListener
 {
 	public abstract Collection<String> onBeforeSearchWord();
-	public abstract void onFinishSearchWord(ArrayList<String> word,ArrayList<Icon> adpter);
 	
-	public static String[] toArray(Collection<String> coll){
-		String[] arr = new String[coll.size()];
+	public abstract void onFinishSearchWord(List<String> word,List<Icon> adpter);
+	
+	public static<T> void toArray(Collection<T> coll,T[] arr){
 		coll.toArray(arr);
-		return arr;
 	}
-	public static Collection<String> toColletion(String[] arr){
-		ArrayList<String> coll = new ArrayList<>();
-		for(String s:arr)
+	public static<T> Collection<T> toColletion(T[] arr){
+		List<T> coll = new ArrayList<>();
+		for(T s:arr)
 		   coll.add(s);
 		return coll;
 	} 

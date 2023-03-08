@@ -46,9 +46,8 @@ public abstract class EditFactory
 		return new CoCoEdit(Edit.getContext(),Edit);
 	}
 	
-	public abstract CodeEdit GetCodeEdit(Context cont,String Lua)
+	public abstract CodeEdit GetEdit(Context cont,String Lua,ThreadPoolExecutor pool)
 
 	public abstract CodeEdit GetFormEdit(CodeEdit Edit)
-	
 	
 }

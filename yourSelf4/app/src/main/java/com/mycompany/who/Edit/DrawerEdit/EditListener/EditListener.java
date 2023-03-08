@@ -16,7 +16,7 @@ public abstract class EditListener
 	@Override
 	public String toString()
 	{
-		return "监听器名字："+name;
+		return "监听器："+name+"  ;类型: "+getClass().getName();
 	}
 	
 	@Override

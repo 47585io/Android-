@@ -14,17 +14,19 @@ import com.mycompany.who.Edit.Share.*;
 
 public abstract class CodeEdit extends CoCoEdit
 {
+	protected EditDate stack;
 	
 	public CodeEdit(Context cont){
 		super(cont);
+		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
 	}
 	public CodeEdit(Context cont,CodeEdit Edit){
 		super(cont,Edit);
+		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
-	}	
-	
-	
+	}
+
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
@@ -33,7 +35,7 @@ public abstract class CodeEdit extends CoCoEdit
 		}catch(Exception e){}
 	}
 
-	public int Uedo_(EditDate.Token token)
+	final public int Uedo_(EditDate.Token token)
 	{
 		IsModify++;
 		isUR=true;
@@ -74,7 +76,7 @@ public abstract class CodeEdit extends CoCoEdit
 		return endSelection;
 	}
 
-	public int Redo_(EditDate.Token token)
+	final public int Redo_(EditDate.Token token)
 	{
 		IsModify++;
 		isUR=true;
@@ -114,7 +116,7 @@ public abstract class CodeEdit extends CoCoEdit
 		return endSelection;
 	}
 
-	public void Uedo()
+	final public void Uedo()
 	{
 		//批量Uedo
 		if(stack==null)
@@ -143,7 +145,7 @@ public abstract class CodeEdit extends CoCoEdit
 		catch (Exception e)
 		{}
 	}
-	public void Redo()
+	final public void Redo()
 	{
 		//批量Redo
 		if(stack==null)
@@ -207,7 +209,7 @@ public abstract class CodeEdit extends CoCoEdit
 			if (count != 0 && !isDraw)
 			{
 				//在删除\n前，删除行
-				ArrayList<Integer> indexs=String_Splitor.indexsOf("\n", str.toString().substring(start, start + count));
+				List<Integer> indexs=String_Splitor.indexsOf("\n", str.toString().substring(start, start + count));
 				delLines(indexs.size());
 			}
 
@@ -251,7 +253,7 @@ public abstract class CodeEdit extends CoCoEdit
 		public void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
 			if (!isDraw&&lengthAfter != 0){
-				ArrayList<Integer> indexs = null;
+				List<Integer> indexs = null;
 				indexs = String_Splitor.indexsOf("\n", text.toString().substring(start, start + lengthAfter));	
 				addLines(indexs.size());
 				//增加行

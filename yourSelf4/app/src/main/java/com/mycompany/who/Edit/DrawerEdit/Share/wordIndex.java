@@ -8,7 +8,11 @@ public class wordIndex{
 		this.end=end;
 		this.b=b;
 	}
-
+	public wordIndex(){
+		this.start=0;
+		this.end=0;
+		this.b=0;
+	}
 	@Override
 	public boolean equals(Object other)
 	{
@@ -28,14 +32,10 @@ public class wordIndex{
 	public byte b;
 	
 	
-	public static class wordIndexS extends wordIndex{
-		//扩展了更强大的功能，例如现在你可以将<和>替换为&lt;和&gt;了
-		//不过为了节约内存，不建议使用
-		wordIndexS(int start,int end,byte b,String to){
-			super(start,end,b);
-			this.to=to;
-		}
-		public String to;
+	public void set(int s,int e,byte b){
+		start=s;
+		end=e;
+		this.b=b;
 	}
 }
 

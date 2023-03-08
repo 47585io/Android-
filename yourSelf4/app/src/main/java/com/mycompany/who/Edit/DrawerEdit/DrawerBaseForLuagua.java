@@ -4,6 +4,8 @@ import com.mycompany.who.Edit.DrawerEdit.Base.*;
 import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 import com.mycompany.who.Edit.DrawerEdit.Share.*;
 import java.util.*;
+import com.mycompany.who.Edit.DrawerEdit.DrawerBase.*;
+import android.text.*;
 
 abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 {
@@ -15,17 +17,17 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		super(cont,Edit);
 	}
 	
-	class FinderText extends EditFinderListener
+	public class FinderText extends EditFinderListener
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindWord(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList, Words WordLib, OtherWords WordLib2)
+		public void OnFindNodes(List<DrawerBase.DoAnyThing> totalList, Words WordLib)
 		{
 			// TODO: Implement this method
 			AnyThingForText AllThings = new AnyThingForText();
@@ -35,36 +37,36 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
+		public void OnClearFindWord(Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
 
 		}
 	}
 	
-	class FinderXML extends EditFinderListener
+	public class FinderXML extends EditFinderListener
 	{
 
 		@Override
-		public void OnClearFindNodes(int start, int end, String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start, int end, String text, List<wordIndex> nodes)
 		{
 			// TODO: Implement this method
 		}
 
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindWord(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindNodes(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 			AnyThingForXML AllThings = new AnyThingForXML();
 
@@ -79,18 +81,18 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
+		public void OnClearFindWord(Words WordLib)
 		{
 
 		}
 	}
 	
 	
-	class FinderJava extends EditFinderListener
+	final public class FinderJava extends EditFinderListener
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindWord(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 			AnyThingForJava AllThings = new AnyThingForJava();
 
@@ -104,7 +106,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindNodes(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 			AnyThingForJava AllThings = new AnyThingForJava();
 
@@ -122,7 +124,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
+		public void OnClearFindWord(Words WordLib)
 		{
 			Array_Splitor. delSame(getLastfunc(),getKeyword());
 			//函数名不可是关键字，但可以和变量或类型重名	
@@ -146,7 +148,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
 			clearRepeatNode(nodes);	
 		}
@@ -154,17 +156,17 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 	
 	
 	
-	class FinderCSS extends EditFinderListener
+	final public class FinderCSS extends EditFinderListener
 	{
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindWord(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindNodes(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 			AnyThingForCSS CSSThings = new AnyThingForCSS();
 
@@ -185,18 +187,18 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 
 		@Override
-		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
+		public void OnClearFindWord(Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
 			clearRepeatNodeForCSS(text,nodes);
 		}
 		
-		public void clearRepeatNodeForCSS(String src,ArrayList<wordIndex> nodes){
+		final public void clearRepeatNodeForCSS(String src,List<wordIndex> nodes){
 			//清除优先级低且位置重复的node
 			int i;
 			for(i=0;i<nodes.size();i++){
@@ -209,50 +211,49 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		}
 	}
 	
-	class FinderHTML extends EditFinderListener
+	final public class FinderHTML extends EditFinderListener
 	{
 
 		@Override
-		public void OnFindNodes(ArrayList<DrawerBase.DoAnyThing> totalList, Words WordLib, OtherWords WordLib2)
+		public void OnFindNodes(List<DrawerBase.DoAnyThing> totalList, Words WordLib)
 		{
 			// TODO: Implement this method
 		}
 
 
 		@Override
-		public void OnFindWord(ArrayList<DrawerBase.DoAnyThing> totalList,Words WordLib,OtherWords WordLib2)
+		public void OnFindWord(List<DrawerBase.DoAnyThing> totalList,Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnClearFindWord(Words WordLib,OtherWords WordLib2)
+		public void OnClearFindWord(Words WordLib)
 		{
 
 		}
 
 		@Override
-		public void OnClearFindNodes(int start,int end,String text, ArrayList<wordIndex> nodes)
+		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
-			nodes.addAll(reDrawHTML(start,end,text));
+		    reDrawHTML(start,end,text,nodes);
 		}
 		
 		
-		protected ArrayList<wordIndex> getNodes(String text, String Lua, int now)
+		final protected List<wordIndex> getNodes(String text, String Lua, int now)
 		{
-			EditListener finder=getFinder();
+			String L = laugua;
 			setLuagua(Lua);
-			ArrayList<wordIndex> tmp= FindFor(0,0,text);
+			List<wordIndex> tmp = new ArrayList<>();
+			FindFor(0,0,text,tmp,new SpannableStringBuilder());
 			offsetNode(tmp, now);
-			setFinder(finder);
+			setLuagua(L);
 			return tmp;
 		}
 
-		protected ArrayList<wordIndex> reDrawHTML(int start,int end,String text)
+		final protected List<wordIndex> reDrawHTML(int start,int end,String text,List<wordIndex>nodes)
 		{
-
-			ArrayList<wordIndex> nodes=new ArrayList<>();
-			ArrayList<wordIndex> tmp;
+			List<wordIndex> tmp=new ArrayList<>();
 			int now=0,css=-1,js=-1,css_end=-1,js_end=-1;
 			try
 			{
