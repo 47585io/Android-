@@ -10,7 +10,7 @@ public abstract class EditFormatorListener extends EditListener
 	//为了避免繁琐的判断，一开始就调用start方法，将事情初始化为你想要的样子
 	public abstract int dothing_End(ModifyBuffer editor, int beforeIndex,int start,int end);
 	//收尾工作
-	
+
 	public static class ModifyBuffer{
 		StringBuilder src;
 		StringBuilder target;
@@ -39,14 +39,14 @@ public abstract class EditFormatorListener extends EditListener
 		{
 			return target.toString();
 		}
-		
+
 		public String getSrc(){
 			return src.toString();
 		}
 		public int length(){
 			return target.length();
 		}
-		
+
 		synchronized public void reSAll(String want, String to){
 			int nowIndex = target.lastIndexOf(want);
 			while (nowIndex != -1)
@@ -57,6 +57,7 @@ public abstract class EditFormatorListener extends EditListener
 				nowIndex = target.lastIndexOf(want, nowIndex - 1);
 			}
 		}
-		
+
 	}
 }
+

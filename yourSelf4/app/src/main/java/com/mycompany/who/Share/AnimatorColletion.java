@@ -36,4 +36,14 @@ public class AnimatorColletion
 		oa.start();
 		
 	}
+	
+	public static void transtionX(View v,float x,float y){
+		ObjectAnimator animator=ObjectAnimator.ofFloat(v,"transtionX",x,y);
+		animator.start();
+	}
+	public static void transtionY(View v,float x,float y){
+		ObjectAnimator animator=ObjectAnimator.ofFloat(v,"transtionY",x,y);
+		animator.start();
+	}
+	
 }

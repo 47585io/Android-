@@ -16,8 +16,9 @@ import android.util.*;
 import android.content.res.*;
 import com.mycompany.who.Activity.*;
 import android.text.*;
+import android.app.*;
 
-public class EditGroup extends RelativeLayout
+public class EditGroup extends LinearLayout
 {
 	
 	//为提升编辑器效率，增加EditGroup
@@ -29,7 +30,7 @@ public class EditGroup extends RelativeLayout
 	
 	public static int WindowHeight=300;
 	public static int WindowWidth=600;
-	public static int MaxLine=5000;
+	public static int MaxLine=1000;
 	public String path;
 	private int EditFlag=0;
 	private int historyId;
@@ -38,7 +39,7 @@ public class EditGroup extends RelativeLayout
 	protected HorizontalScrollView EdithScro;
 	protected LinearLayout ForEdit;
 	protected LinearLayout ForEditSon;
-	protected Edit EditLines;
+	protected EditLine EditLines;
 	protected ListView mWindow;
 	
 	private EditBuilder builder;
@@ -70,7 +71,6 @@ public class EditGroup extends RelativeLayout
 		Last.add(new Stack<Integer>());
 		builder=new EditBuilder();
 		mfactory=new EditFactory2();
-		
 	}
 	private void init2(Context cont)
 	{	
@@ -78,15 +78,15 @@ public class EditGroup extends RelativeLayout
 		EdithScro=new HorizontalScrollView(cont);
 		ForEdit=new LinearLayout(cont);
 		ForEditSon=new LinearLayout(cont);
-		EditLines=new Edit(cont);
+		EditLines=new EditLine(cont);
 		mWindow=new ListView(cont);
 
 		addView(EdithScro);
-		addView(mWindow);
 		EdithScro.addView(EditScro);
 		EditScro.addView(ForEdit);
 		ForEdit.addView(EditLines);
 		ForEdit.addView(ForEditSon);
+		addView(mWindow);
 	}
 	protected void config(){
 		EditLines.setFocusable(false);
@@ -98,7 +98,11 @@ public class EditGroup extends RelativeLayout
 		CodeEdit.Enabled_Format = true;
 		CodeEdit.Enabled_Drawer = true;
 		CodeEdit.Enabled_Complete = true;
-		CodeEdit.Enabled_MakeHTML = true;
+		
+	}
+	
+	public void loadSize(){
+		trim(this,-1,-1);
 	}
 	
 	public EditBuilder getEditBuilder(){
@@ -130,29 +134,44 @@ public class EditGroup extends RelativeLayout
 	}
 	protected void configEdit(CodeEdit Edit,String name)
 	{
-		Edit.setPool(pool);
-		com.mycompany.who.Share.Share.setEdit(Edit,name);
+		
 	}
 	
 	
 	/*关键代码*/
 	protected void trimToFather(){
 		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-		int height=builder.calaEditHeight(EditList.size())+1000;
-		int width=builder.calaEditWidth()+1000;
-		trim(ForEditSon,width,height);
+		wordIndex size = builder.WAndH();
+		int height=size.end+2000;
+		int width=size.start+1500;
+		int LinesWidth = (int)((String.valueOf(height/EditLines.getLineHeight()).length())*EditLines.getTextSize());
+		trim(ForEditSon,width-LinesWidth,height);
 		trim(ForEdit,width,height);
-		//为两个Edit的父元素扩展空间
+		//为两个Edit的父元素扩展空间，一个Lines的父元素ForEdit，一个ForEditSon
+		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 	}
-	protected void trim(ViewGroup Father,int width,int height){
+	final protected void trim(View Father,int width,int height){
 		//调整空间
 		ViewGroup.LayoutParams p = Father.getLayoutParams();
 		p.width=width;
 		p.height=height;
 		Father.setLayoutParams(p);
 	}
+	final protected void trimAdd(View Father,int addWidth,int addHeight){
+		ViewGroup.LayoutParams p = Father.getLayoutParams();
+		p.width+=addWidth;
+		p.height+=addHeight;
+		Father.setLayoutParams(p);
+	}
+	final protected void trimXel(View Father,int WidthX,int HeightX){
+		ViewGroup.LayoutParams p = Father.getLayoutParams();
+		p.width*=WidthX;
+		p.height*=HeightX;
+		Father.setLayoutParams(p);
+	}
 	
-	class RCodeEdit extends CodeEdit{
+	
+	final class RCodeEdit extends CodeEdit{
 
 		public int index;	
 		private boolean can;
@@ -188,7 +207,9 @@ public class EditGroup extends RelativeLayout
 				return;
 			}
 			
-			trimToFather();
+			//第一个编辑器扩展大小
+			if(EditFlag==0)
+			    trimToFather();
 			//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 			//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
 			//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
@@ -202,6 +223,7 @@ public class EditGroup extends RelativeLayout
 		
 			EditFlag++;		
 			
+			/*关键代码*/
 			int lineCount= getLineCount();
 			if(lineCount> MaxLine){
 				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
@@ -242,11 +264,12 @@ public class EditGroup extends RelativeLayout
 			}
 			
 			EditFlag--;
+			
 			if(EditFlag==0){
-				reLines(builder.calaEditLines());
+				EditLines. reLines(builder.calaEditLines());
 				Last.push(new Stack<Integer>());
 			}
-			//最后一个编辑器计算行
+			//最后一个编辑器单独计算行
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 	        //先开辟一个空间，待之后存储
 		
@@ -255,23 +278,7 @@ public class EditGroup extends RelativeLayout
 		@Override
 	 	public wordIndex calc(CodeEdit Edit)
 		{
-			//请求测量
-			historyId=((RCodeEdit)Edit).index;
-			//本次窗口谁请求，单词给谁
-			int offset=Edit.getSelectionStart();
-			wordIndex pos = Edit.getScrollCursorPos(offset, EdithScro.getScrollX() - Edit.lines.getWidth(), EditScro.getScrollY()-builder.calaEditHeight(index));
-			//start真实位置还少一个lines
-			//Window必须在re内
-			if (pos.start + mWindow.getWidth() > getWidth() || pos.start < 0)
-				pos.start = getWidth() - mWindow.getWidth();
-			//如果x超出屏幕，总是设置在最右侧
-
-			if (pos.end + mWindow.getHeight() +  Edit.getLineHeight() * 2 > getHeight())
-				pos.end = pos.end - mWindow.getHeight() - Edit.getLineHeight();
-			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
-			else
-				pos.end = pos.end + Edit.getLineHeight();
-
+			
 			//测量并修改Window大小
 			int height = MeasureWindowHeight();
 			MarginLayoutParams prams = (ViewGroup.MarginLayoutParams) mWindow.getLayoutParams();
@@ -282,7 +289,25 @@ public class EditGroup extends RelativeLayout
 			prams.width = WindowWidth;
 
 			mWindow.setLayoutParams(prams);
+			
+			
+			//请求测量
+			historyId=((RCodeEdit)Edit).index;
+			//本次窗口谁请求，单词给谁
+			int offset=Edit.getSelectionStart();
+			wordIndex pos = Edit.getScrollCursorPos(offset,EdithScro.getScrollX(),EditScro.getScrollY()-EditGroup.this.builder.calaEditHeight(index));
+		
+			pos.start+=EditLines.getWidth();
+			if (pos.start + mWindow.getWidth() > getWidth())
+				pos.start = getWidth() - mWindow.getWidth();
+			//如果x超出屏幕，总是设置在最右侧
 
+			if (pos.end + mWindow.getHeight()+Edit.getLineHeight() > getHeight())
+				pos.end = pos.end-mWindow.getHeight()-Edit.getLineHeight();
+			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
+			else
+				pos.end = pos.end + Edit.getLineHeight();
+			
 			return pos;
 		}
 	}
@@ -374,7 +399,6 @@ public class EditGroup extends RelativeLayout
 			Last.add(new Stack<Integer>());
 			for(CodeEdit e:EditList){
 				e.Format(0,e.getText().length());
-				e.reDraw(0,e.getText().length());
 			}
 		}
 		public void Format(int start,int end){
@@ -384,8 +408,7 @@ public class EditGroup extends RelativeLayout
 				@Override
 				void doOnce(int start, int end, CodeEdit Edit)
 				{
-					int cale= Edit.Format(start,end);
-					Edit.reDraw(start,end+cale);
+					Edit.reDraw(start,end);
 				}
 			};
 			d.dofor(this.start,this.end);
@@ -405,7 +428,7 @@ public class EditGroup extends RelativeLayout
 			Next.push(last);
 			for(int l:last)
 				EditList.get(l).Uedo();
-			EditList.get(0). reLines(calaEditLines());
+			EditLines. reLines(calaEditLines());
 		}
 		public void Redo(){
 			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
@@ -415,7 +438,7 @@ public class EditGroup extends RelativeLayout
 			Last.push(next);
 			for(int l:next)
 				EditList.get(l).Redo();
-			EditList.get(0).reLines(calaEditLines());
+			EditLines.reLines(calaEditLines());
 		}
 		
 		abstract class DoForAnyOnce{
@@ -433,7 +456,10 @@ public class EditGroup extends RelativeLayout
 		}
 		
 		public int calaEditHeight(int index){
-			return calaEditLines()*EditLines.getLineHeight();
+			int height=0;
+			for(int i=0;i<index;++i)
+				height+=EditList.get(i).maxHeight();
+			return height;
 		}
 		public int calaEditLines(){
 			int line=0;
@@ -449,6 +475,17 @@ public class EditGroup extends RelativeLayout
 					width=w;
 			}
 			return width;
+		}
+		public wordIndex WAndH(){
+			//获取最宽和最高
+			wordIndex size=new wordIndex();
+			for(Edit e:EditList){
+				wordIndex tmp=e.WAndH();
+				size.end+=tmp.end;
+				if(size.start<tmp.start)
+					size.start=tmp.start;
+			}
+			return size;
 		}
 		
 	}
@@ -545,10 +582,8 @@ public class EditGroup extends RelativeLayout
 			WindowHeight=300;
 		    WindowWidth=900;
 		}
-		
 		super.onConfigurationChanged(config);
 	}
-	
-	
+
 	
 }

@@ -22,7 +22,7 @@ public class CoCoEdit extends CompleteEdit
 {
 	public static int CursorRect_Color=0x25616263;
 	protected boolean isUR=false;
-	public Edit lines;
+	public EditLine lines;
 	private List<EditListener> mlistenerVS;
 	
 	public CoCoEdit(Context cont)
@@ -30,7 +30,7 @@ public class CoCoEdit extends CompleteEdit
 		super(cont);
 		mlistenerVS=new ArrayList<>();
 		mlistenerVS.add(new DefaultCanvaser());
-		this.lines=new Edit(cont);	
+		this.lines=new EditLine(cont);	
 		lines.setFocusable(false);
 	}
 	public CoCoEdit(Context cont,CoCoEdit Edit){
@@ -74,49 +74,10 @@ public class CoCoEdit extends CompleteEdit
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 	}
 
-	public void reLines(int line){
-		int caline= line- lines.getLineCount();
-		if(caline<0){
-			while(caline++<0){
-				delALine();
-			}
-		}
-		else if(caline>0){
-			while(caline-->0){
-				addALine();
-			}
-		}
-	}
-	final public void addLines(int count){
-		while (count-->0)
-		{
-			addALine();
-		} 	 	 
-	}
-	final public void delLines(int count){
-		while (count-->0)
-		{
-			delALine();
-		} 	 	 
-	}
-	final public void addALine()
-	{
-		lines.append(lines.getLineCount()+"\n");
-		lines.setWidth((lines.getLineCount()+ "").length() * (int)lines.getTextSize());
-	}
-	final public void delALine()
-	{
-		String src = lines.getText().toString();
-		int end = src.lastIndexOf('\n', src.length() - 2);
-		if (end != -1)
-			lines.getText().delete(end+1, src.length());
-		lines.setWidth((lines.getLineCount() + "").length() * (int)lines.getTextSize());
-	}
 	
 	public void zoomBy(float size){
-		Text_Size=size;
 		setTextSize(size);
-	    lines.setWidth((lines.getLineCount()+"").length()*(int)lines.getTextSize());
+	    lines.setWidth(lines.maxWidth());
 		lines.setTextSize(size);
 	}
 	
@@ -126,13 +87,13 @@ public class CoCoEdit extends CompleteEdit
 		int lines= getLayout().getLineForOffset(offset);
 		Rect bounds = new Rect();
 		//任何传参取值都必须new
-		wordIndex pos = new wordIndex(0, 0, (byte)0);
+		wordIndex pos = new wordIndex();
 		getLineBounds(lines, bounds);
 	    pos.start=bounds.centerX();
 		pos.end=bounds.centerY();
 
 		int index= tryLine_Start(getText().toString(),offset);
-		pos.start=(int)( (offset- index)*Text_Size);
+		pos.start=(int)((offset- index)*getTextSize());
 
 		return pos;
 	}

@@ -14,7 +14,7 @@ public interface EditListenerRunner
 	
 	public void DrawingForLi(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder,Editable editor,EditDrawerListener li)
 	
-	public String FormatForLi(int start,int end,String src,EditFormatorListener li)
+	public String FormatForLi(int start,int end,String editor,EditFormatorListener li)
 	
 	public void InsertForLi(Editable editor, int nowIndex,EditInsertorListener li)
 	

@@ -87,25 +87,50 @@ public class CompleteEdit extends FormatEdit
 		super.clearListener();
 	}
 
+	protected void callOnopenWindow(ListView Window){
+	}
+	
 	//多线程
-
-	final public void openWindow(ListView Window, int index, ThreadPoolExecutor pool)
+	final public void openWindow(final ListView Window, int index, final ThreadPoolExecutor pool)
 	{
 		if (!Enabled_Complete)
 			return;
-		String wantBefore= getWord(index);
-		String wantAfter = getAfterWord(index);
+		final String wantBefore= getWord(index);
+		final String wantAfter = getAfterWord(index);
 		//获得光标前后的单词，并开始查找
-		Epp.start();
-		List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS,pool);
-		if(Icons!=null){
-		    WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
-		    Window.setAdapter(adapter);
-		}
-		Epp.stop();
-	}
-	final private List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
 		
+		Runnable run = new Runnable(){
+			@Override
+			public void run()
+			{
+				Epp.start();//开始存储
+				List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS);
+				//经过一次查找，Icons里装满了单词
+				if(Icons!=null){
+					final WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
+					Runnable run2=new Runnable(){
+
+						@Override
+						public void run()
+						{
+							Window.setAdapter(adapter);
+							callOnopenWindow(Window);
+							//将单词设置到Window后回收单词
+							Epp.stop();
+						}
+					};
+					post(run2);//将UI任务交给主线程
+				}
+			}
+		};
+		if(pool!=null)
+		    pool.submit(run);//因为含有阻塞，所以将任务交给池子
+		else
+			run.run();
+		
+	}
+	final private List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group){
+		//用多线程在不同集合中找单词
 		if(Runner==null)
 			return null;
 		
@@ -120,6 +145,7 @@ public class CompleteEdit extends FormatEdit
 		if(pool==null)
 			return EditListenerItrator.foreach(Group,run);
 		return EditListenerItrator.foreach(Group,run,pool);
+		//阻塞以获得所有单词
 	}
 	
 	final public static List<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
@@ -200,6 +226,7 @@ public class CompleteEdit extends FormatEdit
 	}
 	public void insertWord(String word, int index, int flag)
 	{
+		IsModify++;
 		try
 		{
 			Editable editor = getText();
@@ -223,7 +250,7 @@ public class CompleteEdit extends FormatEdit
 		}
 		catch (Exception e)
 		{}
-
+		IsModify--;
 	}
 
 

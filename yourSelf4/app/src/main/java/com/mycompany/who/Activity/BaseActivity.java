@@ -23,6 +23,7 @@ public class BaseActivity extends Activity
 	        dismiss_Title_And_ActionBar(this);
 		    dismiss_DownBar(this);
 		}
+		getWindow().setBackgroundDrawable(null);
     }
 
 	public static void dismiss_Title_And_ActionBar(Activity act){

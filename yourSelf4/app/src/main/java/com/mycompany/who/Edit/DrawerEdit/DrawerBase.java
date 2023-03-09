@@ -25,10 +25,9 @@ public abstract class DrawerBase extends Edit
 	//这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_MakeHTML=false;
-	public static int Delayed_Draw = 0;
 	
 	protected ThreadPoolExecutor pool;
-	public int tryLines=2;
+	public int tryLines=1;
 	public String laugua;
 	
 	/* tmp */
@@ -148,18 +147,7 @@ public abstract class DrawerBase extends Edit
 				try{
 				    FindFor(start,end,text,nodes,builder);//寻找nodes
 					if(nodes.size()!=0){
-					    Runnable run= new Runnable(){
-
-							@Override
-							public void run()
-							{
-								Drawing(start,end,nodes,builder);//为nodes染色
-							}
-						};
-						if(Delayed_Draw==0)
-							post(run);
-						else
-							postDelayed(run,Delayed_Draw);
+					    Drawing(start,end,nodes,builder);//染色
 					}
 				}catch(Exception e){}
 			}
@@ -173,7 +161,7 @@ public abstract class DrawerBase extends Edit
 		return "";
 	}
 	
-	public void prepare(final int start,final int end,final String text){
+	final public void prepare(final int start,final int end,final String text){
 		//准备指定文本的颜料
 		Runnable run = new Runnable(){
 

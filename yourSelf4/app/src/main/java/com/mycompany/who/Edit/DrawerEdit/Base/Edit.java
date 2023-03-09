@@ -19,7 +19,6 @@ public class Edit extends EditText
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
 	public static int Text_Color=0xffabb2bf;
-	public float Text_Size=14;
 	
 	static{
 		Ep=new EPool2();
@@ -33,7 +32,6 @@ public class Edit extends EditText
 	public Edit(Context cont,Edit Edit)
 	{
 		super(cont);
-		Text_Size=Edit.Text_Size;
 		config();
 	}
 	
@@ -42,57 +40,81 @@ public class Edit extends EditText
 		setBackgroundResource(0);
 		setTypeface(Typeface.MONOSPACE);
 		setHighlightColor(Selected_Color);
-		setTextSize(Text_Size);
+		setTextSize(14);
 		setLetterSpacing(0.01f);
 		setLineSpacing(0.2f,1.2f);
 		setPadding(0,0,0,0);
 	}
+	
+	public float getTextSize(){
+		return super.getTextSize()/1.6f;
+	}
+	
 	public int getLineCount(){
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
-			return 0;
-		return indexs.size()+1;
+		return String_Splitor.Count('\n',getText().toString())+1;
 	}
 	
 	public int maxHeight(){
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
-			return 0;
-		return (indexs.size()+1)*getLineHeight();
+		return getLineHeight()*(String_Splitor.Count('\n',getText().toString())+1);
 	}
-	
 	public int maxWidth(){
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
-			return 0;
-		float width=0;
+		if(indexs==null||indexs.size()==0){
+			return (int)(getText().toString().length()*getTextSize());
+		}
+		int width=0;
 		int last=0;
 		for(int i: indexs){
-			float w=(i-last)*getTextSize();
+			int w=(i-last);
 			if(w>width)
 				width=w;
 			last=i;
 		}
-		return (int)width;
+		return (int)(width*getTextSize());
 	}
-	
 	public wordIndex WAndH(){
 		wordIndex size=new wordIndex();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
+		if(indexs==null||indexs.size()==0){
+			size.start= (int)(getText().toString().length()*getTextSize());
+			size.end=getLineHeight();
 			return size;
-		float width=0;
+		}
+		int width=0;
 		int last=0;
 		for(int i: indexs){
-			float w=(i-last)*getTextSize();
+			int w=(i-last);
 			if(w>width)
 				width=w;
 			last=i;
 		}
-		size.start=(int)width;
+		size.start=(int)(width*getTextSize());
 		size.end=(indexs.size()+1)*getLineHeight();
 		return size;
 	}
+	
+	public static final wordIndex LAndC(String text){
+		//为外部文本测量行数与最宽的那行字符数
+		wordIndex size=new wordIndex();
+		List<Integer> indexs = String_Splitor.indexsOf('\n',text);
+		if(indexs==null||indexs.size()==0){
+			size.start= (text.length());
+			size.end= 1;
+			return size;
+		}
+		int width=0;
+		int last=0;
+		for(int i: indexs){
+			int w=(i-last);
+			if(w>width)
+				width=w;
+			last=i;
+		}
+		size.start=width;
+		size.end=(indexs.size()+1);
+		return size;
+	}
+	
 
 	final public wordIndex subLines(int startLine){
 		wordIndex j = new wordIndex(0,0,(byte)0);

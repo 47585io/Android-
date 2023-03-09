@@ -50,12 +50,12 @@ public class PageList extends LinearLayout
 			mtabListener.onTabPage(index);
 		//异常情况下，什么也不做
 		//否则把编辑器切换
-		/*
+		
 		if(getOrientation()==LinearLayout.HORIZONTAL)
-		    AnimatorColletion.transtionX(this,getX(),getChildAt(index).getX());
+		    AnimatorColletion.transtionX(this,getX(),getChildAt(index).getLeft());
 		else if(getOrientation()==LinearLayout.VERTICAL){
-			AnimatorColletion.transtionY(this,getY(),getChildAt(index).getY());
-		}*/
+			AnimatorColletion.transtionY(this,getY(),getChildAt(index).getLeft());
+		}
 	}
 	public void delPage(int index)
 	{

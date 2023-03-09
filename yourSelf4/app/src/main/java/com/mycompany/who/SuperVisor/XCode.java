@@ -25,7 +25,7 @@ import java.security.acl.*;
 import com.mycompany.who.View.*;
 
 
-public class XCode extends RelativeLayout
+public class XCode extends LinearLayout
 {
 	
 	private PageList mEditGroupPages;

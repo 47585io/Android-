@@ -13,11 +13,16 @@ import android.graphics.*;
 import com.mycompany.who.Edit.Share.*;
 
 /*
-   在基类上开一些接口
-   另外的，复杂的函数我都设置成了final
+   在基类上开一些接口，另外的，复杂的函数我都设置成了final
+   
+   从现在开始，所有被调函数，例如Drawing，必须自己管理好线程和IsModify安全，然后将真正操作交给另一个函数
+   
+   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 */
 public abstract class DrawerBase2 extends DrawerBase
 {
+	
+	public static int Delayed_Draw = 0;
 	
 	protected EditListener mlistenerF;
 	protected EditListener mlistenerD;
@@ -68,24 +73,46 @@ public abstract class DrawerBase2 extends DrawerBase
 	}
 	
 
-	protected void FindFor(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)
+	protected final void FindFor(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)
 	{
-		Ep.start();
+		//为了安全，禁止重写
+		Ep.start(); //开始记录
+		onFindNodes(start,end,text,nodes,builder);
+	}
+	protected void onFindNodes(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder){
 		if(Runner!=null)
 		    Runner.FindForLi(start, end, text, WordLib, nodes,builder, (EditFinderListener)mlistenerF);
 	}
 
 	@Override
-	protected void Drawing(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder)
+	protected final void Drawing(final int start, final int end, final List<wordIndex> nodes,final SpannableStringBuilder builder)
 	{
-		IsModify++;
-		isDraw = true;
+		//为了安全，禁止重写
+		Runnable run= new Runnable(){
+
+			@Override
+			public void run()
+			{
+				IsModify++;
+				isDraw = true; //会修改文本，isModify
+				onDrawNodes(start,end,nodes,builder);
+				isDraw = false;
+				IsModify--;
+				Ep.stop(); //Draw完后回收nodes
+			}
+		};
+		if(Delayed_Draw==0)
+			post(run);
+		else
+			postDelayed(run,Delayed_Draw);
+		//为了线程安全，涉及UI操作必须抛到主线程	
+	}
+	protected void onDrawNodes(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder){
+		//应该重写这个
 		if(Runner!=null)
 		    Runner.DrawingForLi(start, end, nodes,builder, getText(),(EditDrawerListener)getDrawer());
-	   	IsModify--;
-		isDraw = false;
-		Ep.stop();
 	}
+	
 
 	abstract public void setLuagua(String Lua);
 

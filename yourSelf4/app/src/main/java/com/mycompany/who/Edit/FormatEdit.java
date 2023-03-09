@@ -17,7 +17,6 @@ public class FormatEdit extends DrawerEnd
 {
 	public static boolean Enabled_Format=false;
 	protected boolean isFormat=false;
-	public static int MaxCount=19999;
 	
 	protected EditListener mlistenerM;
 	protected EditListener mlistenerI;
@@ -52,7 +51,7 @@ public class FormatEdit extends DrawerEnd
 			{		
 				//是否启用自动format
 				Insert(start);
-				if (lengthAfter<MaxCount&&text.toString().indexOf('\n', start) != -1)
+				if (text.toString().indexOf('\n', start) != -1)
 				{
 					cale = Format(start, start + lengthAfter);	
 				}
@@ -62,7 +61,7 @@ public class FormatEdit extends DrawerEnd
 
 		//format后才染色
 		super.onTextChanged(text, start, lengthBefore, lengthAfter + cale);
-
+		
 	}
 
 	@Override
@@ -83,17 +82,13 @@ public class FormatEdit extends DrawerEnd
 		return mlistenerI;
 	}
 
-	public int Format(int start, int end)
+	public final int Format(int start, int end)
 	{
-		IsModify++;
-		isFormat = true;
-		//为提升效率，将原文本和目标文本装入buffer
-		//您可以直接通过测量buffer.getSrc()的下标来修改buffer内部
 		if (Runner != null)
 		{
-			String buffer = Runner.FormatForLi(start, end, getText().toString(), (EditFormatorListener)mlistenerM);
-			getText().replace(start, end, buffer);
-			//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
+			IsModify++;
+			isFormat = true;
+			String buffer=onFormat(start,end);
 			isFormat = false;
 			IsModify--;
 			return buffer.length() - (end - start);
@@ -102,19 +97,29 @@ public class FormatEdit extends DrawerEnd
 		else
 			return 0;
 	}
+	protected String onFormat(int start,int end){
+		//为提升效率，将原文本和目标文本装入buffer
+		//您可以直接通过测量buffer.getSrc()的下标来修改buffer内部
 
-	public void Insert(int index)
+		String buffer = Runner.FormatForLi(start, end, getText().toString(), (EditFormatorListener)mlistenerM);
+		getText().replace(start, end, buffer);
+		//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
+		return buffer;
+	}
+
+	public final void Insert(int index)
 	{
 		//插入字符
 		IsModify++;
 		isFormat = true;
-		if(Runner!=null)
-		    Runner.InsertForLi(getText(), index, (EditInsertorListener)mlistenerI);
+		onInsert(index);
 		isFormat = false;
 		IsModify--;
 	}	
-
-
+	protected void onInsert(int index){
+		if(Runner!=null)
+		    Runner.InsertForLi(getText(), index, (EditInsertorListener)mlistenerI);
+	}
 
 
 	final public static class DefaultFormatorListener extends EditFormatorListener
@@ -185,8 +190,8 @@ public class FormatEdit extends DrawerEnd
 		@Override
 		public int dothing_Start(ModifyBuffer editor, int nowIndex, int start, int end)
 		{
-			editor. reSAll("\t", "    ");
-			String src= editor.getSrc();
+			editor. reSAll("\t","    ");
+			String src= editor.toString();
 			nowIndex = src.lastIndexOf(SPILT, nowIndex - 1);
 			if (nowIndex == -1)
 				nowIndex = src.indexOf(SPILT);
@@ -197,7 +202,6 @@ public class FormatEdit extends DrawerEnd
 		@Override
 		public int dothing_End(ModifyBuffer editor, int beforeIndex, int start, int end)
 		{
-
 			return -1;
 		}
 

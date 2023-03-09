@@ -26,9 +26,11 @@ public class MainActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		pool=new ThreadPoolExecutor(2,6,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
+		getWindow().setBackgroundDrawable(null);
+		pool=new ThreadPoolExecutor(5,15,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
 		Group=new EditGroup(this);
 		setContentView(Group);
+		Group.loadSize();
 		Group.AddEdit(".java");
 		Group.setPool(pool);
 		Group.getEditBuilder().setRunner(EditRunnerFactory.getCanvasRunner());

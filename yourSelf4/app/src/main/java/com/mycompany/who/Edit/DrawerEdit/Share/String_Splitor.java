@@ -58,18 +58,39 @@ public class String_Splitor
 	}
 	public static List<Integer> indexsOf(char c,String text){
 		//查找文本中所有出现str的index
-		
 		int index = 0;
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
-		    index = text.indexOf(c,index);
+		    index = text.indexOf(c,index+1);
 			if(index==-1)
 				break;
 			indexs.add(index);
-			index++;
 		}
 		return indexs;
 	}
+	public static int Count(String want,String text){
+		int count=0;
+		int index =0;
+		while(true){
+		    index = text.indexOf(want,index+1);
+			if(index==-1)
+				break;
+			++count;
+		}
+		return count;
+	}
+	public static int Count(char want,String text){
+		int count=0;
+		int index =0;
+		while(true){
+		    index = text.indexOf(want,index+1);
+			if(index==-1)
+				break;
+			++count;
+		}
+		return count;
+	}
+	
 	public static int calaN(String src,int index){
 		int count = 0;
 		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){

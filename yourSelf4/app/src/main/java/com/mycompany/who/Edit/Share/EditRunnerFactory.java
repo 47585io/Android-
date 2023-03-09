@@ -42,7 +42,7 @@ public class EditRunnerFactory
 		}
 
 		@Override
-		public String FormatForLi(int start, int end, String src, EditFormatorListener li)
+		public String FormatForLi(int start, int end,String src, EditFormatorListener li)
 		{
 			// TODO: Implement this method
 			return null;
@@ -120,6 +120,7 @@ public class EditRunnerFactory
 				return src.substring(start, end);
 
 			EditFormatorListener.ModifyBuffer buffer=new EditFormatorListener.ModifyBuffer(start, src, src.substring(start, end));
+			
 			int beforeIndex = 0;
 			int nowIndex=start;
 			nowIndex = total.dothing_Start(buffer, nowIndex, start, end);

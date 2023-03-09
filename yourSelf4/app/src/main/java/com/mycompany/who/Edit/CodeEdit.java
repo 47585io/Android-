@@ -15,38 +15,53 @@ import com.mycompany.who.Edit.Share.*;
 public abstract class CodeEdit extends CoCoEdit
 {
 	protected EditDate stack;
-	
-	public CodeEdit(Context cont){
+
+	public CodeEdit(Context cont)
+	{
 		super(cont);
 		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
 	}
-	public CodeEdit(Context cont,CodeEdit Edit){
-		super(cont,Edit);
+	public CodeEdit(Context cont, CodeEdit Edit)
+	{
+		super(cont, Edit);
 		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
 	}
 
 	@Override
-	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	protected void onTextChanged(final CharSequence text, final int start, final int lengthBefore, final int lengthAfter)
 	{
-		try{
-		super.onTextChanged(text, start, lengthBefore, lengthAfter);
-		}catch(Exception e){}
+		Runnable run = new Runnable(){
+
+			@Override
+			public void run()
+			{
+				try
+				{
+					CodeEdit.super.onTextChanged(text, start, lengthBefore, lengthAfter);
+				}
+				catch (Exception e)
+				{}
+			}
+				
+		};
+		post(run);
+		
 	}
 
 	final public int Uedo_(EditDate.Token token)
 	{
 		IsModify++;
-		isUR=true;
+		isUR = true;
 		int endSelection=0;
 		if (token != null)
 		{
 			//范围限制
-			if(token.start<0)
-				token.start=0;
-			if(token.end>getText().length())
-				token.end=getText().length();
+			if (token.start < 0)
+				token.start = 0;
+			if (token.end > getText().length())
+				token.end = getText().length();
 			ongetUR(token);
 
 			if (token.src == "")
@@ -54,24 +69,24 @@ public abstract class CodeEdit extends CoCoEdit
 				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end).toString());
 				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
 				getText().delete(token.start, token.end);	
-				endSelection=token.start;
+				endSelection = token.start;
 			}
 			else if (token.start == token.end)
 			{
 				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
 				stack.Reput(token.start, token.start + token.src.length(), "");
 				getText().insert(token.start, token.src);
-				endSelection=token.start + token.src.length();
+				endSelection = token.start + token.src.length();
 			}
 			else
 			{
 				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
 				//另外的，则是反向替换某个字符串
 			    getText().replace(token.start, token.end, token.src);
-				endSelection=token.start + token.src.length();
+				endSelection = token.start + token.src.length();
 			}
 		}
-		isUR=false;
+		isUR = false;
 		IsModify--;
 		return endSelection;
 	}
@@ -79,14 +94,14 @@ public abstract class CodeEdit extends CoCoEdit
 	final public int Redo_(EditDate.Token token)
 	{
 		IsModify++;
-		isUR=true;
+		isUR = true;
 		int endSelection=0;
 		if (token != null)
 		{
-			if(token.start<0)
-				token.start=0;
-			if(token.end>getText().length())
-				token.end=getText().length();
+			if (token.start < 0)
+				token.start = 0;
+			if (token.end > getText().length())
+				token.end = getText().length();
 			ongetUR(token);
 
 			if (token.src == "")
@@ -94,24 +109,24 @@ public abstract class CodeEdit extends CoCoEdit
 				stack.put(token.start, token.start , getText().subSequence(token.start, token.end).toString());
 				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
 				getText().delete(token.start, token.end);
-				endSelection=token.start;
+				endSelection = token.start;
 			}
 			else if (token.start == token.end)
 			{
 				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
 				stack.put(token.start, token.start + token.src.length(), "");
 				getText().insert(token.start, token.src);
-				endSelection=token.start + token.src.length();
+				endSelection = token.start + token.src.length();
 			}
 			else
 			{
 				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
 				//另外的，则是反向替换某个字符串
 			    getText().replace(token.start, token.end, token.src);
-				endSelection=token.start + token.src.length();
+				endSelection = token.start + token.src.length();
 		    }
 		}
-		isUR=false;
+		isUR = false;
 		IsModify--;
 		return endSelection;
 	}
@@ -119,7 +134,7 @@ public abstract class CodeEdit extends CoCoEdit
 	final public void Uedo()
 	{
 		//批量Uedo
-		if(stack==null)
+		if (stack == null)
 			return;
 
 		EditDate.Token token;	
@@ -128,8 +143,8 @@ public abstract class CodeEdit extends CoCoEdit
 		{
 			while (true)
 			{
-				token=stack.getLast();
-				endSelection=Uedo_(token);
+				token = stack.getLast();
+				endSelection = Uedo_(token);
 				setSelection(endSelection);
 				//设置光标位置
 				EditDate.Token token2=stack.seeLast();
@@ -148,7 +163,7 @@ public abstract class CodeEdit extends CoCoEdit
 	final public void Redo()
 	{
 		//批量Redo
-		if(stack==null)
+		if (stack == null)
 			return;
 
 		EditDate.Token token;
@@ -157,13 +172,13 @@ public abstract class CodeEdit extends CoCoEdit
 		{
 			while (true)
 			{
-				token=stack.getNext();
-				endSelection=Redo_(token);
+				token = stack.getNext();
+				endSelection = Redo_(token);
 				setSelection(endSelection);
 				EditDate.Token token2=stack.seeNext();
 				if (token2 == null)
 					return;
-				else if ( token2.start == token.end)	
+				else if (token2.start == token.end)	
 					continue;
 				else
 					break;
@@ -172,15 +187,17 @@ public abstract class CodeEdit extends CoCoEdit
 		catch (Exception e)
 		{}
 	}
-	
-	protected void ongetUR(EditDate.Token token){
+
+	protected void ongetUR(EditDate.Token token)
+	{
 	}
-	protected void onPutUR(EditDate.Token token){
+	protected void onPutUR(EditDate.Token token)
+	{
 	}
-	
+
 	public class DefaultText implements TextWatcher
 	{
-		
+
 		/**
 		 * 输入框改变前的内容
 		 *  charSequence 输入前字符串
@@ -205,13 +222,14 @@ public abstract class CodeEdit extends CoCoEdit
 		@Override
 		public void beforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			
-			if (count != 0 && !isDraw)
-			{
-				//在删除\n前，删除行
-				List<Integer> indexs=String_Splitor.indexsOf("\n", str.toString().substring(start, start + count));
-				delLines(indexs.size());
-			}
+			/*
+			 if(count!=0 && !isDraw) 
+			 { 
+			 //在删除\n前，删除行 
+			 List<Integer>indexs=String_Splitor.indexsOf('\n', str.toString().substring(start,start + count)); 
+			 delLines( (indexs.size())); 
+			 }
+			 */
 
 			if (isDraw || isUR)
 			{
@@ -252,12 +270,13 @@ public abstract class CodeEdit extends CoCoEdit
 		@Override
 		public void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
-			if (!isDraw&&lengthAfter != 0){
-				List<Integer> indexs = null;
-				indexs = String_Splitor.indexsOf("\n", text.toString().substring(start, start + lengthAfter));	
-				addLines(indexs.size());
-				//增加行
-			}
+			/*
+			 if (!isDraw&&lengthAfter != 0){
+			 List<Integer> indexs = null;
+			 indexs = String_Splitor.indexsOf('\n', text.toString().substring(start, start + lengthAfter));	
+			 addLines(indexs.size());
+			 //增加行
+			 }*/
 		}
 
 		/**
@@ -266,26 +285,34 @@ public abstract class CodeEdit extends CoCoEdit
 		@Override
 		public void afterTextChanged(Editable p1)
 		{
-			if (IsModify!=0||IsModify2)
+			if (IsModify != 0 || IsModify2)
 				return;
-			openWindow(getWindow(), getSelectionStart(),getPool());
-
-			if (getWindow().getAdapter().getCount() > 0)
-			{
-				wordIndex pos = calc(CodeEdit.this);
-				getWindow().setX(pos.start);
-				getWindow().setY(pos.end);
-			}
-			else
-			{
-				//如果删除字符后没有了单词，则移走
-				getWindow().setX(-9999);
-				getWindow().setY(-9999);
-			}
+			openWindow(getWindow(), getSelectionStart(), getPool());
 		}
-		
+
 	}
-	public TextWatcher getDefultTextListener(){
+
+	@Override
+	protected void callOnopenWindow(ListView Window)
+	{
+		if (getWindow().getAdapter()!=null&&getWindow().getAdapter().getCount()>0)
+		{
+			wordIndex pos = calc(CodeEdit.this);
+			getWindow().setX(pos.start);
+			getWindow().setY(pos.end);
+		}
+		else
+		{
+			//如果删除字符后没有了单词，则移走
+			getWindow().setX(-9999);
+			getWindow().setY(-9999);
+		}
+	}
+	
+	
+	
+	public TextWatcher getDefultTextListener()
+	{
 		return new DefaultText();
 	}
 
