@@ -77,9 +77,13 @@ public abstract class DrawerBase2 extends DrawerBase
 	{
 		//为了安全，禁止重写
 		Ep.start(); //开始记录
-		onFindNodes(start,end,text,nodes,builder);
+		
+		try{
+		    onFindNodes(start,end,text,nodes,builder);
+		}catch(Exception e){}
+		
 	}
-	protected void onFindNodes(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder){
+	protected void onFindNodes(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)throws Exception{
 		if(Runner!=null)
 		    Runner.FindForLi(start, end, text, WordLib, nodes,builder, (EditFinderListener)mlistenerF);
 	}
@@ -94,8 +98,12 @@ public abstract class DrawerBase2 extends DrawerBase
 			public void run()
 			{
 				IsModify++;
-				isDraw = true; //会修改文本，isModify
-				onDrawNodes(start,end,nodes,builder);
+				isDraw = true; //此时会修改文本，isModify
+				
+				try{
+				    onDrawNodes(start,end,nodes,builder);
+				}catch(Exception e){}
+				
 				isDraw = false;
 				IsModify--;
 				Ep.stop(); //Draw完后回收nodes
@@ -107,10 +115,10 @@ public abstract class DrawerBase2 extends DrawerBase
 			postDelayed(run,Delayed_Draw);
 		//为了线程安全，涉及UI操作必须抛到主线程	
 	}
-	protected void onDrawNodes(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder){
+	protected void onDrawNodes(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder)throws Exception{
 		//应该重写这个
 		if(Runner!=null)
-		    Runner.DrawingForLi(start, end, nodes,builder, getText(),(EditDrawerListener)getDrawer());
+	        Runner.DrawingForLi(start, end, nodes,builder, getText(),(EditDrawerListener)getDrawer());
 	}
 	
 

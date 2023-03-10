@@ -6,7 +6,7 @@ import com.mycompany.who.*;
 public class Words
 {
 	//所有单词
-	public static String[] keyword = new String[]{
+	public final static String[] keyword = new String[]{
 		"goto","const",
 		"enum","assert",
 		"package","import",
@@ -26,7 +26,7 @@ public class Words
 		"register","explicit","extern",
 	};
 
-	public static String[] IknowTag= new String[]{	"*",
+	public final static String[] IknowTag= new String[]{	"*",
 		"html",
 		"body",
 		"head",
@@ -131,19 +131,19 @@ public class Words
 		"image",
 		"animateTransform",};
 
-	public static String[] constword = new String[]{"null","true","false","NaN","NULL"};
-	public static char[] fuhao= new char[]{
+	public final static String[] constword = new String[]{"null","true","false","NaN","NULL"};
+	public final static char[] fuhao= new char[]{
 		'(',')','{','}','[',']',
 		'=',';',',','.',':',
 		'+','-','*','/','%',
 		'^','|','&','<','>','?','@',
 		'!','~','\'','\n',' ','\t','#'
 	};
-	public static char[] spilt= new char[]{
+	public final static char[] spilt= new char[]{
         '\n',' ','\t','<','>',
 	};
 
-	public static HashMap<String,String> zhu_key_value = new HashMap<String,String>();
+	public final static HashMap<String,String> zhu_key_value =  new HashMap<String,String>();
 
 	static{
 		sort();

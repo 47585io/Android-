@@ -32,21 +32,14 @@ public abstract class CodeEdit extends CoCoEdit
 	@Override
 	protected void onTextChanged(final CharSequence text, final int start, final int lengthBefore, final int lengthAfter)
 	{
-		Runnable run = new Runnable(){
-
-			@Override
-			public void run()
-			{
+		
 				try
 				{
 					CodeEdit.super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				}
 				catch (Exception e)
 				{}
-			}
-				
-		};
-		post(run);
+			
 		
 	}
 

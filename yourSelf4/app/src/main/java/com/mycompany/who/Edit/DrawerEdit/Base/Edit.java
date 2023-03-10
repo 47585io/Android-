@@ -15,19 +15,15 @@ import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
 public class Edit extends EditText
 {
 	protected static KeyListener listener;
-	public static EPool2 Ep;
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
 	public static int Text_Color=0xffabb2bf;
 	
-	static{
-		Ep=new EPool2();
-	}
 	
 	public Edit(Context cont){
 		super(cont);
 		listener = new EditText(getContext()).getKeyListener();
-		config();
+		config();	
 	}
 	public Edit(Context cont,Edit Edit)
 	{
@@ -47,7 +43,7 @@ public class Edit extends EditText
 	}
 	
 	public float getTextSize(){
-		return super.getTextSize()/1.6f;
+		return super.getTextSize()/1.65f;
 	}
 	
 	public int getLineCount(){

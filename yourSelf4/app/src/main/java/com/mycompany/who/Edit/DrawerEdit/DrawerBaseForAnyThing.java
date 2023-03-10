@@ -16,7 +16,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 	}
 	
 	//Text工厂
-	class AnyThingForText{
+	 class AnyThingForText{
 		//勇往直前的GoTo块，会突进一大段并阻拦其它块
 		public DoAnyThing getGoTo_zhuShi(){
 			//获取注释

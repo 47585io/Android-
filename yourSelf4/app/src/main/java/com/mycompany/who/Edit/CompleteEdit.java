@@ -18,7 +18,7 @@ public class CompleteEdit extends FormatEdit
 	private final EditCompletorBoxes boxes=new EditCompletorBoxes();
 	public static EPool3 Epp;
 	public static boolean Enabled_Complete=false;
-	private static int Search_Bit=0xefffffff;
+	private int Search_Bit=0xefffffff;
 	protected List<EditListener> mlistenerCS;
 	
 	static{
@@ -87,7 +87,7 @@ public class CompleteEdit extends FormatEdit
 		super.clearListener();
 	}
 
-	protected void callOnopenWindow(ListView Window){
+	protected void callOnopenWindow(ListView Window)throws Exception{
 	}
 	
 	//多线程
@@ -104,7 +104,7 @@ public class CompleteEdit extends FormatEdit
 			public void run()
 			{
 				Epp.start();//开始存储
-				List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS);
+				List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),mlistenerCS,pool);
 				//经过一次查找，Icons里装满了单词
 				if(Icons!=null){
 					final WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
@@ -114,7 +114,9 @@ public class CompleteEdit extends FormatEdit
 						public void run()
 						{
 							Window.setAdapter(adapter);
-							callOnopenWindow(Window);
+							try{
+							    callOnopenWindow(Window);
+							}catch(Exception e){}
 							//将单词设置到Window后回收单词
 							Epp.stop();
 						}
@@ -124,27 +126,25 @@ public class CompleteEdit extends FormatEdit
 			}
 		};
 		if(pool!=null)
-		    pool.submit(run);//因为含有阻塞，所以将任务交给池子
+		    pool.execute(run);//因为含有阻塞，所以将任务交给池子
 		else
 			run.run();
 		
 	}
-	final private List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group){
+	final private List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
 		//用多线程在不同集合中找单词
 		if(Runner==null)
 			return null;
 		
 		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
-
+ 
 			@Override
 			public List<Icon> run(EditListener li)
 			{
 				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,(EditCompletorListener)li);
 			}
 		};
-		if(pool==null)
-			return EditListenerItrator.foreach(Group,run);
-		return EditListenerItrator.foreach(Group,run,pool);
+		return EditListenerItrator.foreach(Group,run);
 		//阻塞以获得所有单词
 	}
 	
@@ -224,35 +224,37 @@ public class CompleteEdit extends FormatEdit
 
 		return want;
 	}
-	public void insertWord(String word, int index, int flag)
+	final public void insertWord(String word, int index, int flag)
 	{
 		IsModify++;
 		try
 		{
-			Editable editor = getText();
-			wordIndex tmp = tryWordSplit(editor.toString(), index);
-			wordIndex tmp2 = tryWordSplitAfter(getText().toString(), index);
-
-			getText().replace(tmp.start, tmp2.end, word);
-			setSelection(tmp.start + word.length());
-			//把光标移动到最后
-
-			if (flag == 3)
-			{
-				getText().insert(getSelectionStart(), "(");
-			}
-			else if (flag == 5)
-			{
-				if (getText().toString().charAt(tmp.start - 1) != '<')
-					getText().insert(tmp.start, "<");
-			}
-			//函数额外插入字符
+			onInsertword(word,index,flag);
 		}
 		catch (Exception e)
 		{}
 		IsModify--;
 	}
+	protected void onInsertword(String word,int index,int flag){
+		Editable editor = getText();		
+		wordIndex tmp = tryWordSplit(editor.toString(), index);
+		wordIndex tmp2 = tryWordSplitAfter(getText().toString(), index);
+		
+		editor.replace(tmp.start, tmp2.end, word);
+		setSelection(tmp.start + word.length());
+		//把光标移动到最后
 
+		if (flag == 3)
+		{
+			editor.insert(getSelectionStart(), "(");
+		}
+		else if (flag == 5)
+		{
+			if (editor.toString().charAt(tmp.start - 1) != '<')
+				editor.insert(tmp.start, "<");
+		}
+		//函数额外插入字符
+	}
 
     final public class EditCompletorBoxes
 	{ 

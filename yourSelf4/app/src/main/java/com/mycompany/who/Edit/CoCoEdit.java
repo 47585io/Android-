@@ -59,8 +59,10 @@ public class CoCoEdit extends CompleteEdit
 		Rect bounds = new Rect();
 		getLineBounds(lines, bounds);
 		if(Runner!=null){
+			try{
 		    for(EditListener li:getCanvaserList())
 		        Runner.CanvaserForLi(this,canvas,paint,bounds,(EditCanvaserListener)li);
+			}catch(Exception e){}
 		}
 		super.onDraw(canvas);
     }

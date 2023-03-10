@@ -1,4 +1,5 @@
-package com.mycompany.who.Edit.Share;
+package com.mycompany.who.Edit.DrawerEdit.Share;
+
 import com.mycompany.who.*;
 import com.mycompany.who.Edit.*;
 import java.io.*;
@@ -9,6 +10,12 @@ public class Share
 	public static int setbitTo_0S(int src,byte...indexs){
 		for(byte index:indexs){
 			src=setbitTo_0(src,index);
+		}
+		return src;
+	}
+	public static int setbitTo_1S(int src,byte...indexs){
+		for(byte index:indexs){
+			src=setbitTo_1(src,index);
 		}
 		return src;
 	}
@@ -26,7 +33,7 @@ public class Share
 		else
 			return true;
 	}
-	
+
 	public final static byte icon_key=1;
 	public final static byte icon_villber=2;
 	public final static byte icon_func=3;
@@ -34,8 +41,8 @@ public class Share
 	public final static byte icon_tag=5;
 	public final static byte icon_obj=8;
 	public final static byte icon_default=-128;
-	
-	
+
+
 	public static int getWordIcon(byte flag){
 		switch(flag){
 				//关键字，变量，函数，类型，标签，默认
@@ -59,5 +66,5 @@ public class Share
 
 		}
 	}
-	
+
 }

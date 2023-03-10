@@ -22,25 +22,26 @@ public class EditGroup extends LinearLayout
 {
 	
 	//为提升编辑器效率，增加EditGroup
-	//编辑器卡顿主要原因是单个编辑器文本过多造成的遍历刷新卡顿
+	//编辑器卡顿主要原因是单个编辑器文本过多造成的刷新卡顿
 	//解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
 	
 	//编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
 	//解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
 	
-	public static int WindowHeight=300;
-	public static int WindowWidth=600;
-	public static int MaxLine=1000;
+	public static int MaxLine=100;
+	public int WindowHeight=600, WindowWidth=600;
+	public int PortWindowHeight=600,PortWindowWidth=600,LandWindowHeight=300,LandWindowWidth=900;
+	public int selfWidth,selfHeight;
 	public String path;
 	private int EditFlag=0;
 	private int historyId;
 	
-	protected ScrollView EditScro;
-	protected HorizontalScrollView EdithScro;
-	protected LinearLayout ForEdit;
-	protected LinearLayout ForEditSon;
-	protected EditLine EditLines;
-	protected ListView mWindow;
+	public ScrollView EditScro;
+	public HorizontalScrollView EdithScro;
+	public LinearLayout ForEdit;
+	public LinearLayout ForEditSon;
+	public EditLine EditLines;
+	public ListView mWindow;
 	
 	private EditBuilder builder;
 	private EditFactory2 mfactory;
@@ -98,11 +99,17 @@ public class EditGroup extends LinearLayout
 		CodeEdit.Enabled_Format = true;
 		CodeEdit.Enabled_Drawer = true;
 		CodeEdit.Enabled_Complete = true;
-		
 	}
 	
-	public void loadSize(){
-		trim(this,-1,-1);
+	public void loadSize(int width,int height,boolean portOrland){
+		selfWidth=width;
+		selfHeight=height;
+		PortWindowWidth=PortWindowHeight=(int)(width*0.95);
+		LandWindowWidth=(int)(height*0.7);
+		LandWindowHeight=(int)(width*0.3);
+	
+		trim(this,width,height);
+		trim(mWindow,PortWindowWidth,PortWindowHeight);
 	}
 	
 	public EditBuilder getEditBuilder(){
@@ -122,19 +129,21 @@ public class EditGroup extends LinearLayout
 		RCodeEdit Edit;
 		if(EditList.size()==0){
 	        Edit = new RCodeEdit(getContext());
-			configEdit(Edit,name);
+			configEdit(Edit,".java");
 			Edit.lines=EditLines;
 			path=name;
 		}
 		else{
-			Edit= new RCodeEdit(getContext(),(EditList.get(0)));	
+			Edit=new RCodeEdit(getContext(),EditList.get(0));
 		}
 		Edit.setOnClickListener(new Click());
 		return Edit;
 	}
 	protected void configEdit(CodeEdit Edit,String name)
 	{
-		
+		Edit.setPool(pool);
+		Edit.setRunner(EditRunnerFactory.getCanvasRunner());
+		com.mycompany.who.Share.Share.setEdit(Edit,name);
 	}
 	
 	
@@ -150,20 +159,20 @@ public class EditGroup extends LinearLayout
 		//为两个Edit的父元素扩展空间，一个Lines的父元素ForEdit，一个ForEditSon
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 	}
-	final protected void trim(View Father,int width,int height){
+	final public static void trim(View Father,int width,int height){
 		//调整空间
 		ViewGroup.LayoutParams p = Father.getLayoutParams();
 		p.width=width;
 		p.height=height;
 		Father.setLayoutParams(p);
 	}
-	final protected void trimAdd(View Father,int addWidth,int addHeight){
+	final public static void trimAdd(View Father,int addWidth,int addHeight){
 		ViewGroup.LayoutParams p = Father.getLayoutParams();
 		p.width+=addWidth;
 		p.height+=addHeight;
 		Father.setLayoutParams(p);
 	}
-	final protected void trimXel(View Father,int WidthX,int HeightX){
+	final public static void trimXel(View Father,int WidthX,int HeightX){
 		ViewGroup.LayoutParams p = Father.getLayoutParams();
 		p.width*=WidthX;
 		p.height*=HeightX;
@@ -213,56 +222,15 @@ public class EditGroup extends LinearLayout
 			//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 			//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
 			//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
-			//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的
-			//由于onTextChanged是文本变化后调用的，所以文本是对的
-			//另外的，text参数其实就是EditText内部的SpanbleStringBuilder，它们是同步的
+			//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
 			
 			if(IsModify!=0||IsModify2)
 				return ;
 			//已经被修改，不允许再修改
 		
 			EditFlag++;		
-			
-			/*关键代码*/
-			int lineCount= getLineCount();
-			if(lineCount> MaxLine){
-				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
-				wordIndex j = subLines(MaxLine);
-				String src = getText().toString().substring(j.start,j.end);
-				getText().delete(j.start,j.end);	
-				
-				if(start+lengthAfter<j.start)
-					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
-				else{
-				    super.onTextChanged(text, start, lengthBefore, j.start-start);	
-				}	
-				//删除后，只把本次未被截取的前半部分染色，
-				//它可能在MAX行之内，即正常染色
-				//也可能在MAX行之外，即只染色start～MAX行之间
-
-				if(EditList.size()-1<=index)
-					AddEdit("");
-				//若无编辑器，则添加一个
-				EditList.get(index+1).getText().insert(0,src);
-				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
-				//不难看出，这样递归回调，最后会回到第一个编辑器
-
-				if(start+lengthAfter<j.start){
-					requestFocus();
-					//setSelection(start+lengthAfter);
-				}	
-				//若本次输入的内容在自己之内，最后requestFocus，否则留着给下个
-			}
-			else if(start==0&&index>0&&lengthBefore!=0&&lengthAfter==0){
-				EditList.get(index-1).requestFocus();
-				EditList.get(index-1).setSelection(EditList.get(index-1).getText().length());
-				//已经删除到头，切换到上个
-			}
-			else{
-			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
-				//否则正常调用
-			}
-			
+			sendOutLineToNext(text,start,lengthBefore,lengthAfter);		
+			//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
 			EditFlag--;
 			
 			if(EditFlag==0){
@@ -273,6 +241,38 @@ public class EditGroup extends LinearLayout
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 	        //先开辟一个空间，待之后存储
 		
+		}
+		
+		protected void sendOutLineToNext(CharSequence text,int start, int lengthBefore, int lengthAfter){
+			/*关键代码*/
+			int lineCount= getLineCount();
+			if(lineCount> MaxLine){
+				wordIndex j = subLines(MaxLine);
+				String src = getText().toString().substring(j.start,j.end);
+				getText().delete(j.start,j.end);	
+				//截取多余的行
+				
+				if(start+lengthAfter<j.start)
+					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
+				else{
+				    super.onTextChanged(text, start, lengthBefore, j.start-start);	
+				}	
+				//截取后，只把本次未被截取的前半部分染色，
+				//它可能在MAX行之内，即正常染色
+				//也可能在MAX行之外，即只染色start～MAX行之间
+				
+				if(EditList.size()-1<=index)
+					AddEdit("");
+				//若无编辑器，则添加一个
+				EditList.get(index+1).getText().insert(0,src);
+				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
+				//不难看出，这样递归回调，最后会回到第一个编辑器
+	
+			}
+			else{
+			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
+				//否则正常调用
+			}
 		}
 
 		@Override
@@ -290,7 +290,6 @@ public class EditGroup extends LinearLayout
 
 			mWindow.setLayoutParams(prams);
 			
-			
 			//请求测量
 			historyId=((RCodeEdit)Edit).index;
 			//本次窗口谁请求，单词给谁
@@ -298,11 +297,11 @@ public class EditGroup extends LinearLayout
 			wordIndex pos = Edit.getScrollCursorPos(offset,EdithScro.getScrollX(),EditScro.getScrollY()-EditGroup.this.builder.calaEditHeight(index));
 		
 			pos.start+=EditLines.getWidth();
-			if (pos.start + mWindow.getWidth() > getWidth())
-				pos.start = getWidth() - mWindow.getWidth();
+			if (pos.start + mWindow.getWidth() > selfWidth)
+				pos.start = selfWidth - mWindow.getWidth();
 			//如果x超出屏幕，总是设置在最右侧
 
-			if (pos.end + mWindow.getHeight()+Edit.getLineHeight() > getHeight())
+			if (pos.end + mWindow.getHeight()+Edit.getLineHeight() > selfHeight)
 				pos.end = pos.end-mWindow.getHeight()-Edit.getLineHeight();
 			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
 			else
@@ -322,7 +321,7 @@ public class EditGroup extends LinearLayout
 		}
 	}
 	
-	public class EditBuilder{
+	final public class EditBuilder{
 		//通过EditBuilder直接操作Edit
 		private wordIndex start;
 		private wordIndex end;
@@ -524,7 +523,7 @@ public class EditGroup extends LinearLayout
 		}
 	}
 	
-	class EditFactory2 extends EditFactory
+	final class EditFactory2 extends EditFactory
 	{
 
 		@Override
@@ -546,7 +545,7 @@ public class EditGroup extends LinearLayout
 		}
 	}
 
-	private int MeasureWindowHeight()
+	public int MeasureWindowHeight()
 	{
 		int height=0;
 		int i;
@@ -571,18 +570,32 @@ public class EditGroup extends LinearLayout
 	
 	
 	@Override
-	protected void onConfigurationChanged(Configuration config)
+	protected void onConfigurationChanged(final Configuration config)
 	{
-		if (config.orientation == Configuration.ORIENTATION_PORTRAIT)
-		{
-		    WindowHeight=600;
-		    WindowWidth=600;
-		}
-		else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE){
-			WindowHeight=300;
-		    WindowWidth=900;
-		}
-		super.onConfigurationChanged(config);
+		Runnable run = new Runnable(){
+
+			@Override
+			public void run()
+			{
+				int sizeMask=selfWidth^selfHeight;
+				selfWidth=(sizeMask)^selfWidth;
+				selfHeight=(sizeMask)^selfHeight;
+				trim(EditGroup. this,selfWidth,selfHeight);
+				
+				if (config.orientation == Configuration.ORIENTATION_PORTRAIT)
+				{
+					WindowHeight=PortWindowHeight;
+					WindowWidth=PortWindowWidth;
+				}
+				else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE){
+					WindowHeight=LandWindowHeight;
+					WindowWidth=LandWindowWidth;
+				}
+				EditGroup. super.onConfigurationChanged(config);
+			}
+		};
+		post(run);//应该尽量使切屏顺畅
+		
 	}
 
 	

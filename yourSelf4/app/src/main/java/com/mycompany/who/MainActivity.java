@@ -27,13 +27,35 @@ public class MainActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
-		pool=new ThreadPoolExecutor(5,15,1000,TimeUnit.MILLISECONDS,new LinkedBlockingQueue());
+		init();
 		Group=new EditGroup(this);
 		setContentView(Group);
-		Group.loadSize();
+		Group.loadSize(1000,2000,true);
 		Group.AddEdit(".java");
 		Group.setPool(pool);
 		Group.getEditBuilder().setRunner(EditRunnerFactory.getCanvasRunner());
+	}
+	
+	protected void init(){
+		RejectedExecutionHandler rejected = new RejectedExecutionHandler(){
+
+			@Override
+			public void rejectedExecution(Runnable p1, ThreadPoolExecutor p2)
+			{
+				try {
+					// 等待1秒后，尝试将当前被拒绝的任务重新加入线程队列
+					// 此时主线程是会被阻塞的
+					Thread.sleep(1000);
+					p2.execute(p1);
+				} catch (Exception e) {
+				}
+			}
+		};
+		// 将线程池队列设置为有界队列
+		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
+		// 初始化线程池
+		pool = new ThreadPoolExecutor(5, 15, 0, TimeUnit.SECONDS, queue, rejected);
+
 	}
 
 	@Override

@@ -13,6 +13,7 @@ import java.util.*;
 
 public class EditRunnerFactory
 {
+	//获取安全的Runner
 	public static EditListenerRunner getDrawerRunner(){
 		return new DR();
 	}
@@ -91,7 +92,7 @@ public class EditRunnerFactory
 			}
 			catch (Exception e)
 			{
-				Log.e("Finding Error", li.toString());
+				Log.e("Finding Error", li.toString()+e.toString());
 			}
 		}
 
@@ -123,22 +124,23 @@ public class EditRunnerFactory
 			
 			int beforeIndex = 0;
 			int nowIndex=start;
-			nowIndex = total.dothing_Start(buffer, nowIndex, start, end);
 			try
 			{
+			    nowIndex = total.dothing_Start(buffer, nowIndex, start, end);
+			
 				for (;nowIndex < end && nowIndex != -1;)
 				{
 					beforeIndex = nowIndex;
 					nowIndex = total.dothing_Run(buffer, nowIndex);
 				}
+			    nowIndex =  total.dothing_End(buffer, beforeIndex, start, end);		
 			}
 			catch (IndexOutOfBoundsException e)
 			{
 				Log.e("Formating Error", total.toString());
 				return src.substring(start, end);
+				//格式化的过程中出现了问题，返回原字符串
 			}
-			nowIndex =  total.dothing_End(buffer, beforeIndex, start, end);			
-
 			return buffer.toString();
 		}
 
@@ -167,7 +169,7 @@ public class EditRunnerFactory
 			List<String> words = null;
 			List<Icon> Adapter=new ArrayList<>();
 			if(!EditListener.Enabled(li))
-				return null;
+				return Adapter;
 
 			try{
 				lib = li.onBeforeSearchWord();

@@ -41,7 +41,6 @@ public class DrawerEnd extends DrawerBaseForLuagua
 	public DrawerEnd(Context cont,DrawerEnd Edit){
 		super(cont,Edit);
 		mfactory =new FinderFactory();
-		setLuagua(Edit.laugua);
 	}
 	
 	

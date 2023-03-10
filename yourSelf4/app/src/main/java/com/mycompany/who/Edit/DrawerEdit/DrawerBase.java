@@ -9,6 +9,7 @@ import java.util.*;
 import android.util.*;
 import com.mycompany.who.Edit.DrawerEdit.Base.*;
 import java.util.concurrent.*;
+import com.mycompany.who.Edit.Share.*;
 
 
 public abstract class DrawerBase extends Edit
@@ -16,6 +17,7 @@ public abstract class DrawerBase extends Edit
 	
 	//一百行代码实现代码染色
 	protected OtherWords WordLib;
+	protected EPool2 Ep;
 	protected boolean isDraw=false;
 	protected int IsModify;
 	protected boolean IsModify2;
@@ -25,7 +27,6 @@ public abstract class DrawerBase extends Edit
 	//这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_MakeHTML=false;
-	
 	protected ThreadPoolExecutor pool;
 	public int tryLines=1;
 	public String laugua;
@@ -37,11 +38,13 @@ public abstract class DrawerBase extends Edit
 	DrawerBase(Context cont){
 	 	super(cont);
 		WordLib=new OtherWords(6);
+		Ep=new EPool2();
 	}
 	DrawerBase(Context cont,DrawerBase Edit){
 		super(cont,Edit);
 		pool = Edit. pool;
 		this.WordLib=Edit.WordLib;	
+		Ep=new EPool2();
 	}
 
 	abstract protected void FindFor(int start,int end,String text,List<wordIndex> nodes,SpannableStringBuilder builder)
@@ -152,8 +155,9 @@ public abstract class DrawerBase extends Edit
 				}catch(Exception e){}
 			}
 		};
-		if(pool!=null)
-		    pool.submit(run);
+		if(pool!=null){
+		    pool.execute(run);
+		}
 		else
 			run.run();
 			//如果有pool，在子线程中执行
@@ -176,7 +180,7 @@ public abstract class DrawerBase extends Edit
 			}
 		};
 		if(pool!=null)
-		    pool.submit(run);
+		    pool.execute(run);
 		else
 			run.run();
 	}
@@ -234,7 +238,7 @@ public abstract class DrawerBase extends Edit
 	}
 	
 	
-	final public static wordIndex tryWord(String src,int index){
+	final public wordIndex tryWord(String src,int index){
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -250,7 +254,7 @@ public abstract class DrawerBase extends Edit
 		return tmp;
 	}
 	
-	final public static wordIndex tryWordAfter(String src,int index){
+	final public  wordIndex tryWordAfter(String src,int index){
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -292,7 +296,7 @@ public abstract class DrawerBase extends Edit
 		return end;
 	}
 	
-	final public static wordIndex tryWordSplit(String src,int nowIndex){
+	final public  wordIndex tryWordSplit(String src,int nowIndex){
 		//试探纯单词
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
@@ -306,7 +310,7 @@ public abstract class DrawerBase extends Edit
 		}
 		return tmp;
 	}
-	final public static wordIndex tryWordSplitAfter(String src,int index){
+	final public  wordIndex tryWordSplitAfter(String src,int index){
 		//试探纯单词
 	    wordIndex tmp = Ep.get();
 		try{
@@ -346,24 +350,24 @@ public abstract class DrawerBase extends Edit
 	public HashMap<String,String> get_zhu(){
 		return WordLib.zhu_key_value;
 	}
-	public TreeSet<String> getLastfunc(){
-		return WordLib.mdates.get(0);
+	public Collection<String> getLastfunc(){
+		return WordLib.mdates.get(WordLib.words_func);
 	}
-	public TreeSet<String> getHistoryVillber(){
-		return WordLib.mdates.get(1);
+	public Collection<String> getHistoryVillber(){
+		return WordLib.mdates.get(WordLib.words_vill);
 	}
-	public TreeSet<String> getThoseObject(){
-		return WordLib.mdates.get(2);
+	public Collection<String> getThoseObject(){
+		return WordLib.mdates.get(WordLib.words_obj);
 	}
-	public TreeSet<String> getBeforetype(){
-		return WordLib.mdates.get(3);
+	public Collection<String> getBeforetype(){
+		return WordLib.mdates.get(WordLib.words_type);
 	}
 
-	public TreeSet<String> getTag(){
-		return WordLib.mdates.get(4);
+	public Collection<String> getTag(){
+		return WordLib.mdates.get(WordLib.words_tag);
 	}
-	public TreeSet<String> getAttribute(){
-		return WordLib.mdates.get(5);
+	public Collection<String> getAttribute(){
+		return WordLib.mdates.get(WordLib.words_attr);
 	}
 	
 }

@@ -36,7 +36,7 @@ public abstract class EPool<T>
 	    //开始记录
 		isStart=true;
 	}
-	synchronized public void stop(){
+	public void stop(){
 		isStart=false;
 		recyle(size);
 		size=0;
