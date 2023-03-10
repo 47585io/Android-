@@ -6,7 +6,7 @@ import com.mycompany.who.*;
 public class Words
 {
 	//所有单词
-	public final static String[] keyword = new String[]{
+	protected String[] keyword = new String[]{
 		"goto","const",
 		"enum","assert",
 		"package","import",
@@ -26,7 +26,7 @@ public class Words
 		"register","explicit","extern",
 	};
 
-	public final static String[] IknowTag= new String[]{	"*",
+	protected String[] IknowTag= new String[]{	"*",
 		"html",
 		"body",
 		"head",
@@ -131,7 +131,7 @@ public class Words
 		"image",
 		"animateTransform",};
 
-	public final static String[] constword = new String[]{"null","true","false","NaN","NULL"};
+	protected String[] constword = new String[]{"null","true","false","NaN","NULL"};
 	public final static char[] fuhao= new char[]{
 		'(',')','{','}','[',']',
 		'=',';',',','.',':',
@@ -143,9 +143,10 @@ public class Words
         '\n',' ','\t','<','>',
 	};
 
-	public final static HashMap<String,String> zhu_key_value =  new HashMap<String,String>();
+	public static Map<String,String> zhu_key_value;
 
 	static{
+		zhu_key_value= Collections.synchronizedMap(new HashMap<String,String>());
 		sort();
 		zhu_key_value.put("//","\n");
 		zhu_key_value.put("/*","*/");
@@ -155,10 +156,12 @@ public class Words
 	public static void sort(){
 		Arrays.sort(fuhao);
 		Arrays.sort(spilt);
+	}
+
+	public Words(){
 		Arrays.sort(keyword);
 		Arrays.sort(constword);
 		Arrays.sort(IknowTag);
 	}
-
 
 }

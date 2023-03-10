@@ -35,7 +35,7 @@ public class String_Splitor
 		}
 		return true;
 	}
-	public static String indexOfKey(String str,int nowIndex,HashMap<String,String> zhu_key_value){
+	public static String indexOfKey(String str,int nowIndex,Map<String,String> zhu_key_value){
 		for(String key: zhu_key_value.keySet()){
 		    if(str.indexOf(key,nowIndex)==nowIndex)
 				return key;

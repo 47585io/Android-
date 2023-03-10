@@ -42,6 +42,7 @@ public class MainActivity extends Activity
 			@Override
 			public void rejectedExecution(Runnable p1, ThreadPoolExecutor p2)
 			{
+				//制定拒绝策略，避免线程池溢出后直接丢弃任务
 				try {
 					// 等待1秒后，尝试将当前被拒绝的任务重新加入线程队列
 					// 此时主线程是会被阻塞的
@@ -54,7 +55,7 @@ public class MainActivity extends Activity
 		// 将线程池队列设置为有界队列
 		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
 		// 初始化线程池
-		pool = new ThreadPoolExecutor(5, 15, 0, TimeUnit.SECONDS, queue, rejected);
+		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 
 	}
 

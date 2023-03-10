@@ -16,26 +16,24 @@ import android.graphics.*;
 public class CompleteEdit extends FormatEdit
 {
 	private final EditCompletorBoxes boxes=new EditCompletorBoxes();
-	public static EPool3 Epp;
+	public EPool3 Epp;
 	public static boolean Enabled_Complete=false;
 	private int Search_Bit=0xefffffff;
 	protected List<EditListener> mlistenerCS;
-	
-	static{
-		Epp=new EPool3();
-	}
 	
 	public CompleteEdit(Context cont)
 	{
 		super(cont);	
 		mlistenerCS = new ArrayList<>();
 		trimListener();
+		Epp=new EPool3();
 	}
 	public CompleteEdit(Context cont, CompleteEdit Edit)
 	{
 		super(cont, Edit);
 		mlistenerCS=Edit.getCompletorList();
 		Search_Bit = Edit.Search_Bit;
+		Epp=new EPool3();
 	}
     
 	public void trimListener()
@@ -184,7 +182,7 @@ public class CompleteEdit extends FormatEdit
 		return words;
 	}
 
-	final public static void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
+	final public void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
 	{
 		//排序并添加一组的单词块
 		if (words == null || words.size() == 0)
@@ -266,7 +264,7 @@ public class CompleteEdit extends FormatEdit
 				@Override
 				public Collection<String> onBeforeSearchWord()
 				{
-					return toColletion(getKeyword());
+					return getKeyword();
 				}
 
 				@Override
@@ -287,7 +285,7 @@ public class CompleteEdit extends FormatEdit
 					if (Share.getbit(Search_Bit, Colors.color_attr))
 						words.addAll(getAttribute());
 					if(Share.getbit(Search_Bit, Colors.color_const))
-					    words.addAll(toColletion(getConstword()));
+					    words.addAll(getConstword());
 					
 					return words;
 				}
@@ -391,10 +389,7 @@ public class CompleteEdit extends FormatEdit
 				{
 					if (Share.getbit(Search_Bit, Colors.color_tag))
 					{
-						List<String> words=new ArrayList<>();
-						words.addAll(toColletion(getIknowtag()));
-						words.addAll(getTag());	
-						return words;
+						return getTag();
 					}
 					return null;
 				}

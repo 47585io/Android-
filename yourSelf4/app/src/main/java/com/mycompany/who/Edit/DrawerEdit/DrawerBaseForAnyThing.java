@@ -223,7 +223,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 				{
 					//找到一个单词 或者 未找到单词就遇到特殊字符，就把之前累计字符串清空
 					//为了节省时间，将更简单的条件放前面，触发&&的断言机制
-					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&src.charAt(nowIndex+1)!='_'&&Array_Splitor.indexOf(nowWord.toString(),getKeyword())!=-1){
+					if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&src.charAt(nowIndex+1)!='_'&&getKeyword().contains(nowWord.toString())){
 						//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
 						wordIndex node= Ep.get();
 						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_key);
@@ -231,7 +231,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 						nowWord.delete(0,nowWord.length());
 					    return nowIndex;
 					}
-					else if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&Array_Splitor.indexOf(nowWord.toString(),getConstword())!=-1){
+					else if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getConstword().contains(nowWord.toString())){
 						//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
 						wordIndex node= Ep.get();
 						node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_const);
@@ -408,15 +408,13 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 				@Override
 				public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 				{	
-				   	if(!String_Splitor.IsAtoz(src.charAt(nowIndex+1))){
-						int index = Array_Splitor.indexOf(nowWord.toString(),WordLib.keyword);
-					    if(index==-1)
-							return -1;
-					    if(WordLib.keyword[index]=="class"
-						   ||WordLib.keyword[index]=="new"
-						   ||WordLib.keyword[index]=="extends"
-						   ||WordLib.keyword[index]=="implements"
-						   ||WordLib.keyword[index]=="interface"){
+				   	if(!String_Splitor.IsAtoz(src.charAt(nowIndex+1))&&getKeyword().contains(nowWord.toString())){
+						String Word=nowWord.toString();
+					    if(Word.equals("class")
+						   ||Word.equals("new")
+						   ||Word.equals("extends")
+						   ||Word.equals("implements")
+						   ||Word.equals("interface")){
 							wordIndex tmp=tryWordAfter(src,nowIndex+1);
 							getBeforetype().add(src.substring(tmp.start,tmp.end));
 							return tmp.end-1;
@@ -519,7 +517,7 @@ public abstract class DrawerBaseForAnyThing extends DrawerBase2
 
 					if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1))
 						&& src.charAt(tryLine_End(src, nowIndex) - 1) == '{'
-						&&(getTag().contains(nowWord.toString()) || Array_Splitor.indexOf(nowWord.toString(), getIknowtag()) != -1))
+						&&(getTag().contains(nowWord.toString())))
 					{
 						//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
 						wordIndex node=Ep.get();

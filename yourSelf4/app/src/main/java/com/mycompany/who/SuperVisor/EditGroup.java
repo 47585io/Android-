@@ -28,7 +28,7 @@ public class EditGroup extends LinearLayout
 	//编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
 	//解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
 	
-	public static int MaxLine=100;
+	public static int MaxLine=1500;
 	public int WindowHeight=600, WindowWidth=600;
 	public int PortWindowHeight=600,PortWindowWidth=600,LandWindowHeight=300,LandWindowWidth=900;
 	public int selfWidth,selfHeight;

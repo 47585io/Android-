@@ -45,7 +45,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		@Override
 		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
-
+			clearRepeatNode(nodes,end);
 		}
 	}
 	
@@ -55,7 +55,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		@Override
 		public void OnClearFindNodes(int start, int end, String text, List<wordIndex> nodes)
 		{
-			// TODO: Implement this method
+			clearRepeatNode(nodes,end);
 		}
 
 
@@ -150,7 +150,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		@Override
 		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
-			clearRepeatNode(nodes);	
+			clearRepeatNode(nodes,end);	
 		}
 	}
 	
@@ -195,6 +195,7 @@ abstract public class DrawerBaseForLuagua extends DrawerBaseForAnyThing
 		@Override
 		public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 		{
+			clearRepeatNode(nodes,end);
 			clearRepeatNodeForCSS(text,nodes);
 		}
 		

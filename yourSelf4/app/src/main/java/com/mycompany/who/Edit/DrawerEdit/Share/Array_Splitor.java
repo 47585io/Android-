@@ -94,7 +94,7 @@ public class Array_Splitor
 				return start;
 		return -1;
 	}
-
+	
 	public static List<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
 		//查找数组中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.length==0)

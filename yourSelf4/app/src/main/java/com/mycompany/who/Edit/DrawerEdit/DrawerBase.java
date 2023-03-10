@@ -113,12 +113,12 @@ public abstract class DrawerBase extends Edit
 		return arr.toString();
 	}
 
-	public static void clearRepeatNode(List<wordIndex> nodes){
+	public static void clearRepeatNode(List<wordIndex> nodes,int end){
 		//清除优先级低且位置重复的node
 		int i,j;
 		for(i=0;i<nodes.size();i++){
 			wordIndex now = nodes.get(i);
-			if(now.start==now.end){
+			if(now.start==now.end||now.start>end||now.end>end){
 				nodes.remove(i--);
 				continue;
 			}
@@ -332,14 +332,11 @@ public abstract class DrawerBase extends Edit
 	
 	//根据不同情况，返回不同的单词
 	
-	public String[] getKeyword(){
-		return WordLib.keyword;
+	public Collection<String> getKeyword(){
+		return WordLib.mdates.get(WordLib.words_key);
 	}
-	public String[] getConstword(){
-		return WordLib.constword;
-	}
-	public String[] getIknowtag(){
-		return WordLib.IknowTag;
+	public Collection<String> getConstword(){
+		return WordLib.mdates.get(WordLib.words_const);
 	}
 	public char[] getFuhao(){
 		return WordLib.fuhao;
@@ -347,7 +344,7 @@ public abstract class DrawerBase extends Edit
 	public char[] getSpilt(){
 		return WordLib.spilt;
 	}
-	public HashMap<String,String> get_zhu(){
+	public Map<String,String> get_zhu(){
 		return WordLib.zhu_key_value;
 	}
 	public Collection<String> getLastfunc(){
