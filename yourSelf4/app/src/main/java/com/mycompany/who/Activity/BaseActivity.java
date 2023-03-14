@@ -9,6 +9,7 @@ import android.widget.*;
 import com.mycompany.who.Edit.*;
 import android.content.res.*;
 import android.graphics.*;
+import com.mycompany.who.Edit.Base.*;
 
 public class BaseActivity extends Activity
 {
@@ -105,7 +106,7 @@ public class BaseActivity extends Activity
 		@Override
 		public void show()
 		{
-			CodeEdit.openInputor(text.getContext(),text);
+			Edit.openInputor(text.getContext(),text);
 			super.show();
 		}	
 		

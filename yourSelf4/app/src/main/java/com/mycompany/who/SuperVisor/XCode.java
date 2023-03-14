@@ -7,7 +7,6 @@ import android.widget.*;
 import android.widget.AdapterView.*;
 
 import com.mycompany.who.Edit.*;
-import com.mycompany.who.Edit.DrawerEdit.Share.*;
 
 import java.io.*;
 import java.util.concurrent.*;
@@ -17,12 +16,13 @@ import com.mycompany.who.Share.myRet;
 import com.mycompany.who.R;
 import com.mycompany.who.Share.Share;
 import java.util.*;
-import com.mycompany.who.Edit.DrawerEdit.EditListener.*;
+
 import android.graphics.drawable.Drawable;
 import java.util.jar.*;
 import android.util.*;
 import java.security.acl.*;
 import com.mycompany.who.View.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 
 
 public class XCode extends LinearLayout

@@ -14,6 +14,7 @@ public abstract class OnTouchToMove implements OnTouchListener
 	@Override
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
+		if(p2.getHistorySize()>0){
 		float lastX= p2.getHistoricalX(0, p2.getHistorySize() - 1);
 		float nowX= p2.getX();
 		float lastY= p2.getHistoricalY(0, p2.getHistorySize() - 1);
@@ -28,7 +29,7 @@ public abstract class OnTouchToMove implements OnTouchListener
 			onMoveToTop(p1,p2,lastY-nowY);
 		else
 			onMoveToDown(p1,p2,nowY-lastY);
-		
+		}
 		return onMoveEnd(p1,p2);
 	}
 	

@@ -15,6 +15,8 @@ import android.os.*;
 import android.app.*;
 import java.security.cert.*;
 import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.SuperVisor.Config.*;
+import com.mycompany.who.Edit.ListenerVistor.*;
 
 public class MainActivity extends Activity 
 {
@@ -28,12 +30,12 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
 		init();
-		Group=new EditGroup(this);
+		Group=EditGroup.EditGroupGetter.GetEditGroup(this,2000,1000,ConfigViewWith_PortAndLand.Port);
 		setContentView(Group);
 		Group.loadSize(1000,2000,true);
 		Group.AddEdit(".java");
 		Group.setPool(pool);
-		Group.getEditBuilder().setRunner(EditRunnerFactory.getCanvasRunner());
+		Group.getEditBuilder().setRunner(new EditListenerRunnerInfo());
 	}
 	
 	protected void init(){
@@ -53,7 +55,7 @@ public class MainActivity extends Activity
 			}
 		};
 		// 将线程池队列设置为有界队列
-		LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
+		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		// 初始化线程池
 		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 
@@ -76,6 +78,9 @@ public class MainActivity extends Activity
 				String src= Group.getEditBuilder().reDraw();
 				log.e(src,true);
 				break;
+			case 4:
+				Group.scrollTo(0,0);
+				break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -89,6 +94,7 @@ public class MainActivity extends Activity
 		menu.add(1,1,1,"Redo");
 		menu.add(2,2,2,"Format");
 		menu.add(3,3,3,"reDraw");
+		menu.add(4,4,4,"GoBack");
 		return super.onCreateOptionsMenu(menu);
 	}
 	

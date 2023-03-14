@@ -26,4 +26,6 @@ public class ConfigViewWith_PortAndLand implements Configer<View>
 		this.height=height;
 		portOrLand=is;
 	}
+	
+	
 }

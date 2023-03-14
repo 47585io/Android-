@@ -11,7 +11,6 @@ import java.util.*;
 import com.mycompany.who.R;
 import com.mycompany.who.Share.Share;
 import com.mycompany.who.Edit.Share.*;
-import com.mycompany.who.Edit.DrawerEdit.Share.*;
 
 public class FileList
 {
