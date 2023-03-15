@@ -30,7 +30,7 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
 		init();
-		Group=EditGroup.EditGroupGetter.GetEditGroup(this,2000,1000,ConfigViewWith_PortAndLand.Port);
+		Group=EditGroup.GetEditGroup(this,2000,1000,ConfigViewWith_PortAndLand.Port);
 		setContentView(Group);
 		Group.loadSize(1000,2000,true);
 		Group.AddEdit(".java");

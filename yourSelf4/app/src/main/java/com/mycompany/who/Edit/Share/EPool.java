@@ -11,7 +11,7 @@ public abstract class EPool<T>
 	private int size;
 	private int isStart;
 	public int MaxSize=50000;
-	public int onceCount=100;
+	public int onceCount=1000;
 	
 	public EPool(){
 		Es=new ArrayList<>();
@@ -26,9 +26,10 @@ public abstract class EPool<T>
 		if(p>Es.size()-1)
 			put(onceCount);
 		T E= Es.get(p++);
-		if(isStart!=0)
-			++size;
-			//记录本次使用的size
+		
+		++size;
+		//记录本次使用的size
+		//若未start就使用get，只要调stop，size会累计至下次一起回收
 		return E;
 	}
 	
@@ -63,4 +64,22 @@ public abstract class EPool<T>
 		for(i=p;i<p+size;++i)
 		    resetE(Es.get(i));
 	}
+
+	@Override
+	synchronized public String toString()
+	{
+		String src = "";
+		src=getClass().getSimpleName();
+		if(isStart==0)
+		    src+=" isStop With "+isStart;
+		else
+			src+=" isStart With "+isStart;
+			
+		src+=", I hava "+Es.size();
+		src+=" Element, Used "+p;
+		src+=" Element, Will be released "+size;
+		src+=" Element, Leaked "+(p-size);
+		return src;
+	}
+	 
 }

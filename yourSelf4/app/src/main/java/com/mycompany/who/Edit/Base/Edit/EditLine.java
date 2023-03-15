@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.Base;
+package com.mycompany.who.Edit.Base.Edit;
 import android.content.*;
 import android.view.*;
 import com.mycompany.who.Edit.Share.*;

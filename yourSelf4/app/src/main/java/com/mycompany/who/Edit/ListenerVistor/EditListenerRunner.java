@@ -15,13 +15,13 @@ import java.util.*;
 public interface EditListenerRunner
 {
 	
-	public void FindForLi(int start,int end,String text,Words WorLib,List<wordIndex> nodes,SpannableStringBuilder builder,EditFinderListener li)
+	public List<wordIndex> FindForLi(int start,int end,String text,Words WorLib,EditFinderListener li)
 	
 	public void DrawingForLi(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder,Editable editor,EditDrawerListener li)
 	
 	public String FormatForLi(int start,int end,String editor,EditFormatorListener li)
 	
-	public void InsertForLi(Editable editor, int nowIndex,EditInsertorListener li)
+	public int InsertForLi(Editable editor, int nowIndex,EditInsertorListener li)
 	
 	public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,Words lib,EditCompletorListener li)
 	

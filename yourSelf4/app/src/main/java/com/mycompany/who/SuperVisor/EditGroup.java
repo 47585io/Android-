@@ -15,6 +15,7 @@ import com.mycompany.who.SuperVisor.Config.*;
 import java.util.*;
 import java.util.concurrent.*;
 import android.util.*;
+import com.mycompany.who.Edit.Base.Edit.*;
 
 
 public class EditGroup extends LinearLayout
@@ -63,12 +64,10 @@ public class EditGroup extends LinearLayout
 		EdithScro.setScrollX(x);
 	}
 	
-	public static class EditGroupGetter{
-		public static EditGroup GetEditGroup(Context cont,int width,int height,boolean is){
+	public static EditGroup GetEditGroup(Context cont,int width,int height,boolean is){
 			EditGroup Group= EditGroupCreator.CreatSelf(cont);
 			new Config_hesViewLevel().ConfigSelf(Group);
 			return Group;
-		}
 	}
 	
 	static class EditGroupCreator{
@@ -341,7 +340,7 @@ public class EditGroup extends LinearLayout
 				return ;
 			//已经被修改，不允许再修改
 			
-			Log.e("onTextChange",String.valueOf(index));
+			Log.w("onTextChanged", "My index is "+index);
 			
 			EditFlag++;		
 			sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
@@ -350,9 +349,11 @@ public class EditGroup extends LinearLayout
 
 			if (EditFlag == 0)
 			{
-				EditLines. reLines(builder.calaEditLines());
+				int line = builder.calaEditLines();
+				EditLines. reLines(line);
 				Last.push(new Stack<Integer>());
 				trimToFather();
+				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+ForEdit.getWidth()+" "+ForEdit.getHeight()+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
 				//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 				//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
 				//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
@@ -457,7 +458,8 @@ public class EditGroup extends LinearLayout
 		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
 		{	
 		    /*关键代码*/
-			canvas.clipRect(selfRect(self));
+			Rect rect =selfRect(self);
+			canvas.clipRect(rect);
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 			
 			if(EditDrawFlag==0){

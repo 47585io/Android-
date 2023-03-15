@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.Base;
+package com.mycompany.who.Edit.Base.Edit;
 import android.widget.*;
 import android.content.*;
 import java.util.*;

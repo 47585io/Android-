@@ -10,7 +10,7 @@ import com.mycompany.who.Edit.Share.*;
 import java.util.*;
 
 
-public class EditRunnerFactory
+public class EditListenerRunnerFactory
 {
 	//获取安全的Runner
 	public static EditListenerRunner getDrawerRunner(){
@@ -30,9 +30,10 @@ public class EditRunnerFactory
 	{
 
 		@Override
-		public void FindForLi(int start, int end, String text, Words WorLib,List<wordIndex> nodes,SpannableStringBuilder builder, EditFinderListener li)
+		public List<wordIndex> FindForLi(int start, int end, String text, Words WorLib, EditFinderListener li)
 		{
 			// TODO: Implement this method
+			return null;
 		}
 
 		@Override
@@ -49,9 +50,10 @@ public class EditRunnerFactory
 		}
 
 		@Override
-		public void InsertForLi(Editable editor, int nowIndex, EditInsertorListener li)
+		public int InsertForLi(Editable editor, int nowIndex, EditInsertorListener li)
 		{
 			// TODO: Implement this method
+			return nowIndex;
 		}
 
 		@Override
@@ -71,12 +73,13 @@ public class EditRunnerFactory
 	public static class DR extends BR
 	{
 		@Override
-		public void FindForLi(int start, int end, String text, Words WordLib, List<wordIndex> nodes,SpannableStringBuilder builder, EditFinderListener li)
+		public List<wordIndex> FindForLi(int start, int end, String text, Words WordLib,  EditFinderListener li)
 		{
 			if (!EditListener.Enabled(li))
-				return;
+				return null;
 			
 			List<BaseEdit. DoAnyThing> totalList =new ArrayList<>() ;
+			List<wordIndex> nodes=new ArrayList<>();
 			
 			try
 			{
@@ -87,12 +90,13 @@ public class EditRunnerFactory
 				li.OnFindNodes(totalList,WordLib);
 				BaseEdit. startFind(text, totalList,nodes);
 				li.OnClearFindNodes(start, end, text, nodes);
-				li.setSapns(text,nodes,builder);
 			}
 			catch (Exception e)
 			{
-				Log.e("Finding Error", li.toString()+e.toString());
+				Log.e("Finding Error", li.toString()+" "+e.toString());
+				return null;
 			}
+			return nodes;
 		}
 
 		@Override
@@ -105,7 +109,7 @@ public class EditRunnerFactory
 			}
 			catch (Exception e)
 			{
-				Log.e("Drawing Error", li.toString());
+				Log.e("Drawing Error", li.toString()+" "+e.toString());
 			}
 		}
 	}
@@ -136,7 +140,7 @@ public class EditRunnerFactory
 			}
 			catch (IndexOutOfBoundsException e)
 			{
-				Log.e("Formating Error", total.toString());
+				Log.e("Formating Error", total.toString()+" "+e.toString());
 				return src.substring(start, end);
 				//格式化的过程中出现了问题，返回原字符串
 			}
@@ -144,18 +148,22 @@ public class EditRunnerFactory
 		}
 
 		@Override
-		public void InsertForLi(Editable editor, int nowIndex, EditInsertorListener total)
+		public int InsertForLi(Editable editor, int nowIndex, EditInsertorListener total)
 		{
+			int newIndex = 0;
 			try
 			{
 				if (EditListener.Enabled(total))
-					total.dothing_insert(editor, nowIndex);
+					newIndex= total.dothing_insert(editor, nowIndex);
 			}
 			catch (IndexOutOfBoundsException e)
 			{
-				Log.e("Inserting Error", total.toString());
+				Log.e("Inserting Error", total.toString()+" "+e.toString());
+				return nowIndex;
 			}
+			return newIndex;
 		}
+		
 	}
 	
 	public static class CR extends BR
@@ -178,14 +186,14 @@ public class EditRunnerFactory
 				}
 				li.onFinishSearchWord(words, Adapter);
 			}catch(Exception e){
-				Log.e("Completing Error", li.toString());
+				Log.e("Completing Error", li.toString()+" "+e.toString());
 			}
 			return Adapter;
 		}
 
 	}
 	
-	final public static class VR extends BR
+	public static class VR extends BR
 	{
 
 		@Override
@@ -195,7 +203,7 @@ public class EditRunnerFactory
 				if(EditListener.Enabled(li))
 					li.onDraw(self,canvas,paint,Cursor_bounds);
 			}catch(Exception e){
-				Log.e("Canvaser Error", li.toString());
+				Log.e("Canvaser Error", li.toString()+" "+e.toString());
 			}
 		}
 	}
