@@ -23,7 +23,7 @@ public interface EditListenerRunner
 	
 	public void InsertForLi(Editable editor, int nowIndex,EditInsertorListener li)
 	
-	public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,EditCompletorListener li)
+	public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,Words lib,EditCompletorListener li)
 	
 	public void CanvaserForLi(EditText self,Canvas canvas,TextPaint paint,Rect Cursor_bounds,EditCanvaserListener li)
 }

@@ -29,14 +29,13 @@ public abstract class CodeEdit extends BaseEdit
 	
 	protected EditListenerInfo Info;
 	protected EditListenerRunnerInfo Runner;
-	private final FinderFactory mfactory=new FinderFactory();
-	private final EditCompletorBoxes boxes=new EditCompletorBoxes();
-	private int Search_Bit=0xefffffff;
+	private EditCompletorBoxes boxes;
 	
 	public CodeEdit(Context cont)
 	{
 		super(cont);
 		Info=new myEditInfo();
+		boxes=new EditCompletorBoxes(0);
 		trimListener();
 	}
 	public CodeEdit(Context cont, CodeEdit Edit)
@@ -44,7 +43,7 @@ public abstract class CodeEdit extends BaseEdit
 		super(cont, Edit);
 		Info=Edit.Info;
 		Runner=Edit.getRunner();
-		Search_Bit=Edit.Search_Bit;
+		boxes=Edit.boxes;
 	}
 
     public class myEditInfo extends EditListenerInfo{
@@ -122,30 +121,28 @@ public abstract class CodeEdit extends BaseEdit
 	public void setLuagua(String Lua)
 	{
 		laugua=Lua;
-		Search_Bit=0xffffffff;
+		boxes. Search_Bit=0xffffffff;
 		switch(Lua){
 			case "text":
-				setFinder(mfactory.getTextFinder());
-				Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_key, Colors.color_const, Colors.color_func, Colors.color_villber, Colors.color_obj, Colors.color_type);
+				setFinder(FinderFactory.getTextFinder());
+				boxes.Search_Bit = 0;
 				break;
 			case "xml":
-				setFinder(mfactory.getXMLFinder());
+				setFinder(FinderFactory.getXMLFinder());
+				boxes.Search_Bit=0;
+				boxes.Search_Bit=Share.setbitTo_1S(boxes.Search_Bit,Colors.color_tag,Colors.color_attr);
 				break;
 			case "java":
-				setFinder(mfactory.getJavaFinder());
-				Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_tag, Colors.color_attr);
+				setFinder(FinderFactory.getJavaFinder());
+				boxes.Search_Bit = Share.setbitTo_0S(boxes.Search_Bit, Colors.color_tag, Colors.color_attr);
 				break;
 			case "css":
-				setFinder(mfactory.getCSSFinder());
-				Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_key, Colors.color_const, Colors.color_obj);
-				break;
-			case "html":
-				setFinder(mfactory.getHTMLFinder());
-				Search_Bit = 0xefffffff;
+				setFinder(FinderFactory.getCSSFinder());
+				boxes.Search_Bit = Share.setbitTo_0S(boxes.Search_Bit, Colors.color_key, Colors.color_const, Colors.color_obj);
 				break;
 			default:
 			    setFinder(null);
-				Search_Bit = 0;
+				boxes.Search_Bit = 0;
 		}
 	}
 
@@ -173,8 +170,7 @@ public abstract class CodeEdit extends BaseEdit
 	protected final void FindFor(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)
 	{
 		//为了安全，禁止重写
-		Ep.start(); //开始记录
-		
+		Ep.start();//开始记录
 		try{
 		    onFindNodes(start,end,text,nodes,builder);
 		}catch(Exception e){}
@@ -203,7 +199,8 @@ public abstract class CodeEdit extends BaseEdit
 				
 				isDraw = false;
 				IsModify--;
-				Ep.stop(); //Draw完后回收nodes
+				Ep.stop();
+				//Draw完后申请回收
 			}
 		};
 		if(Delayed_Draw==0)
@@ -341,8 +338,8 @@ public abstract class CodeEdit extends BaseEdit
 							try{
 							    callOnopenWindow(Window);
 							}catch(Exception e){}
-							//将单词设置到Window后回收单词
 							Epp.stop();
+							//将单词放入Window后回收
 						}
 					};
 					post(run2);//将UI任务交给主线程
@@ -366,7 +363,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public List<Icon> run(EditListener li)
 			{
-				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,(EditCompletorListener)li);
+				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,WordLib,(EditCompletorListener)li);
 			}
 		};
 		if(getPool()==null)
@@ -566,7 +563,7 @@ public abstract class CodeEdit extends BaseEdit
 //	___________________________________________________________________________________________________________________________
 	
 	//InsertorListener
-	public class DefaultInsertorListener extends EditInsertorListener
+	public static class DefaultInsertorListener extends EditInsertorListener
 	{
 
 		@Override
@@ -608,8 +605,10 @@ public abstract class CodeEdit extends BaseEdit
 						if (src.charAt(nowIndex - 1) == '<')
 						{
 							int index= String_Splitor.getBeforeBindow(src, nowIndex - 1, "<", "</");
+							Ep.start();
 							wordIndex j= tryWordAfter(src, index);
 							editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");
+							Ep.stop();
 							return j.end + 1;
 						}
 				}
@@ -622,23 +621,29 @@ public abstract class CodeEdit extends BaseEdit
 //	___________________________________________________________________________________________________________________________
 	
 	//EditCompletorBoxes
-	final public class EditCompletorBoxes
+	final public static class EditCompletorBoxes
 	{ 
 
+	    public int Search_Bit=0;
+		//获取一组相同语言的Completetor
+		public EditCompletorBoxes(int bit){
+			Search_Bit=bit;
+		}
+	
 	    public EditListener getKeyBox()
 		{
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
-					return getKeyword();
+					return ((OtherWords)Wordlib). getKeyword();
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_key);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_key);
 				}
 			};
 		}
@@ -647,13 +652,13 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					List<String> words=new ArrayList<>();
 					if (Share.getbit(Search_Bit, Colors.color_attr))
-						words.addAll(getAttribute());
+						words.addAll(((OtherWords)Wordlib). getAttribute());
 					if(Share.getbit(Search_Bit, Colors.color_const))
-					    words.addAll(getConstword());
+					    words.addAll(((OtherWords)Wordlib). getConstword());
 
 					return words;
 				}
@@ -661,7 +666,7 @@ public abstract class CodeEdit extends BaseEdit
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_default);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_default);
 				}
 			};
 		}
@@ -671,17 +676,17 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					if (Share.getbit(Search_Bit, Colors.color_villber))
-					    return getHistoryVillber();
+					    return ((OtherWords)Wordlib). getHistoryVillber();
 					return null;
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_villber);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_villber);
 				}
 			};
 		}
@@ -692,17 +697,17 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					if (Share.getbit(Search_Bit, Colors.color_func))
-					    return getLastfunc();
+					    return ((OtherWords)Wordlib). getLastfunc();
 					return null;
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_func);
+					BaseEdit. addSomeWord(word, adpter, Share.icon_func);
 				}
 			};
 		}
@@ -713,17 +718,17 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					if (Share.getbit(Search_Bit, Colors.color_obj))
-						return getThoseObject();
+						return ((OtherWords)Wordlib). getThoseObject();
 					return null;
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_obj);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_obj);
 				}
 			};
 		}
@@ -733,17 +738,17 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					if (Share.getbit(Search_Bit, Colors.color_type))
-					    return getBeforetype();
+					    return ((OtherWords)Wordlib). getBeforetype();
 					return null;
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_type);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_type);
 				}
 			};
 		}
@@ -753,11 +758,11 @@ public abstract class CodeEdit extends BaseEdit
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<String> onBeforeSearchWord()
+				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
 					if (Share.getbit(Search_Bit, Colors.color_tag))
 					{
-						return getTag();
+						return ((OtherWords)Wordlib). getTag();
 					}
 					return null;
 				}
@@ -765,7 +770,7 @@ public abstract class CodeEdit extends BaseEdit
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					addSomeWord(word, adpter, Share.icon_tag);
+					BaseEdit.addSomeWord(word, adpter, Share.icon_tag);
 				}
 			};
 		}
@@ -774,24 +779,26 @@ public abstract class CodeEdit extends BaseEdit
 //	___________________________________________________________________________________________________________________________
 	
 	//FinderFactory
-	public class FinderFactory{
-		public EditListener getTextFinder(){
+	public static class FinderFactory{
+		
+		public static EditListener getTextFinder(){
 			return new FinderText();
 		}
-		public EditListener getXMLFinder(){
+		public static EditListener getXMLFinder(){
 			return new FinderXML();
 		}
-		public EditListener getJavaFinder(){
+		public static EditListener getJavaFinder(){
 			return new FinderJava();
 		}
-		public EditListener getCSSFinder(){
+		public static EditListener getCSSFinder(){
 			return new FinderCSS();
 		}
+		/*
 		public EditListener getHTMLFinder(){
 			return new FinderHTML();
-		}
+		}*/
 		
-		public class FinderText extends EditFinderListener
+		public static class FinderText extends EditFinderListener
 		{
 
 			@Override
@@ -804,7 +811,7 @@ public abstract class CodeEdit extends BaseEdit
 			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList, Words WordLib)
 			{
 				// TODO: Implement this method
-				AnyThingFactory. AnyThingForText AllThings = mThings.getAnyThingText();
+				AnyThingFactory. AnyThingForText AllThings = AnyThingFactory.getAnyThingText(WordLib);
 				totalList.add(AllThings.getGoTo_zhuShi());
 				totalList.add(AllThings.getGoTo_Str());
 				totalList.add(AllThings.getNoSans_Char());
@@ -819,17 +826,17 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				clearRepeatNode(nodes,end);
+				clearRepeatNode(nodes);
 			}
 		}
 
-		public class FinderXML extends EditFinderListener
+		public static class FinderXML extends EditFinderListener
 		{
 
 			@Override
 			public void OnClearFindNodes(int start, int end, String text, List<wordIndex> nodes)
 			{
-				clearRepeatNode(nodes,end);
+				clearRepeatNode(nodes);
 			}
 
 
@@ -842,7 +849,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
 			{
-				AnyThingFactory. AnyThingForXML AllThings = mThings.getAnyThingXML();
+				AnyThingFactory. AnyThingForXML AllThings = AnyThingFactory.getAnyThingXML(WordLib);
 
 				totalList.clear();
 				totalList.add(AllThings.getGoTo_zhuShi());	
@@ -862,13 +869,13 @@ public abstract class CodeEdit extends BaseEdit
 		}
 
 
-		final public class FinderJava extends EditFinderListener
+		final public static class FinderJava extends EditFinderListener
 		{
 
 			@Override
 			public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
 			{
-				AnyThingFactory. AnyThingForJava AllThings = mThings.getAnyThingJava();
+				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
 
 				totalList.add(AllThings.getSans_TryFunc());	
 				totalList.add(AllThings.getSans_TryVillber());
@@ -882,7 +889,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
 			{
-				AnyThingFactory. AnyThingForJava AllThings = mThings.getAnyThingJava();
+				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
 
 				totalList.add(AllThings.getGoTo_zhuShi());
 				totalList.add(AllThings.getGoTo_Str());
@@ -900,37 +907,38 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnClearFindWord(Words WordLib)
 			{
-				Array_Splitor. delSame(getLastfunc(),getKeyword());
+				OtherWords tmp = (OtherWords) WordLib;
+				Array_Splitor. delSame(tmp.getLastfunc(),tmp.getKeyword());
 				//函数名不可是关键字，但可以和变量或类型重名	
-				Array_Splitor.delSame(getLastfunc(),getKeyword());
+				Array_Splitor.delSame(tmp.getLastfunc(),tmp.getKeyword());
 				//类型不可是关键字
-				Array_Splitor.delSame(getBeforetype(),getHistoryVillber());
+				Array_Splitor.delSame(tmp.getBeforetype(),tmp.getHistoryVillber());
 				//类型不可是变量，类型可以和函数重名
-				Array_Splitor.delSame(getBeforetype(),getConstword());
+				Array_Splitor.delSame(tmp.getBeforetype(),tmp.getConstword());
 				//类型不可是保留字
-				Array_Splitor. delSame(getHistoryVillber(),getKeyword());
-				Array_Splitor. delSame(getThoseObject(),getKeyword());
+				Array_Splitor. delSame(tmp.getHistoryVillber(),tmp.getKeyword());
+				Array_Splitor. delSame(tmp.getThoseObject(),tmp.getKeyword());
 				//变量不可是关键字
-				Array_Splitor. delSame(getThoseObject(),getConstword());
-				Array_Splitor.delSame(getHistoryVillber(),getConstword());
+				Array_Splitor. delSame(tmp.getThoseObject(),tmp.getConstword());
+				Array_Splitor.delSame(tmp.getHistoryVillber(),tmp.getConstword());
 				//变量不可是保留字
-				Array_Splitor.delNumber(getBeforetype());
-				Array_Splitor.delNumber(getHistoryVillber());
-				Array_Splitor.delNumber(getLastfunc());
-				Array_Splitor.delNumber(getThoseObject());
+				Array_Splitor.delNumber(tmp.getBeforetype());
+				Array_Splitor.delNumber(tmp.getHistoryVillber());
+				Array_Splitor.delNumber(tmp.getLastfunc());
+				Array_Splitor.delNumber(tmp.getThoseObject());
 				//去掉数字
 			}
 
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				clearRepeatNode(nodes,end);	
+				clearRepeatNode(nodes);	
 			}
 		}
 
 
 
-		final public class FinderCSS extends EditFinderListener
+		final public static class FinderCSS extends EditFinderListener
 		{
 
 			@Override
@@ -942,7 +950,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
 			{
-				AnyThingFactory. AnyThingForCSS CSSThings = mThings.getAnyThingCSS();
+				AnyThingFactory. AnyThingForCSS CSSThings = AnyThingFactory.getAnyThingCSS(WordLib);
 
 				totalList.add(CSSThings.getGoTo_zhuShi());	
 				totalList.add(CSSThings.getGoTo_Str());
@@ -969,7 +977,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				clearRepeatNode(nodes,end);
+				clearRepeatNode(nodes);
 				clearRepeatNodeForCSS(text,nodes);
 			}
 
@@ -985,7 +993,7 @@ public abstract class CodeEdit extends BaseEdit
 				}
 			}
 		}
-
+/*
 		final public class FinderHTML extends EditFinderListener
 		{
 
@@ -1011,7 +1019,7 @@ public abstract class CodeEdit extends BaseEdit
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				reDrawHTML(start,end,text,nodes);
+				reDrawHTML(start,end,text,nodes,CodeEdit.this.getText().toString());
 			}
 
 
@@ -1026,7 +1034,7 @@ public abstract class CodeEdit extends BaseEdit
 				return tmp;
 			}
 
-			final protected List<wordIndex> reDrawHTML(int start,int end,String text,List<wordIndex>nodes)
+			final protected List<wordIndex> reDrawHTML(int start,int end,String text,List<wordIndex>nodes,String STR)
 			{
 				List<wordIndex> tmp=new ArrayList<>();
 				int now=0,css=-1,js=-1,css_end=-1,js_end=-1;
@@ -1085,7 +1093,7 @@ public abstract class CodeEdit extends BaseEdit
 				{}
 				//那最后一段在哪个tag内呢？
 				//只要看下个tag
-				String s=getText().toString();
+				String s=STR;
 				css = s.indexOf("<style", now+start);
 				js = s.indexOf("<script", now+start);
 				css_end = s.indexOf("</style", now+start);
@@ -1132,27 +1140,25 @@ public abstract class CodeEdit extends BaseEdit
 			}
 
 		}
-		
+		*/
 
 	}
 	
 	
-	public FinderFactory getFinderFactory(){
+	public static FinderFactory getFinderFactory(){
 		return new FinderFactory();
 	}
 	public static EditListener getDefaultDrawer(){
 		return new DefaultDrawerListener();
 	}
-	public static EditListener getDefultFormator()
-	{
+	public static EditListener getDefultFormator(){
 		return new DefaultFormatorListener();
 	}
-	public EditListener getDefultInsertor()
-	{
+	public static EditListener getDefultInsertor(){
 		return new DefaultInsertorListener();
 	}
-	public EditCompletorBoxes getCompletorBox(){
-		return new EditCompletorBoxes();
+	public static EditCompletorBoxes getCompletorBox(int bit){
+		return new EditCompletorBoxes(bit);
 	}
 	public static EditListener getDefultCanvaser(){
 		return new DefaultCanvaser();

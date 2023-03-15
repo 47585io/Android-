@@ -53,9 +53,9 @@ public abstract class BaseEdit extends Edit implements Drawer,Formator,Completor
 	
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	protected OtherWords WordLib;
-	protected EPool2 Ep;
-	protected EPool3 Epp;
 	protected EditDate stack;
+	protected static EPool2 Ep;
+	protected static EPool3 Epp;
 	protected ThreadPoolExecutor pool;
 	
 	protected boolean isDraw=false;
@@ -72,19 +72,20 @@ public abstract class BaseEdit extends Edit implements Drawer,Formator,Completor
 	public String laugua;
 	String HTML;
 	SpannableStringBuilder buider;
-	protected final AnyThingFactory mThings=new AnyThingFactory();
 	
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
 	public static boolean Enabled_Complete;
 	
+	static{
+		Ep=new EPool2();
+		Epp=new EPool3();
+	}
 	
 	BaseEdit(Context cont){
 	 	super(cont);
 		WordLib=new OtherWords(6);
-		Ep=new EPool2();
-		Epp=new EPool3();
 		this.lines=new EditLine(cont);	
 		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
@@ -93,8 +94,6 @@ public abstract class BaseEdit extends Edit implements Drawer,Formator,Completor
 		super(cont,Edit);
 		pool = Edit. pool;
 		this.WordLib=Edit.WordLib;	
-		Ep=new EPool2();
-		Epp=new EPool3();
 		this.lines=Edit.lines;
 		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
@@ -198,12 +197,12 @@ _________________________________________
 		return arr.toString();
 	}
 
-	public static void clearRepeatNode(List<wordIndex> nodes,int end){
+	public static void clearRepeatNode(List<wordIndex> nodes){
 		//清除优先级低且位置重复的node
 		int i,j;
 		for(i=0;i<nodes.size();i++){
 			wordIndex now = nodes.get(i);
-			if(now.start==now.end||now.start>end||now.end>end){
+			if(now.start==now.end){
 				nodes.remove(i--);
 				continue;
 			}
@@ -366,7 +365,7 @@ ________________________________________
 		return words;
 	}
 
-	final public void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
+	final public static void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
 	{
 		//排序并添加一组的单词块
 		if (words == null || words.size() == 0)
@@ -771,7 +770,7 @@ _________________________________________
 	 
 _________________________________________
 */
-	final public wordIndex tryWord(String src,int index){
+	final public static wordIndex tryWord(String src,int index){
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -787,7 +786,7 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public  wordIndex tryWordAfter(String src,int index){
+	final public static wordIndex tryWordAfter(String src,int index){
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -829,7 +828,7 @@ _________________________________________
 		return end;
 	}
 	
-	final public  wordIndex tryWordSplit(String src,int nowIndex){
+	final public static wordIndex tryWordSplit(String src,int nowIndex){
 		//试探纯单词
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
@@ -843,7 +842,7 @@ _________________________________________
 		}
 		return tmp;
 	}
-	final public  wordIndex tryWordSplitAfter(String src,int index){
+	final public static wordIndex tryWordSplitAfter(String src,int index){
 		//试探纯单词
 	    wordIndex tmp = Ep.get();
 		try{
@@ -859,26 +858,26 @@ _________________________________________
 	final public String getWord(int offset)
 	{
 		//获得光标前的纯单词
+		Ep.start();
 	    wordIndex node = tryWordSplit(getText().toString(), offset);
 		if (node.end == 0)
 			node.end = offset;
 		String want= getText().toString().substring(node.start, node.end);
-
+		Ep.stop();
 		return want;
 	}
 	final public String getAfterWord(int offset)
 	{
 		//获得光标后面的纯单词
+		Ep.start();
 		wordIndex node = tryWordSplitAfter(getText().toString(), offset);
 		if (node.end == 0)
 			node.end = getText().toString().length();
 		String want= getText().toString().substring(node.start, node.end);
-
+		Ep.stop();
 		return want;
 	}
 	
-
-// _________________________________________
 	
 	//DoAnyThing，用于找nodes
 	public static interface DoAnyThing{
@@ -886,48 +885,6 @@ _________________________________________
 		//修饰符非常重要，之前没写public，总是会函数执行异常
 	}
 	
-
-/* _________________________________________
-
-	//根据不同情况，返回不同的单词
-	
- _________________________________________
-	
-*/	
-	public Collection<String> getKeyword(){
-		return WordLib.mdates.get(WordLib.words_key);
-	}
-	public Collection<String> getConstword(){
-		return WordLib.mdates.get(WordLib.words_const);
-	}
-	public char[] getFuhao(){
-		return WordLib.fuhao;
-	}
-	public char[] getSpilt(){
-		return WordLib.spilt;
-	}
-	public Map<String,String> get_zhu(){
-		return WordLib.zhu_key_value;
-	}
-	public Collection<String> getLastfunc(){
-		return WordLib.mdates.get(WordLib.words_func);
-	}
-	public Collection<String> getHistoryVillber(){
-		return WordLib.mdates.get(WordLib.words_vill);
-	}
-	public Collection<String> getThoseObject(){
-		return WordLib.mdates.get(WordLib.words_obj);
-	}
-	public Collection<String> getBeforetype(){
-		return WordLib.mdates.get(WordLib.words_type);
-	}
-
-	public Collection<String> getTag(){
-		return WordLib.mdates.get(WordLib.words_tag);
-	}
-	public Collection<String> getAttribute(){
-		return WordLib.mdates.get(WordLib.words_attr);
-	}
 	
 	
 /*
@@ -946,9 +903,16 @@ AnyThingFactory
 _________________________________________
 
 */
-	public class AnyThingFactory{
+	public static class AnyThingFactory{
 		//Text工厂
-		public class AnyThingForText{
+		public static class AnyThingForText{
+			
+			Words WordLib;
+			
+			AnyThingForText(Words lib){
+				WordLib=lib;
+			}
+			
 			//勇往直前的GoTo块，会突进一大段并阻拦其它块
 			public DoAnyThing getGoTo_zhuShi(){
 				//获取注释
@@ -981,6 +945,7 @@ _________________________________________
 			}	
 			public DoAnyThing getGoTo_Str(){
 				//获取字符串
+				
 				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
@@ -1086,13 +1051,54 @@ _________________________________________
 				nodes.add(node);
 
 			}
+			
+			public Collection<String> getKeyword(){
+				return ((OtherWords)WordLib).getKeyword();
+			}
+			public Collection<String> getConstword(){
+				return  ((OtherWords)WordLib).getConstword();
+			}
+			public char[] getFuhao(){
+				return WordLib.fuhao;
+			}
+			public char[] getSpilt(){
+				return WordLib.spilt;
+			}
+			public Map<String,String> get_zhu(){
+				return WordLib.zhu_key_value;
+			}
+			public Collection<String> getLastfunc(){
+				return  ((OtherWords)WordLib).getLastfunc();
+			}
+			public Collection<String> getHistoryVillber(){
+				return  ((OtherWords)WordLib).getHistoryVillber();
+			}
+			public Collection<String> getThoseObject(){
+				return  ((OtherWords)WordLib).getThoseObject();
+			}
+			public Collection<String> getBeforetype(){
+				return  ((OtherWords)WordLib).getBeforetype();
+			}
+
+			public Collection<String> getTag(){
+				return  ((OtherWords)WordLib).getTag();
+			}
+			public Collection<String> getAttribute(){
+				return ((OtherWords)WordLib).getAttribute() ;
+			}
+			
 		}
 
 
 //	___________________________________________________________________________________________________________________________
 
 		//XML工厂
-		public class AnyThingForXML extends AnyThingForText{
+		public static class AnyThingForXML extends AnyThingForText{
+			
+			AnyThingForXML(Words lib){
+				super(lib);
+			}
+			
 			public DoAnyThing getDraw_Tag(){
 				return new DoAnyThing(){
 					@Override
@@ -1140,7 +1146,7 @@ _________________________________________
 //	___________________________________________________________________________________________________________________________
 
 		//Java工厂
-		 public class AnyThingForJava extends AnyThingForText{
+		 public static class AnyThingForJava extends AnyThingForText{
 
 			//不回溯的NoSans块，用已有信息完成判断
 			public DoAnyThing getNoSans_Keyword(){
@@ -1355,7 +1361,8 @@ _________________________________________
 			}
 
 			private char arr[]; 
-			AnyThingForJava(){
+			AnyThingForJava(Words lib){
+				super(lib);
 				arr= new char[]{'!','~','+','-','*','/','%','^','|','&','<','>','='};
 				Arrays.sort(arr);
 			}
@@ -1364,8 +1371,13 @@ _________________________________________
 //	___________________________________________________________________________________________________________________________
 
 		//CSS工厂
-		public class AnyThingForCSS extends AnyThingForText
+		public static class AnyThingForCSS extends AnyThingForText
 		{
+			
+			AnyThingForCSS(Words lib){
+				super(lib);
+			}
+			
 			//如果所有东西不需进行二次查找，就用这个吧
 			public DoAnyThing getNoSans_Func(){
 				//获取函数
@@ -1598,17 +1610,17 @@ _________________________________________
 			}
 		}
 
-		public AnyThingForText getAnyThingText(){
-			return new AnyThingForText();
+		public static AnyThingForText getAnyThingText(Words lib){
+			return new AnyThingForText(lib);
 		}
-		public AnyThingForXML getAnyThingXML(){
-			return new AnyThingForXML();
+		public static AnyThingForXML getAnyThingXML(Words lib){
+			return new AnyThingForXML(lib);
 		}
-		public AnyThingForJava getAnyThingJava(){
-			return new AnyThingForJava();
+		public static AnyThingForJava getAnyThingJava(Words lib){
+			return new AnyThingForJava(lib);
 		}
-		public AnyThingForCSS getAnyThingCSS(){
-			return new AnyThingForCSS();
+		public static AnyThingForCSS getAnyThingCSS(Words lib){
+			return new AnyThingForCSS(lib);
 		}
 	
 	}

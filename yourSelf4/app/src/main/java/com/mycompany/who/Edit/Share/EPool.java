@@ -9,8 +9,8 @@ public abstract class EPool<T>
 	protected List<T> Es;
 	protected int p;
 	private int size;
-	private boolean isStart;
-	public int MaxSize=5000;
+	private int isStart;
+	public int MaxSize=50000;
 	public int onceCount=100;
 	
 	public EPool(){
@@ -26,20 +26,23 @@ public abstract class EPool<T>
 		if(p>Es.size()-1)
 			put(onceCount);
 		T E= Es.get(p++);
-		if(isStart)
+		if(isStart!=0)
 			++size;
 			//记录本次使用的size
 		return E;
 	}
 	
-	public void start(){		
+	synchronized public void start(){		
 	    //开始记录
-		isStart=true;
+		isStart++;
 	}
-	public void stop(){
-		isStart=false;
-		recyle(size);
-		size=0;
+	synchronized public void stop(){
+		isStart--;
+		if(isStart==0){
+			//必须保证所有的任务都完成了，才收回nodes
+		    recyle(size);
+		    size=0;
+		}
 		//stop后，指针向前移size，size清0
 	}
 	

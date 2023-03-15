@@ -241,7 +241,7 @@ public class EditGroup extends LinearLayout
 		if (EditList.size() == 0)
 		{
 	        Edit = new RCodeEdit(getContext());
-			configEdit(Edit, ".java");
+			configEdit(Edit, name);
 			Edit.lines = EditLines;
 			Edit.getCanvaserList().add(new ClipCanvaser());
 			setTag(name);
@@ -456,23 +456,26 @@ public class EditGroup extends LinearLayout
 		@Override
 		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
 		{	
+		    /*关键代码*/
 			canvas.clipRect(selfRect(self));
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 			
 			if(EditDrawFlag==0){
 				//遍历所有其它编辑器，并显示
 				EditDrawFlag++;
+				int id = historyId;
 				historyId=((RCodeEdit)self).index;
 				for(CodeEdit e: EditList){
 					if(((RCodeEdit)e).index!=historyId)
 					    e.invalidate();
 				}
 				EditDrawFlag--;
+				historyId=id;
 			}
 		}
 		
 		public Rect selfRect(EditText self){
-			/*关键代码*/
+			
 			int index = ((RCodeEdit)self).index;
 			//计算编辑器在可视区域中的自己的范围
 
@@ -494,6 +497,9 @@ public class EditGroup extends LinearLayout
 	}
 	public EditCanvaserListener getClipCanvaser()
 	{
+		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
+		//在调试时，发现EditCanvaserListener内部还有一个$this成员，原来这个成员就是EditGroup
+		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
 		return new ClipCanvaser();
 	}
 

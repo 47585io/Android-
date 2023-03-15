@@ -55,7 +55,7 @@ public class EditRunnerFactory
 		}
 
 		@Override
-		public List<Icon> CompeletForLi(String wantBefore, String wantAfter, int before, int after,EditCompletorListener li)
+		public List<Icon> CompeletForLi(String wantBefore, String wantAfter, int before, int after,Words lib,EditCompletorListener li)
 		{
 			// TODO: Implement this method
 			return null;
@@ -162,7 +162,7 @@ public class EditRunnerFactory
 	{
 
 		@Override
-		public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,EditCompletorListener li)
+		public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,Words Wordlib,EditCompletorListener li)
 		{
 			Collection<String> lib;
 			List<String> words = null;
@@ -171,7 +171,7 @@ public class EditRunnerFactory
 				return Adapter;
 
 			try{
-				lib = li.onBeforeSearchWord();
+				lib = li.onBeforeSearchWord(Wordlib);
 				if (lib != null && lib.size() != 0)
 				{
 					words =CodeEdit. SearchOnce(wantBefore, wantAfter, lib, before, after);

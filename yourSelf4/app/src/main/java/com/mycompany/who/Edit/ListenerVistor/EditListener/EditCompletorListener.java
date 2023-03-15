@@ -3,10 +3,11 @@ package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import com.mycompany.who.Edit.Share.*;
 import java.util.*;
 import java.util.concurrent.*;
+import com.mycompany.who.Edit.Base.*;
 
 public abstract class EditCompletorListener extends EditListener
 {
-	public abstract Collection<String> onBeforeSearchWord();
+	public abstract Collection<String> onBeforeSearchWord(Words Wordlib);
 	
 	public abstract void onFinishSearchWord(List<String> word,List<Icon> adpter);
 	

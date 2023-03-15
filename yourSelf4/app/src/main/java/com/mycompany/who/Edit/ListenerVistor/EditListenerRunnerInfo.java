@@ -37,8 +37,8 @@ public class EditListenerRunnerInfo
 	public void InsertForLi(Editable editor, int nowIndex,EditInsertorListener li){
 		MR.InsertForLi(editor,nowIndex,li);
 	}
-	public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,EditCompletorListener li){
-		return CR.CompeletForLi(wantBefore,wantAfter,before,after,li);
+	public List<Icon> CompeletForLi(String wantBefore,String wantAfter,int before,int after,Words lib,EditCompletorListener li){
+		return CR.CompeletForLi(wantBefore,wantAfter,before,after,lib,li);
 	}
 	public void CanvaserForLi(EditText self,Canvas canvas,TextPaint paint,Rect Cursor_bounds,EditCanvaserListener li){
 		VR.CanvaserForLi(self,canvas,paint,Cursor_bounds,li);
