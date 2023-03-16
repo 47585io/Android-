@@ -1,6 +1,7 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 
 import android.text.*;
+import android.util.*;
 
 public abstract class EditFormatorListener extends EditListener
 {
@@ -58,6 +59,45 @@ public abstract class EditFormatorListener extends EditListener
 			}
 		}
 
+	}
+	
+	final public String LetMeFormat(int start, int end, String src)
+	{
+		if (!Enabled())
+			return src.substring(start, end);
+
+		String buffer;
+			
+		try
+		{
+			buffer = Format(start,end,src);
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			Log.e("Formating Error", toString()+" "+e.toString());
+			return src.substring(start, end);
+			//格式化的过程中出现了问题，返回原字符串
+		}
+		return buffer;
+	}
+	
+	protected String Format(int start, int end, String src){
+		
+		EditFormatorListener.ModifyBuffer buffer=new EditFormatorListener.ModifyBuffer(start, src, src.substring(start, end));
+
+		int beforeIndex = 0;
+		int nowIndex=start;
+		
+		nowIndex = dothing_Start(buffer, nowIndex, start, end);
+		
+		for (;nowIndex < end && nowIndex != -1;)
+		{
+			beforeIndex = nowIndex;
+			nowIndex = dothing_Run(buffer, nowIndex);
+		}
+		nowIndex =  dothing_End(buffer, beforeIndex, start, end);		
+		
+		return buffer.toString();
 	}
 }
 

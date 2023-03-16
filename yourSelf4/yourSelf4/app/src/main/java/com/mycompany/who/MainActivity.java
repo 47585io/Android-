@@ -35,7 +35,7 @@ public class MainActivity extends Activity
 		Group.loadSize(1000,2000,true);
 		Group.AddEdit(".java");
 		Group.setPool(pool);
-		Group.getEditBuilder().setRunner(new EditListenerRunnerInfo());
+		
 	}
 	
 	protected void init(){

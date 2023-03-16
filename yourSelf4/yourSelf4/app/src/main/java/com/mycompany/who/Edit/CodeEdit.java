@@ -22,39 +22,40 @@ import android.util.*;
  从现在开始，所有被调函数，例如Drawing，必须自己管理好线程和IsModify安全，然后将真正操作交给另一个函数
 
  在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
-*/
+ */
 public abstract class CodeEdit extends BaseEdit
 {
-	
+
 	public static int Delayed_Draw = 0;
-	
+
 	protected EditListenerInfo Info;
-	protected EditListenerRunnerInfo Runner;
 	private EditListenerFactory.EditCompletorBoxes boxes;
-	
+
 	public CodeEdit(Context cont)
 	{
 		super(cont);
-		Info=new myEditInfo();
-		boxes=new EditListenerFactory.EditCompletorBoxes(0);
+		Info = new myEditInfo();
+		boxes = new EditListenerFactory.EditCompletorBoxes(0);
 		trimListener();
 	}
 	public CodeEdit(Context cont, CodeEdit Edit)
 	{
 		super(cont, Edit);
-		Info=Edit.Info;
-		Runner=Edit.getRunner();
-		boxes=Edit.boxes;
+		Info = Edit.Info;
+		boxes = Edit.boxes;
 	}
 
-    public class myEditInfo extends EditListenerInfo{
-		public myEditInfo(){
-			mlistenerVS=new ArrayList<>();
-			mlistenerCS=new ArrayList<>();			
+    public class myEditInfo extends EditListenerInfo
+	{
+		public myEditInfo()
+		{
+			mlistenerVS = new ArrayList<>();
+			mlistenerCS = new ArrayList<>();			
 		}	
 	}
-	public void trimListener(){
-		setDrawer(new EditListenerFactory.DefaultDrawerListener());
+	public void trimListener()
+	{
+		setDrawer(EditListenerFactory.getDefaultDrawer());
 		getCanvaserList().add(new EditListenerFactory.DefaultCanvaser());
 		setFormator(new EditListenerFactory.DefaultFormatorListener());
 		setInsertor(new EditListenerFactory.DefaultInsertorListener());
@@ -67,7 +68,7 @@ public abstract class CodeEdit extends BaseEdit
 		cs.add(boxes.getKeyBox());
 		cs.add(boxes.getTagBox());
 	}
-	
+
 	public void clearListener()
 	{
 	}
@@ -75,13 +76,13 @@ public abstract class CodeEdit extends BaseEdit
 	{
 		Info.mlistenerF = li;
 	}
-	public void setDrawer(EditListener li)
-	{
-		Info.mlistenerD = li;
-	}
 	public EditListener getFinder()
 	{
 		return Info.mlistenerF;
+	}
+	public void setDrawer(EditListener li)
+	{
+		Info.mlistenerD = li;
 	}
 	public EditListener getDrawer()
 	{
@@ -89,7 +90,7 @@ public abstract class CodeEdit extends BaseEdit
 	}
 	public void setFormator(EditListener li)
 	{
-	    Info.mlistenerM= (EditFormatorListener)li;
+	    Info.mlistenerM = (EditFormatorListener)li;
 	}
 	public void setInsertor(EditListener li)
 	{
@@ -111,27 +112,24 @@ public abstract class CodeEdit extends BaseEdit
 	{
 		return Info.mlistenerVS;
 	}
-	public void setRunner(EditListenerRunnerInfo run)
-	{
-		Runner = run;
+	public EditListenerInfo getInfo(){
+		return Info;
 	}
-	public EditListenerRunnerInfo getRunner()
-	{
-		return Runner;
-	}
+
 	public void setLuagua(String Lua)
 	{
-		laugua=Lua;
-		boxes. Search_Bit=0xffffffff;
-		switch(Lua){
+		laugua = Lua;
+		boxes. Search_Bit = 0xffffffff;
+		switch (Lua)
+		{
 			case "text":
 				setFinder(EditListenerFactory.FinderFactory.getTextFinder());
 				boxes.Search_Bit = 0;
 				break;
 			case "xml":
 				setFinder(EditListenerFactory.FinderFactory.getXMLFinder());
-				boxes.Search_Bit=0;
-				boxes.Search_Bit=Share.setbitTo_1S(boxes.Search_Bit,Colors.color_tag,Colors.color_attr);
+				boxes.Search_Bit = 0;
+				boxes.Search_Bit = Share.setbitTo_1S(boxes.Search_Bit, Colors.color_tag, Colors.color_attr);
 				break;
 			case "java":
 				setFinder(EditListenerFactory.FinderFactory.getJavaFinder());
@@ -147,56 +145,62 @@ public abstract class CodeEdit extends BaseEdit
 		}
 	}
 
-	
-/*
- _________________________________________
 
- Dreawr
- 
- 继承于父类的函数：
-	 
+	/*
+	 _________________________________________
+
+	 Dreawr
+
+	 继承于父类的函数：
+
 	 FindFor ->
-	 
-	 Drawing ->
-	 
- 新的函数：
- 
-	 -> onFindNodes
-	 
-	 -> onDrawNodes
-	 
- _________________________________________
 
-*/
-	protected final void FindFor(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)
+	 Drawing ->
+
+	 新的函数：
+
+	 -> onFindNodes
+
+	 -> onDrawNodes
+
+	 _________________________________________
+
+	 */
+	protected final void FindFor(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)
 	{
 		//为了安全，禁止重写
 		long last = 0,now = 0;
-		last=System.currentTimeMillis();
-		
+		last = System.currentTimeMillis();
+
 		Ep.start();//开始记录
-		try{
-		    onFindNodes(start,end,text,nodes,builder);
-		}catch(Exception e){
-			Log.e("FindNodes Error",e.toString());
+		try
+		{
+		    onFindNodes(start, end, text, nodes, builder);
+		}
+		catch (Exception e)
+		{
+			Log.e("FindNodes Error", e.toString());
 		}	
-		
-		now=System.currentTimeMillis();
-		Log.w("After FindNodes","I take "+(now-last)+" ms, "+Ep.toString());
-		
+
+		now = System.currentTimeMillis();
+		Log.w("After FindNodes", "I take " + (now - last) + " ms, " + Ep.toString());
+
 	}
-	protected void onFindNodes(int start, int end, String text,List<wordIndex>nodes,SpannableStringBuilder builder)throws Exception{
-		if(Runner!=null){
-			 List<wordIndex> tmp = Runner.FindForLi(start, end, text, WordLib, (EditFinderListener)getFinder());
-			 if(tmp!=null){
-				 nodes.addAll(tmp);
-				 ((EditFinderListener)getFinder()).setSapns(text,nodes,builder);
-			 }
+	protected void onFindNodes(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)throws Exception
+	{
+		EditFinderListener li = ((EditFinderListener)getFinder());
+		if(li!=null){
+		    List<wordIndex> tmp = li.LetMeFind(start, end, text, WordLib);
+		    if (tmp != null)
+		    {
+			    nodes.addAll(tmp);
+			    li.setSapns(text, nodes, builder);
+		    }
 		}
 	}
 
 	@Override
-	protected final void Drawing(final int start, final int end, final List<wordIndex> nodes,final SpannableStringBuilder builder)
+	protected final void Drawing(final int start, final int end, final List<wordIndex> nodes, final SpannableStringBuilder builder)
 	{
 		//为了安全，禁止重写
 		Runnable run= new Runnable(){
@@ -206,116 +210,134 @@ public abstract class CodeEdit extends BaseEdit
 			{
 				IsModify++;
 				isDraw = true; //此时会修改文本，isModify
-				
+
 				long last = 0,now = 0;
-				last=System.currentTimeMillis();
-				try{
-					if(nodes.size()!=0)
-					    onDrawNodes(start,end,nodes,builder);
-				}catch(Exception e){
-					Log.e("DrawNodes Error",e.toString());
+				last = System.currentTimeMillis();
+				try
+				{
+					if (nodes.size() != 0)
+					    onDrawNodes(start, end, nodes, builder);
 				}
-				now=System.currentTimeMillis();
-				
+				catch (Exception e)
+				{
+					Log.e("DrawNodes Error", e.toString());
+				}
+				now = System.currentTimeMillis();
+
 				isDraw = false;
 				IsModify--;
 				Ep.stop();
 				//Draw完后申请回收
-				Log.w("After DrawNodes","I take "+(now-last)+" ms, "+Ep.toString());
-				
+				Log.w("After DrawNodes", "I take " + (now - last) + " ms, " + Ep.toString());
+
 			}
 		};
-		if(Delayed_Draw==0)
+		if (Delayed_Draw == 0)
 			post(run);
 		else
-			postDelayed(run,Delayed_Draw);
+			postDelayed(run, Delayed_Draw);
 		//为了线程安全，涉及UI操作必须抛到主线程	
 	}
-	protected void onDrawNodes(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder)throws Exception{
+	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, SpannableStringBuilder builder)throws Exception
+	{
 		//应该重写这个
-		if(Runner!=null)
-	        Runner.DrawingForLi(start, end, nodes,builder, getText(),(EditDrawerListener)getDrawer());
+		EditDrawerListener li = ((EditDrawerListener)getDrawer());
+		if(li!=null)
+		    li.LetMeDraw(start, end, nodes, builder, getText());
 	}
 
 
-/*
- _________________________________________
+	/*
+	 _________________________________________
 
- Formator
+	 Formator
 
- 继承于父类的函数：
+	 继承于父类的函数：
 
 	 Format ->
-	 
-	 Insert -> 
-	 
- 新的函数：
-	 
-	 -> onFormat
-	 
-	 -> onInsert
-	 
- _________________________________________
 
-*/
-	
+	 Insert -> 
+
+	 新的函数：
+	 
+	 -> onBeforeFormat
+
+	 -> onFormat
+
+	 -> onInsert
+
+	 _________________________________________
+
+	 */
+
 	public final Future Format(final int start, final int end)
 	{
 		//为了安全，禁止重写
-		if (Runner != null)
-		{
-			Runnable run = new Runnable(){
 
-				@Override
-				public void run()
-				{
-					long last = 0,now = 0;
-					last=System.currentTimeMillis();
-					Ep.start();
-					
-					String src = Runner.FormatForLi(start, end, getText().toString(), (EditFormatorListener)getFormator());
-					//开线程格式化
-					
-					Ep.stop();
-					now=System.currentTimeMillis();
-					Log.w("After Format StringSpilter","I take "+(now-last)+" ms, "+"Because Str Length is "+src.length()+", and "+Ep.toString());
-					
-					if(src==null)
-						src=getText().toString().substring(start,end);
-					final String buffer=src;
-					Runnable run2 = new Runnable(){
+		Runnable run = new Runnable(){
 
-						@Override
-						public void run()
+			@Override
+			public void run()
+			{
+				long last = 0,now = 0;
+				last = System.currentTimeMillis();
+				
+				String src = onBeforeFormat(start,end);
+				//开线程格式化
+
+				now = System.currentTimeMillis();
+				Log.w("After Format StringSpilter", "I take " + (now - last) + " ms, " + "Because Str Length is " + src.length() + ", and " + Ep.toString());
+
+				if (src == null)
+					src = getText().toString().substring(start, end);
+				final String buffer=src;
+				
+				Runnable run2 = new Runnable(){
+
+					@Override
+					public void run()
+					{
+						IsModify++;
+						isFormat = true; //在此时才会修改文本
+						
+						long last = 0,now = 0;
+						last = System.currentTimeMillis();
+						try
 						{
-							IsModify++;
-							isFormat = true; //在此时才会修改文本
-							Ep.start();
-							
-							try{
-								onFormat(start, end, buffer);
-							}catch(Exception e){
-								Log.e("Format Error",e.toString());
-							}
-								
-							Ep.stop();
-							Log.w("After Formator Replacer",Ep.toString());
-							isFormat = false;
-							IsModify--;
-								
+							onFormat(start, end, buffer);
 						}
-					};
-					post(run2); //安全地把任务交给onFormat
-				}
+						catch (Exception e)
+						{
+							Log.e("Format Error", e.toString());
+						}
+						now = System.currentTimeMillis();
+						Log.w("After Format Replacer", "I take " + (now - last) + " ms," +"The time maybe too Loog！");
+						
+						isFormat = false;
+						IsModify--;
 
-			};
-			if (pool != null)
-				return pool.submit(run);
-			else
-				run.run();
-		}
+					}
+				};
+				post(run2); //安全地把任务交给onFormat
+			}
+
+		};
+		if (pool != null)
+			return pool.submit(run);
+		else
+			run.run();
+
 		return null;
 	}
+	
+	protected String onBeforeFormat(int start,int end){
+		String src = null;
+		EditFormatorListener li = ((EditFormatorListener)getFormator());
+		if(li!=null)
+			src = li.LetMeFormat(start, end, getText().toString());
+		return src;
+	}
+	
 	protected void onFormat(int start, int end, String buffer)throws Exception
 	{
 		//为提升效率，将原文本和目标文本装入buffer
@@ -323,60 +345,61 @@ public abstract class CodeEdit extends BaseEdit
 		getText().replace(start, end, buffer);
 		//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
 	}
-	
+
 	public final void Insert(final int index)
 	{
 		//插入字符
 		IsModify++;
 		isFormat = true;
-		
-		Ep.start();
-		try{
-		   setSelection(onInsert(index));
-		}catch(Exception e){
-			Log.e("Insert Error",e.toString());
+
+		try
+		{
+		    onInsert(index);
 		}
-		Ep.stop();
-		Log.w("Insert with Ep",Ep.toString());
+		catch (Exception e)
+		{
+			Log.e("Insert Error", e.toString());
+		}
+
 		isFormat = false;
 		IsModify--;
 	}	
 
 	protected int onInsert(int index)throws Exception
 	{
-		if (Runner != null) 
-		   return Runner.InsertForLi(getText(), index, (EditInsertorListener)getInsertor());
+		EditInsertorListener li = ((EditInsertorListener)getInsertor());
+		if(li!=null)
+		    return li.LetMeInsert(getText(), index);
 		return index;
 	}
 
 
-/*
- _________________________________________
+	/*
+	 _________________________________________
 
- Completor
+	 Completor
 
- 继承于父类的函数：
+	 继承于父类的函数：
 
 	 openWindow ->1
 
 	 onInsertword
 
- 新的函数：
+	 新的函数：
 
 	 1-> SearchInGroup
 
 	 1-> callOnopenWindow ->2
-	 
+
 	 2-> calc
 
- _________________________________________
+	 _________________________________________
 
-*/
+	 */
 	final public Future openWindow(final ListView Window, int index, final ThreadPoolExecutor pool)
 	{
 		final String wantBefore= getWord(index);
 		final String wantAfter = getAfterWord(index);
-		Log.w("openWindow With Ep",Ep.toString());
 		//获得光标前后的单词，并开始查找
 
 		Runnable run = new Runnable(){
@@ -385,30 +408,34 @@ public abstract class CodeEdit extends BaseEdit
 			{
 				Epp.start();//开始存储
 				long last = 0,now = 0;
-				last=System.currentTimeMillis();
-				
-				List<Icon> Icons = SearchInGroup(wantBefore,wantAfter,0,wantBefore.length(),getCompletorList(),getPool());
+				last = System.currentTimeMillis();
+
+				List<Icon> Icons = SearchInGroup(wantBefore, wantAfter, 0, wantBefore.length(), getCompletorList(), getPool());
 				//经过一次查找，Icons里装满了单词
-				now=System.currentTimeMillis();
-				Log.w("After SearchWords","I take "+(now-last)+" ms, "+Epp.toString());
-				
-				if(Icons!=null){
+				now = System.currentTimeMillis();
+				Log.w("After SearchWords", "I take " + (now - last) + " ms, " + Epp.toString());
+
+				if (Icons != null)
+				{
 					final WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
 					Runnable run2=new Runnable(){
 
 						@Override
 						public void run()
 						{
-							
+
 							Window.setAdapter(adapter);
-							try{
+							try
+							{
 							    callOnopenWindow(Window);
-							}catch(Exception e){
-								Log.e("OpenWindow Error",e.toString());
 							}
-							
+							catch (Exception e)
+							{
+								Log.e("OpenWindow Error", e.toString());
+							}
+
 							Epp.stop();
-							Log.w("After OpenWindow",Epp.toString());
+							Log.w("After OpenWindow", Epp.toString());
 							//将单词放入Window后回收
 						}
 					};
@@ -416,38 +443,38 @@ public abstract class CodeEdit extends BaseEdit
 				}
 			}
 		};
-		if(pool!=null)
+		if (pool != null)
 		    return pool.submit(run);//因为含有阻塞，所以将任务交给池子
 		else
 			run.run();
 		return null;
 	}
-	
-	final protected List<Icon> SearchInGroup(final String wantBefore,final String wantAfter,final int before,final int after,Collection<EditListener> Group,ThreadPoolExecutor pool){
+
+	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after, Collection<EditListener> Group, ThreadPoolExecutor pool)
+	{
 		//用多线程在不同集合中找单词
-		if(Runner==null)
-			return null;
 
 		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
 
 			@Override
 			public List<Icon> run(EditListener li)
 			{
-				return Runner.CompeletForLi(wantBefore,wantAfter,before,after,WordLib,(EditCompletorListener)li);
+				return ((EditCompletorListener)li).LetMeCompelet(wantBefore, wantAfter, before, after, WordLib);
 			}
 		};
-		if(getPool()==null)
-			return EditListenerItrator.foreach(Group,run);
-		return EditListenerItrator.foreach(Group,run);
+		if (getPool() == null)
+			return EditListenerItrator.foreach(Group, run);
+		return EditListenerItrator.foreach(Group, run);
 		//阻塞以获得所有单词
 	}
 
-	protected void onInsertword(String word,int index,int flag){
+	protected void onInsertword(String word, int index, int flag)
+	{
 		Editable editor = getText();	
-		
+
 		wordIndex tmp = tryWordSplit(editor.toString(), index);
 		wordIndex tmp2 = tryWordSplitAfter(getText().toString(), index);
-		
+
 		editor.replace(tmp.start, tmp2.end, word);
 		setSelection(tmp.start + word.length());
 		//把光标移动到最后
@@ -466,7 +493,7 @@ public abstract class CodeEdit extends BaseEdit
 
 	protected void callOnopenWindow(ListView Window)
 	{
-		if (getWindow().getAdapter()!=null&&getWindow().getAdapter().getCount()>0)
+		if (getWindow().getAdapter() != null && getWindow().getAdapter().getCount() > 0)
 		{
 			wordIndex pos = calc(this);
 			getWindow().setX(pos.start);
@@ -481,15 +508,16 @@ public abstract class CodeEdit extends BaseEdit
 	}
 
 	abstract public wordIndex calc(EditText Edit);
-	
 
-/*
- _________________________________________
+
+	/*
+	 _________________________________________
+
 	 
-   onDraw with  Canvaser
-   
- _________________________________________
-*/
+	 onDraw with  Canvaser
+	 
+	 _________________________________________
+	 */
     @Override
 	protected void onDraw(Canvas canvas)
 	{
@@ -499,25 +527,28 @@ public abstract class CodeEdit extends BaseEdit
 		int lines= getLayout().getLineForOffset(getSelectionStart());
 		Rect bounds = new Rect();
 		getLineBounds(lines, bounds);
-		
-		if(Runner!=null){
-			try{
-				for(EditListener li:getCanvaserList())
-					Runner.CanvaserForLi(this,canvas,paint,bounds,(EditCanvaserListener)li);
-			}catch(Exception e){
-				Log.e("OnDraw Error",e.toString());
-			}
+
+		try
+		{
+			for (EditListener li:getCanvaserList())
+				((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, bounds);
 		}
+		catch (Exception e)
+		{
+			Log.e("OnDraw Error", e.toString());
+		}
+		
 		super.onDraw(canvas);
     }
 
 
-	
-/*
 
-  其它函数
-  
-*/
+	
+	/*
+
+	 其它函数
+
+	 */
 
 	final public void reSAll(int start, int end, String want, String to)
 	{
@@ -535,9 +566,10 @@ public abstract class CodeEdit extends BaseEdit
 		isFormat = false;
 		IsModify--;
 	}
-	
 
-	public void zoomBy(float size){
+
+	public void zoomBy(float size)
+	{
 		setTextSize(size);
 	    lines.setWidth(lines.maxWidth());
 		lines.setTextSize(size);
@@ -551,11 +583,11 @@ public abstract class CodeEdit extends BaseEdit
 		//任何传参取值都必须new
 		wordIndex pos = new wordIndex();
 		getLineBounds(lines, bounds);
-	    pos.start=bounds.centerX();
-		pos.end=bounds.centerY();
+	    pos.start = bounds.centerX();
+		pos.end = bounds.centerY();
 
-		int index= tryLine_Start(getText().toString(),offset);
-		pos.start=(int)((offset- index)*getTextSize());
+		int index= tryLine_Start(getText().toString(), offset);
+		pos.start = (int)((offset - index) * getTextSize());
 
 		return pos;
 	}
@@ -563,8 +595,8 @@ public abstract class CodeEdit extends BaseEdit
 	{
 		//获取绝对光标坐标
 		wordIndex pos = getCursorPos(offset);
-		pos.start=pos.start % width;
-		pos.end=pos.end % height;
+		pos.start = pos.start % width;
+		pos.end = pos.end % height;
 		return pos;
 	}
 	final public wordIndex getScrollCursorPos(int offset, int scrollx, int scrolly)
@@ -572,8 +604,8 @@ public abstract class CodeEdit extends BaseEdit
 		//获取存在滚动条时的绝对光标坐标
 		//当前屏幕起始0相当于scroll滚动量,然后用cursorpos-scroll，就是当前屏幕光标绝对坐标	
 		wordIndex pos = getCursorPos(offset);
-		pos.start=pos.start - scrollx;
-		pos.end=pos.end - scrolly;		
+		pos.start = pos.start - scrollx;
+		pos.end = pos.end - scrolly;		
 		return pos;
 	}
 
@@ -581,11 +613,11 @@ public abstract class CodeEdit extends BaseEdit
 	{
 		float xLine;
 		int nowN = 0;
-		xLine=y / getLineHeight();
+		xLine = y / getLineHeight();
 
 		while (xLine-- > 0)
 		{
-			nowN=tryLine_End(getText().toString(), nowN + 1);
+			nowN = tryLine_End(getText().toString(), nowN + 1);
 			//从起始行开始，向后试探至那行的offset
 		}
 		return nowN;
@@ -602,5 +634,5 @@ public abstract class CodeEdit extends BaseEdit
 		return Line;
 	}
 
-	
+
 }

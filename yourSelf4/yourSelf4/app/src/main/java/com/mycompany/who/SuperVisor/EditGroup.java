@@ -65,9 +65,9 @@ public class EditGroup extends LinearLayout
 	}
 	
 	public static EditGroup GetEditGroup(Context cont,int width,int height,boolean is){
-			EditGroup Group= EditGroupCreator.CreatSelf(cont);
-			new Config_hesViewLevel().ConfigSelf(Group);
-			return Group;
+		EditGroup Group= EditGroupCreator.CreatSelf(cont);
+		new Config_hesViewLevel().ConfigSelf(Group);
+		return Group;
 	}
 	
 	static class EditGroupCreator{
@@ -255,7 +255,6 @@ public class EditGroup extends LinearLayout
 	protected void configEdit(CodeEdit Edit, String name)
 	{
 		Edit.setPool(pool);
-		Edit.setRunner(new EditListenerRunnerInfo());
 		com.mycompany.who.Share.Share.setEdit(Edit, name);
 	}
 
@@ -556,11 +555,7 @@ public class EditGroup extends LinearLayout
 			for (CodeEdit e:EditList)
 			    e.setLuagua(luagua);
 		}
-		public void setRunner(EditListenerRunnerInfo Runner)
-		{
-			for (CodeEdit Edit:EditList)
-			    Edit.setRunner(Runner);
-		}
+		
 		public void setPool(ThreadPoolExecutor pool)
 		{
 			for (CodeEdit Edit:EditList)

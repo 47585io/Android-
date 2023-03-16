@@ -11,7 +11,18 @@ import java.util.*;
 
 public class EditListenerFactory
 {
-	
+
+	//DrawerListener
+	public static class DefaultDrawerListener extends EditDrawerListener
+	{
+		@Override
+		public void onDraw(final int start, final int end, List<wordIndex> nodes, SpannableStringBuilder builder, Editable editor)
+		{
+	    	editor.replace(start, end, builder);
+		}
+
+	}
+
 	//	___________________________________________________________________________________________________________________________
 
 	//CanvaserListener
@@ -30,20 +41,6 @@ public class EditListenerFactory
 			paint.setColor(BaseEdit.CursorRect_Color);
 			canvas.drawRect(bounds,paint);
 		}
-	}
-
-
-//	___________________________________________________________________________________________________________________________
-
-	//DrawerListener
-	public static class DefaultDrawerListener extends EditDrawerListener
-	{
-		@Override
-		public void onDraw(final int start, final int end, List<wordIndex> nodes, SpannableStringBuilder builder, Editable editor)
-		{
-	    	editor.replace(start, end, builder);
-		}
-
 	}
 
 
@@ -138,7 +135,7 @@ public class EditListenerFactory
 //	___________________________________________________________________________________________________________________________
 
 	//InsertorListener
-	public static class DefaultInsertorListener extends EditInsertorListener
+	final public static class DefaultInsertorListener extends EditInsertorListener
 	{
 
 		@Override
@@ -352,7 +349,7 @@ public class EditListenerFactory
 //	___________________________________________________________________________________________________________________________
 
 	//FinderFactory
-	public static class FinderFactory{
+	final public static class FinderFactory{
 
 		public static EditListener getTextFinder(){
 			return new FinderText();
@@ -718,7 +715,7 @@ public class EditListenerFactory
 	}
 
 
-	public static FinderFactory getFinderFactory(){
+	public static FinderFactory getDrawerFactory(){
 		return new FinderFactory();
 	}
 	public static EditListener getDefaultDrawer(){
@@ -756,7 +753,7 @@ public class EditListenerFactory
 	 _________________________________________
 
 	 */
-	public static class AnyThingFactory{
+	final public static class AnyThingFactory{
 		//Text工厂
 		public static class AnyThingForText{
 

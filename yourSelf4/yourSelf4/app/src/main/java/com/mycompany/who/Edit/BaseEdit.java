@@ -399,7 +399,7 @@ ________________________________________
 	final public void insertWord(String word, int index, int flag)
 	{
 		IsModify++;
-		Ep.start();
+		
 		try
 		{
 			onInsertword(word,index,flag);
@@ -408,9 +408,7 @@ ________________________________________
 		{
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
-		Ep.stop();
-		Log.d("Insertword with Ep",Ep.toString());
-		
+
 		IsModify--;
 	}
 	abstract protected void onInsertword(String word,int index,int flag)		
@@ -880,23 +878,19 @@ _________________________________________
 	final public String getWord(int offset)
 	{
 		//获得光标前的纯单词
-		Ep.start();
 	    wordIndex node = tryWordSplit(getText().toString(), offset);
 		if (node.end == 0)
 			node.end = offset;
 		String want= getText().toString().substring(node.start, node.end);
-		Ep.stop();
 		return want;
 	}
 	final public String getAfterWord(int offset)
 	{
 		//获得光标后面的纯单词
-		Ep.start();
 		wordIndex node = tryWordSplitAfter(getText().toString(), offset);
 		if (node.end == 0)
 			node.end = getText().toString().length();
 		String want= getText().toString().substring(node.start, node.end);
-		Ep.stop();
 		return want;
 	}
 	

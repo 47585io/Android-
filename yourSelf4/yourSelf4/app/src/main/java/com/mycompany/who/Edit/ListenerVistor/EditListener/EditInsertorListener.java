@@ -2,6 +2,7 @@ package com.mycompany.who.Edit.ListenerVistor.EditListener;
 
 import android.text.*;
 import java.util.*;
+import android.util.*;
 
 public abstract class EditInsertorListener extends EditListener
 {
@@ -21,5 +22,25 @@ public abstract class EditInsertorListener extends EditListener
 			}
 		}
 		return nowIndex+1;
+	}
+	
+	final public int LetMeInsert(Editable editor, int nowIndex)
+	{
+		int newIndex = nowIndex;
+		try
+		{
+			if (Enabled())
+				newIndex= Insert(editor,nowIndex);
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			Log.e("Inserting Error", toString()+" "+e.toString());
+			return nowIndex;
+		}
+		return newIndex;
+	}
+	
+	protected int Insert(Editable editor, int nowIndex){
+		return dothing_insert(editor, nowIndex);
 	}
 }

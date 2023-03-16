@@ -118,27 +118,13 @@ public abstract class EditListenerItrator
 	public static abstract class RunLi<T>{
 		abstract public T run(EditListener li);
 		public T runSelf(EditListener li){
-			if(EditListener.Enabled(li))
+			if(li.Enabled())
 				return run(li);
 			return null;
 		}
 	}
 	
-	public static void DelListener(List<EditListener> lis,String name){
-		for(Object li:lis.toArray())
-		    if(((EditListener)li).name.equals(name))
-				lis.remove(li);
-	}
-	public static void DelListener(List<EditListener> lis,EditListener l){
-		for(Object li:lis.toArray())
-		    if(li.equals(l))
-				lis.remove(li);
-	}
-	public static void DelListener(List<EditListener> lis,int hashCode){
-		for(Object li:lis.toArray())
-		    if(li.hashCode()==hashCode)
-				lis.remove(li);
-	}
+	
 	
 	
 }
