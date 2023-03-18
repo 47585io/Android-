@@ -63,7 +63,7 @@ public class EditListenerInfo
 		mlistenerVS.remove(li);
 	}
 	
-	public EditListener findListener(){
+	public EditListener findListener(String name){
 		return null;
 	}
 	

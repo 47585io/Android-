@@ -115,6 +115,9 @@ public abstract class CodeEdit extends BaseEdit
 	public EditListenerInfo getInfo(){
 		return Info;
 	}
+	public void setInfo(EditListenerInfo i){
+		Info=i;
+	}
 
 	public void setLuagua(String Lua)
 	{

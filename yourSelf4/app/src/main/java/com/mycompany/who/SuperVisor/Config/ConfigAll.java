@@ -8,4 +8,9 @@ public class ConfigAll
 			c. ConfigSelf(target);
 		}
 	}
+	
+	public static<T> void startConfig(Configer<T> c,List<T> target){
+		for(T t:target)
+		    c.ConfigSelf(t);
+	}
 }

@@ -54,8 +54,8 @@ public abstract class EPool<T>
 			Es.add(creat());
 		}
 	}
-	public abstract T creat()
-	public abstract void resetE(T E)
+	protected abstract T creat()
+	protected abstract void resetE(T E)
 	
 	synchronized public void recyle(int size){
 		//指针向前偏size，并将之间的元素重置
@@ -66,7 +66,7 @@ public abstract class EPool<T>
 	}
 
 	@Override
-	synchronized public String toString()
+	public String toString()
 	{
 		String src = "";
 		src=getClass().getSimpleName();

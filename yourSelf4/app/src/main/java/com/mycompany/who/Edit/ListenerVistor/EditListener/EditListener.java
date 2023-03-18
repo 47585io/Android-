@@ -6,7 +6,7 @@ import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Share.*;
 import java.util.*;
 
-public abstract class EditListener
+public abstract class EditListener extends Object
 {
 	private boolean Enabled;
 	private String name;
@@ -14,8 +14,9 @@ public abstract class EditListener
 		name="@default";
 		Enabled=true;
 	}
-	public EditListener(String name){
+	public EditListener(String name,boolean e){
 		this. name=name;
+		Enabled=e;
 	}
 
 	@Override
@@ -39,6 +40,9 @@ public abstract class EditListener
 	}
 	public void setName(String name){
 		this.name=name;
+	}
+	public String getName(){
+		return name;
 	}
 	
 }

@@ -908,13 +908,13 @@ _________________________________________
 	{
 
 		@Override
-		public wordIndex creat()
+		protected wordIndex creat()
 		{
 			return new wordIndex();
 		}
 
 		@Override
-		public void resetE(wordIndex E)
+		protected void resetE(wordIndex E)
 		{
 		}
 
@@ -924,13 +924,13 @@ _________________________________________
 	{
 
 		@Override
-		public Icon creat()
+		protected Icon creat()
 		{
 			return new Icon();
 		}
 
 		@Override
-		public void resetE(Icon E)
+		protected void resetE(Icon E)
 		{
 		}
 
