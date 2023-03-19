@@ -49,10 +49,11 @@ public class String_Splitor
 		int index = 0-str.length();
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
-		    index = text.indexOf(str,index+str.length());
+		    index = text.indexOf(str,index);
 			if(index==-1)
 				break;
 			indexs.add(index);
+			index+=str.length();
 		}
 		return indexs;
 	}
@@ -61,10 +62,11 @@ public class String_Splitor
 		int index = 0;
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
-		    index = text.indexOf(c,index+1);
+		    index = text.indexOf(c,index);
 			if(index==-1)
 				break;
 			indexs.add(index);
+			++index;
 		}
 		return indexs;
 	}
@@ -72,10 +74,11 @@ public class String_Splitor
 		int count=0;
 		int index =0;
 		while(true){
-		    index = text.indexOf(want,index+1);
+		    index = text.indexOf(want,index);
 			if(index==-1)
 				break;
 			++count;
+			index+=want.length();
 		}
 		return count;
 	}
@@ -83,10 +86,11 @@ public class String_Splitor
 		int count=0;
 		int index =0;
 		while(true){
-		    index = text.indexOf(want,index+1);
+		    index = text.indexOf(want,index);
 			if(index==-1)
 				break;
 			++count;
+			++index;
 		}
 		return count;
 	}

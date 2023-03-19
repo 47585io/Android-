@@ -32,10 +32,10 @@ public class EditGroup extends LinearLayout
 	//编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
 	//解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
 	
-	public int MaxLine=4000,OnceSubLine=1;
+	public int MaxLine=200,OnceSubLine=0;
 	public int ExpandWidth=1500,ExpandHeight=2000;
 	public Config_hesSize config;
-	public Config_Edit configEdit;
+	public static Config_Edit configEdit;
 	private int EditFlag=0,EditDrawFlag=0;
 	private int historyId;
 
@@ -52,6 +52,11 @@ public class EditGroup extends LinearLayout
 	private Stack<Stack<Integer>> Next;
 	private ThreadPoolExecutor pool=null;
 
+	
+	static{
+		configEdit=new Config_Edit();
+	}
+	
 	EditGroup(Context cont)
 	{
 		super(cont);
@@ -105,7 +110,7 @@ public class EditGroup extends LinearLayout
 		for(int i=0;i<EditList.size();++i){
 			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
 			if(e.index!=i)
-				e.index=i;
+				e.index= i;
 		}
 	}
 	protected RCodeEdit creatAEdit(String name)
@@ -162,7 +167,7 @@ public class EditGroup extends LinearLayout
 		p.height += addHeight;
 		Father.setLayoutParams(p);
 	}
-	final public static void trimXel(View Father, int WidthX, int HeightX)
+	final public static void trimXel(View Father, float WidthX, float HeightX)
 	{
 		ViewGroup.LayoutParams p = Father.getLayoutParams();
 		p.width *= WidthX;
@@ -218,8 +223,11 @@ public class EditGroup extends LinearLayout
 			Log.w("onTextChanged", "My index is "+index);
 			
 			EditFlag++;		
-			sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
-			//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
+			if(text.toString().indexOf('\n',start)!=-1)
+				sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
+			    //在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
+			else
+				super.onTextChanged(text,start,lengthBefore,lengthAfter);
 			EditFlag--;
 
 			if (EditFlag == 0)
@@ -228,7 +236,7 @@ public class EditGroup extends LinearLayout
 				EditLines. reLines(line);
 				Last.push(new Stack<Integer>());
 				trimToFather();
-				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+ForEdit.getWidth()+" "+ForEdit.getHeight()+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
+				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+config.EditWidth+" "+config.EditHeight+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
 				//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 				//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
 				//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
@@ -249,13 +257,14 @@ public class EditGroup extends LinearLayout
 			int lineCount= getLineCount();
 			if (lineCount > MaxLine)
 			{
-				wordIndex j = subLines(MaxLine-OnceSubLine);
-				String src = getText().toString().substring(j.start, j.end);
+				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
+				wordIndex j = subLines(MaxLine+1-OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
+				j.start--; //连带着把MaxLine行的\n也截取
+				String src = getText().toString().substring(j.start, j.end); 
 				IsModify++;
 				getText().delete(j.start, j.end);	
 				IsModify--;
-				//为提升效率，若超出行数，一次性截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
-
+				
 				if (start + lengthAfter < j.start)
 					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
 				else
@@ -370,7 +379,7 @@ public class EditGroup extends LinearLayout
 	EditCanvaserListener getClipCanvaser()
 	{
 		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
-		//在调试时，发现EditCanvaserListener内部还有一个$this成员，原来这个成员就是EditGroup
+		//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
 		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
 		//其实不安全
 		return new ClipCanvaser();
@@ -446,11 +455,11 @@ public class EditGroup extends LinearLayout
 		}
 		public void Format()
 		{
-			Last.add(new Stack<Integer>());
 			for (CodeEdit e:EditList)
 			{
 				e.Format(0, e.getText().length());
 			}
+			Last.add(new Stack<Integer>());
 		}
 		public void Format(int start, int end)
 		{
@@ -464,6 +473,7 @@ public class EditGroup extends LinearLayout
 				}
 			};
 			d.dofor(this.start, this.end);
+			Last.add(new Stack<Integer>());
 		}
 		public void Insert(int index)
 		{
@@ -490,7 +500,8 @@ public class EditGroup extends LinearLayout
 			if (Next.size() < 1)
 				return;
 			Stack<Integer> next= Next.pop();
-			Last.push(next);
+			Stack<Integer> last = Last.remove(Last.size()-1);
+			Last.push(last);
 			for (int l:next)
 				EditList.get(l).Redo();
 			EditLines.reLines(calaEditLines());
@@ -621,10 +632,9 @@ public class EditGroup extends LinearLayout
 			Group. EditList = new ArrayList<>();
 			Group. Last = new Stack<>();
 			Group. Next = new Stack<>();
-			Group. Last.add(new Stack<Integer>());
+			Group. Last.push(new Stack<Integer>());
 			Group. config = new Config_hesSize();
 		    Group.creatEditBuilder();
-			Group.configEdit=new Config_Edit();
 		}
 		private static void init2(Context cont,EditGroup Group)
 		{	

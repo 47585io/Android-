@@ -6,7 +6,7 @@ import com.mycompany.who.Edit.Share.*;
 public class EditLine extends Edit
 {
 	
-	public int LineCount=1;
+	public int LineCount=0;
 	
 	public EditLine(Context cont){
 		super(cont);
@@ -39,18 +39,18 @@ public class EditLine extends Edit
 	}
 	final public void addALine()
 	{
+		++LineCount;
 		append( LineCount+"\n");
 		setWidth((int)(String.valueOf(LineCount).length() * (int)getTextSize())+30);
-		++LineCount;
 	}
 	final public void delALine()
 	{
+		--LineCount;
 		String src = getText().toString();
 		int end = src.lastIndexOf('\n', src.length() - 2);
 		if (end != -1)
 			getText().delete(end+1, src.length());
 	    setWidth((int)(String.valueOf(LineCount).length() * (int)getTextSize())+30);
-		--LineCount;
 	}
 
 	@Override

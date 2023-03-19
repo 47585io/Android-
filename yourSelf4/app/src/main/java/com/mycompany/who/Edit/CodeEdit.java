@@ -149,8 +149,8 @@ public abstract class CodeEdit extends BaseEdit
 	}
 
 
-	/*
-	 _________________________________________
+ /*
+ _________________________________________
 
 	 Dreawr
 
@@ -166,9 +166,9 @@ public abstract class CodeEdit extends BaseEdit
 
 	 -> onDrawNodes
 
-	 _________________________________________
+ _________________________________________
 
-	 */
+ */
 	protected final void FindFor(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)
 	{
 		//为了安全，禁止重写
@@ -250,8 +250,8 @@ public abstract class CodeEdit extends BaseEdit
 	}
 
 
-	/*
-	 _________________________________________
+/*
+ _________________________________________
 
 	 Formator
 
@@ -269,9 +269,9 @@ public abstract class CodeEdit extends BaseEdit
 
 	 -> onInsert
 
-	 _________________________________________
+ _________________________________________
 
-	 */
+ */
 
 	public final Future Format(final int start, final int end)
 	{
@@ -377,8 +377,8 @@ public abstract class CodeEdit extends BaseEdit
 	}
 
 
-	/*
-	 _________________________________________
+ /*
+ _________________________________________
 
 	 Completor
 
@@ -396,9 +396,9 @@ public abstract class CodeEdit extends BaseEdit
 
 	 2-> calc
 
-	 _________________________________________
+ _________________________________________
 
-	 */
+ */
 	final public Future openWindow(final ListView Window, int index, final ThreadPoolExecutor pool)
 	{
 		final String wantBefore= getWord(index);
@@ -546,12 +546,8 @@ public abstract class CodeEdit extends BaseEdit
 
 
 
-	
-	/*
-
-	 其它函数
-
-	 */
+ 
+	/* 其它函数 */
 
 	final public void reSAll(int start, int end, String want, String to)
 	{

@@ -48,7 +48,9 @@ public class Edit extends EditText
 	}
 	
 	public int getLineCount(){
-		return String_Splitor.Count('\n',getText().toString())+1;
+		String src = getText().toString();	
+		int Count = String_Splitor.Count('\n',src)+1;
+		return Count;
 	}
 	
 	public int maxHeight(){
@@ -118,7 +120,7 @@ public class Edit extends EditText
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
 		if(indexs==null)
 			return j;
-		j.start= indexs.get(startLine-1)+1;
+		j.start= indexs.get(startLine-2)+1;
 		j.end=getText().toString().length();
 		return j;
 	}
@@ -127,8 +129,8 @@ public class Edit extends EditText
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
 		if(indexs==null)
 			return j;
-		j.start= indexs.get(startLine-1)+1;
-		j.end=indexs.get(endLine-1)+1;
+		j.start= indexs.get(startLine-2)+1;
+		j.end=indexs.get(endLine-2)+1;
 		return j;
 	}
 	

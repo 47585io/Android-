@@ -247,9 +247,9 @@ _________________________________________
 			@Override
 			public void run()
 			{
-				final String text = getText().subSequence(start,end).toString();
-				final List<wordIndex> nodes=new ArrayList<>();
-				final SpannableStringBuilder builder = new SpannableStringBuilder();
+				String text = getText().subSequence(start,end).toString();
+				List<wordIndex> nodes=new ArrayList<>();
+				SpannableStringBuilder builder = new SpannableStringBuilder();
 				if(text==null)
 				    return;
 				try{
@@ -903,6 +903,7 @@ _________________________________________
 	
 	
 	abstract public void setLuagua(String l)
+	
 	
 	public static class EPool2 extends EPool<wordIndex>
 	{

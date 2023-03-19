@@ -5,11 +5,11 @@ import java.nio.*;
 
 public class myLog
 {
-	private FileWriter writer;
+	private FileOutputStream writer;
 	public myLog(File f){
 		try
 		{
-			writer=new FileWriter(f);
+			writer=new FileOutputStream(f);
 		}
 		catch (IOException e)
 		{}
@@ -17,7 +17,7 @@ public class myLog
 	public myLog(String path){
 		try
 		{
-			writer=new FileWriter(path);
+			writer=new FileOutputStream(path);
 		}
 		catch (IOException e)
 		{}
@@ -25,7 +25,7 @@ public class myLog
 	public <T> void e(T str,boolean to){
 		try
 		{
-			writer.write(str.toString() + "\n");
+			writer.write((str.toString() + "\n").getBytes());
 			if(to)
 			    writer.flush();
 		}
