@@ -11,6 +11,7 @@ import java.util.concurrent.*;
 import com.mycompany.who.Edit.Base.Moudle.*;
 import com.mycompany.who.Edit.Base.Edit.*;
 import android.util.*;
+import android.view.*;
 
 /*
    整理是一切的开始
@@ -518,28 +519,17 @@ _________________________________________
 	public void Uedo()
 	{
 		//批量Uedo
-		if (stack == null)
+		if (stack == null||stack.Usize()==0)
 			return;
 
 		EditDate.Token token = null;	
 		int endSelection;
 		try
 		{
-			while (true)
-			{
-				token = stack.getLast();
-				endSelection = Uedo_(token);
-				setSelection(endSelection);
-				//设置光标位置
-				EditDate.Token token2=stack.seeLast();
-				if (token2 == null)
-					return;
-				else if (token2.start == token.end)	
-					continue;
-				//如果token位置紧挨着，持续Uedo	
-				else
-					break;
-			}
+			token = stack.getLast();
+			endSelection = Uedo_(token);
+			setSelection(endSelection);
+			//设置光标位置
 		}
 		catch (Exception e)
 		{
@@ -549,26 +539,16 @@ _________________________________________
 	public void Redo()
 	{
 		//批量Redo
-		if (stack == null)
+		if (stack == null||stack.Rsize()==0)
 			return;
 
 		EditDate.Token token = null;
 		int endSelection;
 		try
 		{
-			while (true)
-			{
-				token = stack.getNext();
-				endSelection = Redo_(token);
-				setSelection(endSelection);
-				EditDate.Token token2=stack.seeNext();
-				if (token2 == null)
-					return;
-				else if (token2.start == token.end)	
-					continue;
-				else
-					break;
-			}
+			token = stack.getNext();
+			endSelection = Redo_(token);
+			setSelection(endSelection);	
 		}
 		catch (Exception e)
 		{
@@ -624,7 +604,11 @@ _________________________________________
 		@Override
 		public void beforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			onBeforeTextChanged(str,start,count,after);
+			try{
+			    onBeforeTextChanged(str,start,count,after);
+			}catch(Exception e){
+				Log.e("BeforeTextChange",e.toString());
+			}
 		}
 
 		/**
@@ -637,7 +621,11 @@ _________________________________________
 		@Override
 		public void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{	
-		    NowTextChanged(text,start,lengthBefore,lengthAfter);
+		    try{
+		        NowTextChanged(text,start,lengthBefore,lengthAfter);
+		    }catch(Exception e){
+		    	Log.e("NowTextChange",e.toString());
+		    }
 		}
 
 		/**
@@ -936,5 +924,7 @@ _________________________________________
 		}
 
 	}
+
+	
 	
 }

@@ -148,7 +148,17 @@ public abstract class CodeEdit extends BaseEdit
 		}
 	}
 
-
+	@Override
+	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	{
+		try{
+		    super.onTextChanged(text, start, lengthBefore, lengthAfter);
+		}catch(Exception e){
+			Log.e("onTextChanged Don't know!",e.toString());
+		}
+	}
+	
+	
  /*
  _________________________________________
 

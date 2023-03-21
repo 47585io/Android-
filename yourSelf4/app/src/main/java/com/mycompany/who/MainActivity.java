@@ -71,8 +71,8 @@ public class MainActivity extends Activity
 			case 1:
 				Group.getEditBuilder().Redo();
 				break;
-			case 2:
-				Group.getEditBuilder().Format();
+			case 2:	
+				Group.getEditBuilder().Format();	
 				break;
 			case 3:
 				String src= Group.getEditBuilder().reDraw();

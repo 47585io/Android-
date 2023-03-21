@@ -45,6 +45,13 @@ public class EditDate
 		return RedoList.peek();
 	}
 
+	public int Usize(){
+		return UedoList.size();
+	}
+	public int Rsize(){
+		return RedoList.size();
+	}
+	
 	public static class Token
 	{
 		Token(int start, int end, String src)

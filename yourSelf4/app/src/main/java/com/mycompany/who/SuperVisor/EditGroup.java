@@ -32,12 +32,12 @@ public class EditGroup extends LinearLayout
 	//编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
 	//解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
 	
-	public int MaxLine=200,OnceSubLine=0;
+	public int MaxLine=10,OnceSubLine=0;
 	public int ExpandWidth=1500,ExpandHeight=2000;
 	public Config_hesSize config;
 	public static Config_Edit configEdit;
-	private int EditFlag=0,EditDrawFlag=0;
-	private int historyId;
+	private Int EditFlag=new Int(),EditDrawFlag=new Int();
+	private Int historyId;
 
 	protected ScrollView EditScro;
 	protected HorizontalScrollView EdithScro;
@@ -48,8 +48,8 @@ public class EditGroup extends LinearLayout
 
 	private EditBuilder builder;
 	private List<CodeEdit> EditList;
-	private Stack<Stack<Integer>> Last;
-	private Stack<Stack<Integer>> Next;
+	private Stack<Stack<Int>> Last;
+	private Stack<Stack<Int>> Next;
 	private ThreadPoolExecutor pool=null;
 
 	
@@ -94,14 +94,14 @@ public class EditGroup extends LinearLayout
 	public void AddEdit(String name)
 	{
 		RCodeEdit Edit= creatAEdit(name);
-		Edit.index = EditList.size();
+		Edit.index.set( EditList.size());
 		EditList.add(Edit);
 		ForEditSon.addView(Edit);
 	}
 	private void AddEditAt(int index)
 	{
 		RCodeEdit Edit= creatAEdit("");
-		Edit.index = index;
+		Edit.index.set( index);
 		EditList.add(index,Edit);
 		ForEditSon.addView(Edit,index);
 		reIndex();
@@ -109,8 +109,8 @@ public class EditGroup extends LinearLayout
 	private void reIndex(){
 		for(int i=0;i<EditList.size();++i){
 			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
-			if(e.index!=i)
-				e.index= i;
+			if(e.index.get()!=i)
+				e.index.set( i);
 		}
 	}
 	protected RCodeEdit creatAEdit(String name)
@@ -179,7 +179,7 @@ public class EditGroup extends LinearLayout
 	final class RCodeEdit extends CodeEdit
 	{
 
-		public int index;	
+		public Int index;	
 		private boolean can;
 		//别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数中赋值
 
@@ -187,11 +187,13 @@ public class EditGroup extends LinearLayout
 		{
 			super(cont);
 			can = true;
+			index = new Int();
 		}
 		public RCodeEdit(Context cont, CodeEdit Edit)
 		{
 			super(cont, Edit);
 			can = true;
+			index = new Int();
 		}
 
 		@Override
@@ -206,8 +208,17 @@ public class EditGroup extends LinearLayout
 		{
 			return mWindow;
 		}
-
-
+		@Override
+		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
+		{
+			if(!isDraw&&!isUR&&!isFormat&& EditFlag.get()==0&& (Last.size()==0 || Last.peek().size()!=0))
+				Last.push(new Stack<Int>());  
+			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
+			//让第一个编辑器先开辟一个空间，待之后存储
+			
+			super.onBeforeTextChanged(str, start, count, after);
+		}
+		
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
@@ -219,23 +230,23 @@ public class EditGroup extends LinearLayout
 			if (IsModify != 0 || IsModify2)
 				return ;
 			//已经被修改，不允许再修改
-			
+					
 			Log.w("onTextChanged", "My index is "+index);
 			
-			EditFlag++;		
-			if(text.toString().indexOf('\n',start)!=-1)
+			EditFlag.add();		
+			if(text.toString().indexOf('\n',start)!=-1&&lengthAfter!=0)
 				sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
 			    //在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
 			else
 				super.onTextChanged(text,start,lengthBefore,lengthAfter);
-			EditFlag--;
+			EditFlag.less();
 
-			if (EditFlag == 0)
+			if (EditFlag.get() == 0)
 			{
 				int line = builder.calaEditLines();
-				EditLines. reLines(line);
-				Last.push(new Stack<Integer>());
-				trimToFather();
+				EditLines. reLines(line);	//最后一个编辑器单独计算行
+				trimToFather();    //最后一个编辑器扩展大小
+				
 				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+config.EditWidth+" "+config.EditHeight+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
 				//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 				//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
@@ -243,11 +254,7 @@ public class EditGroup extends LinearLayout
 				//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
 				
 			}
-			//最后一个编辑器扩展大小
-			//最后一个编辑器单独计算行
-			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
-	        //先开辟一个空间，待之后存储
-
+		
 		}
 
 		protected void sendOutLineToNext(CharSequence text, int start, int lengthBefore, int lengthAfter)
@@ -275,14 +282,14 @@ public class EditGroup extends LinearLayout
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
-				if (EditList.size() - 1 == index)
+				if (EditList.size() - 1 == index.get())
 					AddEdit("");
-				else if(EditList.get(index+1).getLineCount()+(lineCount-MaxLine)>MaxLine){
-					AddEditAt(index+1);
+				else if(EditList.get(index.get()+1).getLineCount()+(lineCount-MaxLine)>MaxLine){
+					AddEditAt(index.get()+1);
 				}
 				//若无下个编辑器，则添加一个
 				//若有下个编辑器，但它的行也不足，那么在我之后添加一个
-				EditList.get(index + 1).getText().insert(0, src);
+				EditList.get(index.get() + 1).getText().insert(0, src);
 				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
 				//不难看出，这样递归回调，最后会回到第一个编辑器
 
@@ -306,7 +313,7 @@ public class EditGroup extends LinearLayout
 			historyId = ((RCodeEdit)Edit).index;
 			//本次窗口谁请求，单词给谁
 			int offset=Edit.getSelectionStart();
-			wordIndex pos = ((CodeEdit)Edit).getScrollCursorPos(offset, EdithScro.getScrollX(), EditScro.getScrollY() - EditGroup.this.builder.calaEditHeight(index));
+			wordIndex pos = ((CodeEdit)Edit).getScrollCursorPos(offset, EdithScro.getScrollX(), EditScro.getScrollY() - EditGroup.this.builder.calaEditHeight(index.get()));
 
 			pos.start += EditLines.getWidth();
 			int WindowWidth=config.WindowWidth;
@@ -341,23 +348,23 @@ public class EditGroup extends LinearLayout
 			canvas.clipRect(rect);
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 			
-			if(EditDrawFlag==0){
+			if(EditDrawFlag.get()==0){
 				//遍历所有其它编辑器，并显示
-				EditDrawFlag++;
-				int id = historyId;
+				EditDrawFlag.add();
+				Int id = historyId;
 				historyId=((RCodeEdit)self).index;
 				for(CodeEdit e: EditList){
-					if(((RCodeEdit)e).index!=historyId)
+					if(((RCodeEdit)e).index.get()!=historyId.get())
 					    e.invalidate();
 				}
-				EditDrawFlag--;
+				EditDrawFlag.less();
 				historyId=id;
 			}
 		}
 		
 		public Rect selfRect(EditText self){
 			
-			int index = ((RCodeEdit)self).index;
+			int index = ((RCodeEdit)self).index.get();
 			//计算编辑器在可视区域中的自己的范围
 
 			int EditTop=builder.calaEditHeight(index); //编辑器较ForEditSon的顶部位置
@@ -403,7 +410,7 @@ public class EditGroup extends LinearLayout
 			{
 				if (index - e.getText().length() < 0)
 				{
-					start.start = ((RCodeEdit)e).index;
+					start.start = ((RCodeEdit)e).index.get();
 					start.end = index;
 					return;
 				}
@@ -453,16 +460,18 @@ public class EditGroup extends LinearLayout
 			d.dofor(this.start, this.end);
 			return builder.toString();
 		}
-		public void Format()
+		public void Format() 
 		{
+			Last.push(new Stack<Int>());
 			for (CodeEdit e:EditList)
 			{
-				e.Format(0, e.getText().length());
+			    e.Format(0, e.getText().length());
 			}
-			Last.add(new Stack<Integer>());
 		}
 		public void Format(int start, int end)
 		{
+			Last.push(new Stack<Int>());
+			
 			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
@@ -473,7 +482,6 @@ public class EditGroup extends LinearLayout
 				}
 			};
 			d.dofor(this.start, this.end);
-			Last.add(new Stack<Integer>());
 		}
 		public void Insert(int index)
 		{
@@ -481,30 +489,30 @@ public class EditGroup extends LinearLayout
 			EditList.get(start.start).Insert(start.end);
 		}
 
-		public void Uedo()
+		public Stack<Int> Uedo()
 		{
 			//与顺序无关的Uedo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
-			if (Last.size() < 2)
-				return;
-			Stack<Integer> last= Last.get(Last.size() - 2);
-			Last.remove(Last.size() - 2);
+			if (Last.size() < 1)
+				return null;
+			Stack<Int> last= Last.pop();
 			Next.push(last);
-			for (int l:last)
-				EditList.get(l).Uedo();
+			for (Int l:last)
+				EditList.get(l.get()).Uedo();
 			EditLines. reLines(calaEditLines());
+			return last;
 		}
-		public void Redo()
+		public Stack<Int> Redo()
 		{
 			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
 			if (Next.size() < 1)
-				return;
-			Stack<Integer> next= Next.pop();
-			Stack<Integer> last = Last.remove(Last.size()-1);
-			Last.push(last);
-			for (int l:next)
-				EditList.get(l).Redo();
+				return null;
+			Stack<Int> next= Next.pop();
+			Last.push(next);
+			for (Int l:next)
+				EditList.get(l.get()).Redo();
 			EditLines.reLines(calaEditLines());
+			return next;
 		}
 
 		abstract class DoForAnyOnce
@@ -588,18 +596,22 @@ public class EditGroup extends LinearLayout
 			//如果点击了就插入单词并关闭窗口
 			WordAdpter adapter = (WordAdpter) p1.getAdapter();
 			Icon icon = (Icon) adapter.getItem(p3);
-			CodeEdit Edit = EditList.get(historyId);
+			CodeEdit Edit = EditList.get(historyId.get());
 			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
 			mWindow.setX(-9999);
 			mWindow.setY(-9999);
 		}
 	}
+	
+	
+    /*
+	    Get or Set
+	*/
 	private void setWindowListener(){
 		mWindow.setOnItemClickListener(new onMyWindowClick());	
 	}
 
-	public void setPool(ThreadPoolExecutor pool)
-	{
+	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
 		builder.setPool(pool);
 	}
@@ -613,6 +625,10 @@ public class EditGroup extends LinearLayout
 		super.onConfigurationChanged(config);
 	}
 
+	
+/*
+   Config All
+*/
 	public static EditGroup GetEditGroup(Context cont,int width,int height,boolean is){
 		EditGroup Group= EditGroupCreator.CreatSelf(cont);
 		new Config_hesViewLevel().ConfigSelf(Group);
@@ -632,7 +648,7 @@ public class EditGroup extends LinearLayout
 			Group. EditList = new ArrayList<>();
 			Group. Last = new Stack<>();
 			Group. Next = new Stack<>();
-			Group. Last.push(new Stack<Integer>());
+			//Group. Last.push(new Stack<Int>());
 			Group. config = new Config_hesSize();
 		    Group.creatEditBuilder();
 		}
@@ -735,4 +751,41 @@ public class EditGroup extends LinearLayout
 		}
 	}
 
+	
+	/*
+	    将int类型的数据作为指针传递
+	
+		对于同一个Int对象，可进行安全的读写操作
+		
+		注意，若以指针传递，小心误修改对象，少使用set
+	*/
+	public static class Int{
+		
+		private int date;
+		
+		public Int(){
+			date=0;
+		}
+		public Int(int d){
+			date = d;
+		}
+		
+		public int get(){
+			return date;
+		}
+		synchronized public void set(int d){
+			date = d;
+		}
+		synchronized public int add(){
+			int before = date;
+			++date;
+			return before;
+		}
+		synchronized public int less(){
+			int before = date;
+			--date;
+			return before;
+		}
+	}
+	
 }
