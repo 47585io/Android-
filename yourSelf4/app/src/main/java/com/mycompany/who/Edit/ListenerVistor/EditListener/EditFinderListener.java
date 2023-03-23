@@ -10,9 +10,9 @@ import android.util.*;
 
 public abstract class EditFinderListener extends EditListener
 {
-	abstract public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib);
+	abstract public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib);
 	
-	abstract public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib);
+	abstract public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib);
 	
 	abstract public void OnClearFindWord(Words WordLib);
 	
@@ -42,15 +42,15 @@ public abstract class EditFinderListener extends EditListener
 
 	protected List<wordIndex> Find(int start, int end, String text, Words WordLib){
 		
-		List<BaseEdit. DoAnyThing> totalList =new ArrayList<>() ;
+		List<CodeEdit. DoAnyThing> totalList =new ArrayList<>() ;
 		List<wordIndex> nodes=new ArrayList<>();
 
 		OnFindWord(totalList, WordLib);
-		BaseEdit. startFind(text, totalList,nodes);
+		CodeEdit. startFind(text, totalList,nodes);
 		totalList.clear();
 		OnClearFindWord(WordLib);
 		OnFindNodes(totalList,WordLib);
-		BaseEdit. startFind(text, totalList,nodes);
+		CodeEdit. startFind(text, totalList,nodes);
 		OnClearFindNodes(start, end, text, nodes);
 		
 		return nodes;

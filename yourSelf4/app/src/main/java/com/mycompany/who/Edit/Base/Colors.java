@@ -92,6 +92,47 @@ public class Colors
 		return null;
 	}
 	
+	public static final char End = '#';
+	public static final char End2 = 'x';
+	
+	public static int vualeOf(String color){
+		int vuale=0;
+		for(int i=color.length()-1;i>-1&&color.charAt(i)!=End&&color.charAt(i)!=End2;--i){
+			int number = color.charAt(i)-'0';
+			vuale+= number*Math.pow(16,color.length()-i-1);
+		}
+		return vuale;
+	}
+	public static String toString(int color){
+		StringBuilder b= new StringBuilder();
+		while(color>15){
+			b.insert( 0,numberC(color%15));
+			color/=15;
+		}
+		b.insert(0,"0x");
+		return b.toString();
+	}
+	
+	public static String numberC(int n){
+		if(n>=0||n<=9)
+			return String.valueOf(n);
+		switch(n){
+			case 10:
+				return "a";
+			case 11:
+				return "b";
+			case 12:
+				return "c";
+			case 13:
+				return "d";
+			case 14:
+				return "e";
+			case 15:
+				return "f";
+		}
+		return "";
+	}
+	
 	public final static byte color_white=0;
 	public final static byte color_zhu=1;
 	public final static byte color_str=2;
@@ -168,4 +209,33 @@ public class Colors
 		//替换被HTML解析的字符
 		return src;
 	}
+	
+	
+	
+	public static SpannableStringBuilder TextSpan(List<wordIndex> nodes,Object[] spans,String src){
+		SpannableStringBuilder builder = new SpannableStringBuilder(src);
+		int i;
+		for(i=0;i<nodes.size();++i){
+			ParcelableSpan span = (ParcelableSpan) spans[i];
+			wordIndex node = nodes.get(i);
+			builder.setSpan(span,node.start,node.end,span.getSpanTypeId());
+		}
+		return builder;
+	}
+	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,Editable editor){
+		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
+		String src = editor.toString().substring(start,end);
+		return TextSpan(nodes,spans,src);
+	}
+	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,SpannableStringBuilder editor){
+		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
+		String src = editor.toString().substring(start,end);
+		return TextSpan(nodes,spans,src);
+	}
+	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,SpannedString editor){
+		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
+		String src = editor.toString().substring(start,end);
+		return TextSpan(nodes,spans,src);
+	}
+	
 }

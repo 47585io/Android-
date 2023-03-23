@@ -17,7 +17,6 @@
 		android:paddingRight="10px"
 		android:scaleType="centerInside"/>
 
-
 	<TextView
 		android:id="@+id/Filename"
 		android:layout_width="wrap_content"
@@ -25,7 +24,7 @@
 		android:layout_gravity="center"
 		android:paddingStart="10dp"
 		android:textColor="#ffabb2bf"
-		android:textSize="45px"/>
+		android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </LinearLayout>
 

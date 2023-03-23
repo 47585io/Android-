@@ -18,7 +18,8 @@ public class EditListenerFactory
 		@Override
 		public void onDraw(final int start, final int end, List<wordIndex> nodes, SpannableStringBuilder builder, Editable editor)
 		{
-	    	editor.replace(start, end, builder);
+			if(builder!=null)
+	    	    editor.replace(start, end, builder);
 		}
 
 	}
@@ -38,7 +39,7 @@ public class EditListenerFactory
 
 			//任何修改都会触发重绘，这里在光标位置画矩形
 
-			paint.setColor(BaseEdit.CursorRect_Color);
+			paint.setColor(CodeEdit.CursorRect_Color);
 			canvas.drawRect(bounds,paint);
 		}
 	}
@@ -74,7 +75,7 @@ public class EditListenerFactory
 			nextCount = String_Splitor. calaN(src, nextIndex + 1);
 			//统计\n之后的分隔符数量
 
-			String is= src.substring(BaseEdit.tryLine_Start(src, nextIndex + 1),BaseEdit. tryLine_End(src, nextIndex + 1));
+			String is= src.substring(CodeEdit.tryLine_Start(src, nextIndex + 1),CodeEdit. tryLine_End(src, nextIndex + 1));
 			//如果下个的分隔符数量小于当前的，缩进至与当前的相同的位置
 			if (nowCount >= nextCount && is.indexOf(START) == -1)
 			{
@@ -84,10 +85,10 @@ public class EditListenerFactory
 					int index= String_Splitor.getBeforeBindow(src, end_bindow , START, END);
 					if (index == -1)
 						return nextIndex;
-					int linestart=BaseEdit.tryLine_Start(src, index);
-					int noline= BaseEdit.tryAfterIndex(src, linestart);
-					int bindowstart=BaseEdit.tryLine_Start(src, end_bindow);
-					int nobindow=BaseEdit.tryAfterIndex(src, bindowstart);
+					int linestart=CodeEdit.tryLine_Start(src, index);
+					int noline= CodeEdit.tryAfterIndex(src, linestart);
+					int bindowstart=CodeEdit.tryLine_Start(src, end_bindow);
+					int nobindow=CodeEdit.tryAfterIndex(src, bindowstart);
 					if (nobindow - bindowstart != noline - linestart)
 					{		
 						editor.replace(bindowstart, nobindow, String_Splitor.getNStr(INSERT, noline - linestart));
@@ -177,7 +178,7 @@ public class EditListenerFactory
 						if (src.charAt(nowIndex - 1) == '<')
 						{
 							int index= String_Splitor.getBeforeBindow(src, nowIndex - 1, "<", "</");
-							wordIndex j=BaseEdit. tryWordAfter(src, index);
+							wordIndex j=CodeEdit. tryWordAfter(src, index);
 							editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 							return j.end + 1;
 						}
@@ -207,13 +208,15 @@ public class EditListenerFactory
 				@Override
 				public Collection<String> onBeforeSearchWord(Words Wordlib)
 				{
-					return ((OtherWords)Wordlib). getKeyword();
+					if (Share.getbit(Search_Bit, Colors.color_key))
+					    return ((OtherWords)Wordlib). getKeyword();
+					return null;
 				}
 
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_key);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_key);
 				}
 			};
 		}
@@ -236,7 +239,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_default);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_default);
 				}
 			};
 		}
@@ -256,7 +259,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_villber);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_villber);
 				}
 			};
 		}
@@ -277,7 +280,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit. addSomeWord(word, adpter, Share.icon_func);
+					CodeEdit. addSomeWord(word, adpter, Share.icon_func);
 				}
 			};
 		}
@@ -298,7 +301,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_obj);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_obj);
 				}
 			};
 		}
@@ -318,7 +321,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_type);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_type);
 				}
 			};
 		}
@@ -340,7 +343,7 @@ public class EditListenerFactory
 				@Override
 				public void onFinishSearchWord(List<String> word, List<Icon> adpter)
 				{
-					BaseEdit.addSomeWord(word, adpter, Share.icon_tag);
+					CodeEdit.addSomeWord(word, adpter, Share.icon_tag);
 				}
 			};
 		}
@@ -372,13 +375,13 @@ public class EditListenerFactory
 		{
 
 			@Override
-			public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 
 			}
 
 			@Override
-			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList, Words WordLib)
+			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib)
 			{
 				// TODO: Implement this method
 				AnyThingFactory. AnyThingForText AllThings = AnyThingFactory.getAnyThingText(WordLib);
@@ -396,7 +399,7 @@ public class EditListenerFactory
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				BaseEdit.clearRepeatNode(nodes);
+				CodeEdit.clearRepeatNode(nodes);
 			}
 		}
 
@@ -406,18 +409,18 @@ public class EditListenerFactory
 			@Override
 			public void OnClearFindNodes(int start, int end, String text, List<wordIndex> nodes)
 			{
-				BaseEdit.clearRepeatNode(nodes);
+				CodeEdit.clearRepeatNode(nodes);
 			}
 
 
 			@Override
-			public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 
 			}
 
 			@Override
-			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 				AnyThingFactory. AnyThingForXML AllThings = AnyThingFactory.getAnyThingXML(WordLib);
 
@@ -443,7 +446,7 @@ public class EditListenerFactory
 		{
 
 			@Override
-			public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
 
@@ -457,7 +460,7 @@ public class EditListenerFactory
 			}
 
 			@Override
-			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
 
@@ -502,7 +505,7 @@ public class EditListenerFactory
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				BaseEdit.clearRepeatNode(nodes);	
+				CodeEdit.clearRepeatNode(nodes);	
 			}
 		}
 
@@ -512,13 +515,13 @@ public class EditListenerFactory
 		{
 
 			@Override
-			public void OnFindWord(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 
 			}
 
 			@Override
-			public void OnFindNodes(List<BaseEdit.DoAnyThing> totalList,Words WordLib)
+			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib)
 			{
 				AnyThingFactory. AnyThingForCSS CSSThings = AnyThingFactory.getAnyThingCSS(WordLib);
 
@@ -547,7 +550,7 @@ public class EditListenerFactory
 			@Override
 			public void OnClearFindNodes(int start,int end,String text, List<wordIndex> nodes)
 			{
-				BaseEdit.clearRepeatNode(nodes);
+				CodeEdit.clearRepeatNode(nodes);
 				clearRepeatNodeForCSS(text,nodes);
 			}
 
@@ -764,9 +767,9 @@ public class EditListenerFactory
 			}
 
 			//勇往直前的GoTo块，会突进一大段并阻拦其它块
-			public BaseEdit. DoAnyThing getGoTo_zhuShi(){
+			public CodeEdit. DoAnyThing getGoTo_zhuShi(){
 				//获取注释
-				return new BaseEdit. DoAnyThing(){		
+				return new CodeEdit. DoAnyThing(){		
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -793,10 +796,10 @@ public class EditListenerFactory
 					}
 				};
 			}	
-			public BaseEdit. DoAnyThing getGoTo_Str(){
+			public CodeEdit. DoAnyThing getGoTo_Str(){
 				//获取字符串
 
-				return new BaseEdit. DoAnyThing(){
+				return new CodeEdit. DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -818,7 +821,7 @@ public class EditListenerFactory
 						else if(src.charAt(nowIndex)=='\''){
 							//如果它是'字符，将之后的字符加进来
 							if(src.charAt(nowIndex+1)=='\\'){
-								wordIndex node= BaseEdit. Ep.get();
+								wordIndex node= CodeEdit. Ep.get();
 								node.set(nowIndex,nowIndex+4,Colors.color_str);
 								nodes.add(node);
 								nowIndex+=3;	
@@ -837,16 +840,16 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit. DoAnyThing getNoSans_Char(){
+			public CodeEdit. DoAnyThing getNoSans_Char(){
 				//获取字符
-				return new BaseEdit. DoAnyThing(){
+				return new CodeEdit. DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if(String_Splitor. indexOfNumber(src.charAt(nowIndex))){
 							//否则如果当前的字符是一个数字，就把它加进nodes
 							//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
-							wordIndex node= BaseEdit. Ep.get();
+							wordIndex node= CodeEdit. Ep.get();
 							node.set(nowIndex,nowIndex+1,Colors.color_number);
 							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
@@ -857,7 +860,7 @@ public class EditListenerFactory
 							if(Array_Splitor.indexOf(src.charAt(nowIndex),getSpilt())==-1){
 								//如果它不是会被html文本压缩的字符，将它自己加进nodes
 								//这是为了保留换行空格等
-								wordIndex node=BaseEdit. Ep.get();
+								wordIndex node=CodeEdit. Ep.get();
 								node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 								nodes.add(node);
 							}
@@ -870,9 +873,9 @@ public class EditListenerFactory
 				};
 			}
 
-			public BaseEdit. DoAnyThing getCanTo(){
+			public CodeEdit. DoAnyThing getCanTo(){
 
-				return new BaseEdit. DoAnyThing(){
+				return new CodeEdit. DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -890,13 +893,13 @@ public class EditListenerFactory
 				for(;nowIndex<nextindex;nowIndex++){
 					//保留特殊字符
 					if(Array_Splitor.indexOf(src.charAt(nowIndex),getSpilt())!=-1){
-						wordIndex node= BaseEdit. Ep.get();
+						wordIndex node= CodeEdit. Ep.get();
 						node.set(startindex,nowIndex,wantColor);
 						nodes.add(node);
 						startindex=nowIndex+1;
 					}
 				}
-				wordIndex node= BaseEdit. Ep.get();
+				wordIndex node= CodeEdit. Ep.get();
 				node.set(startindex,nextindex,wantColor);
 				nodes.add(node);
 
@@ -949,15 +952,15 @@ public class EditListenerFactory
 				super(lib);
 			}
 
-			public BaseEdit.DoAnyThing getDraw_Tag(){
-				return new BaseEdit.DoAnyThing(){
+			public CodeEdit.DoAnyThing getDraw_Tag(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//简单的一个xml方案
 						wordIndex node;
 						if(src.charAt(nowIndex)=='<'){
-							node=BaseEdit.tryWordAfter(src,nowIndex+1);
+							node=CodeEdit.tryWordAfter(src,nowIndex+1);
 							node.b=Colors.color_tag;
 							getTag().add(src.substring(node.start,node.end));
 							nodes.add(node);
@@ -969,8 +972,8 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getDraw_Attribute(){
-				return new BaseEdit.DoAnyThing(){
+			public CodeEdit.DoAnyThing getDraw_Attribute(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -978,7 +981,7 @@ public class EditListenerFactory
 						if(src.charAt(nowIndex)=='='
 						   ||src.charAt(nowIndex)==':'
 						   ){
-							node=BaseEdit.tryWord(src,nowIndex-1);
+							node=CodeEdit.tryWord(src,nowIndex-1);
 							node.b=Colors.color_attr;
 							getAttribute().add(src.substring(node.start,node.end));
 							nodes.add(node);
@@ -999,9 +1002,9 @@ public class EditListenerFactory
 		public static class AnyThingForJava extends AnyThingForText{
 
 			//不回溯的NoSans块，用已有信息完成判断
-			public BaseEdit.DoAnyThing getNoSans_Keyword(){
+			public CodeEdit.DoAnyThing getNoSans_Keyword(){
 				//获取关键字和保留字
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1009,7 +1012,7 @@ public class EditListenerFactory
 						//为了节省时间，将更简单的条件放前面，触发&&的断言机制
 						if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&src.charAt(nowIndex+1)!='_'&&getKeyword().contains(nowWord.toString())){
 							//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node= BaseEdit.Ep.get();
+							wordIndex node= CodeEdit.Ep.get();
 							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_key);
 							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
@@ -1017,7 +1020,7 @@ public class EditListenerFactory
 						}
 						else if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getConstword().contains(nowWord.toString())){
 							//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node= BaseEdit.Ep.get();
+							wordIndex node= CodeEdit.Ep.get();
 							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_const);
 							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
@@ -1033,17 +1036,17 @@ public class EditListenerFactory
 			}
 
 
-			public BaseEdit.DoAnyThing getNoSans_Func(){
+			public CodeEdit.DoAnyThing getNoSans_Func(){
 				//获取函数
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						int afterIndex=BaseEdit.tryAfterIndex(src,nowIndex+1);
+						int afterIndex=CodeEdit.tryAfterIndex(src,nowIndex+1);
 						if(src.charAt(afterIndex)=='('){
 							if(getLastfunc().contains(nowWord.toString())){
 								//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
-								wordIndex node= BaseEdit.Ep.get();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_func);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
@@ -1054,17 +1057,17 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getNoSans_Villber(){
+			public CodeEdit.DoAnyThing getNoSans_Villber(){
 				//获得变量
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getHistoryVillber().contains(nowWord.toString())){
-							int afterIndex=BaseEdit.tryAfterIndex(src,nowIndex+1);
+							int afterIndex=CodeEdit.tryAfterIndex(src,nowIndex+1);
 							if(src.charAt(afterIndex)!='('){
 								//否则如果当前累计的字符串是一个变量并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= BaseEdit.Ep.get();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_villber);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
@@ -1075,17 +1078,17 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getNoSans_Object(){
+			public CodeEdit.DoAnyThing getNoSans_Object(){
 				//获取对象
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getThoseObject().contains(nowWord.toString())){
-							int afterIndex=BaseEdit.tryAfterIndex(src,nowIndex+1);
+							int afterIndex=CodeEdit.tryAfterIndex(src,nowIndex+1);
 							if(src.charAt(afterIndex)!='('){
 								//否则如果当前累计的字符串是一个对象并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= BaseEdit.Ep.get();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_obj);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
@@ -1097,17 +1100,17 @@ public class EditListenerFactory
 				};
 			}
 
-			public BaseEdit. DoAnyThing getNoSans_Type(){
+			public CodeEdit. DoAnyThing getNoSans_Type(){
 				//获取类型
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if(!String_Splitor. IsAtoz(src.charAt(nowIndex+1))&&getBeforetype().contains(nowWord.toString())){
-							int afterIndex=BaseEdit.tryAfterIndex(src,nowIndex+1);
+							int afterIndex=CodeEdit.tryAfterIndex(src,nowIndex+1);
 							if(src.charAt(afterIndex)!='('){
 								//否则如果当前累计的字符串是一个类型并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= BaseEdit.Ep.get();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_type);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
@@ -1122,16 +1125,16 @@ public class EditListenerFactory
 
 
 			//会回溯的Sans块，试探并记录单词
-			public BaseEdit.DoAnyThing getSans_TryFunc(){
+			public CodeEdit.DoAnyThing getSans_TryFunc(){
 				//试探函数
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						wordIndex node;
 						if(src.charAt(nowIndex)=='('){
 							//如果它是(字符，将之前的函数名存起来
-							node=BaseEdit.tryWord(src,nowIndex-1);
+							node=CodeEdit.tryWord(src,nowIndex-1);
 							getLastfunc().add(src.substring(node.start,node.end));
 							return nowIndex;
 						}
@@ -1140,9 +1143,9 @@ public class EditListenerFactory
 					}	
 				};
 			}
-			public BaseEdit.DoAnyThing getSans_TryVillber(){
+			public CodeEdit.DoAnyThing getSans_TryVillber(){
 				//试探变量和类型
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{					 
@@ -1150,14 +1153,14 @@ public class EditListenerFactory
 						if((src.charAt(nowIndex)=='=')){
 							//如果它是.或=字符，将之前的对象名或变量存起来	
 							//=前后必须是分割符或普通的英文字符，不能是任何与=结合的算术字符
-							node=BaseEdit.tryWord(src,nowIndex-1);
+							node=CodeEdit.tryWord(src,nowIndex-1);
 							if(src.charAt(nowIndex)=='='&&!getHistoryVillber().contains(src.substring(node.start,node.end))
 							   &&Array_Splitor.indexOf(src.charAt(nowIndex-1),arr)==-1
 							   &&Array_Splitor.indexOf(src.charAt(nowIndex+1),arr)==-1){
 								//二次试探，得到类型
 								//变量必须首次出现才有类型
-								int nowN= BaseEdit.tryLine_Start(src, node.start);
-								wordIndex tmp = BaseEdit.tryWord(src,node.start-1);
+								int nowN= CodeEdit.tryLine_Start(src, node.start);
+								wordIndex tmp = CodeEdit.tryWord(src,node.start-1);
 								if(tmp.start>nowN)
 								//类型与变量必须在同一行
 									getBeforetype().add(src.substring(tmp.start,tmp.end));
@@ -1170,15 +1173,15 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getSans_TryObject(){
+			public CodeEdit.DoAnyThing getSans_TryObject(){
 				//试探对象
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						wordIndex node;
 						if(src.charAt(nowIndex)=='.'&&!String_Splitor.indexOfNumber(src.charAt(nowIndex+2))){
-							node=BaseEdit.tryWord(src,nowIndex-1);
+							node=CodeEdit.tryWord(src,nowIndex-1);
 							getThoseObject().add(src.substring(node.start,node.end));
 							return nowIndex;
 						}
@@ -1186,9 +1189,9 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getSans_TryType(){
+			public CodeEdit.DoAnyThing getSans_TryType(){
 				//试探类型
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{	
@@ -1199,7 +1202,7 @@ public class EditListenerFactory
 							   ||Word.equals("extends")
 							   ||Word.equals("implements")
 							   ||Word.equals("interface")){
-								wordIndex tmp=BaseEdit.tryWordAfter(src,nowIndex+1);
+								wordIndex tmp=CodeEdit.tryWordAfter(src,nowIndex+1);
 								getBeforetype().add(src.substring(tmp.start,tmp.end));
 								return tmp.end-1;
 							}
@@ -1229,19 +1232,19 @@ public class EditListenerFactory
 			}
 
 			//如果所有东西不需进行二次查找，就用这个吧
-			public BaseEdit.DoAnyThing getNoSans_Func(){
+			public CodeEdit.DoAnyThing getNoSans_Func(){
 				//获取函数
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 
 						if(src.charAt(nowIndex)=='('){
 							//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
-							wordIndex node = BaseEdit.tryWord(src,nowIndex);
+							wordIndex node = CodeEdit.tryWord(src,nowIndex);
 							node.b=Colors.color_func;
 							nodes.add(node);
-							wordIndex node2=BaseEdit.Ep.get();
+							wordIndex node2=CodeEdit.Ep.get();
 							node2.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 							nodes.add(node2);
 							getLastfunc().add(src.substring(node.start,node.end));
@@ -1252,19 +1255,19 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getNoSans_Object(){
+			public CodeEdit.DoAnyThing getNoSans_Object(){
 				//获取对象
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 
 						if(src.charAt(nowIndex)=='.'){
 							//否则如果当前累计的字符串是一个对象并且后面是.字符，就把它加进nodes
-							wordIndex node =BaseEdit. tryWord(src,nowIndex);
+							wordIndex node =CodeEdit. tryWord(src,nowIndex);
 							node.b=Colors.color_obj;
 							nodes.add(node);
-							wordIndex node2=BaseEdit.Ep.get();
+							wordIndex node2=CodeEdit.Ep.get();
 							node2.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 							nodes.add(node2);
 							getThoseObject().add(src.substring(node.start,node.end));
@@ -1276,9 +1279,9 @@ public class EditListenerFactory
 				};
 			}
 
-			public BaseEdit.DoAnyThing getCSSDrawer()
+			public CodeEdit.DoAnyThing getCSSDrawer()
 			{
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
@@ -1286,7 +1289,7 @@ public class EditListenerFactory
 						wordIndex node,node2;
 						if (src.charAt(nowIndex) == '#')
 						{
-							node=BaseEdit.Ep.get();
+							node=CodeEdit.Ep.get();
 							node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 							nodes.add(node);
 							node2=tryWordAfterCSS(src, nowIndex + 1);
@@ -1298,7 +1301,7 @@ public class EditListenerFactory
 						}
 						else if (src.charAt(nowIndex) == '.' && !String_Splitor.indexOfNumber(src.charAt(nowIndex - 1)) && !String_Splitor.indexOfNumber(src.charAt(nowIndex + 1)))
 						{
-							node=BaseEdit.Ep.get();
+							node=CodeEdit.Ep.get();
 							node.set(nowIndex,nowIndex+1,Colors.color_fuhao);
 							nodes.add(node);
 							node2=tryWordAfterCSS(src, nowIndex + 1);
@@ -1312,24 +1315,24 @@ public class EditListenerFactory
 				};
 			}
 
-			public BaseEdit.DoAnyThing getCSSChecker()
+			public CodeEdit.DoAnyThing getCSSChecker()
 			{
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//为了节省时间，将更简单的条件放前面，触发&&的断言机制
-						if(String_Splitor.IsAtoz(src.charAt(nowIndex + 1))&& src.charAt(BaseEdit.tryLine_End(src, nowIndex) - 1) == '{'){
+						if(String_Splitor.IsAtoz(src.charAt(nowIndex + 1))&& src.charAt(CodeEdit.tryLine_End(src, nowIndex) - 1) == '{'){
 							if(getHistoryVillber().contains(nowWord.toString())){
-								wordIndex node=BaseEdit.Ep.get();
+								wordIndex node=CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_cssid);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
 								return nowIndex;
 							}
 							else if(getBeforetype().contains(nowWord.toString())){
-								wordIndex node=BaseEdit.Ep.get();
+								wordIndex node=CodeEdit.Ep.get();
 								node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_csscla);
 								nodes.add(node);
 								nowWord.delete(0,nowWord.length());
@@ -1343,20 +1346,20 @@ public class EditListenerFactory
 			}
 
 
-			public BaseEdit.DoAnyThing getNoSans_Tag()
+			public CodeEdit.DoAnyThing getNoSans_Tag()
 			{
 				//获取Tag
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1))
-							&& src.charAt(BaseEdit.tryLine_End(src, nowIndex) - 1) == '{'
+							&& src.charAt(CodeEdit.tryLine_End(src, nowIndex) - 1) == '{'
 							&&(getTag().contains(nowWord.toString())))
 						{
 							//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
-							wordIndex node=BaseEdit.Ep.get();
+							wordIndex node=CodeEdit.Ep.get();
 							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_tag);
 							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
@@ -1366,19 +1369,19 @@ public class EditListenerFactory
 					}
 				};
 			}
-			public BaseEdit.DoAnyThing getNoSans_Attribute()
+			public CodeEdit.DoAnyThing getNoSans_Attribute()
 			{
 				//获取属性
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						int afterIndex=BaseEdit.tryAfterIndex(src, nowIndex + 1);
+						int afterIndex=CodeEdit.tryAfterIndex(src, nowIndex + 1);
 
 						if ( !String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && src.charAt(afterIndex) != '('&&getAttribute().contains(nowWord) )
 						{
 							//如果当前累计的字符串是一个属性并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node=BaseEdit.Ep.get();
+							wordIndex node=CodeEdit.Ep.get();
 							node.set(nowIndex-nowWord.length()+1,nowIndex+1,Colors.color_attr);
 							nodes.add(node);
 							nowWord.delete(0,nowWord.length());
@@ -1388,9 +1391,9 @@ public class EditListenerFactory
 					}
 				};
 			}	
-			public BaseEdit.DoAnyThing getDraw_Attribute()
+			public CodeEdit.DoAnyThing getDraw_Attribute()
 			{
-				return new BaseEdit.DoAnyThing(){
+				return new CodeEdit.DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1399,7 +1402,7 @@ public class EditListenerFactory
 							|| src.charAt(nowIndex) == ':'
 							){
 							int i=src.indexOf('{',nowIndex);
-							if (i<BaseEdit.tryLine_End(src, nowIndex)&&i!=-1)
+							if (i<CodeEdit.tryLine_End(src, nowIndex)&&i!=-1)
 							{
 								node=tryWordAfterCSS(src, nowIndex + 1);
 								node.b=Colors.color_cssfl;
@@ -1422,7 +1425,7 @@ public class EditListenerFactory
 			public wordIndex tryWordForCSS(String src, int index)
 			{
 				//试探前面的单词
-				wordIndex tmp = BaseEdit.Ep.get();
+				wordIndex tmp = CodeEdit.Ep.get();
 				try
 				{
 					while (Array_Splitor. indexOf(src.charAt(index), getFuhao()) != -1)
@@ -1434,7 +1437,7 @@ public class EditListenerFactory
 				}
 				catch (Exception e)
 				{
-					return BaseEdit.Ep.get();
+					return CodeEdit.Ep.get();
 				}
 				return tmp;
 			}
@@ -1442,7 +1445,7 @@ public class EditListenerFactory
 			public wordIndex tryWordAfterCSS(String src, int index)
 			{
 				//试探后面的单词
-				wordIndex tmp =BaseEdit. Ep.get();
+				wordIndex tmp =CodeEdit. Ep.get();
 				try
 				{
 					while (Array_Splitor.indexOf(src.charAt(index), getFuhao()) != -1)
@@ -1454,7 +1457,7 @@ public class EditListenerFactory
 				}
 				catch (Exception e)
 				{
-					return BaseEdit.Ep.get();
+					return CodeEdit.Ep.get();
 				}
 				return tmp;
 			}

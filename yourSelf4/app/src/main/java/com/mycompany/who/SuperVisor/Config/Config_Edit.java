@@ -8,7 +8,12 @@ import com.mycompany.who.Edit.Share.*;
 
 public class Config_Edit implements Configer<CodeEdit>
 {
-
+	
+	public static Config_Edit configEdit;
+	static{
+		configEdit=new Config_Edit();
+	}
+	
 	EditListenerInfo Info;
 	ThreadPoolExecutor pool;
 	EditLine lines;

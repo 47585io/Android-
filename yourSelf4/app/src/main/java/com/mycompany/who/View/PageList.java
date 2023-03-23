@@ -17,29 +17,30 @@ public class PageList extends LinearLayout
 	private static int noRepeatId=-1;
 	private int nowIndex;
 	private onTabPag mtabListener;
+	private List<View> mPages;
 	
 	public PageList(Context cont)
 	{
 		super(cont);
-		setOnTouchListener(new OnTouchToMoveSelf());
+		mPages=new ArrayList<>();
+		//setOnTouchListener(new OnTouchToMoveSelf());
 	}
 
-	public boolean addPage(ViewGroup EditPage)
+	public void addView(View EditPage)
 	{
 		//添加一个命名的编辑器
 		int index = contrans(EditPage);
 		if (index != -1)
-		{	
-			return false;
+			return ;
 			//如果是同一个文件，不重复加入
-		}
+		
 		if(mtabListener!=null)
 			mtabListener.onAddPage(EditPage);
 		EditPage.setId(++noRepeatId);	
-		addView(EditPage);
-		return true;
+		super. addView(EditPage);
+		mPages.add(EditPage);
 	}
-	public void tabPage(int index)
+	public void tabView(int index)
 	{
 		if (index>getChildCount()-1 || index < 0)
 		{
@@ -51,28 +52,26 @@ public class PageList extends LinearLayout
 		//异常情况下，什么也不做
 		//否则把编辑器切换
 		
-		if(getOrientation()==LinearLayout.HORIZONTAL)
-		    AnimatorColletion.transtionX(this,getX(),getChildAt(index).getLeft());
-		else if(getOrientation()==LinearLayout.VERTICAL){
-			AnimatorColletion.transtionY(this,getY(),getChildAt(index).getLeft());
-		}
+		removeAllViews();
+		super. addView(mPages.get(index));
 	}
-	public void delPage(int index)
+	public void removeViewAt(int index)
 	{
 		if(mtabListener!=null)
 			mtabListener.onDelPage(index);
 		removeViewAt(index);
+		mPages.remove(index);
 		if(nowIndex==index)
-			tabPage(index-1);
+			tabView(index-1);
 	}
 
-	public int contrans(ViewGroup Page)
+	public int contrans(View Page)
 	{
 		int index;
-		for (index = 0;index < getChildCount();index++)
+		for (index = 0;index < mPages.size();index++)
 		{
 			View p =  getChildAt(index);
-			if (p.getId()==Page.getId())
+			if (p.getId()==Page.getId()||p.getTag().equals(Page.getTag()))
 			{
 			    return index;
 			}
@@ -93,7 +92,9 @@ public class PageList extends LinearLayout
 		//获取当前的编辑器id
 		return noRepeatId;
 	}
-	
+	public View getView(int index){
+		return mPages.get(index);
+	}
 	
 	class OnTouchToMoveSelf extends OnTouchToMove
 	{

@@ -21,6 +21,7 @@ import com.mycompany.who.Edit.ListenerVistor.*;
 public class MainActivity extends Activity 
 {
 	private EditGroup Group;
+	private XCode Code;
 	protected ThreadPoolExecutor pool;
 	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	
@@ -30,12 +31,10 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
 		init();
-		Group=EditGroup.GetEditGroup(this,2000,1000,ConfigViewWith_PortAndLand.Port);
-		setContentView(Group);
-		Group.loadSize(1000,2000,true);
-		Group.AddEdit(".java");
-		Group.setPool(pool);
-		
+		Code = new XCode(this);
+		Code.setPool(pool);
+		Code.addEdit(".java");
+		setContentView(Code);
 	}
 	
 	protected void init(){
@@ -63,7 +62,7 @@ public class MainActivity extends Activity
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
-	{
+	{/*
 		switch(item.getItemId()){
 			case 0:
 				Group.getEditBuilder().Uedo();
@@ -81,7 +80,7 @@ public class MainActivity extends Activity
 			case 4:
 				Group.scrollTo(0,0);
 				break;
-		}
+		}*/
 		return super.onOptionsItemSelected(item);
 	}
 

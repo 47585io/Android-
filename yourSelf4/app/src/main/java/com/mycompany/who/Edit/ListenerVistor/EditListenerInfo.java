@@ -18,6 +18,13 @@ public class EditListenerInfo
 	
 	public List<EditListener> mlistenerVS;
 	
+	
+	public EditListenerInfo(){
+		mlistenerVS = new ArrayList<>();
+		mlistenerCS = new ArrayList<>();				
+	}
+	
+	
 	public void addAListener(EditListener li){
 		
 		if(li==null)

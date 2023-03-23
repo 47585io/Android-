@@ -18,9 +18,9 @@ import android.util.*;
 import com.mycompany.who.Edit.Base.Edit.*;
 
 
-public class EditGroup extends LinearLayout
+public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeEdit.IlovePool
 {
-
+	
 	//为提升编辑器效率，增加EditGroup
 	//编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
 	//解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
@@ -32,17 +32,13 @@ public class EditGroup extends LinearLayout
 	//编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
 	//解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
 	
-	public int MaxLine=10,OnceSubLine=0;
-	public int ExpandWidth=1500,ExpandHeight=2000;
-	public Config_hesSize config;
-	public static Config_Edit configEdit;
-	private Int EditFlag=new Int(),EditDrawFlag=new Int();
-	private Int historyId;
-
-	protected ScrollView EditScro;
-	protected HorizontalScrollView EdithScro;
+	public static int MaxLine=2000,OnceSubLine=0;
+	public static int ExpandWidth=1500,ExpandHeight=2000;
+	protected int mWidth,mHeight;
+	protected Int EditFlag=new Int();
+	protected Int historyId;
+	
 	protected LinearLayout ForEdit;
-	protected LinearLayout ForEditSon;
 	protected EditLine EditLines;
 	protected ListView mWindow;
 
@@ -51,22 +47,13 @@ public class EditGroup extends LinearLayout
 	private Stack<Stack<Int>> Last;
 	private Stack<Stack<Int>> Next;
 	private ThreadPoolExecutor pool=null;
-
-	
-	static{
-		configEdit=new Config_Edit();
-	}
+	private EditFactory mfactory;
 	
 	EditGroup(Context cont)
 	{
 		super(cont);
-	}
-
-	@Override
-	public void scrollTo(int x, int y)
-	{
-		EditScro.setScrollY(y);
-		EdithScro.setScrollX(x);
+		new EditGroupCreator().ConfigSelf(this); // 初始化成员
+		new Config_hesViewLevel().ConfigSelf(this); // 配置层级
 	}
 	
 	@Override
@@ -77,52 +64,67 @@ public class EditGroup extends LinearLayout
 		return false;
 	}
 
-	/*必须调用*/
-	public void loadSize(int width,int height,boolean is){
-		config.set(width, height,is,this);
-		config.ConfigSelf(this);
-	}
-	public EditBuilder getEditBuilder()
-	{
+	
+	public EditBuilder getEditBuilder(){
 		return builder;
 	}
-	public List<CodeEdit> getEditList()
-	{
+	public List<CodeEdit> getEditList(){
 		return EditList;
 	}
-
+	public CodeEdit getHistoryEdit(){
+		return EditList.get(historyId.get());
+	}
+	@Override
+	public ThreadPoolExecutor getPool()
+	{
+		return pool;
+	}
+	
+	public wordIndex WAndH(){
+		return new wordIndex(mWidth,mHeight,(byte)0);
+	}
+	
+	public void setWindow(ListView Window){
+		if(Window!=null)
+		    mWindow=Window;
+	}
+	public void setPool(ThreadPoolExecutor pool){
+		this.pool = pool;
+		builder.setPool(pool);
+	}
+	public void setEditFactory(EditFactory factory){
+		if(factory!=null)
+		    mfactory=factory;
+	}
+	
+	
+	/* AddEdit只要调用一次，后面的Edit会跟随第一个的配置 */
 	public void AddEdit(String name)
 	{
 		RCodeEdit Edit= creatAEdit(name);
 		Edit.index.set( EditList.size());
 		EditList.add(Edit);
-		ForEditSon.addView(Edit);
+		ForEdit.addView(Edit);
 	}
+	/* 为了安全，不允许调用 */
 	private void AddEditAt(int index)
 	{
 		RCodeEdit Edit= creatAEdit("");
 		Edit.index.set( index);
 		EditList.add(index,Edit);
-		ForEditSon.addView(Edit,index);
+		ForEdit.addView(Edit,index);
 		reIndex();
 	}
-	private void reIndex(){
-		for(int i=0;i<EditList.size();++i){
-			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
-			if(e.index.get()!=i)
-				e.index.set( i);
-		}
-	}
+	
+	/* 创建一个Edit */
 	protected RCodeEdit creatAEdit(String name)
 	{
 		RCodeEdit Edit;
 		if (EditList.size() == 0)
 		{
-	        Edit = new RCodeEdit(getContext());
-			configEdit(Edit, name);
+	        Edit = new RCodeEdit(getContext(),mfactory.getEdit(this));
+			mfactory. configEdit(Edit, name,this);
 			Edit.lines = EditLines;
-			Edit.getCanvaserList().add(new ClipCanvaser());
-			setTag(name);
 		}
 		else
 		{
@@ -131,12 +133,17 @@ public class EditGroup extends LinearLayout
 		Edit.setOnClickListener(new Click());
 		return Edit;
 	}
-	protected void configEdit(CodeEdit Edit, String name)
-	{
-		Edit.setPool(pool);
-		com.mycompany.who.Share.Share.setEdit(Edit, name);
-	}
 
+	/* 重新排列Edit的下标 */
+	private void reIndex(){
+		for(int i=0;i<EditList.size();++i){
+			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
+			if(e.index.get()!=i)
+				e.index.set( i);
+		}
+	}
+	
+	
 
 	/*关键代码*/
 	protected void trimToFather()
@@ -145,11 +152,11 @@ public class EditGroup extends LinearLayout
 		wordIndex size = builder.WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
-		trim(ForEditSon, width - EditLines.maxWidth(), height);
-		trim(ForEdit, width, height);
-		config.EditWidth=width; 
-		config.EditHeight=height;
-		//为两个Edit的父元素扩展空间，一个Lines的父元素ForEdit，一个ForEditSon
+		trim(ForEdit, width - EditLines.maxWidth(), height);
+		trim(this, width, height);
+		mWidth=width; 
+		mHeight=height;
+		//为两个Edit的父元素扩展空间，一个ForEdit，一个this
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 	}
 	final public static void trim(View Father, int width, int height)
@@ -247,7 +254,7 @@ public class EditGroup extends LinearLayout
 				EditLines. reLines(line);	//最后一个编辑器单独计算行
 				trimToFather();    //最后一个编辑器扩展大小
 				
-				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+config.EditWidth+" "+config.EditHeight+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
+				Log.w("注意！此消息一次onTextChanged中只出现一次","trimToFather："+mWidth+" "+mHeight+ " and reLines:"+line+" and Stack size："+Last.size()+" 注意，Stack Size不会太大");
 				//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 				//注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
 				//因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
@@ -305,93 +312,22 @@ public class EditGroup extends LinearLayout
 		@Override
 	 	public wordIndex calc(EditText Edit)
 		{
-
-			//测量并修改Window大小
-			config.ConfigSelf(EditGroup.this);
-
-			//请求测量
-			historyId = ((RCodeEdit)Edit).index;
-			//本次窗口谁请求，单词给谁
-			int offset=Edit.getSelectionStart();
-			wordIndex pos = ((CodeEdit)Edit).getScrollCursorPos(offset, EdithScro.getScrollX(), EditScro.getScrollY() - EditGroup.this.builder.calaEditHeight(index.get()));
-
-			pos.start += EditLines.getWidth();
-			int WindowWidth=config.WindowWidth;
-			int WindowHeight=config.WindowHeight;
-			int selfWidth=config.selfWidth;
-			int selfHeight=config.selfHeight;
-			
-			if (pos.start + WindowWidth >selfWidth)
-				pos.start =selfWidth - WindowWidth;
-			//如果x超出屏幕，总是设置在最右侧
-
-			if (pos.end + WindowHeight + Edit.getLineHeight() >selfHeight)
-				pos.end = pos.end - WindowHeight - Edit.getLineHeight();
-			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
-			else
-				pos.end = pos.end + Edit.getLineHeight();
-
+			wordIndex pos=Calc(((RCodeEdit)Edit),EditGroup.this);
 			return pos;
 		}
 
 	}
+	
+	/*
+	    默认是以光标位置显示窗口，子类可以重写
+	*/
+    protected wordIndex Calc(RCodeEdit Edit,EditGroup self){
+		historyId = Edit.index;
+		return Edit.getCursorPos(Edit.getSelectionStart());
+	}
+	
 
 	
-	public class ClipCanvaser extends EditCanvaserListener
-	{
-		//提升效率，不想用可以remove
-		@Override
-		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
-		{	
-		    /*关键代码*/
-			Rect rect =selfRect(self);
-			canvas.clipRect(rect);
-			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
-			
-			if(EditDrawFlag.get()==0){
-				//遍历所有其它编辑器，并显示
-				EditDrawFlag.add();
-				Int id = historyId;
-				historyId=((RCodeEdit)self).index;
-				for(CodeEdit e: EditList){
-					if(((RCodeEdit)e).index.get()!=historyId.get())
-					    e.invalidate();
-				}
-				EditDrawFlag.less();
-				historyId=id;
-			}
-		}
-		
-		public Rect selfRect(EditText self){
-			
-			int index = ((RCodeEdit)self).index.get();
-			//计算编辑器在可视区域中的自己的范围
-
-			int EditTop=builder.calaEditHeight(index); //编辑器较ForEditSon的顶部位置
-			int SeeTop = EditScro.getScrollY(); //可视区域较ForEditSon的顶部位置
-			int SeeLeft = EdithScro.getScrollX();//可视区域较ForEditSon的左边位置
-
-			int left = SeeLeft - EditLines.maxWidth();
-			//编辑器左边是当前可视区域左边减EditLines的宽
-			int top = SeeTop - EditTop;
-			//编辑器顶部为从0开始至可视区域顶部的偏移
-			int right = config. selfWidth + left;
-			//编辑器右边是左边加一个可视区域的宽
-			int bottom= top+ config.selfHeight;
-			//编辑器底部是上面加一个可视区域的高
-			return new Rect(left,top,right,bottom);
-		}
-
-	}
-	EditCanvaserListener getClipCanvaser()
-	{
-		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
-		//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
-		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
-		//其实不安全
-		return new ClipCanvaser();
-	}
-
 	final public class EditBuilder
 	{
 		//通过EditBuilder直接操作Edit
@@ -436,19 +372,16 @@ public class EditGroup extends LinearLayout
 			    Edit.setPool(pool);
 		}
 
-		public String reDraw()
+		public void reDraw()
 		{
-			StringBuilder builder=new StringBuilder();
 			for (CodeEdit e:EditList)
 			{
 				e.reDraw(0, e.getText().length());
 			}
-			return builder.toString();
 		}
-		public String reDraw(int start, int end)
+		public void reDraw(int start, int end)
 		{
 			calaRange(start, end);
-			final StringBuilder builder=new StringBuilder();
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -458,7 +391,6 @@ public class EditGroup extends LinearLayout
 				}
 			};
 			d.dofor(this.start, this.end);
-			return builder.toString();
 		}
 		public void Format() 
 		{
@@ -531,20 +463,20 @@ public class EditGroup extends LinearLayout
 			}
 			abstract void doOnce(int start, int end, CodeEdit Edit)
 		}
-
-		public int calaEditHeight(int index)
-		{
-			int height=0;
-			for (int i=0;i < index;++i)
-				height += EditList.get(i).maxHeight();
-			return height;
-		}
+		
 		public int calaEditLines()
 		{
 			int line=0;
 			for (Edit e:EditList)
 				line += e.getLineCount();
 			return line;
+		}
+		public int calaEditHeight(int index)
+		{
+			int height=0;
+			for (int i=0;i < index;++i)
+				height += EditList.get(i).maxHeight();
+			return height;
 		}
 		public int calaEditWidth()
 		{
@@ -577,180 +509,97 @@ public class EditGroup extends LinearLayout
 			builder=new EditBuilder();
 	}
 	
-	class Click implements OnClickListener
-	{
-		@Override
-		public void onClick(View p1)
-		{
-			historyId = ((RCodeEdit) p1).index;
-			mWindow.setX(-9999);
-		}
-	}
 	
-	class onMyWindowClick implements OnItemClickListener
-	{
-
-		@Override
-		public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
-		{
-			//如果点击了就插入单词并关闭窗口
-			WordAdpter adapter = (WordAdpter) p1.getAdapter();
-			Icon icon = (Icon) adapter.getItem(p3);
-			CodeEdit Edit = EditList.get(historyId.get());
-			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
-			mWindow.setX(-9999);
-			mWindow.setY(-9999);
-		}
-	}
-	
-	
-    /*
-	    Get or Set
-	*/
-	private void setWindowListener(){
-		mWindow.setOnItemClickListener(new onMyWindowClick());	
-	}
-
-	public void setPool(ThreadPoolExecutor pool){
-		this.pool = pool;
-		builder.setPool(pool);
-	}
-
 
 	@Override
-	protected void onConfigurationChanged(final Configuration config)
+	public void ConfigSelf(EditGroup target)
 	{
-		EditGroup.this.config.change(this);
-		EditGroup.this.config.ConfigSelf(this);
-		super.onConfigurationChanged(config);
+		//任何时候，立刻配置
 	}
-
 	
-/*
-   Config All
-*/
-	public static EditGroup GetEditGroup(Context cont,int width,int height,boolean is){
-		EditGroup Group= EditGroupCreator.CreatSelf(cont);
-		new Config_hesViewLevel().ConfigSelf(Group);
-		return Group;
-	}
 
-	static class EditGroupCreator{
 
-		public static EditGroup CreatSelf(Context cont){
-			EditGroup Group = new EditGroup(cont);
+	/*
+	    一顿操作后，EditGroup所有成员都分配好了空间
+	*/
+	static class EditGroupCreator implements Configer<EditGroup>
+	{
+
+		@Override
+		public void ConfigSelf(EditGroup Group)
+		{
 			init(Group);
-			init2(cont,Group);
-			return Group;
-		}	
+			init2(Group.getContext(),Group);
+		}
+
 		private static void init(EditGroup Group)
 		{
 			Group. EditList = new ArrayList<>();
 			Group. Last = new Stack<>();
 			Group. Next = new Stack<>();
-			//Group. Last.push(new Stack<Int>());
-			Group. config = new Config_hesSize();
 		    Group.creatEditBuilder();
+			Group.creatEditFactory();
 		}
 		private static void init2(Context cont,EditGroup Group)
 		{	
-			Group. EditScro = new ScrollView(cont);
-			Group. EdithScro = new HorizontalScrollView(cont);
-			Group. ForEdit = new LinearLayout(cont);
-			Group. ForEditSon = new LinearLayout(cont);
+		   	Group. ForEdit = new LinearLayout(cont);
 			Group. EditLines = new EditLine(cont);
-			Group. mWindow = new ListView(cont);
 		}	
 	}
 
-	public static class Config_hesSize implements Configer<EditGroup>
-	{
-		private boolean portOrLand=true;
-		private int WindowHeight=600, WindowWidth=600;
-		private int selfWidth=2000,selfHeight=1000;
-		private int EditWidth,EditHeight;
-		@Override
-		public void ConfigSelf(EditGroup target)
-		{
-			int height=MeasureWindowHeight(target.mWindow);
-			if(portOrLand==ConfigViewWith_PortAndLand.Port){
-				WindowWidth=WindowHeight=(int)(selfWidth*0.9);
-			}
-			else{
-				WindowWidth=(int)(selfWidth*0.7);
-				WindowHeight= (int)(selfHeight*0.3);
-			}	
-			if (height < WindowHeight)
-				WindowHeight=height;
-			EditGroup.trim(target.mWindow,WindowWidth,WindowHeight);
-		}
-
-		public void set(int width,int height,boolean is,EditGroup target){
-			selfWidth=width;
-			selfHeight=height;
-			portOrLand=is;
-			onChange(target);
-		}
-		public void change(EditGroup target){
-			int tmp = selfWidth;
-			selfWidth=selfHeight;
-			selfHeight=tmp;
-			portOrLand=!portOrLand;
-			onChange(target);
-		}
-		protected void onChange(EditGroup target){
-			EditGroup.trim(target,selfWidth,selfHeight);
-			EditGroup.trim(target.EditScro,selfWidth,selfHeight);
-			EditGroup.trim(target.EdithScro,selfWidth,selfHeight);
-		}
-		public static int MeasureWindowHeight(ListView mWindow)
-		{
-			int height=0;
-			int i;
-			WordAdpter adapter= (WordAdpter) mWindow.getAdapter();
-			if(adapter==null)
-				return 0;
-			for (i = 0;i < adapter.getCount();i++)
-			{
-				View view = adapter.getView(i, null, mWindow);
-				view.measure(0, 0);
-				height += view.getMeasuredHeight();
-				//若View没有明确设定width和height时，它的大小为0
-				//可以measure方法测量它的大小，这样测量的大小会被保存，然后获取测量的高
-				//注意，getWidth不等于getMeasuredHeight
-			}
-
-			return height;
-		}
-
-	}
-
+	/*
+	    如何配置View层次结构
+	*/
 	static class Config_hesViewLevel implements Configer<EditGroup>
 	{
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
-			target. addView(target. EdithScro);
-			target. EdithScro.addView(target. EditScro);
-			target. EditScro.addView(target. ForEdit);
-			target. ForEdit.addView(target. EditLines);
-			target. ForEdit.addView(target. ForEditSon);
-			target. addView(target. mWindow);
+			target. addView(target.EditLines);
+			target. addView(target.ForEdit);
+			if(target.mWindow==null){
+				target.mWindow=new ListView(target.getContext());
+				target.addView(target. mWindow);
+			}
 			config(target);
 		}
 		protected void config(EditGroup target)
 		{
 			target. EditLines.setFocusable(false);
-			target. ForEditSon.setOrientation(LinearLayout.VERTICAL);
-			target. mWindow.setBackgroundColor(0xFF1E2126);
-			target. mWindow.setDivider(null);
-			target.setWindowListener();
+			target. ForEdit.setOrientation(LinearLayout.VERTICAL);
 			CodeEdit.Enabled_Drawer=true;
 			CodeEdit.Enabled_Complete=true;
 			CodeEdit.Enabled_Format=true;
 		}
 	}
 
+	
+	public static interface EditFactory{
+		public CodeEdit getEdit(EditGroup self)
+		public void configEdit(CodeEdit Edit,String name,EditGroup self)
+	}
+	class Factory implements EditGroup.EditFactory
+	{
+
+		@Override
+		public CodeEdit getEdit(EditGroup self)
+		{
+			return new CodeEdit(self.getContext());
+		}
+
+		@Override
+		public void configEdit(CodeEdit Edit, String name, EditGroup self)
+		{
+			Edit.setPool(pool);
+			com.mycompany.who.Share.Share.setEdit(Edit, name);
+		}
+
+	}
+	private void creatEditFactory(){
+		if(mfactory==null)
+			mfactory=new Factory();
+	}
+	
 	
 	/*
 	    将int类型的数据作为指针传递
@@ -787,5 +636,43 @@ public class EditGroup extends LinearLayout
 			return before;
 		}
 	}
+	
+	class Click implements OnClickListener
+	{
+		@Override
+		public void onClick(View p1)
+		{
+			historyId = ((RCodeEdit) p1).index;
+			if(mWindow!=null)
+			    mWindow.setX(-9999);
+		}
+	}
+
+	
+/*
+
+_________________________________________
+
+   告诉持有我的外部类，要使用我，您必须拥有如下这些
+
+ _________________________________________
+
+*/
+
+    public static interface IneedFactory{
+		
+		public void setEditFactory(EditFactory factory)
+				
+		public EditFactory getEditFactory()
+		
+	}
+	
+	public static interface IneedWindow{
+	
+		public ListView getWindow()
+		
+	}
+
+	
 	
 }
