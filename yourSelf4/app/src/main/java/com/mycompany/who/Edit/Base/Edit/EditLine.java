@@ -3,6 +3,7 @@ import android.content.*;
 import android.view.*;
 import com.mycompany.who.Edit.Share.*;
 import com.mycompany.who.Edit.Share.Share1.*;
+import android.util.*;
 
 public class EditLine extends Edit
 {
@@ -12,6 +13,34 @@ public class EditLine extends Edit
 	public EditLine(Context cont){
 		super(cont);
 	}
+	public EditLine(Context cont,EditLine Edit){
+		super(cont);
+	}
+	public EditLine(Context cont,AttributeSet attrs){
+		super(cont,attrs);
+	}
+
+	@Override
+	public void Creat()
+	{
+		LineCount=0;
+		super.Creat();
+	}
+
+	@Override
+	public void CopyFrom(Edit target)
+	{
+		LineCount = ((EditLine)target).LineCount;
+		super.CopyFrom(target);
+	}
+
+	@Override
+	public void CopyTo(Edit target)
+	{
+		((EditLine)target). LineCount = LineCount;
+		super.CopyTo(target);
+	}
+	
 	
 	public void reLines(int line){
 		int caline= line-LineCount;

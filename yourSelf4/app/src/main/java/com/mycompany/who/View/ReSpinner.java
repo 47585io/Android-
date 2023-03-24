@@ -69,7 +69,7 @@ public class ReSpinner extends  Spinner
 		super.onDetachedFromWindow();
 	}
 
-	public static abstract class onSelectionListener
+	public static interface onSelectionListener
 	{
 		public abstract void onRepeatSelected(int postion)
 	}

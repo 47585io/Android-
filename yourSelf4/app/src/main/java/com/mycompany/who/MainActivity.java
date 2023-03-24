@@ -1,27 +1,16 @@
 package com.mycompany.who;
 
-import android.content.*;
-import android.view.*;
-import android.view.View.*;
-import android.widget.*;
-import com.mycompany.who.Activity.*;
-import com.mycompany.who.Edit.*;
-import com.mycompany.who.Share.*;
-import java.util.*;
-import java.util.concurrent.*;
-import android.view.animation.*;
-import com.mycompany.who.SuperVisor.*;
-import android.os.*;
 import android.app.*;
-import java.security.cert.*;
-import com.mycompany.who.Edit.Share.*;
-import com.mycompany.who.SuperVisor.Config.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
+import android.os.*;
+import android.view.*;
+import com.mycompany.who.Share.*;
+import com.mycompany.who.SuperVisor.Moudle.*;
+import java.util.concurrent.*;
 
 public class MainActivity extends Activity 
 {
 	private EditGroup Group;
-	private XCode Code;
+	private PageHandler Code;
 	protected ThreadPoolExecutor pool;
 	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	
@@ -31,7 +20,7 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
 		init();
-		Code = new XCode(this);
+		Code = new PageHandler(this);
 		Code.setPool(pool);
 		Code.addEdit(".java");
 		setContentView(Code);

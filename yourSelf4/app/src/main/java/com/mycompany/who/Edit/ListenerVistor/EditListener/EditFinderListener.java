@@ -17,9 +17,14 @@ public abstract class EditFinderListener extends EditListener
 	
 	abstract public void OnClearFindNodes(int start,int end,String text,List<wordIndex> nodes);
 	
+	public Colors.ByteToColor2 BToC = null;
+	
 	public void setSapns(String text,List<wordIndex> nodes,SpannableStringBuilder builder){
 		builder.append(text);
-		Colors.ForeColorText(builder,nodes,null);
+		Colors.ForeColorText(builder,nodes,getByteToColor());
+	}
+	public Colors.ByteToColor2 getByteToColor(){
+		return BToC;
 	}
 	
 	final public List<wordIndex> LetMeFind(int start, int end, String text, Words WordLib)
@@ -48,6 +53,7 @@ public abstract class EditFinderListener extends EditListener
 		CodeEdit. startFind(text, totalList,nodes);
 		totalList.clear();
 		OnClearFindWord(WordLib);
+		
 		OnFindNodes(totalList,WordLib);
 		CodeEdit. startFind(text, totalList,nodes);
 		OnClearFindNodes(start, end, text, nodes);

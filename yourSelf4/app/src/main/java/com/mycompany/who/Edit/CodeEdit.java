@@ -77,7 +77,7 @@ import java.util.concurrent.*;
   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
  */
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
+public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
 {
 	
 	//一百行代码实现代码染色，格式化，自动补全，Uedo，Redo
@@ -119,24 +119,55 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	
 	public CodeEdit(Context cont){
 	 	super(cont);
-		WordLib=new OtherWords(6);
-		this.lines=new EditLine(cont);	
-		this.stack = new EditDate();
-		addTextChangedListener(new DefaultText());
-		boxes= EditListenerFactory.getCompletorBox(0);
-		Info = new EditListenerInfo();
-		trimListener();
+	}
+	public CodeEdit(Context cont,AttributeSet attrs){
+		super(cont,attrs);
 	}
 	public CodeEdit(Context cont,CodeEdit Edit){
 		super(cont,Edit);
+	}
+
+	@Override
+	public void CopyFrom(Edit target)
+	{
+		super.CopyFrom(target);
+		CodeEdit Edit = (CodeEdit) target;
 		pool = Edit. pool;
 		this.WordLib=Edit.WordLib;	
 		this.lines=Edit.lines;
 		this.stack = new EditDate();
 		addTextChangedListener(new DefaultText());
 		boxes=Edit.boxes;
-		Info = Edit.Info;
+		Info = Edit.Info;	
 	}
+
+	@Override
+	public void CopyTo(Edit target)
+	{
+		super.CopyTo(target);
+		CodeEdit Edit = (CodeEdit) target;
+		Edit. pool = pool;
+		Edit.WordLib = WordLib;	
+		Edit.lines = lines;
+		Edit.stack = new EditDate();
+		Edit. addTextChangedListener(new DefaultText());
+		Edit.boxes = boxes;
+		Edit.Info = Info;	
+	}
+
+	@Override
+	public void Creat()
+	{
+		super.Creat();
+		WordLib=new OtherWords(6);
+		this.lines=new EditLine(getContext());	
+		this.stack = new EditDate();
+		addTextChangedListener(new DefaultText());
+		boxes= EditListenerFactory.getCompletorBox(0);
+		Info = new EditListenerInfo();
+		trimListener();
+	}
+	
 	
 	public void trimListener()
 	{
@@ -391,7 +422,7 @@ Dreawr
 		return null;
 	}
 	
-	final public Future prepare(final int start,final int end,final String text,final Colors.ByteToColor2 Color){
+	final public Future prepare(final int start,final int end,final String text){
 		//准备指定文本的颜料
 		Runnable run = new Runnable(){
 
@@ -402,7 +433,7 @@ Dreawr
 				final SpannableStringBuilder builder = new SpannableStringBuilder();
 				FindFor(start,end,text.substring(start,end),nodes,builder);
 				CodeEdit. this.buider=builder;
-				HTML= getHTML(nodes,text.substring(start,end),Color);
+				HTML= getHTML(nodes,text.substring(start,end),((EditFinderListener)getFinder()).getByteToColor());
 			}
 		};
 		if(pool!=null)
@@ -552,8 +583,8 @@ _________________________________________
 				last = System.currentTimeMillis();
 
 				String src = onBeforeFormat(start,end);
-				//开线程格式化
-
+				//开线程格式化	
+				
 				now = System.currentTimeMillis();
 				Log.w("After Format StringSpilter", "I take " + (now - last) + " ms, " + "Because Str Length is " + src.length() + ", and " + Ep.toString());
 
@@ -710,7 +741,7 @@ _________________________________________
 
 				if (Icons != null)
 				{
-					final WordAdpter adapter = new WordAdpter(Window.getContext(), Icons, R.layout.WordIcon);
+					final WordAdpter<Icon> adapter = new WordAdpter<Icon>(Window.getContext(), Icons, R.layout.WordIcon);
 					Runnable run2=new Runnable(){
 
 						@Override
@@ -829,12 +860,9 @@ _________________________________________
 		}
 	}
 	
-	public wordIndex calc(EditText Edit){
-		return new wordIndex();
-	}
-	public ListView getWindow(){
-		return null;
-	}
+	abstract public wordIndex calc(EditText Edit)
+	
+	abstract public ListView getWindow()
 	
 	
 	final public void insertWord(String word, int index, int flag)
@@ -1505,12 +1533,23 @@ _________________________________________
 		return Line;
 	}
 	
-	public SpannableStringBuilder subSpan(int start,int end){
+	public Future subSpan(final int start,final int end){
 		//不同于prepare，subSpan会从start~end中截取所有span，无需创建span
-		SpannableStringBuilder builder = new SpannableStringBuilder();
-		List<wordIndex> nodes = new ArrayList<>();
-		FindFor(start,end,getText().subSequence(start,end).toString(),nodes,builder);
-		return Colors.subSpan(start,end,nodes,getText());
+		Runnable run = new Runnable(){
+
+			@Override
+			public void run()
+			{
+				List<wordIndex> nodes = new ArrayList<>();
+				FindFor(start,end,getText().subSequence(start,end).toString(),nodes,buider);
+				buider.append( Colors.subSpan(start,end,nodes,getText()));
+			}
+		};
+		if(pool!=null)
+			return pool.submit(run);
+		else
+			run.run();
+		return null;
 	}
 	
 

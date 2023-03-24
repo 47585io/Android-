@@ -1,22 +1,17 @@
 package com.mycompany.who.View;
 
 import android.content.*;
-import android.text.method.*;
+import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.Edit.*;
-import com.mycompany.who.View.*;
-import java.util.*;
-import java.util.concurrent.*;
-import com.mycompany.who.R;
-import com.mycompany.who.Edit.Share.*;
 import com.mycompany.who.Share.*;
+import java.util.*;
 
 public class PageList extends LinearLayout
 {
 	private static int noRepeatId=-1;
 	private int nowIndex;
-	private onTabPag mtabListener;
+	private onTabPage mtabListener;
 	private List<View> mPages;
 	
 	public PageList(Context cont)
@@ -24,6 +19,14 @@ public class PageList extends LinearLayout
 		super(cont);
 		mPages=new ArrayList<>();
 		//setOnTouchListener(new OnTouchToMoveSelf());
+	}
+	public PageList(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		mPages=new ArrayList<>();
+	}
+	public PageList(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+		mPages=new ArrayList<>();
 	}
 
 	public void addView(View EditPage)
@@ -79,7 +82,7 @@ public class PageList extends LinearLayout
 		return -1;
 	}
 
-	public void setListener(onTabPag li){
+	public void setListener(onTabPage li){
 		mtabListener=li;
 	}
 	public int getNowIndex()
@@ -96,45 +99,8 @@ public class PageList extends LinearLayout
 		return mPages.get(index);
 	}
 	
-	class OnTouchToMoveSelf extends OnTouchToMove
-	{
-
-		@Override
-		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
-		{
-			if(getOrientation()==LinearLayout.HORIZONTAL&&getX()>0)
-				setX(getX()-dx);		
-		}
-
-		@Override
-		public void onMoveToRight(View p1, MotionEvent p2, float dx)
-		{
-			if(getOrientation()==LinearLayout.HORIZONTAL&&getX()<getWidth())
-				setX(getX()+dx);	
-		}
-
-		@Override
-		public void onMoveToTop(View p1, MotionEvent p2, float dy)
-		{
-			
-		}
-
-		@Override
-		public void onMoveToDown(View p1, MotionEvent p2, float dy)
-		{
-			// TODO: Implement this method
-		}
-
-		@Override
-		public boolean onMoveEnd(View p1, MotionEvent p2)
-		{
-			
-			return true;
-		}
-		
-	}
 	
-	public static interface onTabPag{
+	public static interface onTabPage{
 		public void onTabPage(int index);
 		public void onAddPage(View v);
 		public void onDelPage(int index);

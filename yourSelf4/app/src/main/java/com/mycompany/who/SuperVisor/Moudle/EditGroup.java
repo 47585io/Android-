@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor;
+package com.mycompany.who.SuperVisor.Moudle;
 
 import android.content.*;
 import android.util.*;
@@ -14,6 +14,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import com.mycompany.who.Edit.Share.Share4.*;
 import android.text.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import android.graphics.*;
+import com.mycompany.who.Edit.ListenerVistor.*;
+import com.mycompany.who.*;
 
 public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeEdit.IlovePool
 {
@@ -33,11 +37,8 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 	/*
 	 我什么也不知道
-
 	 我只完善了Edit的功能，管理一组的Edit以及如何操作它们
-
 	 我只在适时扩展大小
-
 	 我需要Window，请让外部类给我Window，并尽可能地自己展示
 
 	 */
@@ -59,13 +60,22 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	private ThreadPoolExecutor pool=null;
 	private EditFactory mfactory;
 
-	EditGroup(Context cont)
+	public EditGroup(Context cont)
 	{
 		super(cont);
-		new EditGroupCreator().ConfigSelf(this); // 初始化成员
-		new Config_hesViewLevel().ConfigSelf(this); // 配置层级
+		init();
 	}
-
+	public EditGroup(Context cont,AttributeSet attrs)
+	{
+		super(cont,attrs);
+		init();
+	}
+	public void init(){
+		new EditGroupCreator(R.layout.EditGroup).ConfigSelf(this); // 初始化成员
+		new Config_hesView().ConfigSelf(this); // 配置层级
+	}
+	
+	
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -129,7 +139,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		ForEdit.addView(Edit);
 	}
 	/* 为了安全，不允许调用 */
-	private void AddEditAt(int index)
+	final private void AddEditAt(int index)
 	{
 		RCodeEdit Edit= creatAEdit("");
 		Edit.index.set(index);
@@ -139,7 +149,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 
 	/* 创建一个Edit */
-	protected RCodeEdit creatAEdit(String name)
+	final protected RCodeEdit creatAEdit(String name)
 	{
 		RCodeEdit Edit;
 		if (EditList.size() == 0)
@@ -157,7 +167,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 
 	/* 重新排列Edit的下标 */
-	private void reIndex()
+	final private void reIndex()
 	{
 		for (int i=0;i < EditList.size();++i)
 		{
@@ -351,6 +361,17 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		historyId = Edit.index;
 		return Edit.getCursorPos(Edit.getSelectionStart());
 	}
+	
+	public class Clip extends EditCanvaserListener
+	{
+
+		@Override
+		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
+		{
+			//默认啥也不做，子类可以重写
+		}
+	}
+	
 
 
 	//通过EditBuilder直接操作Edit
@@ -386,86 +407,105 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			calaIndex(start);
 			calaIndex(end);
 		}
+		/*
+		  一组的Edit共享Info，对于Info的操作都是内存空间的修改
+		*/
 		public void setLuagua(String luagua)
 		{
-			for (CodeEdit e:EditList)
-			    e.setLuagua(luagua);
+			EditList.get(0).setLuagua(luagua);
 		}
-
+		public void setListener(EditListener li){
+			EditList.get(0).getInfo().addAListener(li);
+		}
+		public void delListener(EditListener li){
+			EditList.get(0).getInfo().delAListener(li);
+		}
+		public EditListenerInfo getInfo()
+		{
+			return EditList.get(0).getInfo();
+		}
+		/*
+		  一组的Edit虽然共享pool，但设置的是自己的指针
+		*/
 		public void setPool(ThreadPoolExecutor pool)
 		{
 			for (CodeEdit Edit:EditList)
 			    Edit.setPool(pool);
 		}
-
-		public void reDraw()
+			
+		/*public void reDraw()
 		{
 			for (CodeEdit e:EditList)
 			{
 				e.reDraw(0, e.getText().length());
 			}
-		}
-		public void reDraw(int start, int end)
+		}*/
+		public List<Future> reDraw(int start, int end)
 		{
 			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-				    Edit.reDraw(start, end);
+				    return Edit.reDraw(start, end);
 				}
 			};
-			d.dofor(this.start, this.end);
+			return d.dofor(this.start, this.end);
 		}
-		public String getHTML() throws ExecutionException, InterruptedException{
-			StringBuilder b=new StringBuilder();
-			List<Future> results = new ArrayList<>();
-			for(CodeEdit E : EditList){
-				results.add( E.prepare(0,E.getText().length(),E.getText().toString(),null));
-			}
-			for(Future result: results){
-				result.get();
-			}
-			for(CodeEdit E : EditList){
-				E.GetString(b,null);
-			}
-			return b.toString();
+		public List<Future> prepare(int start,int end){
+			calaRange(start, end);
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				Future doOnce(int start, int end, CodeEdit Edit)
+				{
+					return Edit.prepare(start,end,Edit.getText().toString());
+				}
+
+			};
+			return d.dofor(this.start,this.end);
 		}
-		public SpannableStringBuilder subSpan(){
-			SpannableStringBuilder b = new SpannableStringBuilder();
-			for(CodeEdit E : EditList){
-				b.append( E.subSpan(0,E.getText().length()));
-			}
-			return b;
+		public List<Future> subSpan(int start,int end)
+		{
+			calaRange(start, end);
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				Future doOnce(int start, int end, CodeEdit Edit)
+				{
+					return Edit.subSpan(start,end);
+				}
+
+			};
+			return d.dofor(this.start,this.end);
 		}
-		public void Format() 
+		public void GetString(StringBuilder b,SpannableStringBuilder bu){
+			for(CodeEdit E : EditList){
+				E.GetString(b,bu);
+			}
+		}
+		
+		/*public void Format() 
 		{
 			Last.push(new Stack<Int>());
 			for (CodeEdit e:EditList)
 			{
 			    e.Format(0, e.getText().length());
 			}
-		}
-		public void Format(int start, int end)
+		}*/
+		public List<Future> Format(int start, int end)
 		{
-			Last.push(new Stack<Int>());
-
 			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-					Edit.reDraw(start, end);
+					return Edit.reDraw(start, end);
 				}
 			};
-			d.dofor(this.start, this.end);
-		}
-		public void Insert(int index)
-		{
-			calaIndex(index);
-			EditList.get(start.start).Insert(start.end);
+			return d.dofor(this.start, this.end);
 		}
 
 		public Stack<Int> Uedo()
@@ -496,19 +536,21 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 		abstract class DoForAnyOnce
 		{
-			public void dofor(wordIndex start, wordIndex end)
+			public List<Future> dofor(wordIndex start, wordIndex end)
 			{
-				doOnce(start.end, EditList.get(start.start).getText().length(), EditList.get(start.start++));
+				List<Future> results = new ArrayList<>();
+				results.add( doOnce(start.end, EditList.get(start.start).getText().length(), EditList.get(start.start++)));
 				//第一个编辑器的开头是start.end，结尾是它的长度
 				for (;start.start < end.start;start.start++)
 				{
-					doOnce(0, EditList.get(start.start).getText().length(), EditList.get(start.start));
+					results.add( doOnce(0, EditList.get(start.start).getText().length(), EditList.get(start.start)));
 					//中间编辑器的开头是0,结尾是它的长度
 				}
-				doOnce(0, end.end, EditList.get(end.start));
+				results.add( doOnce(0, end.end, EditList.get(end.start)));
 				//最后一个编辑器的开头是0，结尾是end.end
+				return results;
 			}
-			abstract void doOnce(int start, int end, CodeEdit Edit)
+			abstract Future doOnce(int start, int end, CodeEdit Edit)
 		}
 
 		public int calaEditLines()
@@ -563,21 +605,23 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	public static interface EditFactory
 	{
 		public CodeEdit getEdit(EditGroup self)
+		
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 	}
 	//默认的工厂
-	class Factory implements EditGroup.EditFactory
+	final class Factory implements EditGroup.EditFactory
 	{
 
 		@Override
 		public CodeEdit getEdit(EditGroup self)
 		{
-			return new CodeEdit(self.getContext());
+			return new RCodeEdit(self.getContext());
 		}
 
 		@Override
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
+			Edit.getCanvaserList().add(new Clip());
 			Edit.setPool(pool);
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
@@ -597,7 +641,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 	 注意，若以指针传递，小心误修改对象，少使用set
 	 */
-	public static class Int
+	final public static class Int
 	{
 
 		private int date;
@@ -634,57 +678,62 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 
 	
-
-	public static interface Creator<T> extends Configer<T>{
-		public void init(T target)
+	/* 非常好用 */
+	public static abstract class Creator<T extends ViewGroup> implements Configer<T>{
+		
+		public int id;
+		
+		public Creator(int resid){
+			id=resid;
+		}
+		@Override
+		public void ConfigSelf(T target)
+		{
+			View tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
+			init(target,tmp);
+		}
+		
+		abstract public void init(T target,View root)
+	
 	}
 	public static interface Level<T> extends Configer<T>{
         public void config(T target)
 	}
 	
 	//一顿操作后，EditGroup所有成员都分配好了空间
-	static class EditGroupCreator implements Configer<EditGroup>
+	final static class EditGroupCreator extends Creator<EditGroup>
 	{
 
-		@Override
-		public void ConfigSelf(EditGroup Group)
-		{
-			init(Group);
-			init2(Group.getContext(), Group);
+		public EditGroupCreator(int resid){
+			super(resid);
 		}
 
-		private static void init(EditGroup Group)
+		public void init(EditGroup Group,View root)
 		{
 			Group. EditList = new ArrayList<>();
 			Group. Last = new Stack<>();
 			Group. Next = new Stack<>();
 		    Group.creatEditBuilder();
 			Group.creatEditFactory();
+			init2(Group,root);
 		}
-		private static void init2(Context cont, EditGroup Group)
+		private static void init2( EditGroup Group,View root)
 		{	
-		   	Group. ForEdit = new LinearLayout(cont);
-			Group. EditLines = new EditLine(cont);
+		   	Group. ForEdit = root.findViewById(R.id.ForEdit);
+			Group. EditLines = root.findViewById(R.id.EditLine);
 		}	
 	}
 
 	
-	// 如何配置View层次结构
-	static class Config_hesViewLevel implements Configer<EditGroup>
+	// 如何配置View
+	final static class Config_hesView implements Level<EditGroup>
 	{
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
-			target. addView(target.EditLines);
-			target. addView(target.ForEdit);
-			if (target.mWindow == null)
-			{
-				target.mWindow = new ListView(target.getContext());
-				target.addView(target. mWindow);
-			}
 			config(target);
 		}
-		protected void config(EditGroup target)
+		public void config(EditGroup target)
 		{
 			target. EditLines.setFocusable(false);
 			target. ForEdit.setOrientation(LinearLayout.VERTICAL);
@@ -695,7 +744,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 	
 	//这个...
-	class Click implements OnClickListener
+	final class Click implements OnClickListener
 	{
 		@Override
 		public void onClick(View p1)
@@ -733,6 +782,13 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 	}
 
+	public static interface Init{
+		
+		public void loadSize(int width, int height ,boolean is)
+		
+		public void init()
+		
+	}
 
 
 }

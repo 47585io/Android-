@@ -8,9 +8,37 @@ import android.widget.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import com.mycompany.who.Edit.Share.Share3.*;
 import java.util.*;
+import org.xml.sax.ext.*;
+import android.util.*;
 
-public class Edit extends EditText
+public class Edit extends EditText implements Creat<Edit>
 {
+
+	@Override
+	public void Creat()
+	{
+		config();
+		listener = new EditText(getContext()).getKeyListener();
+	}
+
+	@Override
+	public Edit CreatOne()
+	{
+		return new Edit(getContext());
+	}
+
+	@Override
+	public void CopyFrom(Edit target)
+	{
+		config();
+	}
+
+	@Override
+	public void CopyTo(Edit target)
+	{
+		target.config();
+	}
+	
 	protected static KeyListener listener;
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
@@ -19,13 +47,16 @@ public class Edit extends EditText
 	
 	public Edit(Context cont){
 		super(cont);
-		listener = new EditText(getContext()).getKeyListener();
-		config();	
+		Creat();
+	}
+	public Edit(Context cont,AttributeSet attrs){
+		super(cont,attrs);
+		Creat();
 	}
 	public Edit(Context cont,Edit Edit)
 	{
 		super(cont);
-		config();
+		CopyFrom(Edit);
 	}
 	
 	public void config(){	
