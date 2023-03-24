@@ -7,6 +7,9 @@ import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.Edit.Share.Share1.*;
+import com.mycompany.who.Edit.Share.Share2.*;
+import com.mycompany.who.Edit.Share.Share3.*;
 import java.util.*;
 
 public class EditListenerFactory

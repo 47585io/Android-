@@ -1,11 +1,10 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 
-import com.mycompany.who.Edit.Share.*;
-import java.util.*;
-import java.util.concurrent.*;
-import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.*;
 import android.util.*;
+import com.mycompany.who.Edit.*;
+import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.Edit.Share.Share2.*;
+import java.util.*;
 
 public abstract class EditCompletorListener extends EditListener
 {

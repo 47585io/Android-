@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.Share;
+package com.mycompany.who.Edit.Share.Share1;
 
 public class size
 {

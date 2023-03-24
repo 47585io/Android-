@@ -5,6 +5,7 @@ import java.util.concurrent.*;
 import com.mycompany.who.Edit.Base.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.Edit.Share.Share4.*;
 
 public class Config_Edit implements Configer<CodeEdit>
 {

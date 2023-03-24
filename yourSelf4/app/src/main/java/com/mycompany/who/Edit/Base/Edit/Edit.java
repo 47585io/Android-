@@ -1,17 +1,13 @@
 package com.mycompany.who.Edit.Base.Edit;
-import android.widget.*;
 import android.content.*;
-import java.util.*;
-
+import android.graphics.*;
 import android.text.method.*;
-import android.util.*;
-import java.lang.reflect.*;
 import android.view.*;
 import android.view.inputmethod.*;
-
-import com.mycompany.who.Edit.Share.*;
-
-import android.graphics.*;
+import android.widget.*;
+import com.mycompany.who.Edit.Share.Share1.*;
+import com.mycompany.who.Edit.Share.Share3.*;
+import java.util.*;
 
 public class Edit extends EditText
 {

@@ -2,6 +2,7 @@ package com.mycompany.who.Edit.Base.Edit;
 import android.content.*;
 import android.view.*;
 import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.Edit.Share.Share1.*;
 
 public class EditLine extends Edit
 {

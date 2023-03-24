@@ -1,12 +1,11 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 
-
 import android.text.*;
+import android.util.*;
 import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
-import android.util.*;
 
 public abstract class EditFinderListener extends EditListener
 {
@@ -20,7 +19,7 @@ public abstract class EditFinderListener extends EditListener
 	
 	public void setSapns(String text,List<wordIndex> nodes,SpannableStringBuilder builder){
 		builder.append(text);
-		Colors.ForeColorText(builder,nodes);
+		Colors.ForeColorText(builder,nodes,null);
 	}
 	
 	final public List<wordIndex> LetMeFind(int start, int end, String text, Words WordLib)

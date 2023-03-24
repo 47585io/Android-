@@ -1,21 +1,25 @@
 package com.mycompany.who.Edit;
 
 import android.content.*;
+import android.graphics.*;
 import android.text.*;
-import android.widget.*;
-import com.mycompany.who.Edit.Base.*;
-
-import com.mycompany.who.Edit.Share.*;
-import java.util.*;
-import java.util.concurrent.*;
-import com.mycompany.who.Edit.Base.Moudle.*;
-import com.mycompany.who.Edit.Base.Edit.*;
 import android.util.*;
 import android.view.*;
+import android.widget.*;
+import com.mycompany.who.*;
+import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.Edit.Base.Edit.*;
+import com.mycompany.who.Edit.Base.Moudle.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.*;
-import android.graphics.*;
+import com.mycompany.who.Edit.Share.*;
+import com.mycompany.who.Edit.Share.Share1.*;
+import com.mycompany.who.Edit.Share.Share2.*;
+import com.mycompany.who.Edit.Share.Share3.*;
+import com.mycompany.who.Edit.Share.Share4.*;
+import java.security.acl.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 /*
    整理是一切的开始
@@ -321,7 +325,7 @@ Dreawr
 		    String text = editor.toString().substring(start,end);
 		
 		    try{
-		        SpannableStringBuilder builder= Colors.ForeColorText(text,nodes);
+		        SpannableStringBuilder builder= Colors.ForeColorText(text,nodes,null);
 			    //在Edit中的真实下标开始，将范围内的单词染色
 			    editor.replace(start,end,builder);
 	
@@ -333,24 +337,27 @@ Dreawr
 		IsModify--;
 	}
 	
-	final public static String getHTML(List<wordIndex> nodes,String text){
+	final public static String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color){
 		//中间函数，用于生成HTML文本
 		
 		if(nodes==null||text==null)
 			return "";
 		
+		if(Color==null)
+			Color = new Colors.myColor2();
+			
 		StringBuffer arr = new StringBuffer();
 		int index=0;
-		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: #abb2bf;background-color: rgb(28, 32, 37);font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
+		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Color.getDefultS()+";background-color: "+Color.getDefultBgS()+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
 		for(wordIndex node:nodes){
 			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
 			if(node.start>index)
-				arr.append(Colors.textForeColor(text.substring(index,node.start),Colors. Default_));
-			arr.append(Colors.  textForeColor(text.substring(node.start,node.end),Colors.fromByteToColorS(node.b)));
+				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
+			arr.append(Colors.  textForeColor(text.substring(node.start,node.end),Color.fromByteToColorS(node.b)));
 			index=node.end;
 		}
 		if(index<text.length())
-			arr.append(Colors.  textForeColor(text.substring(index,text.length()),Colors.Default_));
+			arr.append(Colors.  textForeColor(text.substring(index,text.length()),Color.getDefultS()));
 		arr.append("<br><br><br><hr><br><br></body></html>");
 		return arr.toString();
 	}
@@ -384,7 +391,7 @@ Dreawr
 		return null;
 	}
 	
-	final public Future prepare(final int start,final int end,final String text){
+	final public Future prepare(final int start,final int end,final String text,final Colors.ByteToColor2 Color){
 		//准备指定文本的颜料
 		Runnable run = new Runnable(){
 
@@ -395,7 +402,7 @@ Dreawr
 				final SpannableStringBuilder builder = new SpannableStringBuilder();
 				FindFor(start,end,text.substring(start,end),nodes,builder);
 				CodeEdit. this.buider=builder;
-				HTML= getHTML(nodes,text.substring(start,end));
+				HTML= getHTML(nodes,text.substring(start,end),Color);
 			}
 		};
 		if(pool!=null)
@@ -406,11 +413,11 @@ Dreawr
 	}
 	final public void GetString(StringBuilder HTML,SpannableStringBuilder builder){
 		//获取准备好了的文本
-		if(this.HTML!=null){
+		if(this.HTML!=null&&HTML!=null){
 		    HTML.append(this.HTML);
 			this.HTML=null;
 		}
-		if(this.buider!=null){
+		if(this.buider!=null&&builder!=null){
 		    builder.append(this.buider);
 			this.buider=null;
 		}
@@ -1551,12 +1558,8 @@ _________________________________________
  _________________________________________
  
  */
-	public static interface Drawer{
-		
-		public Future reDraw(final int start,final int end)
-		
-		public void Draw(int start,int end,List<wordIndex> nodes)
-		
+	public static interface myDrawer extends Drawer{
+			
 		public void FindFor(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)
 		
 		public void onFindNodes(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)throws Exception
@@ -1568,25 +1571,19 @@ _________________________________________
 	}
 	
 	
-	public static interface Formator{
+	public static interface myFormator extends Formator{
 
-		public Future Format(final int start, final int end)
-		
 		public String onBeforeFormat(int start,int end)
 		
 		public void onFormat(int start, int end, String buffer)throws Exception
-		
-		public void Insert(final int index)
 		
 		public int onInsert(int index)throws Exception
 	
 	}
 	
 	
-	public static interface Completor{
+	public static interface myCompletor extends Completor{
 
-		public Future openWindow(final ListView Window, int index, final ThreadPoolExecutor pool)
-		
 		public List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after, Collection<EditListener> Group, ThreadPoolExecutor pool)
 		
 		public void callOnopenWindow(ListView Window)
@@ -1600,19 +1597,11 @@ _________________________________________
 	}
 	
 	
-	public static interface Canvaser{
-
-		public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)	
-	
-	}
+	public static interface myCanvaser extends Canvaser{}
 	
 	
-	public static interface UedoWithRedo{
+	public static interface myUedoWithRedo extends UedoWithRedo{
 		
-		public void Uedo()
-		
-		public void Redo()
-
 		public int Uedo_(EditDate.Token token)
 
 		public int Redo_(EditDate.Token token)
@@ -1646,6 +1635,5 @@ _________________________________________
 		public ThreadPoolExecutor getPool()
 		
 	}
-	
 	
 }

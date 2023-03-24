@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.Share;
+package com.mycompany.who.Edit.Share.Share1;
 
 public class wordIndex extends size{
 	//单个词的范围和颜料标签
@@ -24,5 +24,7 @@ public class wordIndex extends size{
 		super.set(s,e);
 		this.b=b;
 	}
+	
+	
 }
 

@@ -1,16 +1,24 @@
-package com.mycompany.who.Edit.Share;
+package com.mycompany.who.Edit.Share.Share2;
 
-public  class Icon{
-	private int resid;
+public class Icon{
+	
+	private int icon;
+	private String path;
 	private String name;
 	private byte flag=-128;
+	
 	public Icon(){
 
 	}
 	public Icon(int resid,String name){
-		this.resid=resid;
+		this.icon=resid;
 		this.name=name;
 	}
+	public Icon(String path,String name){
+		this.path=path;
+		this.name=name;
+	}
+	
 	public String getName() {
         return name;
     }
@@ -20,11 +28,11 @@ public  class Icon{
     }
 
     public int getIcon() {
-        return resid;
+        return icon;
     }
 
     public void setIcon(int resid) {
-        this.resid = resid;
+        this.icon = resid;
     }
 	
 	public int getflag() {
@@ -36,5 +44,13 @@ public  class Icon{
     }
 
 
+	public void setPath(String path){
+		this.path=path;
+	}
+	public String getPath(){
+		return path;
+	}
+	
+	
 }
 

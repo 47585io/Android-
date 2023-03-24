@@ -1,32 +1,22 @@
 package com.mycompany.who.SuperVisor;
+
 import android.content.*;
 import android.content.res.*;
 import android.graphics.*;
+import android.text.*;
+import android.util.*;
 import android.view.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
-
 import com.mycompany.who.Edit.*;
-
-import java.io.*;
-import java.util.concurrent.*;
-import com.mycompany.who.Edit.Share.*;
-import com.mycompany.who.View.Backgroud;
-import com.mycompany.who.Share.myRet;
-import com.mycompany.who.R;
-import com.mycompany.who.Share.Share;
-import java.util.*;
-
-import android.graphics.drawable.Drawable;
-import java.util.jar.*;
-import android.util.*;
-import java.security.acl.*;
-import com.mycompany.who.View.*;
+import com.mycompany.who.Edit.Base.Edit.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.Base.Moudle.*;
+import com.mycompany.who.Edit.Share.Share1.*;
+import com.mycompany.who.Edit.Share.Share2.*;
 import com.mycompany.who.SuperVisor.Config.*;
-import android.text.*;
-import com.mycompany.who.SuperVisor.EditGroup.*;
+import com.mycompany.who.View.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 
 public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.IlovePool, EditGroup.IneedWindow, EditGroup.IneedFactory
@@ -38,11 +28,11 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 		// TODO: Implement this method
 	}
 	
-	
-	private PageList mEditGroupPages;
+	protected PageList mEditGroupPages;
 	protected ScrollView Scro;
 	protected HorizontalScrollView hScro;
 	protected ListView mWindow;
+	protected LinearLayout Title;
 	
 	private CodeEdit HistoryEdit;
 	private KeyPool keyPool;
@@ -68,10 +58,12 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 		Scro = new ScrollView(cont);
 		hScro = new HorizontalScrollView(cont);
 		mWindow = new ListView(cont);
+		Title = new LinearLayout(cont);
 		mWindow.setOnItemClickListener(new onMyWindowClick());
 		
 		Scro.addView(hScro);
 		hScro. addView(mEditGroupPages);
+		addView(Title);
 		addView(Scro);
 		addView(mWindow);
 	}	
@@ -82,6 +74,22 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 	public PageList getEditGroupPages(){
 		return mEditGroupPages;
 	}
+	public EditGroup getEditGroup(int index){
+	    View v = mEditGroupPages.getView(index);
+		if(v instanceof EditGroup)
+			return (EditGroup)v;
+		return null;
+	}
+	public CodeEdit getEdit(size s){
+		EditGroup Group = getEditGroup(s.start);
+		if(Group!=null){
+			return Group.getEditList().get(s.end);
+		}
+		return null;
+	}
+	public int getNowIndex(){
+		return mEditGroupPages.getNowIndex();
+	}
 	
 	public void addEdit(String name){
 		EditGroup Group = new REditGroup(getContext());
@@ -89,11 +97,11 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 		Group.setWindow(mWindow);
 		Group.setEditFactory(mfactory);
 		Group.AddEdit(name);
+		Group.setTag(name);
 		mEditGroupPages.addView(Group);
 	}
 	
 
-	
 	public ThreadPoolExecutor getPool()
 	{
 		return pool;
@@ -144,7 +152,7 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 		protected void trimToFather()
 		{
 			super.trimToFather();
-			trim((View)getParent(),mWidth,mWidth);
+			trim((View)getParent(),mWidth,mHeight);
 			//已知parent为LinearLayout，可以扩展parent的大小
 		}
 
@@ -265,7 +273,9 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 	{
 		public boolean portOrLand=true;
 		public int WindowHeight=600, WindowWidth=600;
-		public int selfWidth=1000,selfHeight=2000;
+		public int selfWidth=1000,selfHeight=2000+200;
+		public int EditWidth=1000,EditHeight=2000;
+	    public int TitleWidth=1000,TitleHeight=200;
 		
 		@Override
 		public void ConfigSelf(XCode target)
@@ -283,23 +293,40 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 			EditGroup.trim(target.mWindow,WindowWidth,WindowHeight);
 		}
 
-		public void set(int width,int height,boolean is,XCode target){
-			selfWidth=width;
-			selfHeight=height;
+		public void set(int Ewidth,int Eheight,int Twidth,int Theight,boolean is,XCode target){
+			EditWidth=Ewidth;
+			EditHeight=Eheight;
+			TitleWidth=Twidth;
+			TitleHeight=Theight;
+			selfWidth=Ewidth;
+			selfHeight=Eheight+Theight;
 			portOrLand=is;
 			onChange(target);
 		}
 		public void change(XCode target){
-			int tmp = selfWidth;
-			selfWidth=selfHeight;
-			selfHeight=tmp;
+			int tmp = EditWidth;
+			EditWidth=EditHeight;
+			EditHeight=tmp;
+			
+			tmp = TitleWidth;
+			TitleWidth=TitleHeight;
+			TitleHeight=tmp;
+			
+			selfWidth=EditWidth;
+			selfHeight=EditHeight+TitleHeight;
+			
 			portOrLand=!portOrLand;
 			onChange(target);
 		}
 		protected void onChange(XCode target){
+			EditGroup.trim(target.Title,TitleWidth,TitleHeight);
 			EditGroup.trim(target,selfWidth,selfHeight);
-			EditGroup.trim(target.Scro,selfWidth,selfHeight);
-			EditGroup.trim(target.hScro,selfWidth,selfHeight);
+			EditGroup.trim(target.Scro,EditWidth,EditHeight);
+			EditGroup.trim(target.hScro,EditWidth,EditHeight);
+			if(portOrLand)
+				target.setOrientation(VERTICAL);
+			else
+				target.setOrientation(HORIZONTAL);
 		}
 		public static int MeasureWindowHeight(ListView mWindow)
 		{
@@ -328,6 +355,22 @@ public class XCode extends LinearLayout implements Configer<XCode>, CodeEdit.Ilo
 	{
 		config.change(this);
 		super.onConfigurationChanged(newConfig);
+	}
+	
+	
+	static class Config_hesLevel implements Configer<XCode>
+	{
+
+		@Override
+		public void ConfigSelf(XCode target)
+		{
+		
+		}
+		
+		public void config(XCode target){
+			
+		}
+		
 	}
 
 	

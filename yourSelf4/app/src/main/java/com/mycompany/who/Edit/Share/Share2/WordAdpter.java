@@ -1,22 +1,24 @@
-package com.mycompany.who.Edit.Share;
+package com.mycompany.who.Edit.Share.Share2;
 
 import android.content.*;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
 import com.mycompany.who.R;
+import android.graphics.*;
 
 public class WordAdpter<T extends Icon> extends BaseAdapter
 {
 
     protected List<T> mfile;
 	protected int rid;
+	protected Context cont;
 
 	public WordAdpter(Context context, List<T> file,int id) {
         mfile = file;
 		rid=id;
+		cont=context;
     }
-
 
     @Override
     public int getCount() {
@@ -48,9 +50,13 @@ public class WordAdpter<T extends Icon> extends BaseAdapter
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        viewHolder.tvName.setText(mfile.get(position).getName());
-        viewHolder.tvIcon.setBackgroundResource(mfile.get(position).getIcon());
-
+		Icon icon = mfile.get(position);	
+        viewHolder.tvName.setText(icon.getName());
+        if(icon.getPath()==null)
+		    viewHolder.tvIcon.setImageResource(icon.getIcon());
+		else
+		    viewHolder.tvIcon.setImageBitmap(BitmapFactory.decodeFile(icon.getPath()));
+	
         return convertView;
     }
 

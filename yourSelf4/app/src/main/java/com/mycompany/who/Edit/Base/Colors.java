@@ -2,10 +2,8 @@ package com.mycompany.who.Edit.Base;
 
 import android.text.*;
 import android.text.style.*;
-
+import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
-import android.widget.*;
-import com.mycompany.who.Edit.Share.*;
 
 public class Colors
 {
@@ -28,6 +26,8 @@ public class Colors
 	public static int CSS_class=0xffd4b876;
 	public static int CSS_felement=0xff57adbb;//淡湖绿
 
+	public static int Bg = 0xff1c2025;
+	
 	public static int fromByteToColor(byte b){
 		switch(b){
 			case 0: return Default;
@@ -106,8 +106,8 @@ public class Colors
 	public static String toString(int color){
 		StringBuilder b= new StringBuilder();
 		while(color>15){
-			b.insert( 0,numberC(color%15));
-			color/=15;
+			b.insert( 0,numberC(color%16));
+			color/=16;
 		}
 		b.insert(0,"0x");
 		return b.toString();
@@ -151,20 +151,98 @@ public class Colors
 	public final static byte color_cssfl=15;
 	
 	
-	public static SpannableStringBuilder ForeColorText(String src,List<wordIndex> nodes){
+	/* 自定义您的颜色  */
+	public static interface ByteToColor{
+
+		public int fromByteToColor(byte b)
+
+		public String fromByteToColorS(byte b)
+
+	}
+	
+	public static interface ByteToColor2 extends ByteToColor{
+		
+		public int getDefult()
+
+		public String getDefultS();
+		
+		public int getDefultBg()
+		
+		public String getDefultBgS()
+		
+	}
+	
+	public static class myColor implements ByteToColor
+	{
+
+		@Override
+		public int fromByteToColor(byte b)
+		{
+			return fromByteToColor(b);
+		}
+
+		@Override
+		public String fromByteToColorS(byte b)
+		{
+			return fromByteToColorS(b);
+		}
+		
+	}
+	
+	public static class myColor2 extends myColor implements ByteToColor2
+	{
+
+		@Override
+		public int getDefult()
+		{
+			return Default;
+		}
+
+		@Override
+		public String getDefultS()
+		{
+			return Default_;
+		}
+
+		@Override
+		public int getDefultBg()
+		{
+			return Bg;
+		}
+
+		@Override
+		public String getDefultBgS()
+		{
+			return Colors.toString(Bg);
+		}
+	}
+	
+	public static SpannableStringBuilder ForeColorText(String src,List<wordIndex> nodes,ByteToColor Colors){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes)
-		    styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(wordIndex node:nodes){
+			if(Colors==null)
+		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			else
+				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	    return styled;	
 	}
-	public static void ForeColorText(Editable editor,List<wordIndex> nodes,int start){
-		for(wordIndex node:nodes)
-		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	public static void ForeColorText(Editable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
+		for(wordIndex node:nodes){
+			if(Colors==null)
+		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			else
+				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	}
-	public static void ForeColorText(SpannableStringBuilder editor,List<wordIndex> nodes){
-		for(wordIndex node:nodes)
-		    editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	public static void ForeColorText(SpannableStringBuilder builder,List<wordIndex> nodes,ByteToColor Colors){
+		for(wordIndex node:nodes){
+			if(Colors==null)
+		        builder.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			else
+				builder.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	}
 	public static Spanned ForeColorText(String text,String color) {
 		//返回具有样式的Spanned
@@ -172,20 +250,33 @@ public class Colors
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
 	}
 	
-	public static SpannableStringBuilder BackColorText(String src,List<wordIndex> nodes){
+	public static SpannableStringBuilder BackColorText(String src,List<wordIndex> nodes,ByteToColor Colors){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes)
-		    styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(wordIndex node:nodes){
+			if(Colors==null)
+		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		    else
+				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	    return styled;	
 	}
-	public static void BackColorText(Editable editor,List<wordIndex> nodes,int start){
-		for(wordIndex node:nodes)
-		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	public static void BackColorText(Editable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
+		for(wordIndex node:nodes){
+			if(Colors==null)
+		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			else
+				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	    }
 	}
-	public static void BackColorText(SpannableStringBuilder editor,List<wordIndex> nodes){
-		for(wordIndex node:nodes)
-		    editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+	public static void BackColorText(SpannableStringBuilder builder,List<wordIndex> nodes,ByteToColor Colors){
+		for(wordIndex node:nodes){
+			if(builder==null)
+		        builder.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			else
+				builder.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			
+	    }
 	}
 	
 	public static String textForeColor(String src,String fgcolor){
