@@ -102,9 +102,9 @@ public class EditLine extends Edit
 	}
 
 	@Override
-	public wordIndex WAndH()
+	public size WAndH()
 	{
-		return new wordIndex(maxWidth(),maxHeight(),(byte)0);
+		return new size(maxWidth(),maxHeight());
 	}
 	
 	

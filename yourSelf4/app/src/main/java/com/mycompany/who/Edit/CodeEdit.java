@@ -848,7 +848,7 @@ _________________________________________
 	{
 		if ( getWindow().getAdapter() != null && getWindow().getAdapter().getCount() > 0)
 		{
-			wordIndex pos = calc(this);
+			size pos = calc(this);
 			getWindow().setX(pos.start);
 			getWindow().setY(pos.end);
 		}
@@ -860,7 +860,7 @@ _________________________________________
 		}
 	}
 	
-	abstract public wordIndex calc(EditText Edit)
+	abstract public size calc(EditText Edit)
 	
 	abstract public ListView getWindow()
 	
@@ -1474,13 +1474,13 @@ _________________________________________
 		lines.setTextSize(size);
 	}
 
-	final public wordIndex getCursorPos(int offset)
+	final public size getCursorPos(int offset)
 	{
 		//获取光标坐标
 		int lines= getLayout().getLineForOffset(offset);
 		Rect bounds = new Rect();
 		//任何传参取值都必须new
-		wordIndex pos = new wordIndex();
+		size pos = new size();
 		getLineBounds(lines, bounds);
 	    pos.start = bounds.centerX();
 		pos.end = bounds.centerY();
@@ -1490,19 +1490,19 @@ _________________________________________
 
 		return pos;
 	}
-	final public wordIndex getRawCursorPos(int offset, int width, int height)
+	final public size getRawCursorPos(int offset, int width, int height)
 	{
 		//获取绝对光标坐标
-		wordIndex pos = getCursorPos(offset);
+		size pos = getCursorPos(offset);
 		pos.start = pos.start % width;
 		pos.end = pos.end % height;
 		return pos;
 	}
-	final public wordIndex getScrollCursorPos(int offset, int scrollx, int scrolly)
+	final public size getScrollCursorPos(int offset, int scrollx, int scrolly)
 	{
 		//获取存在滚动条时的绝对光标坐标
 		//当前屏幕起始0相当于scroll滚动量,然后用cursorpos-scroll，就是当前屏幕光标绝对坐标	
-		wordIndex pos = getCursorPos(offset);
+		size pos = getCursorPos(offset);
 		pos.start = pos.start - scrollx;
 		pos.end = pos.end - scrolly;		
 		return pos;

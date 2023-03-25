@@ -98,8 +98,8 @@ public class Edit extends EditText implements Creat<Edit>
 		}
 		return (int)(width*getTextSize());
 	}
-	public wordIndex WAndH(){
-		wordIndex size=new wordIndex();
+	public size WAndH(){
+		size size=new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
 		if(indexs==null||indexs.size()==0){
 			size.start= (int)(getText().toString().length()*getTextSize());
@@ -119,9 +119,9 @@ public class Edit extends EditText implements Creat<Edit>
 		return size;
 	}
 	
-	public static final wordIndex LAndC(String text){
+	public static final size LAndC(String text){
 		//为外部文本测量行数与最宽的那行字符数
-		wordIndex size=new wordIndex();
+		size size=new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',text);
 		if(indexs==null||indexs.size()==0){
 			size.start= (text.length());
@@ -142,8 +142,8 @@ public class Edit extends EditText implements Creat<Edit>
 	}
 	
 
-	final public wordIndex subLines(int startLine){
-		wordIndex j = new wordIndex(0,0,(byte)0);
+	final public size subLines(int startLine){
+		size j = new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
 		if(indexs==null)
 			return j;
@@ -151,8 +151,8 @@ public class Edit extends EditText implements Creat<Edit>
 		j.end=getText().toString().length();
 		return j;
 	}
-	final public wordIndex subLines(int startLine,int endLine){
-		wordIndex j = new wordIndex(0,0,(byte)0);
+	final public size subLines(int startLine,int endLine){
+		size j = new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
 		if(indexs==null)
 			return j;

@@ -108,9 +108,9 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		return pool;
 	}
 
-	public wordIndex WAndH()
+	public size WAndH()
 	{
-		return new wordIndex(mWidth, mHeight, (byte)0);
+		return new size(mWidth, mHeight);
 	}
 
 	public void setWindow(ListView Window)
@@ -162,7 +162,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		{
 			Edit = new RCodeEdit(getContext(), EditList.get(0));
 		}
-		Edit.setOnClickListener(new Click());
 		return Edit;
 	}
 
@@ -183,7 +182,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	protected void trimToFather()
 	{
 		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-		wordIndex size = builder.WAndH();
+		size size = builder.WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
 		trim(ForEdit, width - EditLines.maxWidth(), height);
@@ -307,7 +306,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			if (lineCount > MaxLine)
 			{
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
-				wordIndex j = subLines(MaxLine + 1 - OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
+				size j = subLines(MaxLine + 1 - OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
 				j.start--; //连带着把MaxLine行的\n也截取
 				String src = getText().toString().substring(j.start, j.end); 
 				IsModify++;
@@ -346,9 +345,9 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		}
 
 		@Override
-	 	public wordIndex calc(EditText Edit)
+	 	public size calc(EditText Edit)
 		{
-			wordIndex pos=Calc(((RCodeEdit)Edit), EditGroup.this);
+			size pos=Calc(((RCodeEdit)Edit), EditGroup.this);
 			return pos;
 		}
 
@@ -356,7 +355,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 	
 	// 默认是以光标位置显示窗口，子类可以重写 
-    protected wordIndex Calc(RCodeEdit Edit, EditGroup self)
+    protected size Calc(RCodeEdit Edit, EditGroup self)
 	{
 		historyId = Edit.index;
 		return Edit.getCursorPos(Edit.getSelectionStart());
@@ -378,15 +377,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	final public class EditBuilder
 	{
 		
-		private wordIndex start;
-		private wordIndex end;
-
-		public EditBuilder()
-		{
-			start = new wordIndex(0, 0, (byte)0);
-			end = new wordIndex(0, 0, (byte)0);
-		}
-		private void calaIndex(int index)
+		private void calaIndex(int index,size start)
 		{
 			//将start转换为 起始编辑器下标+起始位置
 			for (CodeEdit e:EditList)
@@ -401,11 +392,39 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 				//每次index减当前Edit.len，若长度小于0，则就是当前Edit，index就是start
 			}
 		}
-		private void calaRange(int start, int end)
+		private void calaRange(int start, int end,size s,size e)
 		{
 			//将start～end的范围转换为 起始编辑器下标+起始位置～末尾编辑器下标+末尾位置
-			calaIndex(start);
-			calaIndex(end);
+			calaIndex(start,s);
+			calaIndex(end,e);
+		}
+		
+		public void append(CharSequence str){
+			size start = new size();
+			calaIndex(calaEditLen(),start);
+			EditList.get( start.start).append(str);
+		}
+		public void insert(int index,CharSequence str){
+			size start = new size();
+			calaIndex(calaEditLen(),start);
+			EditList.get( start.start).getText().insert(start.end,str);
+		}
+		public void delete(int start,int end){
+			
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				Future doOnce(int start, int end, CodeEdit Edit)
+				{
+				    Edit.getText().delete(start,end);
+					return null;
+				}
+			};
+		    d.dofor(start,end);
+		}
+		public void replace(int start,int end,CharSequence str){
+			delete(start,end);
+			insert(start,str);
 		}
 		/*
 		  一组的Edit共享Info，对于Info的操作都是内存空间的修改
@@ -442,7 +461,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		}*/
 		public List<Future> reDraw(int start, int end)
 		{
-			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -451,10 +469,10 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 				    return Edit.reDraw(start, end);
 				}
 			};
-			return d.dofor(this.start, this.end);
+			return d.dofor(start,end);
 		}
-		public List<Future> prepare(int start,int end){
-			calaRange(start, end);
+		public List<Future> prepare(int start,int end)
+		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -464,11 +482,10 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 				}
 
 			};
-			return d.dofor(this.start,this.end);
+			return d.dofor(start,end);
 		}
 		public List<Future> subSpan(int start,int end)
 		{
-			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -478,7 +495,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 				}
 
 			};
-			return d.dofor(this.start,this.end);
+			return d.dofor(start,end);
 		}
 		public void GetString(StringBuilder b,SpannableStringBuilder bu){
 			for(CodeEdit E : EditList){
@@ -496,7 +513,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		}*/
 		public List<Future> Format(int start, int end)
 		{
-			calaRange(start, end);
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -505,7 +521,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 					return Edit.reDraw(start, end);
 				}
 			};
-			return d.dofor(this.start, this.end);
+			return d.dofor(start,end);
 		}
 
 		public Stack<Int> Uedo()
@@ -536,23 +552,41 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 		abstract class DoForAnyOnce
 		{
-			public List<Future> dofor(wordIndex start, wordIndex end)
+			public List<Future> dofor(int start,int end)
 			{
+				size s = new size();
+				size e = new size();
+				calaRange(start, end,s,e);
+				
 				List<Future> results = new ArrayList<>();
-				results.add( doOnce(start.end, EditList.get(start.start).getText().length(), EditList.get(start.start++)));
+				
+				//单个编辑器的情况下
+				if(s.start==e.start){
+					results.add(doOnce(s.end,e.end,EditList.get(s.start)));
+					return results;
+				}
+				
+				//多个编辑器的情况下
+				results.add( doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++)));
 				//第一个编辑器的开头是start.end，结尾是它的长度
-				for (;start.start < end.start;start.start++)
+				for (;s.start < e.start;s.start++)
 				{
-					results.add( doOnce(0, EditList.get(start.start).getText().length(), EditList.get(start.start)));
+					results.add( doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start)));
 					//中间编辑器的开头是0,结尾是它的长度
 				}
-				results.add( doOnce(0, end.end, EditList.get(end.start)));
+				results.add( doOnce(0, e.end, EditList.get(e.start)));
 				//最后一个编辑器的开头是0，结尾是end.end
 				return results;
 			}
 			abstract Future doOnce(int start, int end, CodeEdit Edit)
 		}
 
+		public int calaEditLen(){
+			int len = 0;
+			for (Edit e:EditList)
+			    len+=e.getText().length();
+			return len;
+		}
 		public int calaEditLines()
 		{
 			int line=0;
@@ -578,13 +612,13 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			}
 			return width;
 		}
-		public wordIndex WAndH()
+		public size WAndH()
 		{
 			//获取最宽和最高
-			wordIndex size=new wordIndex();
+			size size=new size();
 			for (Edit e:EditList)
 			{
-				wordIndex tmp=e.WAndH();
+				size tmp=e.WAndH();
 				size.end += tmp.end;
 				if (size.start < tmp.start)
 					size.start = tmp.start;

@@ -164,7 +164,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 		}
 
 		@Override
-		protected wordIndex Calc(RCodeEdit Edit, EditGroup self)
+		protected size Calc(RCodeEdit Edit, EditGroup self)
 		{
 			
 			super.Calc(Edit,self);
@@ -176,7 +176,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 			//本次窗口谁请求，单词给谁
 			int offset=Edit.getSelectionStart();
 			int xlen = self.getEditBuilder().calaEditHeight(Edit.index.get());
-			wordIndex pos = ((CodeEdit)Edit).getScrollCursorPos(offset, hScro.getScrollX(), Scro.getScrollY() - xlen);
+			size pos = ((CodeEdit)Edit).getScrollCursorPos(offset, hScro.getScrollX(), Scro.getScrollY() - xlen);
 
 			pos.start += EditLines.getWidth();
 			int WindowWidth=config.WindowWidth;
@@ -262,6 +262,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 			{
 				CodeEdit E= new RCodeEdit(self.getContext());
 				E.getCanvaserList().add(getClipCanvaser());
+				E.setOnClickListener(new Click());
 				return E;
 			}
 
