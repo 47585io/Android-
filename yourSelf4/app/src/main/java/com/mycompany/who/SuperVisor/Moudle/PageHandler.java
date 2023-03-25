@@ -97,19 +97,28 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	
 	  添加一个EditGroup，并自动配置 ？ 添加许多View
 	*/
-	final public void addEdit(String name){
+	final private EditGroup creatEdit(String name){
 		EditGroup Group = new REditGroup(getContext());
 		Group.setPool(pool);
 		Group.setWindow(mWindow);
 		Group.setEditFactory(mfactory);
 		Group.AddEdit(name);
 		Group.setTag(name);
+		Group.setTarget(this);
+		return Group;
+	}
+	final public void addEdit(String name){
+		EditGroup Group = creatEdit(name);
 		mEditGroupPages.addView(Group);
 	}
-	public void addViewS(View... S){
+	public void addViewS(View... S, String name){
 		LinearLayout page = new LinearLayout(getContext());
-		for(View v:S)
+		for(View v:S){
+			if(v instanceof Interfaces.BubbleEvent)
+				((Interfaces.BubbleEvent)v).setTarget(this);
 		    page.addView(v);
+		}
+		page.setTag(name);
 		mEditGroupPages.addView(page);
 	}
 
@@ -265,24 +274,9 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			}
 		}
 		
-		//向上冒泡，冒泡至PageHandler
-		@Override
-		public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
-		{
-			super.BubbleKeyEvent(keyCode, event);
-			return PageHandler.this.BubbleKeyEvent(keyCode,event);
-		}
-
-		@Override
-		public boolean BubbleMotionEvent(MotionEvent event)
-		{
-			super.BubbleMotionEvent(event);
-			return PageHandler.this.BubbleMotionEvent(event);
-		}
-
 	}
 
-	//已经到达了最后
+	//已经到达了最后吗？
 	@Override
 	public boolean BubbleMotionEvent(MotionEvent event)
 	{

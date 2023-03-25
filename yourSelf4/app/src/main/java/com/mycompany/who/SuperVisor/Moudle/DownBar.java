@@ -2,6 +2,7 @@ package com.mycompany.who.SuperVisor.Moudle;
 import android.widget.*;
 import android.content.*;
 import android.util.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
 
 /*
@@ -9,9 +10,9 @@ import android.util.*;
 
   不出意外，很麻烦
 */
-public class DownBar extends SlidingDrawer
+public class DownBar extends HasAll
 {
-	public DownBar(Context cont,AttributeSet attrs){
-		super(cont,attrs);
+	public DownBar(Context cont){
+		super(cont);
 	}
 }

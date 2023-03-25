@@ -22,6 +22,8 @@ public class Interfaces
 		
 		public boolean BubbleMotionEvent(MotionEvent event)
 		
+		public void setTarget(BubbleEvent target)
+		
 	}
 	
 }

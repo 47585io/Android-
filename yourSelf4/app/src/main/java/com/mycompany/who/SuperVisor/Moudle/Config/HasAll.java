@@ -15,6 +15,8 @@ import android.util.*;
 public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfaces.BubbleEvent,Interfaces.Init
 {
 
+	private Interfaces.BubbleEvent Target;
+	
 	public HasAll(Context cont){
 		super(cont);
 		init();
@@ -62,28 +64,38 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event)
 	{
-		super.onKeyUp(keyCode, event);
 		return BubbleKeyEvent(keyCode,event);
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{	
-	    super.onTouchEvent(event);
-		return BubbleMotionEvent(event);
+	   	return BubbleMotionEvent(event);
 	}
 	
-	//向上冒泡
+	//向上冒泡，若没有目标则原地Return
 	@Override
 	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
 	{
-		return false;
+		boolean is = super.onKeyUp(keyCode,event);
+		if(Target!=null)
+			return Target. BubbleKeyEvent(keyCode,event);
+		return is;
 	}
 
 	@Override
 	public boolean BubbleMotionEvent(MotionEvent event)
 	{
-		return false;
+		boolean is = super.onTouchEvent(event);
+		if(Target!=null)  
+			return Target.BubbleMotionEvent(event);
+		return is;
+	}
+	
+	@Override
+	public void setTarget(Interfaces.BubbleEvent target)
+	{
+		Target=target;
 	}
 	
 

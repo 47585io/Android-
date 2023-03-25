@@ -18,6 +18,7 @@ import android.graphics.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
 
 public class EditGroup extends HasAll implements CodeEdit.IlovePool
 {
@@ -152,6 +153,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		{
 			Edit = new RCodeEdit(getContext(), EditList.get(0));
 		}
+		Edit.setTarget(this);
 		return Edit;
 	}
 
@@ -187,6 +189,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 	{
 
 		public Int index;	
+		private Interfaces.BubbleEvent Target;
 		private boolean can;
 		//别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数中赋值
 
@@ -328,15 +331,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		public boolean onKeyUp(int keyCode, KeyEvent event)
 		{
 			//只有获取焦点的View，才能被调用，并继续分发，这里Edit可以获取焦点，将其实现交给外部类
-			super.onKeyUp(keyCode, event);
-			return BubbleKeyEvent(keyCode,event);	
+		    return BubbleKeyEvent(keyCode,event);
 		}
 
 		@Override
 		public boolean onTouchEvent(MotionEvent event)
 		{
 			//只有被touch的View，才能被调用，并继续分发，这里Edit可以被touch，将其实现交给外部类
-			super.onTouchEvent(event);
 			return BubbleMotionEvent(event);
 		}
 	
@@ -344,13 +345,25 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		@Override
 		public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
 		{
-			return EditGroup.this.BubbleKeyEvent(keyCode,event);
+			boolean is = super.onKeyUp(keyCode,event);
+			if(Target!=null)
+			    return Target. BubbleKeyEvent(keyCode,event);
+			return is;
 		}
 
 		@Override
 		public boolean BubbleMotionEvent(MotionEvent event)
 		{
-			return EditGroup.this.BubbleMotionEvent(event);
+			boolean is = super.onTouchEvent(event);
+			if(Target!=null)  
+			    return Target.BubbleMotionEvent(event);
+			return is;
+		}
+		
+		@Override
+		public void setTarget(Interfaces.BubbleEvent target)
+		{
+			Target = target;
 		}
 
 	}
