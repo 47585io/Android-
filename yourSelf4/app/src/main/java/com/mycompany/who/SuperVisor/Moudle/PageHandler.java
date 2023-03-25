@@ -8,17 +8,15 @@ import android.util.*;
 import android.view.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
+import com.mycompany.who.*;
 import com.mycompany.who.Edit.*;
-import com.mycompany.who.Edit.Base.Edit.*;
+import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import com.mycompany.who.Edit.Share.Share2.*;
-import com.mycompany.who.SuperVisor.Config.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.View.*;
-import java.util.*;
 import java.util.concurrent.*;
-import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.R;
 
 
 /*
@@ -33,22 +31,8 @@ import com.mycompany.who.R;
   一切都与EditGroup需要的不谋而和，因此有了REditGroup
 
 */
-public class PageHandler extends LinearLayout implements Configer<PageHandler>, CodeEdit.IlovePool, EditGroup.IneedWindow, EditGroup.IneedFactory, EditGroup.Init
+public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup.IneedWindow, EditGroup.IneedFactory
 {
-
-	@Override
-	public void init()
-	{
-		new HandlerCreator(R.layout.PageHandler).ConfigSelf(this);
-		new Config_Level().ConfigSelf(this);
-	}
-
-	@Override
-	public void ConfigSelf(PageHandler target)
-	{
-		// TODO: Implement this method
-	}
-
 
 	protected ScrollBar Scro;
 	protected HScrollBar hScro;
@@ -63,12 +47,16 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 	
 	
 	public PageHandler(Context cont){
-		super(cont);
-		init();
+		super(cont);	
 	}	
 	public PageHandler(Context cont,AttributeSet set){
 		super(cont,set);
-		init();
+	}
+	@Override
+	public void init()
+	{
+		new HandlerCreator(R.layout.PageHandler).ConfigSelf(this);
+		new Config_Level().ConfigSelf(this);
 	}
 	
 	
@@ -87,6 +75,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 			return (EditGroup)v;
 		return null;
 	}
+	
 	public CodeEdit getEdit(size s){
 		EditGroup Group = getEditGroup(s.start);
 		if(Group!=null){
@@ -94,9 +83,11 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 		}
 		return null;
 	}
+	
 	public View getView(int index){
 		return mEditGroupPages.getView(index);
 	}
+	
 	public int getNowIndex(){
 		return mEditGroupPages.getNowIndex();
 	}
@@ -254,6 +245,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 			return new ClipCanvaser();
 		}
 		
+		//推荐使用
 		class Factory2 implements EditGroup.EditFactory
 		{
 
@@ -269,32 +261,56 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 			@Override
 			public void configEdit(CodeEdit Edit, String name, EditGroup self)
 			{
-				Edit.setPool(pool);
 				com.mycompany.who.Share.Share.setEdit(Edit, name);
 			}
 		}
 		
+		//向上冒泡，冒泡至PageHandler
+		@Override
+		public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+		{
+			super.BubbleKeyEvent(keyCode, event);
+			return PageHandler.this.BubbleKeyEvent(keyCode,event);
+		}
+
+		@Override
+		public boolean BubbleMotionEvent(MotionEvent event)
+		{
+			super.BubbleMotionEvent(event);
+			return PageHandler.this.BubbleMotionEvent(event);
+		}
+
+	}
+
+	//已经到达了最后
+	@Override
+	public boolean BubbleMotionEvent(MotionEvent event)
+	{
+		super.BubbleMotionEvent(event);
+		return true;
+	}
+
+	@Override
+	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+	{
+		super.BubbleKeyEvent(keyCode, event);
+		if(Scro.size()!=0||hScro.size()!=0){
+			Scro.goback();
+			hScro.goback();
+			return true;
+		}
+		return false;
 	}
 	
 	
 	/*
-	  Config_hesSize 
-	  
-	  锁定我的大小，使用设置的大小
-	  
-	  自动根据横竖屏改变大小
-	  
-	*/
-	public static interface Config_Size<T> extends Configer<T>{
-		
-		public void set(int width,int height,boolean is,T target)
-		
-		public void change(T target)
-		
-		public void onChange(T target)
-	}
-	
-	
+	 Config_hesSize 
+
+	 锁定我的大小，使用设置的大小
+
+	 自动根据横竖屏改变大小
+
+	 */
 	final public static class Config_hesSize implements Config_Size<PageHandler>
 	{
 		public boolean portOrLand=true;
@@ -376,7 +392,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 	
 	
 	//一顿操作后，PageHandler所有成员都分配好了空间
-	final static class HandlerCreator extends EditGroup.Creator<PageHandler>
+	final static class HandlerCreator extends Creator<PageHandler>
 	{
 		
 		public HandlerCreator(int i){
@@ -395,7 +411,7 @@ public class PageHandler extends LinearLayout implements Configer<PageHandler>, 
 	}
 	
 	// 如何配置View层次结构
-	final class Config_Level implements EditGroup.Level<PageHandler>
+	final class Config_Level implements Level<PageHandler>
 	{
 
 		@Override

@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.Share;
+package com.mycompany.who.SuperVisor.Moudle.Share;
 
 public class ExtensionChooser
 {

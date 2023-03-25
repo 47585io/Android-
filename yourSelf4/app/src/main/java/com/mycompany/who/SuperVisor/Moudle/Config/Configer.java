@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.Config;
+package com.mycompany.who.SuperVisor.Moudle.Config;
 import java.util.*;
 
 public interface Configer<T>

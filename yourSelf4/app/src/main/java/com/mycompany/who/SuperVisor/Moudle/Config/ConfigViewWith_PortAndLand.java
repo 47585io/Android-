@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.Config;
+package com.mycompany.who.SuperVisor.Moudle.Config;
 import android.view.*;
 import com.mycompany.who.SuperVisor.*;
 import com.mycompany.who.SuperVisor.Moudle.*;

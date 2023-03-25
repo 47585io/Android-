@@ -5,7 +5,7 @@ import android.view.*;
 import java.util.*;
 import android.util.*;
 
-public class ScrollBar extends ScrollView
+public class ScrollBar extends ScrollView implements Scroll
 {
 	
 	Stack<Integer> historyL;
@@ -29,7 +29,7 @@ public class ScrollBar extends ScrollView
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if(ev.getAction()==MotionEvent.ACTION_UP||ev.getAction()==MotionEvent.ACTION_DOWN&&canSave)
+		if((ev.getAction()==MotionEvent.ACTION_UP||ev.getAction()==MotionEvent.ACTION_DOWN)&&canSave)
 			historyL.push(getScrollY());
 		if(canScroll)
 		    return super.onTouchEvent(ev);
@@ -68,16 +68,12 @@ public class ScrollBar extends ScrollView
 		setScrollY(historyN.pop());
 		canSave=true;
 	}
-	
-	public static interface Scroll{
-		
-		public void setCanScroll(boolean can)
-		
-		public void setCanSave(boolean can)
-		
-		public void goback()
-		
-		public void gonext()
+
+	@Override
+	public int size()
+	{
+		return historyL.size();
 	}
+
 	
 }

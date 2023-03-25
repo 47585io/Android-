@@ -1,11 +1,11 @@
 package com.mycompany.who.SuperVisor.Moudle;
-import android.widget.*;
 import android.content.*;
 import android.util.*;
-import com.mycompany.who.View.*;
-import com.mycompany.who.SuperVisor.Config.*;
 import android.view.*;
+import android.widget.*;
 import com.mycompany.who.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
+import com.mycompany.who.View.*;
 
 
 /*
@@ -16,7 +16,7 @@ import com.mycompany.who.*;
   我想用一些按扭来封装编辑器功能
   
 */
-public class Title extends LinearLayout implements EditGroup.Init, Configer<Title>
+public class Title extends HasAll 
 {
 
 	@Override
@@ -25,20 +25,6 @@ public class Title extends LinearLayout implements EditGroup.Init, Configer<Titl
 		new TitleCreator(R.layout.Title).ConfigSelf(this);
 		new Config_Level().ConfigSelf(this);
 	}
-	
-
-	@Override
-	public void loadSize(int width, int height, boolean is)
-	{
-		// TODO: Implement this method
-	}
-
-	@Override
-	public void ConfigSelf(Title target)
-	{
-		// TODO: Implement this method
-	}
-	
 	
 	protected ReSpinner Spinner;
 	protected LinearLayout ButtonBar;
@@ -60,7 +46,7 @@ public class Title extends LinearLayout implements EditGroup.Init, Configer<Titl
 		return ButtonBar;
 	}
 	
-	public static class Config_hesSize implements PageHandler.Config_Size<Title>
+	public static class Config_hesSize implements Config_Size<Title>
 	{
 
 		@Override
@@ -89,7 +75,7 @@ public class Title extends LinearLayout implements EditGroup.Init, Configer<Titl
 	}
 	
 	//一顿操作后，PageHandler所有成员都分配好了空间
-	final static class TitleCreator extends EditGroup.Creator<Title>
+	final static class TitleCreator extends Creator<Title>
 	{
 
 		public TitleCreator(int i){
@@ -105,7 +91,7 @@ public class Title extends LinearLayout implements EditGroup.Init, Configer<Titl
 	}
 
 	// 如何配置View层次结构
-	final class Config_Level implements EditGroup.Level<Title>
+	final class Config_Level implements Level<Title>
 	{
 
 		@Override

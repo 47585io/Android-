@@ -20,6 +20,7 @@ import com.mycompany.who.Edit.Share.Share4.*;
 import java.security.acl.*;
 import java.util.*;
 import java.util.concurrent.*;
+import android.content.res.*;
 
 /*
    整理是一切的开始
@@ -86,7 +87,6 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	public static EPool2 Ep;
 	public static EPool3 Epp;
 	protected EditListenerInfo Info;
-	protected ThreadPoolExecutor pool;
 	
 	protected boolean isDraw=false;
 	protected boolean isFormat=false;
@@ -132,7 +132,6 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	{
 		super.CopyFrom(target);
 		CodeEdit Edit = (CodeEdit) target;
-		pool = Edit. pool;
 		this.WordLib=Edit.WordLib;	
 		this.lines=Edit.lines;
 		this.stack = new EditDate();
@@ -146,13 +145,13 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	{
 		super.CopyTo(target);
 		CodeEdit Edit = (CodeEdit) target;
-		Edit. pool = pool;
 		Edit.WordLib = WordLib;	
 		Edit.lines = lines;
-		Edit.stack = new EditDate();
-		Edit. addTextChangedListener(new DefaultText());
+		Edit.stack = stack;
+		Edit.addTextChangedListener(new DefaultText());
 		Edit.boxes = boxes;
 		Edit.Info = Info;	
+		Edit.setText(getText()); 
 	}
 
 	@Override
@@ -264,15 +263,14 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 		}
 	}
 	
+	/*
+	  三个不属于我的东西
+	*/
+	abstract public ThreadPoolExecutor getPool()
 	
-	public void setPool(ThreadPoolExecutor pool)
-	{
-		this.pool = pool;
-	}
-	public ThreadPoolExecutor getPool()
-	{
-		return pool;
-	}
+	abstract public size calc(EditText Edit)
+
+	abstract public ListView getWindow()
 	
 	
 /*
@@ -412,8 +410,8 @@ Dreawr
 				}
 			}
 		};
-		if(pool!=null){
-		    return pool.submit(run);
+		if(getPool()!=null){
+		    return getPool().submit(run);
 		}
 		else
 			run.run();
@@ -436,8 +434,8 @@ Dreawr
 				HTML= getHTML(nodes,text.substring(start,end),((EditFinderListener)getFinder()).getByteToColor());
 			}
 		};
-		if(pool!=null)
-		    return pool.submit(run);
+		if(getPool()!=null)
+		    return getPool().submit(run);
 		else
 			run.run();
 		return null;
@@ -622,8 +620,8 @@ _________________________________________
 			}
 
 		};
-		if (pool != null)
-			return pool.submit(run);
+		if (getPool() != null)
+			return getPool().submit(run);
 		else
 			run.run();
 
@@ -646,15 +644,16 @@ _________________________________________
 		//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
 	}
 
-	public final void Insert(final int index)
+	public final int Insert(final int index)
 	{
 		//插入字符
+		int count = 0;
 		IsModify++;
 		isFormat = true;
 
 		try
 		{
-		    onInsert(index);
+		    count = onInsert(index);
 		}
 		catch (Exception e)
 		{
@@ -663,6 +662,8 @@ _________________________________________
 
 		isFormat = false;
 		IsModify--;
+		
+		return count;
 	}	
 
 	protected int onInsert(int index)throws Exception
@@ -734,7 +735,7 @@ _________________________________________
 				long last = 0,now = 0;
 				last = System.currentTimeMillis();
 
-				List<Icon> Icons = SearchInGroup(wantBefore, wantAfter, 0, wantBefore.length(), getCompletorList(), getPool());
+				List<Icon> Icons = SearchInGroup(wantBefore, wantAfter, 0, wantBefore.length());
 				//经过一次查找，Icons里装满了单词
 				now = System.currentTimeMillis();
 				Log.w("After SearchWords", "I take " + (now - last) + " ms, " + Epp.toString());
@@ -774,9 +775,11 @@ _________________________________________
 		return null;
 	}
 
-	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after, Collection<EditListener> Group, ThreadPoolExecutor pool)
+	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)
 	{
 		//用多线程在不同集合中找单词
+		Collection<EditListener> Group = getCompletorList();
+		ThreadPoolExecutor pool = getPool();
 		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
 
 			@Override
@@ -858,12 +861,7 @@ _________________________________________
 			getWindow().setX(-9999);
 			getWindow().setY(-9999);
 		}
-	}
-	
-	abstract public size calc(EditText Edit)
-	
-	abstract public ListView getWindow()
-	
+	}	
 	
 	final public void insertWord(String word, int index, int flag)
 	{
@@ -1248,7 +1246,7 @@ _________________________________________
 		{
 			//如果没有输入，则不用做什么
 		    IsModify2=true;	
-		
+			
 			if (Enabled_Format)
 			{		
 				//是否启用自动format
@@ -1271,7 +1269,7 @@ _________________________________________
 			    
 			}
 			IsModify2=false;
-				
+			
 		}
 		
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
@@ -1545,8 +1543,8 @@ _________________________________________
 				buider.append( Colors.subSpan(start,end,nodes,getText()));
 			}
 		};
-		if(pool!=null)
-			return pool.submit(run);
+		if(getPool()!=null)
+			return getPool().submit(run);
 		else
 			run.run();
 		return null;
@@ -1623,7 +1621,7 @@ _________________________________________
 	
 	public static interface myCompletor extends Completor{
 
-		public List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after, Collection<EditListener> Group, ThreadPoolExecutor pool)
+		public List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)
 		
 		public void callOnopenWindow(ListView Window)
 		
@@ -1674,5 +1672,5 @@ _________________________________________
 		public ThreadPoolExecutor getPool()
 		
 	}
-	
+
 }

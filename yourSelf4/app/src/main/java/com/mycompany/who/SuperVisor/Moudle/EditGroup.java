@@ -9,7 +9,6 @@ import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Edit.*;
 import com.mycompany.who.Edit.Share.Share1.*;
-import com.mycompany.who.SuperVisor.Config.*;
 import java.util.*;
 import java.util.concurrent.*;
 import com.mycompany.who.Edit.Share.Share4.*;
@@ -18,10 +17,12 @@ import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import android.graphics.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
-public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeEdit.IlovePool
+public class EditGroup extends HasAll implements CodeEdit.IlovePool
 {
-	/*
+	
+  /*
 	 为提升编辑器效率，增加EditGroup
 	 编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
 	 解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
@@ -33,16 +34,14 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	 编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
 	 解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
 
-	 */
+  */
 
-	/*
+  /*
 	 我什么也不知道
 	 我只完善了Edit的功能，管理一组的Edit以及如何操作它们
 	 我只在适时扩展大小
 	 我需要Window，请让外部类给我Window，并尽可能地自己展示
-
-	 */
-
+  */
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	protected int mWidth,mHeight;
@@ -60,21 +59,19 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	private ThreadPoolExecutor pool=null;
 	private EditFactory mfactory;
 
+	
 	public EditGroup(Context cont)
 	{
-		super(cont);
-		init();
+		super(cont);	
 	}
 	public EditGroup(Context cont,AttributeSet attrs)
 	{
 		super(cont,attrs);
-		init();
 	}
 	public void init(){
 		new EditGroupCreator(R.layout.EditGroup).ConfigSelf(this); // 初始化成员
 		new Config_hesView().ConfigSelf(this); // 配置层级
 	}
-	
 	
 	@Override
 	public boolean equals(Object obj)
@@ -82,11 +79,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		if (((View)obj).getTag().equals(getTag()))
 			return true;
 		return false;
-	}
-	@Override
-	public void ConfigSelf(EditGroup target)
-	{
-		//任何时候，立刻配置
 	}
 	
 
@@ -115,18 +107,16 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 	public void setWindow(ListView Window)
 	{
-		if (Window != null)
-		    mWindow = Window;
+		mWindow = Window;
 	}
 	public void setPool(ThreadPoolExecutor pool)
 	{
 		this.pool = pool;
-		builder.setPool(pool);
 	}
 	public void setEditFactory(EditFactory factory)
 	{
 		if (factory != null)
-		    mfactory = factory;
+		    mfactory = factory;	
 	}
 
 
@@ -177,7 +167,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 
 
-
 	/*关键代码*/
 	protected void trimToFather()
 	{
@@ -192,31 +181,9 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		//为两个Edit的父元素扩展空间，一个ForEdit，一个this
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 	}
-	final public static void trim(View Father, int width, int height)
-	{
-		//调整空间
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width = width;
-		p.height = height;
-		Father.setLayoutParams(p);
-	}
-	final public static void trimAdd(View Father, int addWidth, int addHeight)
-	{
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width += addWidth;
-		p.height += addHeight;
-		Father.setLayoutParams(p);
-	}
-	final public static void trimXel(View Father, float WidthX, float HeightX)
-	{
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width *= WidthX;
-		p.height *= HeightX;
-		Father.setLayoutParams(p);
-	}
 
 
-	final class RCodeEdit extends CodeEdit
+	final class RCodeEdit extends CodeEdit implements Interfaces.BubbleEvent
 	{
 
 		public Int index;	
@@ -248,6 +215,12 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		{
 			return mWindow;
 		}
+		@Override
+		public ThreadPoolExecutor getPool()
+		{
+			return pool;
+		}
+
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
@@ -351,6 +324,35 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			return pos;
 		}
 
+		@Override
+		public boolean onKeyUp(int keyCode, KeyEvent event)
+		{
+			//只有获取焦点的View，才能被调用，并继续分发，这里Edit可以获取焦点，将其实现交给外部类
+			super.onKeyUp(keyCode, event);
+			return BubbleKeyEvent(keyCode,event);	
+		}
+
+		@Override
+		public boolean onTouchEvent(MotionEvent event)
+		{
+			//只有被touch的View，才能被调用，并继续分发，这里Edit可以被touch，将其实现交给外部类
+			super.onTouchEvent(event);
+			return BubbleMotionEvent(event);
+		}
+	
+		//向上冒泡，冒泡至EditGroup
+		@Override
+		public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+		{
+			return EditGroup.this.BubbleKeyEvent(keyCode,event);
+		}
+
+		@Override
+		public boolean BubbleMotionEvent(MotionEvent event)
+		{
+			return EditGroup.this.BubbleMotionEvent(event);
+		}
+
 	}
 
 	
@@ -443,22 +445,11 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		{
 			return EditList.get(0).getInfo();
 		}
-		/*
-		  一组的Edit虽然共享pool，但设置的是自己的指针
-		*/
-		public void setPool(ThreadPoolExecutor pool)
-		{
-			for (CodeEdit Edit:EditList)
-			    Edit.setPool(pool);
+		public void setInfo(EditListenerInfo Info){
+			for(CodeEdit E:EditList)
+			    E.setInfo(Info);
 		}
-			
-		/*public void reDraw()
-		{
-			for (CodeEdit e:EditList)
-			{
-				e.reDraw(0, e.getText().length());
-			}
-		}*/
+	
 		public List<Future> reDraw(int start, int end)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
@@ -503,14 +494,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			}
 		}
 		
-		/*public void Format() 
-		{
-			Last.push(new Stack<Int>());
-			for (CodeEdit e:EditList)
-			{
-			    e.Format(0, e.getText().length());
-			}
-		}*/
 		public List<Future> Format(int start, int end)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
@@ -656,7 +639,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
 			Edit.getCanvaserList().add(new Clip());
-			Edit.setPool(pool);
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
 
@@ -710,29 +692,7 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 			return before;
 		}
 	}
-
 	
-	/* 非常好用 */
-	public static abstract class Creator<T extends ViewGroup> implements Configer<T>{
-		
-		public int id;
-		
-		public Creator(int resid){
-			id=resid;
-		}
-		@Override
-		public void ConfigSelf(T target)
-		{
-			View tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
-			init(target,tmp);
-		}
-		
-		abstract public void init(T target,View root)
-	
-	}
-	public static interface Level<T> extends Configer<T>{
-        public void config(T target)
-	}
 	
 	//一顿操作后，EditGroup所有成员都分配好了空间
 	final static class EditGroupCreator extends Creator<EditGroup>
@@ -790,16 +750,8 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 	}
 	
 	
-	/*
-
-	 _________________________________________
-
-	 告诉持有我的外部类，要使用我，您必须拥有如下这些
-
-	 _________________________________________
-
-	 */
-
+	/*  告诉持有我的外部类，要使用我，您必须拥有如下这些  */
+	
     public static interface IneedFactory
 	{
 
@@ -814,14 +766,6 @@ public class EditGroup extends LinearLayout implements Configer<EditGroup>,CodeE
 
 		public ListView getWindow()
 
-	}
-
-	public static interface Init{
-		
-		public void loadSize(int width, int height ,boolean is)
-		
-		public void init()
-		
 	}
 
 
