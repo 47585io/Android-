@@ -4,6 +4,6 @@ import java.util.concurrent.*;
 
 public interface Completor
 {
-	public Future openWindow(ListView Window, int index, ThreadPoolExecutor pool)
+	public Future openWindow( int index)
 	
 }

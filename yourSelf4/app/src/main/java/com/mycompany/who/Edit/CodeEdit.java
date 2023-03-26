@@ -78,7 +78,7 @@ import android.content.res.*;
   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
  */
-public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
 {
 	
 	//一百行代码实现代码染色，格式化，自动补全，Uedo，Redo
@@ -87,6 +87,8 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	public static EPool2 Ep;
 	public static EPool3 Epp;
 	protected EditListenerInfo Info;
+	protected ThreadPoolExecutor pool;
+	protected ListView mWindow;
 	
 	protected boolean isDraw=false;
 	protected boolean isFormat=false;
@@ -111,6 +113,7 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	public static boolean Enabled_Format=false;
 	public static boolean Enabled_Complete;
 	public static int Delayed_Draw = 0;
+	public static int MaxCount=20000;
 	
 	static{
 		Ep=new EPool2();
@@ -264,14 +267,25 @@ public abstract class CodeEdit extends Edit implements Drawer,Formator,Completor
 	}
 	
 	/*
-	  三个不属于我的东西
+	  我真服了，在构造自己前会调用onTextChanged，这时候自己的成员全是null，
+	  
+	  而是最坑的是: 居然也没有与外部类绑定，那么就不能直接在任何函数中返回外部类的成员，因为外部类对象为null
+	  
 	*/
-	abstract public ThreadPoolExecutor getPool()
 	
-	abstract public size calc(EditText Edit)
-
-	abstract public ListView getWindow()
+	public void setPool(ThreadPoolExecutor pool){
+		this.pool = pool;
+	}	
+	public void setWindow(ListView Window){
+		mWindow = Window;
+	}
 	
+    public ThreadPoolExecutor getPool(){
+		return pool;
+	}
+	public ListView getWindow(){
+		return mWindow;
+	}
 	
 /*
 _________________________________________
@@ -418,6 +432,25 @@ Dreawr
 			//如果有pool，在子线程中执行
 			//否则直接执行
 		return null;
+	}
+	/*
+	  JavaBinder        !!! FAILED BINDER TRANSACTION !!!  (parcel size = 242844)
+	  03-26 10:15:10.228 27546 27546 D   AndroidRuntime          Shutting down VM
+	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          FATAL EXCEPTION: main
+	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          Process: com.mycompany.who, PID: 27546
+	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          java.lang.RuntimeException: android.os.TransactionTooLargeException: data parcel size 242844 bytes
+	  
+	  单次的数据太大，我在编辑器中一次粘贴1500行就出现这个问题，而如果每次粘贴800行就没有问题
+	  这样的话，应该是在reDraw中，replace了1500行的SpannableStringBuilder，因此在处理时，单个的文本太大了，如果分成800行的SpannableStringBuilder就没事了
+	  
+	*/
+	final public void reDrawColor(int start,int end){
+		for(int i=start;i<end;i+=MaxCount){
+			if(end-i<MaxCount)
+				reDraw(i,end);
+			else
+			    reDraw(i,i+MaxCount);
+		}
 	}
 	
 	final public Future prepare(final int start,final int end,final String text){
@@ -721,8 +754,11 @@ _________________________________________
 
  */
  
-	final public Future openWindow(final ListView Window, int index, final ThreadPoolExecutor pool)
+	final public Future openWindow(int index)
 	{
+		if(getWindow()==null)
+			return null;
+		
 		final String wantBefore= getWord(index);
 		final String wantAfter = getAfterWord(index);
 		//获得光标前后的单词，并开始查找
@@ -742,17 +778,17 @@ _________________________________________
 
 				if (Icons != null)
 				{
-					final WordAdpter<Icon> adapter = new WordAdpter<Icon>(Window.getContext(), Icons, R.layout.WordIcon);
+					final WordAdpter<Icon> adapter = new WordAdpter<Icon>(getContext(), Icons, R.layout.WordIcon);
 					Runnable run2=new Runnable(){
 
 						@Override
 						public void run()
 						{
 
-							Window.setAdapter(adapter);
+							getWindow().setAdapter(adapter);
 							try
 							{
-							    callOnopenWindow(Window);
+							    callOnopenWindow(getWindow());
 							}
 							catch (Exception e)
 							{
@@ -768,8 +804,8 @@ _________________________________________
 				}
 			}
 		};
-		if (pool != null)
-		    return pool.submit(run);//因为含有阻塞，所以将任务交给池子
+		if (getPool() != null)
+		    return getPool().submit(run);//因为含有阻塞，所以将任务交给池子
 		else
 			run.run();
 		return null;
@@ -862,6 +898,11 @@ _________________________________________
 			getWindow().setY(-9999);
 		}
 	}	
+	
+	public size calc(EditText Edit){
+		return getCursorPos(Edit.getSelectionStart());
+	}
+	
 	
 	final public void insertWord(String word, int index, int flag)
 	{
@@ -1237,9 +1278,9 @@ _________________________________________
 			return;
 		//如果正被修改，不允许再次修改	
 		
-		if(Enabled_Complete&&getWindow()!=null){
+		if(Enabled_Complete){
 			//是否启用自动补全
-			openWindow(getWindow(), getSelectionStart(), getPool());
+			openWindow(getSelectionStart());
 		}
 		
 		if (lengthAfter != 0)
@@ -1265,7 +1306,7 @@ _________________________________________
 				    tmp.start=tryLine_Start(text.toString(),tmp.start-1);
 				    tmp.end=tryLine_End(text.toString(),tmp.end+1);
 				}
-			    reDraw(tmp.start,tmp.end);
+			    reDrawColor(tmp.start,tmp.end);
 			    
 			}
 			IsModify2=false;
@@ -1671,6 +1712,14 @@ _________________________________________
 		
 		public ThreadPoolExecutor getPool()
 		
+	}
+	
+	public static interface IneedWindow{
+
+		public ListView getWindow()
+		
+		public void setWindow(ListView Window)
+
 	}
 
 }

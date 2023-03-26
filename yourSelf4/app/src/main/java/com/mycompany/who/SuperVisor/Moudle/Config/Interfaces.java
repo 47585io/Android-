@@ -24,6 +24,8 @@ public class Interfaces
 		
 		public void setTarget(BubbleEvent target)
 		
+		public BubbleEvent getTarget()
+		
 	}
 	
 }

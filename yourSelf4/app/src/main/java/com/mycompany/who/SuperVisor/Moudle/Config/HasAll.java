@@ -5,6 +5,7 @@ import android.view.*;
 import java.text.*;
 import android.util.*;
 import android.content.res.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
 
 
 /*
@@ -16,7 +17,8 @@ import android.content.res.*;
 public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfaces.BubbleEvent,Interfaces.Init
 {
 
-	private Interfaces.BubbleEvent Target;
+	protected Interfaces.BubbleEvent Target;
+	protected Config_Size config;
 	
 	public HasAll(Context cont){
 		super(cont);
@@ -30,11 +32,14 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	@Override
 	public void init()
 	{
-
 	}
 	@Override
 	public void loadSize(int width, int height, int is)
 	{
+		
+	}
+	public Config_Size getConfig(){
+		return config;
 	}
 
 	final public static void trim(View Father, int width, int height)
@@ -97,6 +102,11 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	{
 		Target=target;
 	}
+	@Override
+	public Interfaces.BubbleEvent getTarget()
+	{
+		return Target;
+	}
 	
 
 	@Override
@@ -126,7 +136,9 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 
 	}
 	public static interface Level<T> extends Configer<T>{
+		
         public void config(T target)
+		
 	}
 	
 	
@@ -147,4 +159,44 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		public void onChange(T target)
 	}
 	
+	
+	public static class Config_Size2<T> implements Config_Size<T>
+	{
+
+		int width,height,portOrLand;
+		
+		@Override
+		public void ConfigSelf(T target)
+		{
+			// TODO: Implement this method
+		}
+
+		@Override
+		public void set(int width, int height, int is, T target)
+		{
+			this.width = width;
+			this.height = height;
+			this.portOrLand = is;
+			onChange(target);
+		}
+
+		@Override
+		public void change(T target)
+		{
+			int tmp = width;
+			width = height;
+			height = tmp;
+			if(portOrLand==LinearLayout.VERTICAL)
+				portOrLand=LinearLayout.HORIZONTAL;
+			else
+				portOrLand=LinearLayout.VERTICAL;
+			onChange(target);
+		}
+
+		@Override
+		public void onChange(T target)
+		{
+			// TODO: Implement this method
+		}
+	}
 }

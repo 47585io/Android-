@@ -5,7 +5,7 @@ public class Icon{
 	private int icon;
 	private String path;
 	private String name;
-	private byte flag=-128;
+	private byte flag;
 	
 	public Icon(){
 

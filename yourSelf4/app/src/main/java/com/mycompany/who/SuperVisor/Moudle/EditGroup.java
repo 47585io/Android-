@@ -20,9 +20,8 @@ import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
 
-public class EditGroup extends HasAll implements CodeEdit.IlovePool
+public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow
 {
-	
   /*
 	 为提升编辑器效率，增加EditGroup
 	 编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
@@ -100,19 +99,22 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 	{
 		return pool;
 	}
-
-	public size WAndH()
+	@Override
+	public ListView getWindow()
 	{
-		return new size(mWidth, mHeight);
+		return mWindow;
 	}
+
 
 	public void setWindow(ListView Window)
 	{
 		mWindow = Window;
+		builder.setWindow(Window);
 	}
 	public void setPool(ThreadPoolExecutor pool)
 	{
 		this.pool = pool;
+		builder.setPool(pool);
 	}
 	public void setEditFactory(EditFactory factory)
 	{
@@ -213,16 +215,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 			//监听器优先调用，所以Last会先开一个空间让我push
 			//每一轮次onTextChanged执行后紧跟其后再开一个空间
 		}		
-		@Override
-		public ListView getWindow()
-		{
-			return mWindow;
-		}
-		@Override
-		public ThreadPoolExecutor getPool()
-		{
-			return pool;
-		}
 
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
@@ -249,6 +241,20 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 
 			Log.w("onTextChanged", "My index is " + index);
 
+			if(EditFlag.get()==0)
+				trimToFather();    //第一个编辑器扩展大小
+			/*
+			   编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
+			   注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
+			   因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
+			   因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
+			  
+			   但是，为什么我要将trimToFather交给第一个编辑器？
+			   这是因为，在下面的代码中，会调用super.onTextChanged()
+			   在其中，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
+			   
+			 */
+			
 			EditFlag.add();		
 			if (text.toString().indexOf('\n', start) != -1 && lengthAfter != 0)
 				sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
@@ -261,15 +267,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 			{
 				int line = builder.calaEditLines();
 				EditLines. reLines(line);	//最后一个编辑器单独计算行
-				trimToFather();    //最后一个编辑器扩展大小
-
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + mWidth + " " + mHeight + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");
-				/*
-				 编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-				 注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
-				 因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
-				 因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
-				 */
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + mWidth + " " + mHeight + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
 
 		}
@@ -366,6 +364,12 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 			Target = target;
 		}
 
+		@Override
+		public Interfaces.BubbleEvent getTarget()
+		{
+			return Target;
+		}
+
 	}
 
 	
@@ -454,13 +458,21 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		public void delListener(EditListener li){
 			EditList.get(0).getInfo().delAListener(li);
 		}
-		public EditListenerInfo getInfo()
-		{
-			return EditList.get(0).getInfo();
-		}
+		
+		/*
+		  一组的Edit的Info成员却是指针
+		*/
 		public void setInfo(EditListenerInfo Info){
 			for(CodeEdit E:EditList)
 			    E.setInfo(Info);
+		}
+		public void setWindow(ListView Window){
+			for(CodeEdit E:EditList)
+			    E.setWindow(Window);
+		}
+		public void setPool(ThreadPoolExecutor pool){
+			for(CodeEdit E:EditList)
+			    E.setPool(pool);
 		}
 	
 		public List<Future> reDraw(int start, int end)
@@ -470,7 +482,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 				@Override
 				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-				    return Edit.reDraw(start, end);
+				    Edit.reDrawColor(start, end);
+					return null;
 				}
 			};
 			return d.dofor(start,end);
@@ -652,6 +665,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
 			Edit.getCanvaserList().add(new Clip());
+			Edit.setPool(self. pool);
+			Edit.setWindow(self. mWindow);
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
 
@@ -771,13 +786,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool
 		public void setEditFactory(EditFactory factory)
 
 		public EditFactory getEditFactory()
-
-	}
-
-	public static interface IneedWindow
-	{
-
-		public ListView getWindow()
 
 	}
 

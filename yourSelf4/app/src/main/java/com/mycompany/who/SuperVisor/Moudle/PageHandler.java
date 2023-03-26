@@ -17,6 +17,7 @@ import com.mycompany.who.Edit.Share.Share2.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.View.*;
 import java.util.concurrent.*;
+import java.util.*;
 
 
 /*
@@ -31,7 +32,7 @@ import java.util.concurrent.*;
   一切都与EditGroup需要的不谋而和，因此有了REditGroup
 
 */
-public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup.IneedWindow, EditGroup.IneedFactory
+public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.IneedFactory
 {
 
 	protected ScrollBar Scro;
@@ -43,8 +44,6 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	private ThreadPoolExecutor pool;
 	private EditGroup.EditFactory mfactory;
 	
-	public Config_hesSize config;
-
 	public PageHandler(Context cont){
 		super(cont);	
 	}	
@@ -166,6 +165,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			
 			super.Calc(Edit,self);
 			//测量并修改Window大小
+			Config_hesSize config = (PageHandler.Config_hesSize)PageHandler.this. getConfig();
 			config.ConfigSelf(PageHandler. this);
 
 			//请求测量
@@ -228,6 +228,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 				int index = ((RCodeEdit)self).index.get();
 				//计算编辑器在可视区域中的自己的范围
 
+				Config_hesSize config = (PageHandler.Config_hesSize)PageHandler.this. getConfig();
 				int EditTop=getEditBuilder().calaEditHeight(index); //编辑器较ForEdit的顶部位置
 				int SeeTop = Scro.getScrollY(); //可视区域较ForEdit的顶部位置
 				int SeeLeft = hScro.getScrollX();//可视区域较ForEdit的左边位置
@@ -260,19 +261,22 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			@Override
 			public CodeEdit getEdit(EditGroup self)
 			{
-				CodeEdit E= new RCodeEdit(self.getContext());
-				E.getCanvaserList().add(getClipCanvaser());
-				E.setOnClickListener(new Click());
+				CodeEdit E = null;
+				E = new RCodeEdit(self.getContext());
 				return E;
 			}
 
 			@Override
 			public void configEdit(CodeEdit Edit, String name, EditGroup self)
 			{
+				Edit.getCanvaserList().add(getClipCanvaser());
+				Edit.setOnClickListener(new Click());
+				Edit.setPool(self.getPool());
+				Edit.setWindow(self.getWindow());
 				com.mycompany.who.Share.Share.setEdit(Edit, name);
 			}
 		}
-		
+			
 	}
 
 	//已经到达了最后吗？
@@ -287,7 +291,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
 	{
 		super.BubbleKeyEvent(keyCode, event);
-		if(Scro.size()!=0||hScro.size()!=0){
+		if((Scro.size()!=0||hScro.size()!=0)&&keyCode==KeyEvent.KEYCODE_BACK){
 			Scro.goback();
 			hScro.goback();
 			return true;
@@ -323,7 +327,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			}	
 			if (height < WindowHeight)
 				WindowHeight=height;
-			EditGroup.trim(target.mWindow,WindowWidth,WindowHeight);
+			trim(target.mWindow,WindowWidth,WindowHeight);
 			//立即设置Window大小
 		}
 

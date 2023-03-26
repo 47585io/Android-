@@ -93,7 +93,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 		@Override
 		public void change(XCode target)
 		{
-			//target. setOrientation(portOrLand);
+			target. setOrientation(portOrLand);
 			configT.change(target.mTitle);
 			configP.change(target.mPages);
 		}
