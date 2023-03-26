@@ -10,6 +10,7 @@ import com.mycompany.who.Edit.Share.Share3.*;
 import java.util.*;
 import org.xml.sax.ext.*;
 import android.util.*;
+import android.text.*;
 
 public class Edit extends EditText implements Creat<Edit>
 {
@@ -84,9 +85,10 @@ public class Edit extends EditText implements Creat<Edit>
 		return getLineHeight()*(String_Splitor.Count('\n',getText().toString())+1);
 	}
 	public int maxWidth(){
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
+		Editable editor = getText();
+		List<Integer> indexs = String_Splitor.indexsOf('\n',editor.toString());
 		if(indexs==null||indexs.size()==0){
-			return (int)(getText().toString().length()*getTextSize());
+			return (int)(editor.length()*getTextSize());
 		}
 		int width=0;
 		int last=0;
@@ -96,13 +98,15 @@ public class Edit extends EditText implements Creat<Edit>
 				width=w;
 			last=i;
 		}
+		width=(width>editor.length()-last)?width:editor.length()-last;
 		return (int)(width*getTextSize());
 	}
 	public size WAndH(){
 		size size=new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
+		Editable editor = getText();
+		List<Integer> indexs = String_Splitor.indexsOf('\n',editor.toString());
 		if(indexs==null||indexs.size()==0){
-			size.start= (int)(getText().toString().length()*getTextSize());
+			size.start= (int)(editor.length()*getTextSize());
 			size.end=getLineHeight();
 			return size;
 		}
@@ -114,6 +118,8 @@ public class Edit extends EditText implements Creat<Edit>
 				width=w;
 			last=i;
 		}
+		width=(width>editor.length()-last)?width:editor.length()-last;
+		//最后一行的长度是？
 		size.start=(int)(width*getTextSize());
 		size.end=(indexs.size()+1)*getLineHeight();
 		return size;
@@ -136,6 +142,7 @@ public class Edit extends EditText implements Creat<Edit>
 				width=w;
 			last=i;
 		}
+		width=(width>text.length()-last)?width:text.length()-last;
 		size.start=width;
 		size.end=(indexs.size()+1);
 		return size;

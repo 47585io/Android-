@@ -44,7 +44,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
   */
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
-	protected int mWidth,mHeight;
 	protected Int EditFlag=new Int();
 	protected Int historyId;
 
@@ -149,7 +148,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
 			mfactory. configEdit(Edit, name, this);
-			Edit.lines = EditLines;
 		}
 		else
 		{
@@ -180,8 +178,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		int width=size.start + ExpandWidth;
 		trim(ForEdit, width - EditLines.maxWidth(), height);
 		trim(this, width, height);
-		mWidth = width; 
-		mHeight = height;
+		config.set(width,height,0,this);
 		//为两个Edit的父元素扩展空间，一个ForEdit，一个this
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 	}
@@ -253,7 +250,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			   这是因为，在下面的代码中，会调用super.onTextChanged()
 			   在其中，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
 			   
-			 */
+			*/
 			
 			EditFlag.add();		
 			if (text.toString().indexOf('\n', start) != -1 && lengthAfter != 0)
@@ -267,7 +264,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			{
 				int line = builder.calaEditLines();
 				EditLines. reLines(line);	//最后一个编辑器单独计算行
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + mWidth + " " + mHeight + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
 
 		}
@@ -667,6 +664,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Edit.getCanvaserList().add(new Clip());
 			Edit.setPool(self. pool);
 			Edit.setWindow(self. mWindow);
+			Edit.setEditLine( EditLines);
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
 
@@ -737,6 +735,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Group. Next = new Stack<>();
 		    Group.creatEditBuilder();
 			Group.creatEditFactory();
+			Group.config = new Config_hesSize();
 			init2(Group,root);
 		}
 		private static void init2( EditGroup Group,View root)
@@ -763,6 +762,31 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			CodeEdit.Enabled_Complete = true;
 			CodeEdit.Enabled_Format = true;
 		}
+	}
+	
+	public static class Config_hesSize implements Config_Size<EditGroup>
+	{
+		
+		public int width,height;
+		
+		@Override
+		public void ConfigSelf(EditGroup target)
+		{
+			target.trimToFather();
+		}
+
+		@Override
+		public void set(int width, int height, int is, EditGroup target)
+		{
+			this.width=width;
+			this.height=height;
+		}
+
+		@Override
+		public void change(EditGroup target){}
+
+		@Override
+		public void onChange(EditGroup target){}
 	}
 	
 	//这个...

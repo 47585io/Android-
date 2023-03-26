@@ -20,16 +20,15 @@ import android.content.res.*;
 public class Title extends HasAll 
 {
 
+	protected ReSpinner Spinner;
+	protected LinearLayout ButtonBar;
+	
 	@Override
 	public void init()
 	{
 		new TitleCreator(R.layout.Title).ConfigSelf(this);
 		new Config_Level().ConfigSelf(this);
 	}
-	
-	protected ReSpinner Spinner;
-	protected LinearLayout ButtonBar;
-	public Config_hesSize config;
 	
 	public Title(Context cont){
 		super(cont);
@@ -47,41 +46,15 @@ public class Title extends HasAll
 		return ButtonBar;
 	}
 	
-	public static class Config_hesSize implements Config_Size<Title>
+	public static class Config_hesSize extends Config_Size2<Title>
 	{
 		
-		public int TitleWidth=1000,TitleHeight=200;
-		public int portOrLand;
-
-		@Override
-		public void set(int width, int height, int is, Title target)
-		{
-			TitleWidth=width;
-			TitleHeight=height;
-			portOrLand=is;
-			onChange(target);
-		}
-
-		@Override
-		public void change(Title target)
-		{
-			int tmp = TitleWidth;
-			TitleWidth = TitleHeight;
-			TitleHeight = tmp;
-			if(portOrLand==LinearLayout.VERTICAL)
-				portOrLand=LinearLayout.HORIZONTAL;
-			else
-				portOrLand=LinearLayout.VERTICAL;
-			
-			onChange(target);
-		}
-
 		@Override
 		public void onChange(Title target)
 		{
-			trim(target.Spinner,TitleWidth/2,TitleHeight);
-			trim(target.ButtonBar,TitleWidth/2,TitleHeight);
-			trim(target,TitleWidth,TitleHeight);
+			trim(target.Spinner,width/2,height);
+			trim(target.ButtonBar,width/2,height);
+			trim(target,width,height);
 			target.ButtonBar.setOrientation(portOrLand);
 			target.setOrientation(portOrLand);
 		}
@@ -91,13 +64,6 @@ public class Title extends HasAll
 		{
 			
 		}
-	}
-
-	@Override
-	public void loadSize(int width, int height, int is)
-	{
-		config.set(width,height,is,this);
-		super.loadSize(width, height, is);
 	}
 
 	@Override

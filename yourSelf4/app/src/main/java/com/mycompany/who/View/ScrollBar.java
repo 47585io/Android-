@@ -29,7 +29,7 @@ public class ScrollBar extends ScrollView implements Scroll
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if((ev.getAction()==MotionEvent.ACTION_UP||ev.getAction()==MotionEvent.ACTION_DOWN)&&canSave)
+		if(ev.getAction()==MotionEvent.ACTION_DOWN&&canSave)
 			historyL.push(getScrollY());
 		if(canScroll)
 		    return super.onTouchEvent(ev);

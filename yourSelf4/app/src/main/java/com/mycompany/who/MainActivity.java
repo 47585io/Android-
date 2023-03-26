@@ -6,6 +6,7 @@ import android.view.*;
 import com.mycompany.who.Share.*;
 import com.mycompany.who.SuperVisor.Moudle.*;
 import java.util.concurrent.*;
+import android.widget.*;
 
 public class MainActivity extends Activity 
 {
@@ -24,6 +25,7 @@ public class MainActivity extends Activity
 		Code.setPool(pool);
 		Code.addEdit(".java");
 		setContentView(Code);
+		Code.loadSize(1000,2000,LinearLayout.VERTICAL);
 	}
 	
 	protected void init(){

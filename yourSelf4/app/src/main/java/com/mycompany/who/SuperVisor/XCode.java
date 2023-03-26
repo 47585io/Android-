@@ -19,20 +19,6 @@ import java.util.concurrent.*;
 public class XCode extends HasAll implements CodeEdit.IlovePool
 {
 
-	@Override
-	public void setPool(ThreadPoolExecutor pool)
-	{
-		// TODO: Implement this method
-	}
-
-	@Override
-	public ThreadPoolExecutor getPool()
-	{
-		// TODO: Implement this method
-		return null;
-	}
-	
-	
 	private Title mTitle;
 	private PageHandler mPages;
 	private DownBar mDownBar;
@@ -63,12 +49,22 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 		addView(mDownBar);
 		
 	}
+	@Override
+	public void setPool(ThreadPoolExecutor pool)
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public ThreadPoolExecutor getPool()
+	{
+		// TODO: Implement this method
+		return null;
+	}
 	
-	
-	public static class Config_ChildsPos implements Config_Size<XCode>
+	public static class Config_ChildsPos extends Config_Size2<XCode>
 	{
 
-		int selfWidth,selfHeight,portOrLand;
 		Title.Config_hesSize configT;
 		PageHandler.Config_hesSize configP;
 		
@@ -81,13 +77,9 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 		@Override
 		public void set(int width, int height, int is, XCode target)
 		{
-			selfWidth=width;
-			selfHeight=height;
-			portOrLand = is;
-			onChange(target);
-			
 			configT.set(width,(int)(height*0.1),portOrLand,target.mTitle);
 			configP.set(width,(int)(height*0.9),portOrLand,target.mPages);
+			super.set(width,height,is,target);
 		}
 
 		@Override
@@ -96,14 +88,14 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			target. setOrientation(portOrLand);
 			configT.change(target.mTitle);
 			configP.change(target.mPages);
+			super.change(target);
 		}
 
 		@Override
 		public void onChange(XCode target)
 		{
-			trim(target,selfWidth,selfHeight);
+			trim(target,width,height);
 		}
-		
 		
 	}
 	

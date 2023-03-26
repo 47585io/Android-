@@ -102,11 +102,11 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
     */
 	
-	public EditLine lines;
-	public String laugua;
+	Edit lines;
+	String laugua;
 	String HTML;
 	SpannableStringBuilder buider;
-	private EditListenerFactory.EditCompletorBoxes boxes;
+	EditListenerFactory.EditCompletorBoxes boxes;
 	
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
@@ -266,6 +266,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		}
 	}
 	
+	public String getLuagua(){
+		return laugua;
+	}
+	
 	/*
 	  我真服了，在构造自己前会调用onTextChanged，这时候自己的成员全是null，
 	  
@@ -278,6 +282,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}	
 	public void setWindow(ListView Window){
 		mWindow = Window;
+	}
+	public void setEditLine(Edit Line){
+		lines = Line;
 	}
 	
     public ThreadPoolExecutor getPool(){
@@ -1509,8 +1516,10 @@ _________________________________________
 	public void zoomBy(float size)
 	{
 		setTextSize(size);
-	    lines.setWidth(lines.maxWidth());
-		lines.setTextSize(size);
+		if(lines!=null){
+	        lines.setWidth(lines.maxWidth());
+		    lines.setTextSize(size);
+		}
 	}
 
 	final public size getCursorPos(int offset)

@@ -36,7 +36,8 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	@Override
 	public void loadSize(int width, int height, int is)
 	{
-		
+		if(config!=null)
+			config.set(width,height,is,this);
 	}
 	public Config_Size getConfig(){
 		return config;
@@ -163,7 +164,7 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	public static class Config_Size2<T> implements Config_Size<T>
 	{
 
-		int width,height,portOrLand;
+		public int width,height,portOrLand;
 		
 		@Override
 		public void ConfigSelf(T target)
