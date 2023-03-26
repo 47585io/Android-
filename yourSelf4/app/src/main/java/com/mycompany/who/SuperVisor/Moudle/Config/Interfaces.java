@@ -6,7 +6,7 @@ public class Interfaces
 	
 	public static interface Init{
 
-		public void loadSize(int width, int height ,boolean is)
+		public void loadSize(int width, int height ,int is)
 
 		public void init()
 

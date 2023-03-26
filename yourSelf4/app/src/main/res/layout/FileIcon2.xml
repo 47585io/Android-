@@ -10,21 +10,22 @@
 	android:paddingTop="7px">
 
 	<ImageView
-		android:id="@+id/Fileicon"
+		android:id="@+id/Fileicon2"
 		android:layout_height="125px"
 		android:layout_width="125px"
 		android:layout_gravity="center"
 		android:paddingRight="10px"
 		android:scaleType="centerInside"/>
 
-	<TextView
-		android:id="@+id/Filename"
+	<EditText
+		android:id="@+id/Filename2"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:text="Medium Text"
 		android:textAppearance="?android:attr/textAppearanceSmall"
 		android:layout_gravity="center"
-		android:paddingStart="10dp"/>
+		android:paddingStart="10dp"
+		android:focusable="false"
+		/>
 
 </LinearLayout>
 

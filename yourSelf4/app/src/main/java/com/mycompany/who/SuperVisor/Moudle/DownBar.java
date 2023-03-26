@@ -15,4 +15,6 @@ public class DownBar extends HasAll
 	public DownBar(Context cont){
 		super(cont);
 	}
+	
+	
 }

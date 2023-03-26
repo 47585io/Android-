@@ -6,6 +6,7 @@ import android.widget.*;
 import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.View.*;
+import android.content.res.*;
 
 
 /*
@@ -28,7 +29,7 @@ public class Title extends HasAll
 	
 	protected ReSpinner Spinner;
 	protected LinearLayout ButtonBar;
-	
+	public Config_hesSize config;
 	
 	public Title(Context cont){
 		super(cont);
@@ -48,33 +49,67 @@ public class Title extends HasAll
 	
 	public static class Config_hesSize implements Config_Size<Title>
 	{
+		
+		public int TitleWidth=1000,TitleHeight=200;
+		public int portOrLand;
 
 		@Override
-		public void set(int width, int height, boolean is, Title target)
+		public void set(int width, int height, int is, Title target)
 		{
-			// TODO: Implement this method
+			TitleWidth=width;
+			TitleHeight=height;
+			portOrLand=is;
+			onChange(target);
 		}
 
 		@Override
 		public void change(Title target)
 		{
-			// TODO: Implement this method
+			int tmp = TitleWidth;
+			TitleWidth = TitleHeight;
+			TitleHeight = tmp;
+			if(portOrLand==LinearLayout.VERTICAL)
+				portOrLand=LinearLayout.HORIZONTAL;
+			else
+				portOrLand=LinearLayout.VERTICAL;
+			
+			onChange(target);
 		}
 
 		@Override
 		public void onChange(Title target)
 		{
-			// TODO: Implement this method
+			trim(target.Spinner,TitleWidth/2,TitleHeight);
+			trim(target.ButtonBar,TitleWidth/2,TitleHeight);
+			trim(target,TitleWidth,TitleHeight);
+			target.ButtonBar.setOrientation(portOrLand);
+			target.setOrientation(portOrLand);
 		}
 
 		@Override
 		public void ConfigSelf(Title target)
 		{
-			// TODO: Implement this method
+			
 		}
 	}
+
+	@Override
+	public void loadSize(int width, int height, int is)
+	{
+		config.set(width,height,is,this);
+		super.loadSize(width, height, is);
+	}
+
+	@Override
+	protected void onConfigurationChanged(Configuration newConfig)
+	{
+		config.change(this);
+		super.onConfigurationChanged(newConfig);
+	}
 	
-	//一顿操作后，PageHandler所有成员都分配好了空间
+	
+	
+	//一顿操作后，Title所有成员都分配好了空间
 	final static class TitleCreator extends Creator<Title>
 	{
 
@@ -85,7 +120,9 @@ public class Title extends HasAll
 		@Override
 		public void init(Title target, View root)
 		{
-			
+			target.Spinner = root.findViewById(R.id.ReSpinner);
+			target.ButtonBar = root.findViewById(R.id.ButtonBar);
+		    target.config = new Config_hesSize();
 		}
 
 	}
@@ -97,13 +134,13 @@ public class Title extends HasAll
 		@Override
 		public void config(Title target)
 		{
-			// TODO: Implement this method
+			
 		}
 
 		@Override
 		public void ConfigSelf(Title target)
 		{
-			// TODO: Implement this method
+			
 		}
 
 	}

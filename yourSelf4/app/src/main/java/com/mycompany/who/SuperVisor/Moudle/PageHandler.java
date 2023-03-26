@@ -44,8 +44,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	private EditGroup.EditFactory mfactory;
 	
 	public Config_hesSize config;
-	
-	
+
 	public PageHandler(Context cont){
 		super(cont);	
 	}	
@@ -114,8 +113,6 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	public void addViewS(View... S, String name){
 		LinearLayout page = new LinearLayout(getContext());
 		for(View v:S){
-			if(v instanceof Interfaces.BubbleEvent)
-				((Interfaces.BubbleEvent)v).setTarget(this);
 		    page.addView(v);
 		}
 		page.setTag(name);
@@ -181,8 +178,8 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			pos.start += EditLines.getWidth();
 			int WindowWidth=config.WindowWidth;
 			int WindowHeight=config.WindowHeight;
-			int selfWidth=config.selfWidth;
-			int selfHeight=config.selfHeight;
+			int selfWidth=config.PageWidth;
+			int selfHeight=config.PageHeight;
 			
 			if (pos.start + WindowWidth >selfWidth)
 				pos.start =selfWidth - WindowWidth;
@@ -211,17 +208,19 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 				//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 
 				if(EditDrawFlag.get()==0){
-					//遍历所有其它编辑器，并显示
-					EditDrawFlag.add();
+					//第一个编辑器还要遍历所有其它编辑器，并显示
+					EditDrawFlag.set(getEditList().size()); //当前还有size个编辑器要显示
 					Int id = historyId;
 					historyId=((RCodeEdit)self).index;
 					for(CodeEdit e: getEditList()){
+						//如果是第一个编辑器，则不用重新绘制
 						if(((RCodeEdit)e).index.get()!=historyId.get())
 							e.invalidate();
 					}
-					EditDrawFlag.less();
 					historyId=id;
 				}
+				EditDrawFlag.less();
+				//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
 			}
 
 			public Rect selfRect(EditText self){
@@ -229,17 +228,17 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 				int index = ((RCodeEdit)self).index.get();
 				//计算编辑器在可视区域中的自己的范围
 
-				int EditTop=getEditBuilder().calaEditHeight(index); //编辑器较ForEditSon的顶部位置
-				int SeeTop = Scro.getScrollY(); //可视区域较ForEditSon的顶部位置
-				int SeeLeft = hScro.getScrollX();//可视区域较ForEditSon的左边位置
+				int EditTop=getEditBuilder().calaEditHeight(index); //编辑器较ForEdit的顶部位置
+				int SeeTop = Scro.getScrollY(); //可视区域较ForEdit的顶部位置
+				int SeeLeft = hScro.getScrollX();//可视区域较ForEdit的左边位置
 
 				int left = SeeLeft - EditLines.maxWidth();
 				//编辑器左边是当前可视区域左边减EditLines的宽
 				int top = SeeTop - EditTop;
 				//编辑器顶部为从0开始至可视区域顶部的偏移
-				int right = config. selfWidth + left;
+				int right = config. PageWidth + left;
 				//编辑器右边是左边加一个可视区域的宽
-				int bottom= top+ config.selfHeight;
+				int bottom= top+ config.PageHeight;
 				//编辑器底部是上面加一个可视区域的高
 				return new Rect(left,top,right,bottom);
 			}
@@ -307,20 +306,20 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 	 */
 	final public static class Config_hesSize implements Config_Size<PageHandler>
 	{
-		public boolean portOrLand=true;
+		public int portOrLand=Configuration.ORIENTATION_PORTRAIT;
 		public int WindowHeight=600, WindowWidth=600;
-		public int selfWidth=1000,selfHeight=2000+200;
+		public int PageWidth=1000,PageHeight=2000;
 		
 		@Override
 		public void ConfigSelf(PageHandler target)
 		{
 			int height=MeasureWindowHeight(target.mWindow);
-			if(portOrLand==ConfigViewWith_PortAndLand.Port){
-				WindowWidth=WindowHeight=(int)(selfWidth*0.9);
+			if(portOrLand==LinearLayout.VERTICAL){
+				WindowWidth=WindowHeight=(int)(PageWidth*0.9);
 			}
 			else{
-				WindowWidth=(int)(selfWidth*0.7);
-				WindowHeight= (int)(selfHeight*0.3);
+				WindowWidth=(int)(PageWidth*0.7);
+				WindowHeight= (int)(PageHeight*0.3);
 			}	
 			if (height < WindowHeight)
 				WindowHeight=height;
@@ -328,26 +327,29 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			//立即设置Window大小
 		}
 
-		public void set(int width,int height,boolean is,PageHandler target){
+		public void set(int width,int height,int is,PageHandler target){
 			//设置我的大小
-			selfWidth=width;
-			selfHeight=height;
+			PageWidth=width;
+			PageHeight=height;
 			portOrLand=is;
 			onChange(target);//立即生效
 		}
 		public void change(PageHandler target){
 			//屏幕旋转了，将宽高互换
-			int tmp = selfWidth;
-			selfWidth=selfHeight;
-			selfHeight=tmp;
-			portOrLand=!portOrLand;
+			int tmp = PageWidth;
+			PageWidth=PageHeight;
+			PageHeight=tmp;
+			if(portOrLand==LinearLayout.VERTICAL)
+				portOrLand=LinearLayout.HORIZONTAL;
+			else
+				portOrLand=LinearLayout.VERTICAL;
 			onChange(target);//立刻生效
 		}
 		//每次change，改变我的大小，即我自己和滚动条的大小
 		public void onChange(PageHandler target){
-			EditGroup.trim(target,selfWidth,selfHeight);
-			EditGroup.trim(target.Scro,selfWidth,selfHeight);
-			EditGroup.trim(target.hScro,selfWidth,selfHeight);
+		    trim(target,PageWidth,PageHeight);
+			trim(target.Scro,PageWidth,PageHeight);
+		    trim(target.hScro,PageWidth,PageHeight);
 		}
 		//测量窗口高度
 		public static int MeasureWindowHeight(ListView mWindow)
@@ -372,16 +374,20 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 
 	}
 
-	public void loadSize(int width,int height,boolean is){
+	@Override
+	public void loadSize(int width, int height, int is)
+	{
 		config.set(width,height,is,this);
+		super.loadSize(width, height, is);
 	}
-	
+
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig)
 	{
-		config.change(this);//屏幕旋转了
+		config.change(this);
 		super.onConfigurationChanged(newConfig);
 	}
+
 	
 	
 	
@@ -399,7 +405,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool, EditGroup
 			target.hScro = tmp.findViewById(R.id.hScro);
 			target.mEditGroupPages = tmp.findViewById(R.id.mPages);
 			target.mWindow = tmp.findViewById(R.id.mWindow);
-			target. config = new Config_hesSize();
+			target.config = new Config_hesSize();
 		}
 
 	}

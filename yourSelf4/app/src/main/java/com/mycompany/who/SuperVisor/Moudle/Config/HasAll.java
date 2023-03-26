@@ -4,6 +4,7 @@ import android.content.*;
 import android.view.*;
 import java.text.*;
 import android.util.*;
+import android.content.res.*;
 
 
 /*
@@ -32,9 +33,8 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 
 	}
 	@Override
-	public void loadSize(int width, int height, boolean is)
+	public void loadSize(int width, int height, int is)
 	{
-		// TODO: Implement this method
 	}
 
 	final public static void trim(View Father, int width, int height)
@@ -140,7 +140,7 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	 */
 	public static interface Config_Size<T> extends Configer<T>{
 
-		public void set(int width,int height,boolean is,T target)
+		public void set(int width,int height,int is,T target)
 
 		public void change(T target)
 
