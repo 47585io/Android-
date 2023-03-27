@@ -19,6 +19,10 @@ public class WordAdpter<T extends Icon> extends BaseAdapter
 		rid=id;
 		cont=context;
     }
+	
+	public List<T> getList(){
+		return mfile;
+	}
 
     @Override
     public int getCount() {
@@ -26,7 +30,7 @@ public class WordAdpter<T extends Icon> extends BaseAdapter
     }
 
     @Override
-    public Object getItem(int position) {
+    public T getItem(int position) {
         return mfile.get(position);
     }
 

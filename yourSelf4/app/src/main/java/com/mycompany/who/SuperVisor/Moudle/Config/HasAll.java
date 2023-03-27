@@ -19,6 +19,8 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 
 	protected Interfaces.BubbleEvent Target;
 	protected Config_Size config;
+	protected Creator Creator;
+	protected Level Configer;
 	
 	public HasAll(Context cont){
 		super(cont);
@@ -29,10 +31,26 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		init();
 	}
 	
+	/*调用初始化成员*/
 	@Override
-	public void init()
-	{
+	public void init(){}
+
+	/*调用配置成员*/
+	@Override
+	public void config(){
+		if(Configer!=null)
+			Configer.ConfigSelf(this);
 	}
+
+	/*更改配置*/
+	public void ShiftConfig(Level Configer){
+		if(this.Configer!=null)
+		    this.Configer.clearConfig(this);
+		this.Configer = Configer;
+		config();
+	}
+	
+	/*锁定大小*/
 	@Override
 	public void loadSize(int width, int height, int is)
 	{
@@ -140,6 +158,8 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		
         public void config(T target)
 		
+		public void clearConfig(T target)
+		
 	}
 	
 	
@@ -155,16 +175,16 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 
 		public void set(int width,int height,int is,T target)
 
-		public void change(T target)
+		public void change(T target,int is)
 
-		public void onChange(T target)
+		public void onChange(T target,int src)
 	}
 	
 	
 	public static class Config_Size2<T> implements Config_Size<T>
 	{
 
-		public int width,height,portOrLand;
+		public int width,height,flag;
 		
 		@Override
 		public void ConfigSelf(T target)
@@ -175,29 +195,60 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		@Override
 		public void set(int width, int height, int is, T target)
 		{
+			int tmp = flag;
 			this.width = width;
 			this.height = height;
-			this.portOrLand = is;
-			onChange(target);
+			this.flag = is;
+			onChange(target,tmp);
 		}
 
 		@Override
-		public void change(T target)
+		public void change(T target,int is)
 		{
+			if(is == flag)
+				return;
+			//屏幕方向与原来相同，不用change
+			
 			int tmp = width;
 			width = height;
 			height = tmp;
-			if(portOrLand==LinearLayout.VERTICAL)
-				portOrLand=LinearLayout.HORIZONTAL;
-			else
-				portOrLand=LinearLayout.VERTICAL;
-			onChange(target);
+			tmp = flag;
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				flag=Configuration.ORIENTATION_LANDSCAPE;
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				flag=Configuration.ORIENTATION_PORTRAIT;
+			}
+			//将所有值取反
+			onChange(target,tmp);
 		}
 
 		@Override
-		public void onChange(T target)
+		public void onChange(T target,int src)
 		{
-			// TODO: Implement this method
+			//port or land
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				onPort(target,src);
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				onLand(target,src);
+			}
 		}
+		
+		public void onPort(T target,int src){}
+		
+		public void onLand(T target,int src){}
+		
+		public int CastFlag(int flag){
+			//将屏幕方向转化为排列方向
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				return LinearLayout.VERTICAL;
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				return LinearLayout.HORIZONTAL;
+			}
+			return -9999;
+		}
+		
 	}
 }

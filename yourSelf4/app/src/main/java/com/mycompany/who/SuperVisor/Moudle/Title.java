@@ -23,21 +23,27 @@ public class Title extends HasAll
 	protected ReSpinner Spinner;
 	protected LinearLayout ButtonBar;
 	
-	@Override
-	public void init()
-	{
-		new TitleCreator(R.layout.Title).ConfigSelf(this);
-		new Config_Level().ConfigSelf(this);
-	}
 	
 	public Title(Context cont){
 		super(cont);
-		init();
 	}
 	public Title(Context cont,AttributeSet attrs){
 		super(cont,attrs);
-		init();
 	}
+	@Override
+	public void init()
+	{
+		Creator = new TitleCreator(R.layout.Title);
+		Configer = new Config_Level();
+		Creator.ConfigSelf(this);
+	}
+
+	@Override
+	public void config()
+	{
+		super.config();
+	}
+	
 	
 	public ReSpinner getReSpinner(){
 		return Spinner;
@@ -46,34 +52,76 @@ public class Title extends HasAll
 		return ButtonBar;
 	}
 	
-	public static class Config_hesSize extends Config_Size2<Title>
+	final public static class Config_hesSize extends Config_Size2<Title>
 	{
 		
 		@Override
-		public void onChange(Title target)
+		public void onPort(Title target, int src)
 		{
+			super.onPort(target, src);
 			trim(target.Spinner,width/2,height);
 			trim(target.ButtonBar,width/2,height);
 			trim(target,width,height);
-			target.ButtonBar.setOrientation(portOrLand);
-			target.setOrientation(portOrLand);
+			//竖屏，Title大小为width和height，然后分配给两个子元素一半的宽
+			
+			src = CastFlag(src);
+			target.ButtonBar.setOrientation(src);
+			target.setOrientation(src);
+			//设置排列方向为LinearLayout.HORIZONTAL
+			
+			RotateViewFromPortToLand(target.Spinner);
+			RotateViewFromPortToLand(target.ButtonBar);
 		}
 
 		@Override
-		public void ConfigSelf(Title target)
+		public void onLand(Title target, int src)
 		{
+			super.onLand(target, src);
 			
+			//Spinner和ButtonBar先保持原来的样子，其它的可以改变大小
+			trim(target.Spinner,height/2,width);
+			trim(target.ButtonBar,height/2,width); 
+			trim(target,width,height);
+			//横屏，Title大小为改变后的width和height，然后分配给两个子元素一半的高
+			
+			RotateViewFromLandToPort(target.Spinner,height/2,width,height/2);
+			RotateViewFromLandToPort(target.ButtonBar,height/2,width,-width);
+			
+			src = CastFlag(src);
+			target.setOrientation(src);
+			//设置排列方向为LinearLayout.VERTICAL
 		}
+		public void RotateViewFromLandToPort(View v,int width,int height,int y){
+			//绕中点旋转，这个可以画个图就好理解了，注意旋转后View的坐标轴也旋转了
+			v.setPivotX(width - height/2);
+			v.setPivotY(height/2);
+			v.setRotation(-90);
+			v.setTranslationX(-(width- height));
+			v.setTranslationY(y);
+			//将View移到左边，下面
+		}
+		public void RotateViewFromPortToLand(View v){
+			//还原位置
+			v.setRotation(0);
+			v.setTranslationX(0);
+			v.setTranslationY(0);
+		}
+		
+		 /*
+		 另一个方案
+		 target.Spinner.setPivotX(width/2);
+		 target.Spinner.setPivotY(width/2);
+		 target.Spinner. setRotation(90);
+		 target.ButtonBar.setTranslationY(height/2-width);
+		 */
+		
 	}
-
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig)
 	{
-		config.change(this);
 		super.onConfigurationChanged(newConfig);
+        getConfig().change(this,newConfig.orientation);
 	}
-	
-	
 	
 	//一顿操作后，Title所有成员都分配好了空间
 	final static class TitleCreator extends Creator<Title>
@@ -98,6 +146,13 @@ public class Title extends HasAll
 	{
 
 		@Override
+		public void clearConfig(Title target)
+		{
+			// TODO: Implement this method
+		}
+
+
+		@Override
 		public void config(Title target)
 		{
 			
@@ -106,7 +161,6 @@ public class Title extends HasAll
 		@Override
 		public void ConfigSelf(Title target)
 		{
-			
 		}
 
 	}

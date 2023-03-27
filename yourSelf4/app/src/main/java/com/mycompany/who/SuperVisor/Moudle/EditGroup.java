@@ -68,10 +68,12 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		super(cont,attrs);
 	}
 	public void init(){
-		new EditGroupCreator(R.layout.EditGroup).ConfigSelf(this); // 初始化成员
-		new Config_hesView().ConfigSelf(this); // 配置层级
+		super.init();
+		Creator = new GroupCreator(R.layout.EditGroup);
+		Configer = new Config_hesView();
+		Creator.ConfigSelf(this);
 	}
-	
+  
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -154,6 +156,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Edit = new RCodeEdit(getContext(), EditList.get(0));
 		}
 		Edit.setTarget(this);
+		Edit.setId(Edit.hashCode());
 		return Edit;
 	}
 
@@ -721,10 +724,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	
 	
 	//一顿操作后，EditGroup所有成员都分配好了空间
-	final static class EditGroupCreator extends Creator<EditGroup>
+	final static class GroupCreator extends Creator<EditGroup>
 	{
 
-		public EditGroupCreator(int resid){
+		public GroupCreator(int resid){
 			super(resid);
 		}
 
@@ -749,6 +752,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	// 如何配置View
 	final static class Config_hesView implements Level<EditGroup>
 	{
+
+		@Override
+		public void clearConfig(EditGroup target)
+		{
+			// TODO: Implement this method
+		}
+
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
@@ -763,8 +773,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			CodeEdit.Enabled_Format = true;
 		}
 	}
-	
-	public static class Config_hesSize implements Config_Size<EditGroup>
+	//配置我的大小
+	final public static class Config_hesSize implements Config_Size<EditGroup>
 	{
 		
 		public int width,height;
@@ -776,17 +786,16 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		}
 
 		@Override
-		public void set(int width, int height, int is, EditGroup target)
-		{
-			this.width=width;
-			this.height=height;
+		public void set(int width, int height, int is, EditGroup target){
+			this.width = width;
+			this.height = height;
 		}
 
 		@Override
-		public void change(EditGroup target){}
+		public void change(EditGroup target,int is){}
 
 		@Override
-		public void onChange(EditGroup target){}
+		public void onChange(EditGroup target,int src){}
 	}
 	
 	//这个...

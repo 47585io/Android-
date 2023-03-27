@@ -6,6 +6,7 @@ import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Share.*;
 import java.util.*;
+import com.mycompany.who.Edit.Share.Share2.*;
 
 public class PageList extends LinearLayout
 {
@@ -29,19 +30,21 @@ public class PageList extends LinearLayout
 		mPages=new ArrayList<>();
 	}
 
-	public void addView(View EditPage)
+	public void addView(View EditPage,String name)
 	{
 		//添加一个命名的编辑器
 		int index = contrans(EditPage);
 		if (index != -1)
 			return ;
 			//如果是同一个文件，不重复加入
-		
-		if(mtabListener!=null)
-			mtabListener.onAddPage(EditPage);
 		EditPage.setId(++noRepeatId);	
+		EditPage.setTag(name);
 		super. addView(EditPage);
 		mPages.add(EditPage);
+		
+		if(mtabListener!=null)
+			mtabListener.onAddPage(EditPage,name);
+		
 	}
 	public void tabView(int index)
 	{
@@ -82,7 +85,7 @@ public class PageList extends LinearLayout
 		return -1;
 	}
 
-	public void setListener(onTabPage li){
+	public void setonTabListener(onTabPage li){
 		mtabListener=li;
 	}
 	public int getNowIndex()
@@ -102,9 +105,17 @@ public class PageList extends LinearLayout
 	
 	public static interface onTabPage{
 		public void onTabPage(int index);
-		public void onAddPage(View v);
+		public void onAddPage(View v,String name);
 		public void onDelPage(int index);
 	}
-
+	
+	public void toList(List<Icon> list){
+		list.clear();
+		for(View v:mPages){
+			String name = (String) v.getTag();
+			Icon icon = new Icon(Share.getFileIcon(name),name);
+			list.add(icon);
+		}
+	}
 
 }

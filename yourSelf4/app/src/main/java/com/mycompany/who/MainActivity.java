@@ -7,26 +7,46 @@ import com.mycompany.who.Share.*;
 import com.mycompany.who.SuperVisor.Moudle.*;
 import java.util.concurrent.*;
 import android.widget.*;
+import com.mycompany.who.SuperVisor.*;
+import com.mycompany.who.Activity.*;
+import android.content.res.*;
 
-public class MainActivity extends Activity 
+public class MainActivity extends BaseActivity2
 {
-	private EditGroup Group;
-	private PageHandler Code;
+	private XCode Code;
+	private PageHandler handler;
 	protected ThreadPoolExecutor pool;
 	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
+		can=true;
 		super.onCreate(savedInstanceState);
-		getWindow().setBackgroundDrawable(null);
-		init();
-		Code = new PageHandler(this);
-		Code.setPool(pool);
-		Code.addEdit(".java");
-		setContentView(Code);
-		Code.loadSize(1000,2000,LinearLayout.VERTICAL);
 	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		init();
+		Code = new XCode(this);
+		Code.config();
+		Code.setPool(pool);
+		setContentView(Code);	
+		int tmp = 0;
+		if(Displaywidth>Displayheight)
+			tmp=Configuration.ORIENTATION_LANDSCAPE;
+		else
+			tmp = Configuration.ORIENTATION_PORTRAIT;
+
+	    Code.loadSize(Displaywidth,Displayheight,tmp);
+		Code.addEdit(".java");
+		Code.addEdit(".c");
+		Code.addEdit(".js");
+	}
+	
+	
 	
 	protected void init(){
 		RejectedExecutionHandler rejected = new RejectedExecutionHandler(){

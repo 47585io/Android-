@@ -9,6 +9,8 @@ public class Interfaces
 		public void loadSize(int width, int height ,int is)
 
 		public void init()
+		
+		public void config()
 
 	}
 	

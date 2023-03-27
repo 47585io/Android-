@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<merge
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:orientation="horizontal">
-
+	attachToroot="true">
+	
 	<com.mycompany.who.View.ReSpinner
 		android:id="@+id/ReSpinner"
 		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"/>
+		android:layout_height="wrap_content"
+		/>
 
 	<LinearLayout
 		android:id="@+id/ButtonBar"
 		android:orientation="horizontal"
 		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"/>
-
-</LinearLayout>
+		android:layout_height="wrap_content">
+		
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Hello world!"
+			>
+			
+		</Button>
+		
+	</LinearLayout>
+</merge>
 

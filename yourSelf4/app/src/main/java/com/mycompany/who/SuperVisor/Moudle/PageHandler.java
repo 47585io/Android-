@@ -53,8 +53,16 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	@Override
 	public void init()
 	{
-		new HandlerCreator(R.layout.PageHandler).ConfigSelf(this);
-		new Config_Level().ConfigSelf(this);
+		super.init();
+		Creator = new HandlerCreator(R.layout.PageHandler);
+		Configer = new Config_hesView();
+		Creator.ConfigSelf(this);
+	}
+
+	@Override
+	public void config()
+	{
+		super.config();
 	}
 	
 	
@@ -97,25 +105,24 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	*/
 	final private EditGroup creatEdit(String name){
 		EditGroup Group = new REditGroup(getContext());
+		Group.config();
 		Group.setPool(pool);
 		Group.setWindow(mWindow);
 		Group.setEditFactory(mfactory);
 		Group.AddEdit(name);
-		Group.setTag(name);
 		Group.setTarget(this);
 		return Group;
 	}
-	final public void addEdit(String name){
+	public void addEdit(String name){
 		EditGroup Group = creatEdit(name);
-		mEditGroupPages.addView(Group);
+		mEditGroupPages.addView(Group,name);
 	}
 	public void addViewS(View... S, String name){
 		LinearLayout page = new LinearLayout(getContext());
 		for(View v:S){
 		    page.addView(v);
 		}
-		page.setTag(name);
-		mEditGroupPages.addView(page);
+		mEditGroupPages.addView(page,name);
 	}
 
 	public ThreadPoolExecutor getPool()
@@ -138,7 +145,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		mfactory=fa;
 	}
 	public void setPageListener(PageList.onTabPage li){
-		mEditGroupPages.setListener(li);
+		mEditGroupPages.setonTabListener(li);
 	}
 	
 	
@@ -256,7 +263,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		}
 		
 		//推荐使用
-		class Factory2 implements EditGroup.EditFactory
+		final class Factory2 implements EditGroup.EditFactory
 		{
 
 			@Override
@@ -319,10 +326,10 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		public void ConfigSelf(PageHandler target)
 		{
 			int Wheight=MeasureWindowHeight(target.mWindow);
-			if(portOrLand==LinearLayout.VERTICAL){
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
 				WindowWidth=WindowHeight=(int)(width*0.9);
 			}
-			else{
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
 				WindowWidth=(int)(width*0.7);
 				WindowHeight= (int)(height*0.3);
 			}	
@@ -333,7 +340,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		}
 
 		//每次change，改变我的大小，即我自己和滚动条的大小
-		public void onChange(PageHandler target){
+		public void onChange(PageHandler target,int src){
 		    trim(target,width,height);
 			trim(target.Scro,width,height);
 		    trim(target.hScro,width,height);
@@ -360,15 +367,18 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		}
 
 	}
-
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig)
 	{
-		config.change(this);
+		/*
+		  横竖屏切换了 ，改变我的大小
+		  为什么要手动改变大小呢？
+		  
+		  因为我设置的是固定的宽高，在旋转屏幕时，屏幕坐标轴会旋转，此时原屏幕的宽变为高，原来的高变为宽，但View宽高不变！
+		*/
 		super.onConfigurationChanged(newConfig);
+	    getConfig().change(this,newConfig.orientation);
 	}
-
-	
 	
 	//一顿操作后，PageHandler所有成员都分配好了空间
 	final static class HandlerCreator extends Creator<PageHandler>
@@ -389,9 +399,16 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 
 	}
 	
-	// 如何配置View层次结构
-	final class Config_Level implements Level<PageHandler>
+	// 如何配置View
+	final class Config_hesView implements Level<PageHandler>
 	{
+
+		@Override
+		public void clearConfig(PageHandler target)
+		{
+			// TODO: Implement this method
+		}
+
 
 		@Override
 		public void config(PageHandler target)
@@ -406,22 +423,22 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		{
 			config(target);
 		}
-	}
-	
-	final class onMyWindowClick implements OnItemClickListener
-	{
-
-		@Override
-		public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+		
+		final class onMyWindowClick implements OnItemClickListener
 		{
-			//如果点击了就插入单词并关闭窗口
-			WordAdpter adapter = (WordAdpter) p1.getAdapter();
-			Icon icon = (Icon) adapter.getItem(p3);
-			if(HistoryEdit!=null)
-			    HistoryEdit.insertWord(icon.getName(), HistoryEdit.getSelectionStart(), icon.getflag());
 
-			mWindow.setX(-9999);
-			mWindow.setY(-9999);
+			@Override
+			public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+			{
+				//如果点击了就插入单词并关闭窗口
+				WordAdpter adapter = (WordAdpter) p1.getAdapter();
+				Icon icon = (Icon) adapter.getItem(p3);
+				if(HistoryEdit!=null)
+					HistoryEdit.insertWord(icon.getName(), HistoryEdit.getSelectionStart(), icon.getflag());
+
+				mWindow.setX(-9999);
+				mWindow.setY(-9999);
+			}
 		}
 	}
 
