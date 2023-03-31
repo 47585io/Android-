@@ -74,7 +74,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		Creator = new GroupCreator(R.layout.EditGroup);
 		Creator.ConfigSelf(this);
 	}
-  
+
+	@Override
+	public boolean onTouch(View p1, MotionEvent p2)
+	{
+		return false;
+	}
+	
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -405,10 +411,19 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		//让孑类重写
 	}
 	
-	@Override
-	public boolean onTouch(View p1, MotionEvent p2)
+	//这个...
+	protected class Click implements OnClickListener
 	{
-		return false;
+		@Override
+		public void onClick(View p1)
+		{
+			historyId = ((RCodeEdit) p1).index;
+			if (mWindow != null)
+			    mWindow.setX(-9999);
+		}
+	}
+	protected OnClickListener getOneClick(){
+		return new Click();
 	}
 
 	
@@ -421,7 +436,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			//将start转换为 起始编辑器下标+起始位置
 			for (CodeEdit e:EditList)
 			{
-				if (index - e.getText().length() < 0)
+				if (index - e.getText().length() <= 0)
 				{
 					start.start = ((RCodeEdit)e).index.get();
 					start.end = index;
@@ -529,7 +544,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			return String_Splitor.indexsOf(want,b.toString());
 		}
 	
-		public List<Future> reDraw(int start, int end)
+		public void reDraw(int start, int end)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
@@ -540,7 +555,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 					return null;
 				}
 			};
-			return d.dofor(start,end);
+			d.dofor(start,end);
 		}
 		public List<Future> prepare(int start,int end)
 		{
@@ -574,17 +589,18 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			}
 		}
 		
-		public List<Future> Format(int start, int end)
+		public void Format(int start, int end)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
 				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-					return Edit.reDraw(start, end);
+					 Edit.Format(start, end);
+					 return null;
 				}
 			};
-			return d.dofor(start,end);
+			d.dofor(start,end);
 		}
 
 		public Stack<Int> Uedo()
@@ -850,21 +866,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 
 		@Override
 		public void onChange(EditGroup target,int src){}
-	}
-	
-	//这个...
-	class Click implements OnClickListener
-	{
-		@Override
-		public void onClick(View p1)
-		{
-			historyId = ((RCodeEdit) p1).index;
-			if (mWindow != null)
-			    mWindow.setX(-9999);
-		}
-	}
-	protected OnClickListener getOneClick(){
-		return new Click();
 	}
 	
 	

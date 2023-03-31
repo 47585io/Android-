@@ -6,7 +6,6 @@ import com.mycompany.who.Edit.Share.Share1.*;
 
 public interface Drawer
 {	
-	public void Draw(int start,int end,List<wordIndex>nodes)
-	public Future reDraw(int start,int end)
+	public void reDraw(int start,int end)
 		
 }

@@ -3,6 +3,6 @@ import java.util.concurrent.*;
 
 public interface Formator
 {
-	public Future Format(int start, int end)
+	public void Format(int start, int end)
 	public int Insert( int index)
 }

@@ -36,9 +36,8 @@ public class MainActivity extends BaseActivity2
 
 	    Code.loadSize(Displaywidth,Displayheight,tmp);
 		Code.addEdit("/storage/emulated/0/AppProjects/工程/yourSelf4/app/src/main/java/com/mycompany/who/Edit/CodeEdit.java");
-		Code.addEdit(".c");
-		Code.addEdit(".js");
-		Code.addView(new ImageView(this),"/storage/emulated/0/DCIM/wh.jpg");
+		
+		
 	}
 
 	@Override

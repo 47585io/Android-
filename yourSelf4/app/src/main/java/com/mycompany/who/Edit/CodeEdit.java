@@ -419,7 +419,7 @@ Dreawr
 		return arr.toString();
 	}
 
-	final public Future reDraw(final int start,final int end){
+	final public void reDraw(final int start,final int end){
 		//立即进行一次默认的完整的染色	
 		Runnable run = new Runnable(){
 			@Override
@@ -438,14 +438,14 @@ Dreawr
 				}
 			}
 		};
+		//只在大的函数中使用pool，小的函数中就只是处理过程，这样就比较可控
 		if(getPool()!=null){
-		    return getPool().submit(run);
+		    getPool().submit(run);
 		}
 		else
 			run.run();
 			//如果有pool，在子线程中执行
 			//否则直接执行
-		return null;
 	}
 	/*
 	  JavaBinder        !!! FAILED BINDER TRANSACTION !!!  (parcel size = 242844)
@@ -570,10 +570,25 @@ Dreawr
 
 			}
 		};
-		if (Delayed_Draw == 0)
-			post(run);
-		else
-			postDelayed(run, Delayed_Draw);
+		if (Delayed_Draw == 0){
+			if(getPool()!=null)
+			    post(run);
+			else
+				run.run();
+		}
+		else{
+			if(getPool()!=null)
+			    postDelayed(run, Delayed_Draw);
+			else{
+				try
+				{
+					Thread.sleep(Delayed_Draw);
+				}
+				catch (InterruptedException e)
+				{}
+				run.run();
+			}
+		}
 		//为了线程安全，涉及UI操作必须抛到主线程	
 	}
 	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, SpannableStringBuilder builder)throws Exception
@@ -615,7 +630,7 @@ _________________________________________
 
 */
 
-	public final Future Format(final int start, final int end)
+	public final void Format(final int start, final int end)
 	{
 		//为了安全，禁止重写
 
@@ -663,16 +678,18 @@ _________________________________________
 
 					}
 				};
-				post(run2); //安全地把任务交给onFormat
+				if(getPool()!=null)
+				    post(run2); //安全地把任务交给onFormat
+				else
+					run2.run();
 			}
 
 		};
 		if (getPool() != null)
-			return getPool().submit(run);
+			getPool().submit(run);
 		else
 			run.run();
 
-		return null;
 	}
 
 	protected String onBeforeFormat(int start,int end){
@@ -768,10 +785,10 @@ _________________________________________
 
  */
  
-	final public Future openWindow(int index)
+	final public void openWindow(int index)
 	{
 		if(getWindow()==null)
-			return null;
+			return;
 		
 		final String wantBefore= getWord(index);
 		final String wantAfter = getAfterWord(index);
@@ -819,10 +836,10 @@ _________________________________________
 			}
 		};
 		if (getPool() != null)
-		    return getPool().submit(run);//因为含有阻塞，所以将任务交给池子
+		    getPool().submit(run);//因为含有阻塞，所以将任务交给池子
 		else
 			run.run();
-		return null;
+
 	}
 
 	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)

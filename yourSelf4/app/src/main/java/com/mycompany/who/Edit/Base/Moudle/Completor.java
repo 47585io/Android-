@@ -4,6 +4,6 @@ import java.util.concurrent.*;
 
 public interface Completor
 {
-	public Future openWindow( int index)
+	public void openWindow( int index)
 	
 }

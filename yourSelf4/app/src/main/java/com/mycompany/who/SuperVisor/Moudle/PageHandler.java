@@ -218,7 +218,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		}
 		
 		
-		final public class ClipCanvaser extends Clip
+		protected class ClipCanvaser extends Clip
 		{
 
 			//提升效率，不想用可以remove
@@ -268,7 +268,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			}
 
 		}
-		protected EditCanvaserListener getClipCanvaser()
+		protected EditCanvaserListener getOneClipCanvaser()
 		{
 			//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
 			//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
@@ -520,7 +520,15 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		public void eatEditGroup(EditGroup Group,String name){
 			myRet ret = new myRet(name);
 			String text = ret.r("UTF-8");
-			Group.getEditBuilder().insert(0,text);
+			EditGroup.EditBuilder builder = Group.getEditBuilder();
+			builder.IsModify(true);
+			builder.setPool(null);
+			builder.insert(0,text);
+			builder.Format(0,text.length());
+			builder.reDraw(0,builder.calaEditLen());
+			builder.setPool(Group.getPool());
+			builder.IsModify(false);
+			builder.insert(builder.calaEditLen()," ");
 		}
 	}
 
