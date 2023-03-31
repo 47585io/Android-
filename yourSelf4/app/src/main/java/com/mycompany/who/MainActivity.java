@@ -23,12 +23,6 @@ public class MainActivity extends BaseActivity2
 	{
 		can=true;
 		super.onCreate(savedInstanceState);
-	}
-
-	@Override
-	protected void onResume()
-	{
-		super.onResume();
 		init();
 		Code = new XCode(this);
 		Code.config();
@@ -41,9 +35,17 @@ public class MainActivity extends BaseActivity2
 			tmp = Configuration.ORIENTATION_PORTRAIT;
 
 	    Code.loadSize(Displaywidth,Displayheight,tmp);
-		Code.addEdit(".java");
+		Code.addEdit("/storage/emulated/0/AppProjects/工程/yourSelf4/app/src/main/java/com/mycompany/who/Edit/CodeEdit.java");
 		Code.addEdit(".c");
 		Code.addEdit(".js");
+		Code.addView(new ImageView(this),"/storage/emulated/0/DCIM/wh.jpg");
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		//每次从后台切回前台都会重新调用
 	}
 	
 	

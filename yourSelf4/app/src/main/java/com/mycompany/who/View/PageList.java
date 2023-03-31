@@ -30,12 +30,12 @@ public class PageList extends LinearLayout
 		mPages=new ArrayList<>();
 	}
 
-	public void addView(View EditPage,String name)
+	public boolean addView(View EditPage,String name)
 	{
 		//添加一个命名的编辑器
 		int index = contrans(EditPage);
 		if (index != -1)
-			return ;
+			return false;
 			//如果是同一个文件，不重复加入
 		EditPage.setId(++noRepeatId);	
 		EditPage.setTag(name);
@@ -44,11 +44,11 @@ public class PageList extends LinearLayout
 		
 		if(mtabListener!=null)
 			mtabListener.onAddPage(EditPage,name);
-		
+		return true;
 	}
 	public void tabView(int index)
 	{
-		if (index>getChildCount()-1 || index < 0)
+		if (index>mPages.size()-1 || index < 0)
 		{
 			return;
 		}
@@ -59,13 +59,13 @@ public class PageList extends LinearLayout
 		//否则把编辑器切换
 		
 		removeAllViews();
-		super. addView(mPages.get(index));
+		super.addView(mPages.get(index));
 	}
 	public void removeViewAt(int index)
 	{
 		if(mtabListener!=null)
 			mtabListener.onDelPage(index);
-		removeViewAt(index);
+		super. removeViewAt(index);
 		mPages.remove(index);
 		if(nowIndex==index)
 			tabView(index-1);
@@ -76,7 +76,7 @@ public class PageList extends LinearLayout
 		int index;
 		for (index = 0;index < mPages.size();index++)
 		{
-			View p =  getChildAt(index);
+			View p =  mPages.get(index);
 			if (p.getId()==Page.getId()||p.getTag().equals(Page.getTag()))
 			{
 			    return index;

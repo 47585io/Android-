@@ -71,7 +71,6 @@ public class EditLine extends Edit
 	{
 		++LineCount;
 		append( LineCount+"\n");
-		setWidth((int)(String.valueOf(LineCount).length() * (int)getTextSize())+30);
 	}
 	final public void delALine()
 	{
@@ -80,7 +79,13 @@ public class EditLine extends Edit
 		int end = src.lastIndexOf('\n', src.length() - 2);
 		if (end != -1)
 			getText().delete(end+1, src.length());
-	    setWidth((int)(String.valueOf(LineCount).length() * (int)getTextSize())+30);
+	}
+
+	@Override
+	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	{
+		setWidth((String.valueOf(LineCount).length() * (int)getTextSize())+30);
+		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 	}
 
 	@Override
@@ -106,7 +111,13 @@ public class EditLine extends Edit
 	{
 		return new size(maxWidth(),maxHeight());
 	}
-	
+
+	@Override
+	public void zoomBy(float size)
+	{
+		super.zoomBy(size);
+		setWidth(maxWidth());
+	}
 	
 
 }

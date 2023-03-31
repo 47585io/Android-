@@ -251,4 +251,12 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		}
 		
 	}
+	
+	
+	public static interface Init extends Interfaces.Init{
+		
+		public void ShiftConfig(Level Configer)
+		
+	}
+	
 }

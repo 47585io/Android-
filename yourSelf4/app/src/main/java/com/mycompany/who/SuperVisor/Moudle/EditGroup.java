@@ -19,9 +19,11 @@ import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
+import com.mycompany.who.Edit.Share.Share3.*;
 
-public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow
+public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnTouchListener
 {
+	
   /*
 	 为提升编辑器效率，增加EditGroup
 	 编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
@@ -70,14 +72,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	public void init(){
 		super.init();
 		Creator = new GroupCreator(R.layout.EditGroup);
-		Configer = new Config_hesView();
 		Creator.ConfigSelf(this);
 	}
   
 	@Override
 	public boolean equals(Object obj)
 	{
-		if (((View)obj).getTag().equals(getTag()))
+		if (obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag()))
 			return true;
 		return false;
 	}
@@ -105,7 +106,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	{
 		return mWindow;
 	}
-
+	public EditLine getLines(){
+		return EditLines;
+	}
 
 	public void setWindow(ListView Window)
 	{
@@ -146,15 +149,23 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	final protected RCodeEdit creatAEdit(String name)
 	{
 		RCodeEdit Edit;
+		//每个Edit都要配置，但只能内部使用的Clip和Click让我配置给它们吧
 		if (EditList.size() == 0)
 		{
+			//第一个编辑器是get的，然后添加Clip
 	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
+			Edit.getCanvaserList().add(getOneClipCanvaser());
 			mfactory. configEdit(Edit, name, this);
 		}
 		else
 		{
-			Edit = new RCodeEdit(getContext(), EditList.get(0));
+			//剩下的编辑器会复制第一个的Clip，因此不再添加，至于名字嘛...
+			CodeEdit E = EditList.get(0);
+			Edit = new RCodeEdit(getContext(),E );
+			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
 		}
+		//组内的每个编辑器都设置Click
+		Edit.setOnClickListener(getOneClick());
 		Edit.setTarget(this);
 		Edit.setId(Edit.hashCode());
 		return Edit;
@@ -380,7 +391,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		return Edit.getCursorPos(Edit.getSelectionStart());
 	}
 	
-	public class Clip extends EditCanvaserListener
+	protected class Clip extends EditCanvaserListener
 	{
 
 		@Override
@@ -389,9 +400,18 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			//默认啥也不做，子类可以重写
 		}
 	}
+	protected EditCanvaserListener getOneClipCanvaser(){
+		return null;
+		//让孑类重写
+	}
 	
+	@Override
+	public boolean onTouch(View p1, MotionEvent p2)
+	{
+		return false;
+	}
 
-
+	
 	//通过EditBuilder直接操作Edit
 	final public class EditBuilder
 	{
@@ -473,6 +493,40 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void setPool(ThreadPoolExecutor pool){
 			for(CodeEdit E:EditList)
 			    E.setPool(pool);
+		}
+		public void lockThem(boolean is){
+			for(CodeEdit E:EditList)
+			    E.lockSelf(is);
+		}
+		public void zoomBy(float x){
+			for(CodeEdit E: EditList){
+				E.zoomBy(x);
+			}
+			trimToFather();
+		}
+		public void IsModify(boolean is){
+			for(CodeEdit E: EditList){
+				E.IsModify(is);
+			}
+		}
+		public void reSAll(int start,int end,final String want,final String to){
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				Future doOnce(int start, int end, CodeEdit Edit)
+				{
+				    Edit.reSAll(start,end,want,to);
+					return null;
+				}
+			};
+			d.dofor(start,end);
+		}
+		public List<Integer> SearchWord(String want){
+			StringBuilder b = new StringBuilder();
+			for(CodeEdit E:EditList){
+				b.append(E.getText().toString());
+			}
+			return String_Splitor.indexsOf(want,b.toString());
 		}
 	
 		public List<Future> reDraw(int start, int end)
@@ -652,22 +706,21 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 	}
 	//默认的工厂
-	final class Factory implements EditGroup.EditFactory
+	final static class Factory implements EditGroup.EditFactory
 	{
 
 		@Override
 		public CodeEdit getEdit(EditGroup self)
 		{
-			return new RCodeEdit(self.getContext());
+			return new CodeEdit(self.getContext());
 		}
 
 		@Override
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
-			Edit.getCanvaserList().add(new Clip());
 			Edit.setPool(self. pool);
 			Edit.setWindow(self. mWindow);
-			Edit.setEditLine( EditLines);
+			Edit.setEditLine(self.getLines());
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
 
@@ -733,12 +786,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 
 		public void init(EditGroup Group,View root)
 		{
-			Group. EditList = new ArrayList<>();
-			Group. Last = new Stack<>();
-			Group. Next = new Stack<>();
+			Group.Configer = new Config_hesView();
+			Group.config = new Config_hesSize();
+			Group.EditList = new ArrayList<>();
+			Group.Last = new Stack<>();
+			Group.Next = new Stack<>();
 		    Group.creatEditBuilder();
 			Group.creatEditFactory();
-			Group.config = new Config_hesSize();
 			init2(Group,root);
 		}
 		private static void init2( EditGroup Group,View root)
@@ -749,7 +803,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	}
 
 	
-	// 如何配置View
+	// 如何配置View，不要做创建工作
 	final static class Config_hesView implements Level<EditGroup>
 	{
 
@@ -799,7 +853,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	}
 	
 	//这个...
-	final class Click implements OnClickListener
+	class Click implements OnClickListener
 	{
 		@Override
 		public void onClick(View p1)
@@ -808,6 +862,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			if (mWindow != null)
 			    mWindow.setX(-9999);
 		}
+	}
+	protected OnClickListener getOneClick(){
+		return new Click();
 	}
 	
 	

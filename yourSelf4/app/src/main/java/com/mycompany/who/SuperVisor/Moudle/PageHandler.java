@@ -18,6 +18,8 @@ import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.View.*;
 import java.util.concurrent.*;
 import java.util.*;
+import android.net.*;
+import com.mycompany.who.Share.*;
 
 
 /*
@@ -43,6 +45,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	private CodeEdit HistoryEdit;
 	private ThreadPoolExecutor pool;
 	private EditGroup.EditFactory mfactory;
+	private ViewBuiler ViewBuilder;
 	
 	public PageHandler(Context cont){
 		super(cont);	
@@ -55,20 +58,26 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	{
 		super.init();
 		Creator = new HandlerCreator(R.layout.PageHandler);
-		Configer = new Config_hesView();
 		Creator.ConfigSelf(this);
 	}
-
 	@Override
 	public void config()
 	{
 		super.config();
+		
 	}
 	
 	
 	public PageList getEditGroupPages(){
 		return mEditGroupPages;
 	}
+	public ScrollView getScro(){
+		return Scro;
+	}
+	public HorizontalScrollView gethScro(){
+		return hScro;
+	}
+
 	/* 不管如何，
 	
 	   您都应该避免使用getEdit，而是使用getView
@@ -99,11 +108,11 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	}
 	
 	/*
-	  addEdit ？ addViewS
+	  addEdit ？ addView
 	
-	  添加一个EditGroup，并自动配置 ？ 添加许多View
+	  添加一个EditGroup，并自动配置 ？ 添加View
 	*/
-	final private EditGroup creatEdit(String name){
+	private EditGroup creatEdit(String name){
 		EditGroup Group = new REditGroup(getContext());
 		Group.config();
 		Group.setPool(pool);
@@ -116,13 +125,13 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	public void addEdit(String name){
 		EditGroup Group = creatEdit(name);
 		mEditGroupPages.addView(Group,name);
+		if(ViewBuilder!=null)
+			ViewBuilder.eatView(Group,name);
 	}
-	public void addViewS(View... S, String name){
-		LinearLayout page = new LinearLayout(getContext());
-		for(View v:S){
-		    page.addView(v);
-		}
-		mEditGroupPages.addView(page,name);
+	public void addView(View v, String name){
+		mEditGroupPages.addView(v,name);
+		if(ViewBuilder!=null)
+			ViewBuilder.eatView(v,name);
 	}
 
 	public ThreadPoolExecutor getPool()
@@ -132,6 +141,10 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	public EditGroup.EditFactory getEditFactory()
 	{
 		return mfactory;
+	}
+	public ViewBuiler getViewBuilder()
+	{
+		return ViewBuilder;
 	}
 	public ListView getWindow()
 	{
@@ -144,6 +157,9 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	public void setEditFactory(EditGroup.EditFactory fa){
 		mfactory=fa;
 	}
+	public void setViewBuilder(ViewBuiler b){
+		ViewBuilder = b;
+	}
 	public void setPageListener(PageList.onTabPage li){
 		mEditGroupPages.setonTabListener(li);
 	}
@@ -155,7 +171,6 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		
 		REditGroup(Context cont){
 			super(cont);
-			setEditFactory(new Factory2());
 		}
 
 		@Override
@@ -253,7 +268,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			}
 
 		}
-		public EditCanvaserListener getClipCanvaser()
+		protected EditCanvaserListener getClipCanvaser()
 		{
 			//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
 			//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
@@ -262,51 +277,45 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			return new ClipCanvaser();
 		}
 		
-		//推荐使用
-		final class Factory2 implements EditGroup.EditFactory
-		{
-
-			@Override
-			public CodeEdit getEdit(EditGroup self)
-			{
-				CodeEdit E = null;
-				E = new RCodeEdit(self.getContext());
-				return E;
-			}
-
-			@Override
-			public void configEdit(CodeEdit Edit, String name, EditGroup self)
-			{
-				Edit.getCanvaserList().add(getClipCanvaser());
-				Edit.setOnClickListener(new Click());
-				Edit.setPool(self.getPool());
-				Edit.setWindow(self.getWindow());
-				Edit.setEditLine( EditLines);
-				com.mycompany.who.Share.Share.setEdit(Edit, name);
-			}
-		}
-			
 	}
 
 	//已经到达了最后吗？
 	@Override
-	public boolean BubbleMotionEvent(MotionEvent event)
+	public boolean BubbleMotionEvent(MotionEvent p2)
 	{
-		super.BubbleMotionEvent(event);
-		return true;
+		return super.BubbleMotionEvent(p2);
+	}	
+	@Override
+	public boolean onTouchEvent(MotionEvent p2)
+	{
+		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){
+			Scro.setCanScroll(false);
+			hScro.setCanScroll(false);
+		}
+		if(p2.getAction()==MotionEvent.ACTION_UP||p2.getAction()==MotionEvent.ACTION_DOWN){
+			Scro.setCanScroll(true);
+			hScro.setCanScroll(true);
+		}
+		View v = getView(getNowIndex());
+		return ViewBuilder.onTouch(v,p2);
 	}
-
+	
 	@Override
 	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
 	{
-		super.BubbleKeyEvent(keyCode, event);
+		return super.BubbleKeyEvent(keyCode, event);
+	}
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event)
+	{
 		if((Scro.size()!=0||hScro.size()!=0)&&keyCode==KeyEvent.KEYCODE_BACK){
 			Scro.goback();
 			hScro.goback();
 			return true;
 		}
-		return false;
+		return super.onKeyUp(keyCode, event);
 	}
+	
 	
 	
 	/*
@@ -381,7 +390,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	}
 	
 	//一顿操作后，PageHandler所有成员都分配好了空间
-	final static class HandlerCreator extends Creator<PageHandler>
+	final class HandlerCreator extends Creator<PageHandler>
 	{
 		
 		public HandlerCreator(int i){
@@ -390,11 +399,13 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 
 		public void init(PageHandler target,View tmp)
 		{
+			target. Configer = new Config_hesView();
+			target.config = new Config_hesSize();
+			target.ViewBuilder = new Domean();
 			target.Scro = tmp.findViewById(R.id.Scro);
 			target.hScro = tmp.findViewById(R.id.hScro);
 			target.mEditGroupPages = tmp.findViewById(R.id.mPages);
 			target.mWindow = tmp.findViewById(R.id.mWindow);
-			target.config = new Config_hesSize();
 		}
 
 	}
@@ -413,9 +424,10 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		@Override
 		public void config(PageHandler target)
 		{
-			target.mWindow.setBackgroundColor(Colors.Bg);
+			target. mWindow.setBackgroundColor(Colors.Bg);
 			target. mWindow.setDivider(null);
 			target. mWindow.setOnItemClickListener(new onMyWindowClick());
+			target. mEditGroupPages.setOnTouchListener(new onTouch());
 		}
 
 		@Override
@@ -440,6 +452,96 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 				mWindow.setY(-9999);
 			}
 		}
+		final class onTouch implements OnTouchListener
+		{
+			@Override
+			public boolean onTouch(View p1, MotionEvent p2)
+			{
+				return PageHandler.this.onTouchEvent(p2);
+			}
+		}
+	}
+	
+	
+	/*
+	  在View被加入页面时，可以进行额外配置
+	*/
+	public static interface ViewBuiler extends OnTouchListener{
+		
+		public void eatView(View v, String name)
+		
+	}
+	final class Domean implements ViewBuiler
+	{
+
+		@Override
+		public boolean onTouch(View p1, MotionEvent p2)
+		{
+			if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){
+				Scro.setCanScroll(false);
+				hScro.setCanScroll(false);
+				if (((Math.pow(Math.abs(p2.getX(0) - p2.getX(1)), 2)+Math.pow(Math.abs(p2.getY(0) - p2.getY(1)), 2))
+					>
+					(Math.pow(Math.abs(p2.getHistoricalX(0, p2.getHistorySize() - 1) - p2.getHistoricalX(1, p2.getHistorySize() - 1)), 2)	+Math.pow( Math.abs(p2.getHistoricalY(0, p2.getHistorySize() - 1) - p2.getHistoricalY(1, p2.getHistorySize() - 1)), 2)))
+					){
+					trimXel(p1,1.05f,1.05f);
+				}
+				else{
+					trimXel(p1,0.95f,0.95f);
+				}
+				ViewGroup.LayoutParams pa = p1.getLayoutParams();
+				trim((View) p1.getParent(),pa.width,pa.height);
+			}
+			if(p2.getAction()==MotionEvent.ACTION_UP||p2.getAction()==MotionEvent.ACTION_DOWN){
+				Scro.setCanScroll(true);
+				hScro.setCanScroll(true);
+			}
+			return true;
+		}
+		
+		@Override
+		public void eatView(View v, String name)
+		{
+			if(!(v instanceof OnTouchListener)) //View已经实现OnTouchListener，不用我啦
+			    v. setOnTouchListener(this);
+			Config_Size2 config = (HasAll.Config_Size2) getConfig();
+			trim(v,config.width,config.height);
+			
+			if(v instanceof ImageView)
+				eatImageView((ImageView)v,name);
+			if(v instanceof EditGroup)
+				eatEditGroup((EditGroup)v,name);
+		}
+		
+		public void eatImageView(ImageView v,String name){
+			Bitmap map = BitmapFactory.decodeFile(name);
+			v.setImageBitmap(map);
+		}
+		public void eatEditGroup(EditGroup Group,String name){
+			myRet ret = new myRet(name);
+			String text = ret.r("UTF-8");
+			Group.getEditBuilder().insert(0,text);
+		}
 	}
 
+	/*
+	  我的外部类啊，请帮我实现主要功能吧
+	*/
+	public static interface IneedBuilder{
+		
+		public ViewBuiler getViewBuilder()
+		
+		public void setViewBuilder(ViewBuiler b)
+	}
+	
+	public static interface requestWithPageHandler{
+		
+		public void addEdit(String name)
+		
+		public void addView(View v, String name)
+		
+		public PageHandler getPages()
+		 
+	}
+	
 }

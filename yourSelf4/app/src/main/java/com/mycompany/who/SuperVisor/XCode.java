@@ -25,7 +25,7 @@ import com.mycompany.who.Edit.Share.Share2.*;
   麻烦啊，XCode要计算它们的大小并把它们放到合适位置
 
 */
-public class XCode extends HasAll implements CodeEdit.IlovePool
+public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.requestWithPageHandler
 {
 
 	private Title mTitle;
@@ -51,12 +51,6 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 		super.init();
 		Creator = new CodeCreator(R.layout.XCode);
 		Creator.ConfigSelf(this);
-		Configer = new Config_hesView(this);
-	}
-	@Override
-	public void config()
-	{
-		Configer.ConfigSelf(this);
 	}
 	
 	
@@ -74,6 +68,11 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 	
 	public void addEdit(String name){
 		mPages.addEdit(name);
+	}
+	@Override
+	public void addView(View S, String name)
+	{
+		mPages.addView(S,name);
 	}
 	
 	public Title getTitle(){
@@ -99,6 +98,8 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 		{
 			target.mTitle = root.findViewById(R.id.Title);
 			target.mPages = root.findViewById(R.id.PageHandler);
+			target.mDownBar = root.findViewById(R.id.DownBar);
+			target.Configer = new Config_hesView(target);
 			target.config = new Config_ChildsPos(target);
 		}
 	}
@@ -123,7 +124,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			//把子元素也配置一遍
 			target. mTitle.setTarget(target);
 			target. mPages.setTarget(target);
-			//target. mDownBar.setTarget(target);
+			target. mDownBar.setTarget(target);
 			target.mTitle.config();
 			target.mPages.config();
 			config(target);
@@ -135,6 +136,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			spinner.setOnItemSelectedListener(new onitemSeletion());
 			spinner.setonSelectionListener(new onSeletion());
 			pages.setonTabListener(new onTabPage());
+			//target.setBackgroundColor(0xffffffff);
 		}
 		
 		@Override
@@ -151,7 +153,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			@Override
 			public void onRepeatSelected(int postion)
 			{
-				// TODO: Implement this method
+				
 			}
 		}
 		class onitemSeletion implements OnItemSelectedListener
@@ -160,7 +162,11 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			@Override
 			public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4)
 			{
-				// TODO: Implement this method
+				pages.tabView(p3);
+				View v=pages.getView(p3);
+				ViewGroup.LayoutParams pa = v.getLayoutParams();
+			    trim(pages,pa.width,pa.height);
+				v.requestFocus();
 			}
 
 			@Override
@@ -175,7 +181,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool
 			@Override
 			public void onTabPage(int index)
 			{
-				// TODO: Implement this method
+				
 			}
 
 			@Override

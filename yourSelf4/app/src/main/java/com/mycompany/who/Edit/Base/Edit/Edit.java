@@ -45,6 +45,7 @@ public class Edit extends EditText implements Creat<Edit>
 	public static int Background_Color=0;
 	public static int Text_Color=0xffabb2bf;
 	public static int CursorRect_Color=0x25616263;
+	public float TextSize=14;
 	
 	public Edit(Context cont){
 		super(cont);
@@ -65,7 +66,7 @@ public class Edit extends EditText implements Creat<Edit>
 		setBackgroundResource(0);
 		setTypeface(Typeface.MONOSPACE);
 		setHighlightColor(Selected_Color);
-		setTextSize(14);
+		setTextSize(TextSize);
 		setLetterSpacing(0.01f);
 		setLineSpacing(0.2f,1.2f);
 		setPadding(0,0,0,0);
@@ -189,6 +190,9 @@ public class Edit extends EditText implements Creat<Edit>
 		inputMethodManager.showSoftInput(editText, 0);
 	}
 	
-	
+	public void zoomBy(float size){
+		setTextSize(size);
+		TextSize=size;
+	}
 	
 }

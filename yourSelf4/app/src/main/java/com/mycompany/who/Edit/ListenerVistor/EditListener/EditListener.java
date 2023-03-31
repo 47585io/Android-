@@ -23,13 +23,7 @@ public abstract class EditListener extends Object
 	public String toString(){
 		return "监听器："+name+"  ;类型: "+getClass().getName();
 	}
-	@Override
-	public boolean equals(Object obj)
-	{
-		if(super.equals(obj)||name==((EditListener)obj).name)
-			return true;
-		return false;
-	}
+	
 	public boolean Enabled(){
 		if(Enabled)
 			return true;

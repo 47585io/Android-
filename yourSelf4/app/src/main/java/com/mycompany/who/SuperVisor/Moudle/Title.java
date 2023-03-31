@@ -34,14 +34,7 @@ public class Title extends HasAll
 	public void init()
 	{
 		Creator = new TitleCreator(R.layout.Title);
-		Configer = new Config_Level();
 		Creator.ConfigSelf(this);
-	}
-
-	@Override
-	public void config()
-	{
-		super.config();
 	}
 	
 	
@@ -134,6 +127,7 @@ public class Title extends HasAll
 		@Override
 		public void init(Title target, View root)
 		{
+			target. Configer = new Config_Level();
 			target.Spinner = root.findViewById(R.id.ReSpinner);
 			target.ButtonBar = root.findViewById(R.id.ButtonBar);
 		    target.config = new Config_hesSize();
@@ -142,7 +136,7 @@ public class Title extends HasAll
 	}
 
 	// 如何配置View层次结构
-	final class Config_Level implements Level<Title>
+	final static class Config_Level implements Level<Title>
 	{
 
 		@Override

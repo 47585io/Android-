@@ -21,6 +21,7 @@ import java.security.acl.*;
 import java.util.*;
 import java.util.concurrent.*;
 import android.content.res.*;
+import java.math.*;
 
 /*
    整理是一切的开始
@@ -136,11 +137,13 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		super.CopyFrom(target);
 		CodeEdit Edit = (CodeEdit) target;
 		this.WordLib=Edit.WordLib;	
-		this.lines=Edit.lines;
 		this.stack = new EditDate();
+		this.Info = Edit.Info;	
+		this.pool = Edit.pool;
+		this.mWindow = Edit.mWindow;
+		this.lines = Edit.lines;
 		addTextChangedListener(new DefaultText());
-		boxes=Edit.boxes;
-		Info = Edit.Info;	
+		this.boxes = Edit.boxes;
 	}
 
 	@Override
@@ -148,13 +151,15 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 		super.CopyTo(target);
 		CodeEdit Edit = (CodeEdit) target;
-		Edit.WordLib = WordLib;	
-		Edit.lines = lines;
-		Edit.stack = stack;
+		Edit.WordLib = this.WordLib;	
+		Edit.stack = this.stack;
+		Edit.Info = this.Info;	
+		Edit.pool = this.pool;
+		Edit.mWindow = this.mWindow;
+		Edit.lines = this.lines;
 		Edit.addTextChangedListener(new DefaultText());
-		Edit.boxes = boxes;
-		Edit.Info = Info;	
-		Edit.setText(getText()); 
+		Edit.boxes = this.boxes;
+		Edit.setText(this.getText()); 
 	}
 
 	@Override
@@ -162,11 +167,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 		super.Creat();
 		WordLib=new OtherWords(6);
-		this.lines=new EditLine(getContext());	
-		this.stack = new EditDate();
+		stack = new EditDate();
+		Info = new EditListenerInfo();
 		addTextChangedListener(new DefaultText());
 		boxes= EditListenerFactory.getCompletorBox(0);
-		Info = new EditListenerInfo();
 		trimListener();
 	}
 	
@@ -292,6 +296,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 	public ListView getWindow(){
 		return mWindow;
+	}
+	public Edit getEditLine(){
+		return lines;
 	}
 	
 /*
@@ -821,7 +828,7 @@ _________________________________________
 	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)
 	{
 		//用多线程在不同集合中找单词
-		Collection<EditListener> Group = getCompletorList();
+		List<EditListener> Group = getCompletorList();
 		ThreadPoolExecutor pool = getPool();
 		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
 
@@ -1512,16 +1519,17 @@ _________________________________________
 		isFormat = false;
 		IsModify--;
 	}
-
 	public void zoomBy(float size)
 	{
-		setTextSize(size);
+		super.zoomBy(size);
 		if(lines!=null){
-	        lines.setWidth(lines.maxWidth());
-		    lines.setTextSize(size);
+		    lines.zoomBy(size);
 		}
 	}
-
+	public void IsModify(boolean is){
+		IsModify2 = is;
+	}
+	
 	final public size getCursorPos(int offset)
 	{
 		//获取光标坐标
@@ -1712,6 +1720,12 @@ _________________________________________
 		
 		public void clearListener()
 		
+		public void addListener(EditListener li)
+		
+		public void delListener(EditListener li)
+		
+		public void EnabelListener(boolean is)
+		
 	}
 	
 	
@@ -1729,6 +1743,14 @@ _________________________________________
 		
 		public void setWindow(ListView Window)
 
+	}
+	
+	public static interface IwantLine{
+		
+		public Edit getEditLine()
+		
+		public void setEditLine(EditLine line)
+		
 	}
 
 }

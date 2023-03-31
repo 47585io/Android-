@@ -6,6 +6,7 @@ public class myRet
 {
 	private FileInputStream reader;
 	private File f;
+	
 	public myRet(String path){
 		try
 		{
@@ -26,19 +27,16 @@ public class myRet
 	}
 
 	public String r(String decode){
-		byte[] buf=new byte[(int)f.length()];
-		String src = null;
+		String src = "";
 		try
 		{
-			reader.read(buf);
+			if(reader!=null&&f!=null){
+				byte[] buf=new byte[(int)f.length()];
+			    reader.read(buf);
+			    src= new String(buf, decode);
+			}
 		}
-		catch (IOException e)
-		{}
-		try
-		{
-			src= new String(buf, decode);
-		}
-		catch (UnsupportedEncodingException e)
+		catch (Exception e)
 		{}
 		return src;
 	}
@@ -46,7 +44,8 @@ public class myRet
 	public void close(){
 		try
 		{
-			reader.close();
+			if(reader!=null)
+			    reader.close();
 		}
 		catch (IOException e)
 		{}
