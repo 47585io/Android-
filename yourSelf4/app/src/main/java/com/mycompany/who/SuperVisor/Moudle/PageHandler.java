@@ -46,6 +46,7 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 	private ThreadPoolExecutor pool;
 	private EditGroup.EditFactory mfactory;
 	private ViewBuiler ViewBuilder;
+	private List<Object> PageState;
 	
 	public PageHandler(Context cont){
 		super(cont);	
@@ -133,7 +134,16 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 		if(ViewBuilder!=null)
 			ViewBuilder.eatView(v,name);
 	}
-
+	public void tabView(int index){
+		int beforeIndex = getNowIndex();
+	
+		mEditGroupPages.tabView(index);
+		
+	}
+	public void removeViewAt(int index){
+		
+	}
+	
 	public ThreadPoolExecutor getPool()
 	{
 		return pool;
@@ -402,6 +412,8 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			target. Configer = new Config_hesView();
 			target.config = new Config_hesSize();
 			target.ViewBuilder = new Domean();
+			target.PageState = new ArrayList<>();
+			
 			target.Scro = tmp.findViewById(R.id.Scro);
 			target.hScro = tmp.findViewById(R.id.hScro);
 			target.mEditGroupPages = tmp.findViewById(R.id.mPages);
@@ -521,13 +533,19 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			myRet ret = new myRet(name);
 			String text = ret.r("UTF-8");
 			EditGroup.EditBuilder builder = Group.getEditBuilder();
-			builder.IsModify(true);
-			builder.setPool(null);
+			
+			builder.IsDraw(true);
 			builder.insert(0,text);
+			builder.IsDraw(false);
+			
+			builder.setPool(null);
+			
+			builder.IsModify(true);
 			builder.Format(0,text.length());
-			builder.reDraw(0,builder.calaEditLen());
 			builder.setPool(Group.getPool());
+			builder.reDraw(0,builder.calaEditLen());
 			builder.IsModify(false);
+			
 			builder.insert(builder.calaEditLen()," ");
 		}
 	}

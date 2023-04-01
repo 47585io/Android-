@@ -48,6 +48,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	protected Int EditFlag=new Int();
 	protected Int historyId;
+	protected CodeEdit.EditChroot root;
 
 	protected LinearLayout ForEdit;
 	protected EditLine EditLines;
@@ -59,7 +60,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	private Stack<Stack<Int>> Next;
 	private ThreadPoolExecutor pool=null;
 	private EditFactory mfactory;
-
+	
 	
 	public EditGroup(Context cont)
 	{
@@ -162,6 +163,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
 			Edit.getCanvaserList().add(getOneClipCanvaser());
 			mfactory. configEdit(Edit, name, this);
+			root = Edit.getChroot(); //复制root
 		}
 		else
 		{
@@ -169,6 +171,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			CodeEdit E = EditList.get(0);
 			Edit = new RCodeEdit(getContext(),E );
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
+			Edit.compareChroot(root); //设置root
 		}
 		//组内的每个编辑器都设置Click
 		Edit.setOnClickListener(getOneClick());
@@ -519,11 +522,25 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			}
 			trimToFather();
 		}
+		
 		public void IsModify(boolean is){
-			for(CodeEdit E: EditList){
-				E.IsModify(is);
-			}
+			root.isFormat = is;
+			compareChroot(root);
 		}
+		public void IsDraw(boolean is){
+			root.isDraw=is;
+			compareChroot(root);
+		}
+		public void IsFormat(boolean is){
+			root.isFormat = is;
+			compareChroot(root);
+		}
+		public void compareChroot(CodeEdit.EditChroot f){
+			for(CodeEdit E: EditList)
+			    
+			    E.compareChroot(f);
+		}
+		
 		public void reSAll(int start,int end,final String want,final String to){
 			DoForAnyOnce d= new DoForAnyOnce(){
 

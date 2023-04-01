@@ -44,6 +44,8 @@ public class PageList extends LinearLayout
 		
 		if(mtabListener!=null)
 			mtabListener.onAddPage(EditPage,name);
+		tabView(mPages.size()-1);
+			
 		return true;
 	}
 	public void tabView(int index)
@@ -52,12 +54,12 @@ public class PageList extends LinearLayout
 		{
 			return;
 		}
-		nowIndex=index;
+		
 		if(mtabListener!=null)
 			mtabListener.onTabPage(index);
 		//异常情况下，什么也不做
 		//否则把编辑器切换
-		
+		nowIndex=index;
 		removeAllViews();
 		super.addView(mPages.get(index));
 	}

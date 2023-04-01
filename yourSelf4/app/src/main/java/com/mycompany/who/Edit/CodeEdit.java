@@ -72,12 +72,24 @@ import java.math.*;
  */
 
  /*
-  在基类上开一些接口，另外的，复杂的函数我都设置成了final
+   在基类上开一些接口，另外的，复杂的函数我都设置成了final
 
-  从现在开始，所有被调函数，例如Drawing，必须自己管理好线程和IsModify安全，然后将真正操作交给另一个函数
+   从现在开始，所有被调函数，例如Drawing，必须自己管理好线程和IsModify安全，然后将真正操作交给另一个函数
 
-  在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
+   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
+ */
+ 
+ /*
+   Enabled_Drawer  禁用所有的自动染色
+   Enabled_Format  禁用所有的自动格式化
+   Enabled_Complete  禁用所有的自动补全
+   
+   IsModify / IsModify2    当前编辑器被修改，不做任何事
+   isDraw                  当前编辑器已在染色，不再染色
+   isFormat                当前编辑器已在格式化，不再格式化
+   isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
+   
  */
 public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
 {
@@ -112,7 +124,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
-	public static boolean Enabled_Complete;
+	public static boolean Enabled_Complete=false;
 	public static int Delayed_Draw = 0;
 	public static int MaxCount=20000;
 	
@@ -571,6 +583,9 @@ Dreawr
 			}
 		};
 		if (Delayed_Draw == 0){
+			//这里为什么要这样判断，直接post不行吗？
+			//post是将任务抛给主线程的消息队列了，但什么时候执行就不一定了，很可能会让接下来的修改优先于染色
+			//因此我这里判断我在不在子线程中，如果不在就直接run，卡住线程，免得有一些问题
 			if(getPool()!=null)
 			    post(run);
 			else
@@ -815,7 +830,6 @@ _________________________________________
 						@Override
 						public void run()
 						{
-
 							getWindow().setAdapter(adapter);
 							try
 							{
@@ -825,7 +839,6 @@ _________________________________________
 							{
 								Log.e("OpenWindow Error", e.toString());
 							}
-
 							Epp.stop();
 							Log.w("After OpenWindow", Epp.toString());
 							//将单词放入Window后回收
@@ -855,7 +868,8 @@ _________________________________________
 				return ((EditCompletorListener)li).LetMeCompelet(wantBefore, wantAfter, before, after, WordLib);
 			}
 		};
-		if (getPool() == null)
+		
+		if (getPool() != null)
 			return EditListenerItrator.foreach(Group, run);
 		return EditListenerItrator.foreach(Group, run);
 		//阻塞以获得所有单词
@@ -1319,14 +1333,14 @@ _________________________________________
 			//如果没有输入，则不用做什么
 		    IsModify2=true;	
 			
-			if (Enabled_Format)
+			if (Enabled_Format&&!isFormat)
 			{		
 				//是否启用自动format
 				Insert(start);
 				//为了安全，不调用Format
 			}
 			
-			if(Enabled_Drawer){
+			if(Enabled_Drawer&&!isDraw){
 				//是否启用自动染色
 			    
 			    //试探起始行和之前之后的tryLines行，并染色
@@ -1485,10 +1499,37 @@ _________________________________________
 		//修饰符非常重要，之前没写public，总是会函数执行异常
 	}
 	
+	//权限类
+	public static class EditChroot{	
+	
+	    public EditChroot(){}
+		public EditChroot(boolean m,boolean d,boolean f,boolean u){
+			IsModify = m;
+			isDraw = d;
+			isFormat = f;
+			isUR = u;
+		}
+		public EditChroot(EditChroot o){
+			compare(o);
+		}
+		public void compare(EditChroot f){
+			IsModify = f.IsModify;
+			isDraw = f.isDraw;
+			isFormat = f.isFormat;
+			isUR = f.isUR;
+		}
+		public EditChroot getChroot(){
+			return new EditChroot(IsModify,isDraw,isFormat,isUR);
+		}
+		
+		public boolean IsModify;
+		public boolean isDraw;
+		public boolean isFormat;
+		public boolean isUR;
+	}
 	
 	
 	/* 其它函数 */
-
 	
 	public static void clearRepeatNode(List<wordIndex> nodes){
 		//清除优先级低且位置重复的node
@@ -1542,6 +1583,15 @@ _________________________________________
 		if(lines!=null){
 		    lines.zoomBy(size);
 		}
+	}
+	public void compareChroot(EditChroot f){
+		IsModify2 = f.IsModify;
+		isDraw = f.isDraw;
+		isFormat = f.isFormat;
+		isUR = f.isUR;
+	}
+	public EditChroot getChroot(){
+		return new EditChroot(IsModify2,isDraw,isFormat,isUR);
 	}
 	public void IsModify(boolean is){
 		IsModify2 = is;

@@ -148,19 +148,12 @@ public class EditListenerFactory
 			// TODO: Implement this method
 		}
 
-		public char insertarr[];
-		public DefaultInsertorListener()
-		{
-			insertarr = new char[]{'{','(','[','\'','"','/','\n'};
-			Arrays.sort(insertarr);
-		}
 		public int dothing_insert(Editable editor, int nowIndex)
 		{
 			String src=editor.toString();
-			int charIndex=Array_Splitor.indexOf(src.charAt(nowIndex), insertarr);
-			if (charIndex != -1)
-			{
-				switch (src.charAt(nowIndex))
+			char c = src.charAt(nowIndex);
+			
+				switch (c)
 				{
 					case '{':
 						editor.insert(nowIndex + 1, "}");
@@ -185,8 +178,14 @@ public class EditListenerFactory
 							editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 							return j.end + 1;
 						}
+						break;
+					case '\n':
+						int index = CodeEdit.tryLine_Start(src,nowIndex);
+						int count = String_Splitor.calaN(src,index);
+						editor.insert(nowIndex+1,String_Splitor.getNStr(" ",count));
+						break;
 				}
-			}
+			
 			return nowIndex + 1;
 		}
 	}
