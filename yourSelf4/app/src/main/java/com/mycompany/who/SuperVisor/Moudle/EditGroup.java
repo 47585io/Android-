@@ -295,24 +295,25 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		protected void sendOutLineToNext(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
 			/*关键代码*/
-
+			boolean need = true;
 			int lineCount= getLineCount();
 			if (lineCount > MaxLine)
 			{
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				size j = subLines(MaxLine + 1 - OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
 				j.start--; //连带着把MaxLine行的\n也截取
-				String src = getText().toString().substring(j.start, j.end); 
+				CharSequence src = getText().subSequence(j.start, j.end); 
 				IsModify++;
 				getText().delete(j.start, j.end);	
 				IsModify--;
 
-				if (start + lengthAfter < j.start)
+				if (start + lengthAfter < j.start){
 					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
+					need = false; //下个编辑器插入的内容不用染色了
+				}
 				else
-				{
 				    super.onTextChanged(text, start, lengthBefore, j.start - start);	
-				}	
+				
 				//截取后，只把本次未被截取的前半部分染色，
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
@@ -320,12 +321,15 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 				if (EditList.size() - 1 == index.get())
 					AddEdit("");
 				else if (EditList.get(index.get() + 1).getLineCount() + (lineCount - MaxLine) > MaxLine)
-				{
 					AddEditAt(index.get() + 1);
-				}
+				
 				//若无下个编辑器，则添加一个
 				//若有下个编辑器，但它的行也不足，那么在我之后添加一个
-				EditList.get(index.get() + 1).getText().insert(0, src);
+				CodeEdit Edit = EditList.get(index.get() + 1);
+				if(!need)
+					Edit.IsDraw(true);//不用染色了
+				Edit.getText().insert(0, src);
+				Edit.IsDraw(false);
 				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
 				//不难看出，这样递归回调，最后会回到第一个编辑器
 
@@ -365,7 +369,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 			boolean is = super.onKeyUp(keyCode,event);
 			if(Target!=null)
-			    return Target. BubbleKeyEvent(keyCode,event);
+			    return Target.onKeyUp(keyCode,event);
 			return is;
 		}
 
@@ -374,7 +378,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 			boolean is = super.onTouchEvent(event);
 			if(Target!=null)  
-			    return Target.BubbleMotionEvent(event);
+			    return Target.onTouchEvent(event);
 			return is;
 		}
 		
@@ -402,6 +406,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	
 	protected class Clip extends EditCanvaserListener
 	{
+
+		@Override
+		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
+		{
+			// TODO: Implement this method
+		}
+
 
 		@Override
 		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
@@ -504,6 +515,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			for(CodeEdit E:EditList)
 			    E.setInfo(Info);
 		}
+		public void setFactory(EditListenerFactory f){
+			for(CodeEdit E:EditList)
+			    E.setFactory(f);
+		}
 		public void setWindow(ListView Window){
 			for(CodeEdit E:EditList)
 			    E.setWindow(Window);
@@ -536,8 +551,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			compareChroot(root);
 		}
 		public void compareChroot(CodeEdit.EditChroot f){
-			for(CodeEdit E: EditList)
-			    
+			for(CodeEdit E: EditList)    
 			    E.compareChroot(f);
 		}
 		
@@ -568,7 +582,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 				@Override
 				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-				    Edit.reDrawColor(start, end);
+				    Edit.reDraw(start, end);
 					return null;
 				}
 			};
@@ -587,18 +601,22 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			return d.dofor(start,end);
 		}
-		public List<Future> subSpan(int start,int end)
+		public CharSequence subSpan(int start,int end)
 		{
+			final SpannableStringBuilder text = new SpannableStringBuilder();
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
 				Future doOnce(int start, int end, CodeEdit Edit)
 				{
-					return Edit.subSpan(start,end);
+				   CharSequence tmp = Edit.getText().subSequence(start,end);
+				   text.append(tmp);
+			       return null;
 				}
 
 			};
-			return d.dofor(start,end);
+			d.dofor(start,end);
+			return text;
 		}
 		public void GetString(StringBuilder b,SpannableStringBuilder bu){
 			for(CodeEdit E : EditList){
@@ -631,6 +649,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			for (Int l:last)
 				EditList.get(l.get()).Uedo();
 			EditLines. reLines(calaEditLines());
+			trimToFather();
 			return last;
 		}
 		public Stack<Int> Redo()
@@ -643,6 +662,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			for (Int l:next)
 				EditList.get(l.get()).Redo();
 			EditLines.reLines(calaEditLines());
+			trimToFather();
 			return next;
 		}
 

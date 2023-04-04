@@ -217,7 +217,7 @@ public class Colors
 		}
 	}
 	
-	public static SpannableStringBuilder ForeColorText(String src,List<wordIndex> nodes,ByteToColor Colors){
+	public static SpannableStringBuilder ForeColorText(CharSequence src,wordIndex[] nodes,ByteToColor Colors){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
@@ -228,7 +228,7 @@ public class Colors
 		}
 	    return styled;	
 	}
-	public static void ForeColorText(Editable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
+	public static void ForeColorText(Editable editor,wordIndex[] nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
 		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -236,7 +236,7 @@ public class Colors
 				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 	}
-	public static void ForeColorText(SpannableStringBuilder builder,List<wordIndex> nodes,ByteToColor Colors){
+	public static void ForeColorText(SpannableStringBuilder builder,wordIndex[] nodes,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
 		        builder.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -250,7 +250,7 @@ public class Colors
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
 	}
 	
-	public static SpannableStringBuilder BackColorText(String src,List<wordIndex> nodes,ByteToColor Colors){
+	public static SpannableStringBuilder BackColorText(CharSequence src,wordIndex[] nodes,ByteToColor Colors){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
@@ -261,7 +261,7 @@ public class Colors
 		}
 	    return styled;	
 	}
-	public static void BackColorText(Editable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
+	public static void BackColorText(Editable editor,wordIndex[] nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
 		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -269,7 +269,7 @@ public class Colors
 				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	    }
 	}
-	public static void BackColorText(SpannableStringBuilder builder,List<wordIndex> nodes,ByteToColor Colors){
+	public static void BackColorText(SpannableStringBuilder builder,wordIndex[] nodes,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(builder==null)
 		        builder.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -303,30 +303,37 @@ public class Colors
 	
 	
 	
-	public static SpannableStringBuilder TextSpan(List<wordIndex> nodes,Object[] spans,String src){
+	public static SpannableStringBuilder setSpans(size[] nodes,Object[] spans,CharSequence src){
 		SpannableStringBuilder builder = new SpannableStringBuilder(src);
 		int i;
-		for(i=0;i<nodes.size();++i){
-			ParcelableSpan span = (ParcelableSpan) spans[i];
-			wordIndex node = nodes.get(i);
-			builder.setSpan(span,node.start,node.end,span.getSpanTypeId());
+		for(i=0;i<nodes.length;++i){
+			Object span = spans[i];
+			size node = nodes[i];
+			builder.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		return builder;
 	}
-	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,Editable editor){
-		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
-		String src = editor.toString().substring(start,end);
-		return TextSpan(nodes,spans,src);
+	public static void setSpans(size[] nodes,Object[] spans,Editable editor){
+		int i;
+		for(i=0;i<nodes.length;++i){
+			Object span = spans[i];
+			size node = nodes[i];
+			editor.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	}
-	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,SpannableStringBuilder editor){
-		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
-		String src = editor.toString().substring(start,end);
-		return TextSpan(nodes,spans,src);
-	}
-	public static SpannableStringBuilder subSpan(int start,int end,List<wordIndex> nodes,SpannedString editor){
-		Object[] spans = editor.getSpans(start,end,ParcelableSpan.class);
-		String src = editor.toString().substring(start,end);
-		return TextSpan(nodes,spans,src);
+	public static void setSpans(size[] nodes,Object[] spans,SpannableStringBuilder builder){
+		int i;
+		for(i=0;i<nodes.length;++i){
+			Object span = spans[i];
+			size node = nodes[i];
+			builder.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 	}
 	
+	
+	public static Class SpanType = ParcelableSpan.class;
+	
+	public static Class BackSpanType = BackgroundColorSpan.class;
+	
+	public static Class ForeSpanType = ForegroundColorSpan.class;
 }

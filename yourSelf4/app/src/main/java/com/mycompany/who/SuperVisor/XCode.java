@@ -15,6 +15,7 @@ import com.mycompany.who.View.*;
 import android.widget.AdapterView.*;
 
 import com.mycompany.who.Edit.Share.Share2.*;
+import java.security.acl.*;
 
 
 /*
@@ -110,10 +111,12 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 	
 		ReSpinner spinner;
 		PageList pages;
+		LinearLayout ButtonBar;
 		XCode target;
 		
 		public Config_hesView(XCode target){
 			spinner = target.mTitle.getReSpinner();
+			ButtonBar = target.mTitle.getButtonBar();
 			pages = target.mPages.getEditGroupPages();
 			this.target = target;
 		}
@@ -135,8 +138,9 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 		{
 			spinner.setOnItemSelectedListener(new onitemSeletion());
 			spinner.setonSelectionListener(new onSeletion());
+			ButtonBar.getChildAt(0).setOnClickListener(new Click());
 			pages.setonTabListener(new onTabPage());
-			//target.setBackgroundColor(0xffffffff);
+			target.setBackgroundColor(0xff222222);
 		}
 		
 		@Override
@@ -145,7 +149,17 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			// TODO: Implement this method
 		}
 
-		
+		class Click implements OnClickListener
+		{
+
+			@Override
+			public void onClick(View p1)
+			{
+				PageHandler h = target.getPages();
+				EditGroup Group = h.getEditGroup(h.getNowIndex());
+				Group.getEditBuilder().Uedo();
+			}
+		}
 		
 		class onSeletion implements ReSpinner.onSelectionListener
 		{

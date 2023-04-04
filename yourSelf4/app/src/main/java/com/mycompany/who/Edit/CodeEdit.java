@@ -91,17 +91,22 @@ import java.math.*;
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
  */
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo
 {
 	
-	//一百行代码实现代码染色，格式化，自动补全，Uedo，Redo
-	protected OtherWords WordLib;
+	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
+	protected Words WordLib;
 	protected EditDate stack;
 	public static EPool2 Ep;
 	public static EPool3 Epp;
 	protected EditListenerInfo Info;
 	protected ThreadPoolExecutor pool;
-	protected ListView mWindow;
+	protected EditListenerFactory mfactory;
+	/*
+	  不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
+	  但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
+	  呜呜呜，对不起真的没办法了
+	*/
 	
 	protected boolean isDraw=false;
 	protected boolean isFormat=false;
@@ -115,18 +120,18 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
     */
 	
-	Edit lines;
-	String laugua;
-	String HTML;
-	SpannableStringBuilder buider;
-	EditListenerFactory.EditCompletorBoxes boxes;
+    protected Edit lines;
+	protected ListView mWindow;
+	protected String laugua;
+	protected int Search_Bit;
+	protected String HTML;
+	protected SpannableStringBuilder buider;
 	
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
 	public static boolean Enabled_Complete=false;
 	public static int Delayed_Draw = 0;
-	public static int MaxCount=20000;
 	
 	static{
 		Ep=new EPool2();
@@ -154,8 +159,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		this.pool = Edit.pool;
 		this.mWindow = Edit.mWindow;
 		this.lines = Edit.lines;
+		this.laugua = Edit.laugua;
+		this.Search_Bit = Edit.Search_Bit;
+		this.mfactory = Edit.mfactory;
 		addTextChangedListener(new DefaultText());
-		this.boxes = Edit.boxes;
 	}
 
 	@Override
@@ -169,8 +176,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.pool = this.pool;
 		Edit.mWindow = this.mWindow;
 		Edit.lines = this.lines;
+		Edit.laugua = this.laugua;
+		Edit.Search_Bit = this.Search_Bit;
+		Edit.mfactory = this.mfactory;
 		Edit.addTextChangedListener(new DefaultText());
-		Edit.boxes = this.boxes;
 		Edit.setText(this.getText()); 
 	}
 
@@ -182,25 +191,25 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		stack = new EditDate();
 		Info = new EditListenerInfo();
 		addTextChangedListener(new DefaultText());
-		boxes= EditListenerFactory.getCompletorBox(0);
+		mfactory = new EditListenerFactory2();
 		trimListener();
 	}
 	
-	
 	public void trimListener()
 	{
-		setDrawer(EditListenerFactory.getDefaultDrawer());
-		getCanvaserList().add(new EditListenerFactory.DefaultCanvaser());
-		setFormator(new EditListenerFactory.DefaultFormatorListener());
-		setInsertor(new EditListenerFactory.DefaultInsertorListener());
+		setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
+		getCanvaserList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
+		setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
+		setInsertor(EditListenerFactory2.InsertorFactory.getDefultInsertor());
+		setFinder(EditListenerFactory2.FinderFactory.getTextFinder());
 		List<EditListener> cs=getCompletorList();
-		cs.add(boxes.getVillBox());
-		cs.add(boxes.getObjectBox());
-		cs.add(boxes.getFuncBox());
-		cs.add(boxes.getTypeBox());
-		cs.add(boxes.getDefaultBox());
-		cs.add(boxes.getKeyBox());
-		cs.add(boxes.getTagBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getVillBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getObjectBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getFuncBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getTypeBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getDefaultBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getKeyBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getTagBox());
 	}
 	
 	public void clearListener()
@@ -256,34 +265,16 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	public void setLuagua(String Lua)
 	{
 		laugua = Lua;
-		boxes. Search_Bit = 0xefffffff;
-		switch (Lua)
-		{
-			case "text":
-				setFinder(EditListenerFactory.FinderFactory.getTextFinder());
-				boxes.Search_Bit = 0;
-				break;
-			case "xml":
-				setFinder(EditListenerFactory.FinderFactory.getXMLFinder());
-				boxes.Search_Bit = 0;
-				boxes.Search_Bit = Share.setbitTo_1S(boxes.Search_Bit, Colors.color_tag, Colors.color_attr);
-				break;
-			case "java":
-				setFinder(EditListenerFactory.FinderFactory.getJavaFinder());
-				boxes.Search_Bit = Share.setbitTo_0S(boxes.Search_Bit, Colors.color_tag, Colors.color_attr);
-				break;
-			case "css":
-				setFinder(EditListenerFactory.FinderFactory.getCSSFinder());
-				boxes.Search_Bit = Share.setbitTo_0S(boxes.Search_Bit, Colors.color_key, Colors.color_const, Colors.color_obj);
-				break;
-			default:
-			    setFinder(null);
-				boxes.Search_Bit = 0;
-		}
+		mfactory.SwitchLuagua(this,Lua);
 	}
-	
 	public String getLuagua(){
 		return laugua;
+	}
+	public void setSearchBit(int bit){
+		Search_Bit = bit;
+	}
+	public int getSearchBit(){
+		return Search_Bit;
 	}
 	
 	/*
@@ -302,6 +293,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	public void setEditLine(Edit Line){
 		lines = Line;
 	}
+	public void setWordLib(Words WordLib){
+		this.WordLib = WordLib;
+	}
+	public void setFactory(EditListenerFactory f){
+		mfactory = f;
+	}
 	
     public ThreadPoolExecutor getPool(){
 		return pool;
@@ -311,6 +308,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 	public Edit getEditLine(){
 		return lines;
+	}
+	public Words getWordLib(){
+		return WordLib;
+	}
+	public EditListenerFactory getFactory(){
+		return mfactory;
 	}
 	
 /*
@@ -330,11 +333,13 @@ _________________________________________
  
  getHTML：通过nodes制作对应的HTML文本
  
- prepare：准备文本，其调用FindFor和getHTML
+ prepare：准备文本，其调用onFindNodes和getHTML
  
  onFindNodes: 真正的找操作写在这里
  
  onDrawNodes: 真正的染色操作写在这里
+ 
+ 注意，不要直接调用FindFor，而是调用obFindNodes
 	 
  _________________________________________
 
@@ -394,7 +399,9 @@ Dreawr
 		    String text = editor.toString().substring(start,end);
 		
 		    try{
-		        SpannableStringBuilder builder= Colors.ForeColorText(text,nodes,null);
+				wordIndex[] tmp = new wordIndex[nodes.size()];
+				nodes.toArray(tmp);
+		        SpannableStringBuilder builder= Colors.ForeColorText(text,tmp,null);
 			    //在Edit中的真实下标开始，将范围内的单词染色
 			    editor.replace(start,end,builder);
 	
@@ -437,14 +444,13 @@ Dreawr
 			@Override
 			public void run()
 			{
-				String text = getText().subSequence(start,end).toString();
-				List<wordIndex> nodes=new ArrayList<>();
-				SpannableStringBuilder builder = new SpannableStringBuilder();
+				String text = getText().toString();
+				List<wordIndex> nodes;
 				if(text==null)
 				    return;
 				try{
-				    FindFor(start,end,text,nodes,builder);//寻找nodes	
-					Drawing(start,end,nodes,builder);//染色			
+				    nodes = FindFor(start,end,text);//寻找nodes	
+					Drawing(start,end,text,nodes);//染色			
 				}catch(Exception e){
 					Log.e("reDraw Don't know！","  Has Error "+e.toString());
 				}
@@ -459,25 +465,6 @@ Dreawr
 			//如果有pool，在子线程中执行
 			//否则直接执行
 	}
-	/*
-	  JavaBinder        !!! FAILED BINDER TRANSACTION !!!  (parcel size = 242844)
-	  03-26 10:15:10.228 27546 27546 D   AndroidRuntime          Shutting down VM
-	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          FATAL EXCEPTION: main
-	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          Process: com.mycompany.who, PID: 27546
-	  03-26 10:15:10.229 27546 27546 E   AndroidRuntime          java.lang.RuntimeException: android.os.TransactionTooLargeException: data parcel size 242844 bytes
-	  
-	  单次的数据太大，我在编辑器中一次粘贴1500行就出现这个问题，而如果每次粘贴800行就没有问题
-	  这样的话，应该是在reDraw中，replace了1500行的SpannableStringBuilder，因此在处理时，单个的文本太大了，如果分成800行的SpannableStringBuilder就没事了
-	  
-	*/
-	final public void reDrawColor(int start,int end){
-		for(int i=start;i<end;i+=MaxCount){
-			if(end-i<MaxCount)
-				reDraw(i,end);
-			else
-			    reDraw(i,i+MaxCount);
-		}
-	}
 	
 	final public Future prepare(final int start,final int end,final String text){
 		//准备指定文本的颜料
@@ -486,11 +473,16 @@ Dreawr
 			@Override
 			public void run()
 			{
-				final List<wordIndex> nodes=new ArrayList<>();
-				final SpannableStringBuilder builder = new SpannableStringBuilder();
-				FindFor(start,end,text.substring(start,end),nodes,builder);
-				CodeEdit. this.buider=builder;
-				HTML= getHTML(nodes,text.substring(start,end),((EditFinderListener)getFinder()).getByteToColor());
+				List<wordIndex> nodes = null;
+				SpannableStringBuilder b = new SpannableStringBuilder(text.substring(start,end));
+				try
+				{
+					nodes = onFindNodes(start, end, text,getFinder());
+					((EditDrawerListener)getDrawer()).setSpan(b,nodes);
+					CodeEdit. this.buider = b;
+					HTML= getHTML(nodes,text.substring(start,end),((EditDrawerListener)getFinder()).getByteToColor());
+				}
+				catch (Exception e){}
 			}
 		};
 		if(getPool()!=null)
@@ -499,7 +491,7 @@ Dreawr
 			run.run();
 		return null;
 	}
-	final public void GetString(StringBuilder HTML,SpannableStringBuilder builder){
+	public void GetString(StringBuilder HTML,SpannableStringBuilder builder){
 		//获取准备好了的文本
 		if(this.HTML!=null&&HTML!=null){
 		    HTML.append(this.HTML);
@@ -511,20 +503,17 @@ Dreawr
 		}
 	}
 	
-	
-	/*
-	    ....
-	*/
-	protected final void FindFor(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)
+	//当调用FindFor后，务必调用Drawing停止Ep
+	protected final List<wordIndex> FindFor(int start, int end, String text)
 	{
 		//为了安全，禁止重写
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
-
+		List<wordIndex> nodes = null;
 		Ep.start();//开始记录
 		try
 		{
-		    onFindNodes(start, end, text, nodes, builder);
+		    nodes= onFindNodes(start, end, text,getFinder());
 		}
 		catch (Exception e)
 		{
@@ -533,24 +522,21 @@ Dreawr
 
 		now = System.currentTimeMillis();
 		Log.w("After FindNodes", "I take " + (now - last) + " ms, " + Ep.toString());
-
+		return nodes;
 	}
-	protected void onFindNodes(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)throws Exception
+	//FindNodes不会修改文本和使用Ep，所以可以直接调用
+	//且其支持任意EditFinderListener查找
+	public List<wordIndex> onFindNodes(int start, int end, String text, EditListener l)throws Exception
 	{
-		EditFinderListener li = ((EditFinderListener)getFinder());
+		EditFinderListener li = (EditFinderListener) l;
 		if(li!=null){
-		    List<wordIndex> tmp = li.LetMeFind(start, end, text, WordLib);
-		    if (tmp != null)
-		    {
-			    nodes.addAll(tmp);
-				if(builder!=null)
-			        li.setSapns(text, nodes, builder);
-		    }
+		    List<wordIndex> tmp = li.LetMeFind(start, end,text,getWordLib(), this);
+		    return tmp;
 		}
+		return null;
 	}
 
-
-	protected final void Drawing(final int start, final int end, final List<wordIndex> nodes, final SpannableStringBuilder builder)
+	protected final void Drawing(final int start, final int end,final String src, final List<wordIndex> nodes)
 	{
 		//为了安全，禁止重写
 		Runnable run= new Runnable(){
@@ -565,8 +551,8 @@ Dreawr
 				last = System.currentTimeMillis();
 				try
 				{
-					if (nodes.size() != 0)
-					    onDrawNodes(start, end, nodes, builder);
+					if (nodes != null)
+					    onDrawNodes(start, end,src, nodes,getDrawer());
 				}
 				catch (Exception e)
 				{
@@ -606,12 +592,13 @@ Dreawr
 		}
 		//为了线程安全，涉及UI操作必须抛到主线程	
 	}
-	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, SpannableStringBuilder builder)throws Exception
+	//会修改文本，不允许直接调用
+	protected void onDrawNodes(int start, int end,String src, List<wordIndex> nodes,EditListener l)throws Exception
 	{
 		//应该重写这个
-		EditDrawerListener li = ((EditDrawerListener)getDrawer());
+		EditDrawerListener li = ((EditDrawerListener)l);
 		if(li!=null)
-		    li.LetMeDraw(start, end, nodes, builder, getText());
+		    li.LetMeDraw(start, end,src, nodes,this);
 	}
 	
 	
@@ -649,79 +636,33 @@ _________________________________________
 	{
 		//为了安全，禁止重写
 
-		Runnable run = new Runnable(){
+		IsModify++;
+		isFormat = true; //在此时才会修改文本
 
-			@Override
-			public void run()
-			{
-				long last = 0,now = 0;
-				last = System.currentTimeMillis();
+		long last = 0,now = 0;
+		last = System.currentTimeMillis();
+		try
+		{
+			onFormat(start, end, getFormator());
+		}
+		catch (Exception e)
+		{
+			Log.e("Format Error", e.toString());
+		}
+		now = System.currentTimeMillis();
+		Log.w("After Format Replacer", "I take " + (now - last) + " ms," +"The time maybe too Loog！");
 
-				String src = onBeforeFormat(start,end);
-				//开线程格式化	
-				
-				now = System.currentTimeMillis();
-				Log.w("After Format StringSpilter", "I take " + (now - last) + " ms, " + "Because Str Length is " + src.length() + ", and " + Ep.toString());
-
-				if (src == null)
-					src = getText().toString().substring(start, end);
-				final String buffer=src;
-
-				Runnable run2 = new Runnable(){
-
-					@Override
-					public void run()
-					{
-						IsModify++;
-						isFormat = true; //在此时才会修改文本
-
-						long last = 0,now = 0;
-						last = System.currentTimeMillis();
-						try
-						{
-							onFormat(start, end, buffer);
-						}
-						catch (Exception e)
-						{
-							Log.e("Format Error", e.toString());
-						}
-						now = System.currentTimeMillis();
-						Log.w("After Format Replacer", "I take " + (now - last) + " ms," +"The time maybe too Loog！");
-
-						isFormat = false;
-						IsModify--;
-
-					}
-				};
-				if(getPool()!=null)
-				    post(run2); //安全地把任务交给onFormat
-				else
-					run2.run();
-			}
-
-		};
-		if (getPool() != null)
-			getPool().submit(run);
-		else
-			run.run();
-
+		isFormat = false;
+		IsModify--;
 	}
 
-	protected String onBeforeFormat(int start,int end){
-		String src = null;
-		EditFormatorListener li = ((EditFormatorListener)getFormator());
+	protected void onFormat(int start,int end,EditListener l){
+		
+		EditFormatorListener li = ((EditFormatorListener)l);
 		if(li!=null)
-			src = li.LetMeFormat(start, end, getText().toString());
-		return src;
+			li.LetMeFormat(start, end, this);
 	}
-
-	protected void onFormat(int start, int end, String buffer)throws Exception
-	{
-		//为提升效率，将原文本和目标文本装入buffer
-		//您可以直接通过测量buffer.getSrc()的下标来修改buffer内部
-		getText().replace(start, end, buffer);
-		//最后，当所有人完成本次对文本的修改后，一次性将修改后的文件替换至Edit
-	}
+	
 
 	public final int Insert(final int index)
 	{
@@ -732,7 +673,7 @@ _________________________________________
 
 		try
 		{
-		    count = onInsert(index);
+		    count = onInsert(index,getInsertor());
 		}
 		catch (Exception e)
 		{
@@ -745,11 +686,11 @@ _________________________________________
 		return count;
 	}	
 
-	protected int onInsert(int index)throws Exception
+	protected int onInsert(int index,EditListener l)throws Exception
 	{
-		EditInsertorListener li = ((EditInsertorListener)getInsertor());
+		EditInsertorListener li = ((EditInsertorListener)l);
 		if(li!=null)
-		    return li.LetMeInsert(getText(), index);
+		    return li.LetMeInsert(this, index);
 		return index;
 	}
 	
@@ -805,8 +746,8 @@ _________________________________________
 		if(getWindow()==null)
 			return;
 		
-		final String wantBefore= getWord(index);
-		final String wantAfter = getAfterWord(index);
+		final CharSequence wantBefore= getWord(index);
+		final CharSequence wantAfter = getAfterWord(index);
 		//获得光标前后的单词，并开始查找
 
 		Runnable run = new Runnable(){
@@ -817,7 +758,7 @@ _________________________________________
 				long last = 0,now = 0;
 				last = System.currentTimeMillis();
 
-				List<Icon> Icons = SearchInGroup(wantBefore, wantAfter, 0, wantBefore.length());
+				List<Icon> Icons = SearchInGroup(wantBefore, wantAfter, 0, wantBefore.length(),getCompletorList());
 				//经过一次查找，Icons里装满了单词
 				now = System.currentTimeMillis();
 				Log.w("After SearchWords", "I take " + (now - last) + " ms, " + Epp.toString());
@@ -852,20 +793,19 @@ _________________________________________
 		    getPool().submit(run);//因为含有阻塞，所以将任务交给池子
 		else
 			run.run();
-
 	}
 
-	protected List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)
+	public List<Icon> SearchInGroup(final CharSequence wantBefore, final CharSequence wantAfter, final int before, final int after,List<EditListener> ls)
 	{
 		//用多线程在不同集合中找单词
-		List<EditListener> Group = getCompletorList();
+		List<EditListener> Group = ls;
 		ThreadPoolExecutor pool = getPool();
 		EditListenerItrator.RunLi<List<Icon>> run = new EditListenerItrator.RunLi<List<Icon>>(){
 
 			@Override
 			public List<Icon> run(EditListener li)
 			{
-				return ((EditCompletorListener)li).LetMeCompelet(wantBefore, wantAfter, before, after, WordLib);
+				return ((EditCompletorListener)li).LetMeCompelet(wantBefore, wantAfter, before, after, WordLib,CodeEdit. this);
 			}
 		};
 		
@@ -874,9 +814,9 @@ _________________________________________
 		return EditListenerItrator.foreach(Group, run);
 		//阻塞以获得所有单词
 	}
-	final public static List<String> SearchOnce(String wantBefore, String wantAfter, String[] target, int before, int after)
+	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, CharSequence[] target, int before, int after)
 	{
-		List<String> words=null;
+		List<CharSequence> words=null;
 		Array_Splitor. Idea ino = Array_Splitor.getNo();
 		Array_Splitor. Idea iyes = Array_Splitor.getyes();
 		if (!wantBefore.equals(""))
@@ -893,10 +833,10 @@ _________________________________________
 		return words;
 	}
 
-	final public static List<String> SearchOnce(String wantBefore, String wantAfter, Collection<String> target, int before, int after)
+	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target, int before, int after)
 	{
 		//同上
-		List<String> words=null;
+		List<CharSequence> words=null;
 		Array_Splitor. Idea ino = Array_Splitor.getNo();
 		Array_Splitor. Idea iyes = Array_Splitor.getyes();
 		if (!wantBefore.equals(""))
@@ -910,15 +850,15 @@ _________________________________________
 		return words;
 	}
 
-	final public static void addSomeWord(List<String> words, List<Icon> adapter, byte flag)
+	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, byte flag, int icon)
 	{
 		//排序并添加一组的单词块
 		if (words == null || words.size() == 0)
 			return;
 		Array_Splitor.sort(words);
 		Array_Splitor.sort2(words);
-		int icon = Share.getWordIcon(flag);
-		for (String word: words)
+	
+		for (CharSequence word: words)
 		{
 			Icon token = Epp.get();
 			token.setIcon(icon);
@@ -949,7 +889,7 @@ _________________________________________
 	}
 	
 	
-	final public void insertWord(String word, int index, int flag)
+	final public void insertWord(CharSequence word, int index, int flag)
 	{
 		IsModify++;
 		
@@ -964,12 +904,12 @@ _________________________________________
 
 		IsModify--;
 	}
-	protected void onInsertword(String word, int index, int flag)
+	protected void onInsertword(CharSequence word, int index, int flag)
 	{
 		Editable editor = getText();	
 
 		wordIndex tmp = tryWordSplit(editor.toString(), index);
-		wordIndex tmp2 = tryWordSplitAfter(getText().toString(), index);
+		wordIndex tmp2 = tryWordSplitAfter(editor.toString(), index);
 
 		editor.replace(tmp.start, tmp2.end, word);
 		setSelection(tmp.start + word.length());
@@ -1009,22 +949,25 @@ _________________________________________
 		getLineBounds(lines, bounds);
 		try
 		{
-		     DrawAndDraw(this,canvas,paint,bounds);
+			++IsModify;
+		    DrawAndDraw(this,canvas,paint,bounds,EditCanvaserListener.OnDraw,getCanvaserList());
+			super.onDraw(canvas);
+			DrawAndDraw(this,canvas,paint,bounds,EditCanvaserListener.AfterDraw,getCanvaserList());	
+			--IsModify;
 		}
 		catch (Exception e)
 		{
 			Log.e("OnDraw Error", e.toString());
 		}
-		super.onDraw(canvas);
+		
     }
 	
-	@Override
-	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
+	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds,int flag,List<EditListener> ls)
 	{
-		for (EditListener li:getCanvaserList())
-			((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, Cursor_bounds);
-	
+		for (EditListener li:ls)
+			((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, Cursor_bounds,flag);
 	}
+	
 	
 /*
 _________________________________________
@@ -1063,7 +1006,7 @@ _________________________________________
 
 			if (token.src == "")
 			{
-				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end).toString());
+				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end));
 				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
 				getText().delete(token.start, token.end);	
 				endSelection = token.start;
@@ -1077,7 +1020,7 @@ _________________________________________
 			}
 			else
 			{
-				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
+				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end));
 				//另外的，则是反向替换某个字符串
 			    getText().replace(token.start, token.end, token.src);
 				endSelection = token.start + token.src.length();
@@ -1103,7 +1046,7 @@ _________________________________________
 
 			if (token.src == "")
 			{
-				stack.put(token.start, token.start , getText().subSequence(token.start, token.end).toString());
+				stack.put(token.start, token.start , getText().subSequence(token.start, token.end));
 				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
 				getText().delete(token.start, token.end);
 				endSelection = token.start;
@@ -1117,7 +1060,7 @@ _________________________________________
 			}
 			else
 			{
-				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end).toString());
+				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end));
 				//另外的，则是反向替换某个字符串
 			    getText().replace(token.start, token.end, token.src);
 				endSelection = token.start + token.src.length();
@@ -1212,6 +1155,8 @@ _________________________________________
 		 这里需要注意的是，任何replace,insert,append,delete函数中都会调ontextChange
 		 另外的，replace并不分两次调用ontextChange，而是直接把删除count与插入after一并传过来，所以都得判断
 		 因此，start光标总是以在最前面的位置为准
+		 text就是EditText内部SpannableStringBuilder，它们是同步的，SpannableStringBuilder实现了CharSequence， Editable接口，则getText得到的也是这个
+		 另外的，getText().subSequence得到的也是SpannableStringBuilder
 		 */
 		@Override
 		public void beforeTextChanged(CharSequence str, int start, int count, int after)
@@ -1276,7 +1221,7 @@ _________________________________________
 			{
 				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 				//从现在start开始，插入start～start+count之间的字符串
-				stack.put(start, start, str.toString().substring(start , start + count));
+				stack.put(start, start, str.subSequence(start , start + count));
 				onPutUR(stack.seeLast());
 			}
 			if (after != 0)
@@ -1337,6 +1282,7 @@ _________________________________________
 			{		
 				//是否启用自动format
 				Insert(start);
+				//Format(start,start+lengthAfter);
 				//为了安全，不调用Format
 			}
 			
@@ -1344,14 +1290,15 @@ _________________________________________
 				//是否启用自动染色
 			    
 			    //试探起始行和之前之后的tryLines行，并染色
+				String src = text.toString();
 			    wordIndex tmp=new wordIndex(0,0,(byte)0);
-			    tmp.start=tryLine_Start(text.toString(),start);
-			    tmp.end=tryLine_End(text.toString(),start+lengthAfter);
+			    tmp.start=tryLine_Start(src,start);
+			    tmp.end=tryLine_End(src,start+lengthAfter);
 			    for(int i=1;i<tryLines;i++){
-				    tmp.start=tryLine_Start(text.toString(),tmp.start-1);
-				    tmp.end=tryLine_End(text.toString(),tmp.end+1);
+				    tmp.start=tryLine_Start(src,tmp.start-1);
+				    tmp.end=tryLine_End(src,tmp.end+1);
 				}
-			    reDrawColor(tmp.start,tmp.end);
+			    reDraw(tmp.start,tmp.end);
 			    
 			}
 			IsModify2=false;
@@ -1388,7 +1335,7 @@ _________________________________________
 	 
 _________________________________________
 */
-	final public static wordIndex tryWord(String src,int index){
+	final public static wordIndex tryWord(CharSequence src,int index){
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -1404,7 +1351,7 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static wordIndex tryWordAfter(String src,int index){
+	final public static wordIndex tryWordAfter(CharSequence src,int index){
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -1419,7 +1366,7 @@ _________________________________________
 		}
 		return tmp;
 	}
-	final public static int tryAfterIndex(String src,int index){
+	final public static int tryAfterIndex(CharSequence src,int index){
 		//试探后面的下一个非分隔符
 		while(index<src.length()
 			  &&src.charAt(index)!='<'
@@ -1446,7 +1393,7 @@ _________________________________________
 		return end;
 	}
 	
-	final public static wordIndex tryWordSplit(String src,int nowIndex){
+	final public static wordIndex tryWordSplit(CharSequence src,int nowIndex){
 		//试探纯单词
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
@@ -1460,7 +1407,7 @@ _________________________________________
 		}
 		return tmp;
 	}
-	final public static wordIndex tryWordSplitAfter(String src,int index){
+	final public static wordIndex tryWordSplitAfter(CharSequence src,int index){
 		//试探纯单词
 	    wordIndex tmp = Ep.get();
 		try{
@@ -1561,7 +1508,7 @@ _________________________________________
 			node.end+=start;
 		}
 	}
-	final public void reSAll(int start, int end, String want, String to)
+	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
 		IsModify++;
 		isFormat = true;
@@ -1596,7 +1543,9 @@ _________________________________________
 	public void IsModify(boolean is){
 		IsModify2 = is;
 	}
-	
+	public void IsDraw(boolean is){
+		isDraw = is;
+	}
 	final public size getCursorPos(int offset)
 	{
 		//获取光标坐标
@@ -1655,26 +1604,30 @@ _________________________________________
 		}
 		return Line;
 	}
-	
-	public Future subSpan(final int start,final int end){
-		//不同于prepare，subSpan会从start~end中截取所有span，无需创建span
-		Runnable run = new Runnable(){
-
-			@Override
-			public void run()
-			{
-				List<wordIndex> nodes = new ArrayList<>();
-				FindFor(start,end,getText().subSequence(start,end).toString(),nodes,buider);
-				buider.append( Colors.subSpan(start,end,nodes,getText()));
-			}
-		};
-		if(getPool()!=null)
-			return getPool().submit(run);
-		else
-			run.run();
-		return null;
+	public void setSpans(size[] nodes,Object[] spans,int start){
+		Colors.setSpans(nodes,spans,getText());
 	}
 	
+	public<T> void clearSpan(int start,int end,Class<T> type){
+		Object[] spans = getText().getSpans(start,end,type);
+		Editable editor = getText();
+		for(Object span: spans)
+		    editor.removeSpan(span);
+	}
+	public<T> size[] subSpanPos(int start,int end,Class<T> type){
+		Object[] spans = getText().getSpans(start,end,type);
+		size[] nodes = new size[spans.length];
+		Editable editor = getText();
+		
+		for(int i=0;i<spans.length;++i ){
+			size s = new size();
+			Object span = spans[i];
+			s.start= editor.getSpanStart(span);
+			s.end = editor.getSpanEnd(span);
+			nodes[i] = s;
+		}
+		return nodes;
+	}
 
 /*
     为你省下更多开辟和释放空间的时间，但可能占很多内存
@@ -1691,6 +1644,9 @@ _________________________________________
 		@Override
 		protected void resetE(wordIndex E)
 		{
+			E.start=0;
+			E.end=0;
+			E.b=-1;
 		}
 
 	}
@@ -1711,7 +1667,6 @@ _________________________________________
 
 	}
 	
-	
  /*
  _________________________________________
 
@@ -1722,44 +1677,46 @@ _________________________________________
  */
 	public static interface myDrawer extends Drawer{
 			
-		public void FindFor(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)
+		public List<wordIndex> FindFor(int start, int end, String text)
 		
-		public void onFindNodes(int start, int end, String text, List<wordIndex>nodes, SpannableStringBuilder builder)throws Exception
+		public void onFindNodes(int start, int end, String text, List<wordIndex>nodes,EditListener l)throws Exception
 		
-		public void Drawing(final int start, final int end, final List<wordIndex> nodes, final SpannableStringBuilder builder)
+		public void Drawing(final int start, final int end, final List<wordIndex> nodes)
 		
-		public void onDrawNodes(int start, int end, List<wordIndex> nodes, SpannableStringBuilder builder)throws Exception
+		public void onDrawNodes(int start, int end, List<wordIndex> nodes, EditListener l)throws Exception
 		
 	}
 	
 	
 	public static interface myFormator extends Formator{
 
-		public String onBeforeFormat(int start,int end)
+		public void onFormat(int start,int end,EditListener l)
 		
-		public void onFormat(int start, int end, String buffer)throws Exception
-		
-		public int onInsert(int index)throws Exception
+		public int onInsert(int index,EditListener l)throws Exception
 	
 	}
 	
 	
 	public static interface myCompletor extends Completor{
 
-		public List<Icon> SearchInGroup(final String wantBefore, final String wantAfter, final int before, final int after)
+		public List<Icon> SearchInGroup(final CharSequence wantBefore, final CharSequence wantAfter, final int before, final int after,List<EditListener> ls)
 		
 		public void callOnopenWindow(ListView Window)
 		
-		public void insertWord(String word, int index, int flag)
+		public void insertWord(CharSequence word, int index, int flag)
 		
-		public void onInsertword(String word, int index, int flag)
+		public void onInsertword(CharSequence word, int index, int flag)
 		
 		public ListView getWindow()
 	
 	}
 	
 	
-	public static interface myCanvaser extends Canvaser{}
+	public static interface myCanvaser {
+		
+		public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds,int flag,List<EditListener> ls)
+		
+	}
 	
 	
 	public static interface myUedoWithRedo extends UedoWithRedo{

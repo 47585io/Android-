@@ -27,7 +27,7 @@ public class String_Splitor
 		return false;
 	}
 
-	public static boolean indexOfNumber(String src){
+	public static boolean indexOfNumber(CharSequence src){
 		int i;
 	    for(i=0;i<src.length();i++){
 			if(!indexOfNumber(src.charAt(i)))
@@ -35,9 +35,9 @@ public class String_Splitor
 		}
 		return true;
 	}
-	public static String indexOfKey(String str,int nowIndex,Map<String,String> zhu_key_value){
-		for(String key: zhu_key_value.keySet()){
-		    if(str.indexOf(key,nowIndex)==nowIndex)
+	public static CharSequence indexOfKey(String str,int nowIndex,Map<CharSequence,CharSequence> zhu_key_value){
+		for(CharSequence key: zhu_key_value.keySet()){
+		    if(str.indexOf(key.toString(),nowIndex)==nowIndex)
 				return key;
 		}
 		return null;
@@ -95,7 +95,7 @@ public class String_Splitor
 		return count;
 	}
 	
-	public static int calaN(String src,int index){
+	public static int calaN(CharSequence src,int index){
 		int count = 0;
 		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){
 			if(src.charAt(index)=='\t'){
@@ -106,17 +106,15 @@ public class String_Splitor
 		}
 		return count;
 	}
-	public static String getNStr(String src,int n){
-		if(n<=0)
-			return "";
-		StringBuffer arr= new StringBuffer();
-		while(n-- !=0){
+	public static CharSequence getNStr(CharSequence src,int n){
+		StringBuffer arr= new StringBuffer("");
+		while(n-- >0){
 			arr.append(src);
 		}
 		return arr.toString();
 	}
 	
-	public static boolean isnullStr(String str){
+	public static boolean isnullStr(CharSequence str){
 		//字符串是否为null，是否为""，是否为全空格
 		if(str==null)
 			return true;
@@ -131,7 +129,7 @@ public class String_Splitor
 	}
 	
 	
-	public static String encode(String str, String charset) throws UnsupportedEncodingException {
+	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException {
 	    String zhPattern = "[\u4e00-\u9fa5]+";//正则表达式，用于匹配url里面的中文
 
 		Pattern p = Pattern.compile(zhPattern);

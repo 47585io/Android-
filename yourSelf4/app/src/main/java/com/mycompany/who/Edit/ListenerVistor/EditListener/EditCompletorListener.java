@@ -5,12 +5,13 @@ import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Share.Share2.*;
 import java.util.*;
+import android.widget.*;
 
 public abstract class EditCompletorListener extends EditListener
 {
-	public abstract Collection<String> onBeforeSearchWord(Words Wordlib);
+	public abstract Collection<CharSequence> onBeforeSearchWord(Words Wordlib,EditText self);
 	
-	public abstract void onFinishSearchWord(List<String> word,List<Icon> adpter);
+	public abstract void onFinishSearchWord(List<CharSequence> word,List<Icon> adpter,EditText self);
 	
 	public static<T> void toArray(Collection<T> coll,T[] arr){
 		if(coll!=null)
@@ -24,31 +25,31 @@ public abstract class EditCompletorListener extends EditListener
 		return coll;
 	} 
 	
-	final public List<Icon> LetMeCompelet(String wantBefore,String wantAfter,int before,int after,Words Wordlib)
+	final public List<Icon> LetMeCompelet(CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib,EditText self)
 	{
 		List<Icon> Adapter = null;
 		if(!Enabled())
 			return Adapter;
 		try{
-		    Adapter=Compelet(wantBefore,wantAfter,before,after,Wordlib);
+		    Adapter=Compelet(wantBefore,wantAfter,before,after,Wordlib,self);
 		}catch(Exception e){
 			Log.e("Completing Error", toString()+" "+e.toString());
 		}
 		return Adapter;
 	}
 	
-	protected List<Icon> Compelet(String wantBefore,String wantAfter,int before,int after,Words Wordlib){
+	protected List<Icon> Compelet(CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib,EditText self){
 		
-		Collection<String> lib;
-		List<String> words = null;
+		Collection<CharSequence> lib;
+		List<CharSequence> words = null;
 		List<Icon> Adapter=new ArrayList<>();
 			
-		lib = onBeforeSearchWord(Wordlib);
+		lib = onBeforeSearchWord(Wordlib,self);
 		if (lib != null && lib.size() != 0)
 		{
 			words =CodeEdit. SearchOnce(wantBefore, wantAfter, lib, before, after);
 		}
-		onFinishSearchWord(words, Adapter);
+		onFinishSearchWord(words, Adapter,self);
 		
 		return Adapter;
 	}

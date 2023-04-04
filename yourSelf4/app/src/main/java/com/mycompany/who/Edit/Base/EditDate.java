@@ -12,11 +12,11 @@ public class EditDate
 		RedoList=new Stack<>();
 	}
 
-	public void put(int start, int end, String src)
+	public void put(int start, int end, CharSequence src)
 	{
 		UedoList.push(new Token(start, end, src));
 	}
-	public void Reput(int start, int end, String src)
+	public void Reput(int start, int end, CharSequence src)
 	{
 		RedoList.push(new Token(start, end, src));
 	}
@@ -54,7 +54,7 @@ public class EditDate
 	
 	public static class Token
 	{
-		Token(int start, int end, String src)
+		Token(int start, int end, CharSequence src)
 		{
 			this.start=start;
 			this.end=end;
@@ -62,7 +62,7 @@ public class EditDate
 		}
 		public int start;
 		public int end;
-		public String src;
+		public CharSequence src;
 	}
 }
 

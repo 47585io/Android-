@@ -12,6 +12,10 @@ import org.xml.sax.ext.*;
 import android.util.*;
 import android.text.*;
 
+
+/*
+  一个bug:计算字符大小很麻烦，这里只管了纯英文字符
+*/
 public class Edit extends EditText implements Creat<Edit>
 {
 

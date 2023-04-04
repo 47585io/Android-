@@ -103,7 +103,7 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	{
 		boolean is = super.onKeyUp(keyCode,event);
 		if(Target!=null)
-			return Target. BubbleKeyEvent(keyCode,event);
+			return Target. onKeyUp(keyCode,event);
 		return is;
 	}
 
@@ -112,7 +112,7 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 	{
 		boolean is = super.onTouchEvent(event);
 		if(Target!=null)  
-			return Target.BubbleMotionEvent(event);
+			return Target.onTouchEvent(event);
 		return is;
 	}
 	

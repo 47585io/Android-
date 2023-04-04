@@ -538,15 +538,9 @@ public class PageHandler extends HasAll implements CodeEdit.IlovePool,EditGroup.
 			builder.insert(0,text);
 			builder.IsDraw(false);
 			
-			builder.setPool(null);
-			
-			builder.IsModify(true);
 			builder.Format(0,text.length());
-			builder.setPool(Group.getPool());
 			builder.reDraw(0,builder.calaEditLen());
-			builder.IsModify(false);
 			
-			builder.insert(builder.calaEditLen()," ");
 		}
 	}
 

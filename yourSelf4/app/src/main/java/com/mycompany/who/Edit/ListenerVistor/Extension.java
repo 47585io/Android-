@@ -6,6 +6,9 @@ import java.util.*;
 import android.widget.*;
 import com.mycompany.who.Edit.*;
 
+/*
+  更灵活的方案
+*/
 public abstract class Extension
 {
 	

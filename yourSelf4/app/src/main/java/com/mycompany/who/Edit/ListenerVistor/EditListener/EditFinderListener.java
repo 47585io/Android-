@@ -6,35 +6,27 @@ import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
+import android.widget.*;
 
 public abstract class EditFinderListener extends EditListener
 {
-	abstract public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib);
+	abstract public void OnFindWord(List<CodeEdit.DoAnyThing> totalList,Words WordLib,EditText self);
 	
-	abstract public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib);
+	abstract public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList,Words WordLib,EditText self);
 	
-	abstract public void OnClearFindWord(Words WordLib);
+	abstract public void OnClearFindWord(Words WordLib,EditText self);
 	
-	abstract public void OnClearFindNodes(int start,int end,String text,List<wordIndex> nodes);
+	abstract public void OnClearFindNodes(int start,int end,String text,EditText self,List<wordIndex> nodes);
 	
-	public Colors.ByteToColor2 BToC = null;
 	
-	public void setSapns(String text,List<wordIndex> nodes,SpannableStringBuilder builder){
-		builder.append(text);
-		Colors.ForeColorText(builder,nodes,getByteToColor());
-	}
-	public Colors.ByteToColor2 getByteToColor(){
-		return BToC;
-	}
-	
-	final public List<wordIndex> LetMeFind(int start, int end, String text, Words WordLib)
+	final public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib, EditText self)
 	{
 		if (!Enabled())
 			return null;
 
 		List<wordIndex> nodes = null;
 		try{
-		    nodes = Find(start,end,text,WordLib);
+		    nodes = Find(start,end,text,WordLib,self);
 		}
 		catch (Exception e)
 		{
@@ -44,19 +36,19 @@ public abstract class EditFinderListener extends EditListener
 		return nodes;
 	}
 
-	protected List<wordIndex> Find(int start, int end, String text, Words WordLib){
+	protected List<wordIndex> Find(int start, int end, String text,Words WordLib, EditText self){
 		
 		List<CodeEdit. DoAnyThing> totalList =new ArrayList<>() ;
 		List<wordIndex> nodes=new ArrayList<>();
 
-		OnFindWord(totalList, WordLib);
-		CodeEdit. startFind(text, totalList,nodes);
+		OnFindWord(totalList, WordLib,self);
+		CodeEdit. startFind(text.substring(start,end), totalList,nodes);
 		totalList.clear();
-		OnClearFindWord(WordLib);
+		OnClearFindWord(WordLib,self);
 		
-		OnFindNodes(totalList,WordLib);
-		CodeEdit. startFind(text, totalList,nodes);
-		OnClearFindNodes(start, end, text, nodes);
+		OnFindNodes(totalList,WordLib,self);
+		CodeEdit. startFind(text.substring(start,end), totalList,nodes);
+		OnClearFindNodes(start, end, text, self, nodes);
 		
 		return nodes;
 	}

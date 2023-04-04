@@ -22,7 +22,7 @@ public class Title extends HasAll
 
 	protected ReSpinner Spinner;
 	protected LinearLayout ButtonBar;
-	
+	protected ReSpinner More;
 	
 	public Title(Context cont){
 		super(cont);
@@ -47,13 +47,13 @@ public class Title extends HasAll
 	
 	final public static class Config_hesSize extends Config_Size2<Title>
 	{
-		
+
 		@Override
 		public void onPort(Title target, int src)
 		{
 			super.onPort(target, src);
-			trim(target.Spinner,width/2,height);
-			trim(target.ButtonBar,width/2,height);
+			trim(target.Spinner,(int)(width*0.6),height);
+			trim(target.ButtonBar,(int)(width*0.4),height);
 			trim(target,width,height);
 			//竖屏，Title大小为width和height，然后分配给两个子元素一半的宽
 			
@@ -64,6 +64,7 @@ public class Title extends HasAll
 			
 			RotateViewFromPortToLand(target.Spinner);
 			RotateViewFromPortToLand(target.ButtonBar);
+			target.setPadding(0,0,0,30);
 		}
 
 		@Override
@@ -72,19 +73,20 @@ public class Title extends HasAll
 			super.onLand(target, src);
 			
 			//Spinner和ButtonBar先保持原来的样子，其它的可以改变大小
-			trim(target.Spinner,height/2,width);
-			trim(target.ButtonBar,height/2,width); 
+			trim(target.Spinner,(int)(height*0.6),width);
+			trim(target.ButtonBar,(int)(height*0.4),width); 
 			trim(target,width,height);
 			//横屏，Title大小为改变后的width和height，然后分配给两个子元素一半的高
 			
-			RotateViewFromLandToPort(target.Spinner,height/2,width,height/2);
-			RotateViewFromLandToPort(target.ButtonBar,height/2,width,-width);
+			RotateViewFromLandToPort(target.Spinner,(float)(height*0.6),width,(float)(height*0.4));
+			RotateViewFromLandToPort(target.ButtonBar,(float)(height*0.4),width,-width);
 			
 			src = CastFlag(src);
 			target.setOrientation(src);
+			target.setPadding(0,0,30,0);
 			//设置排列方向为LinearLayout.VERTICAL
 		}
-		public void RotateViewFromLandToPort(View v,int width,int height,int y){
+		public void RotateViewFromLandToPort(View v,float width,float height,float y){
 			//绕中点旋转，这个可以画个图就好理解了，注意旋转后View的坐标轴也旋转了
 			v.setPivotX(width - height/2);
 			v.setPivotY(height/2);
@@ -128,9 +130,10 @@ public class Title extends HasAll
 		public void init(Title target, View root)
 		{
 			target. Configer = new Config_Level();
+			target.config = new Config_hesSize();
 			target.Spinner = root.findViewById(R.id.ReSpinner);
 			target.ButtonBar = root.findViewById(R.id.ButtonBar);
-		    target.config = new Config_hesSize();
+		    target.More = root.findViewById(R.id.More);
 		}
 
 	}
@@ -149,14 +152,15 @@ public class Title extends HasAll
 		@Override
 		public void config(Title target)
 		{
-			
 		}
 
 		@Override
 		public void ConfigSelf(Title target)
 		{
+			target.Spinner.setBackground(null);
+			target.More.setBackgroundResource(R.drawable.menu);
 		}
-
+		
 	}
 	
 }

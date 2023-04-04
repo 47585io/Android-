@@ -4,15 +4,19 @@ import android.text.*;
 import android.util.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
+import android.widget.*;
+import com.mycompany.who.Edit.Base.*;
 
 public abstract class EditDrawerListener extends EditListener
 {
-	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder, Editable editor)
+	abstract public void onDraw(final int start, final int end,String src, List<wordIndex> nodes, EditText self)
+	
+	final public void LetMeDraw(int start, int end,String src, List<wordIndex> nodes,EditText self)
 	{
 		try
 		{
 			if (Enabled())
-				Draw(start,end,nodes,builder,editor);
+				Draw(start,end,src,nodes,self);
 		}
 		catch (Exception e)
 		{
@@ -20,9 +24,20 @@ public abstract class EditDrawerListener extends EditListener
 		}
 	}
 
-	protected void Draw(int start, int end, List<wordIndex> nodes,SpannableStringBuilder builder, Editable editor){
-		onDraw(start, end, nodes,builder, editor);
+	protected void Draw(int start, int end,String src, List<wordIndex> nodes,EditText self){
+		onDraw(start, end,src, nodes, self);
 	}
-	abstract public void onDraw(final int start, final int end, List<wordIndex> nodes, SpannableStringBuilder builder, Editable editor)
+	
+	public Colors.ByteToColor2 BToC = null;
+
+	public Colors.ByteToColor2 getByteToColor(){
+		return BToC;
+	}
+	
+	public void setSpan(SpannableStringBuilder b,List<wordIndex> nodes){
+		wordIndex[] tmp = new wordIndex[nodes.size()];
+		nodes.toArray(tmp);
+		Colors.ForeColorText(b,tmp,getByteToColor());
+	}
 	
 }

@@ -18,7 +18,7 @@ public class OtherWords extends Words
 	public static final int words_key=6;
 	public static final int words_const=7;
 
-	public List<Collection<String>> mdates;
+	public List<Collection<CharSequence>> mdates;
 	
 	public OtherWords(int size){
 		super();
@@ -39,13 +39,13 @@ public class OtherWords extends Words
 	
 	public void add(int size){
 		while(size-->0){
-			Collection<String> col=Collections.synchronizedSet(new TreeSet<String>());
+			Collection<CharSequence> col=Collections.synchronizedSet(new TreeSet<>());
 			mdates.add(col);
 			//每个集合都是安全的
 		}
 	}
-	public void add(Collection<String> words){
-		Collection<String> col=Collections.synchronizedCollection(words);
+	public void add(Collection<CharSequence> words){
+		Collection<CharSequence> col=Collections.synchronizedCollection(words);
 		mdates.add(col);
 	}
 	
@@ -55,10 +55,10 @@ public class OtherWords extends Words
 	}
 	
 	
-	public Collection<String> getKeyword(){
+	public Collection<CharSequence> getKeyword(){
 		return mdates.get(words_key);
 	}
-	public Collection<String> getConstword(){
+	public Collection<CharSequence> getConstword(){
 		return mdates.get(words_const);
 	}
 	public char[] getFuhao(){
@@ -67,25 +67,25 @@ public class OtherWords extends Words
 	public char[] getSpilt(){
 		return spilt;
 	}
-	public Map<String,String> get_zhu(){
+	public Map<CharSequence,CharSequence> get_zhu(){
 		return zhu_key_value;
 	}
-	public Collection<String> getLastfunc(){
+	public Collection<CharSequence> getLastfunc(){
 		return mdates.get(words_func);
 	}
-	public Collection<String> getHistoryVillber(){
+	public Collection<CharSequence> getHistoryVillber(){
 		return mdates.get(words_vill);
 	}
-	public Collection<String> getThoseObject(){
+	public Collection<CharSequence> getThoseObject(){
 		return mdates.get(words_obj);
 	}
-	public Collection<String> getBeforetype(){
+	public Collection<CharSequence> getBeforetype(){
 		return mdates.get(words_type);
 	}
-	public Collection<String> getTag(){
+	public Collection<CharSequence> getTag(){
 		return mdates.get(words_tag);
 	}
-	public Collection<String> getAttribute(){
+	public Collection<CharSequence> getAttribute(){
 		return mdates.get(words_attr);
 	}
 	

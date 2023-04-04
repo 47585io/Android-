@@ -6,7 +6,7 @@ import com.mycompany.who.*;
 public class Words
 {
 	//所有单词
-	protected String[] keyword = new String[]{
+	protected CharSequence[] keyword = new String[]{
 		"goto","const",
 		"enum","assert",
 		"package","import",
@@ -26,7 +26,7 @@ public class Words
 		"register","explicit","extern",
 	};
 
-	protected String[] IknowTag= new String[]{	"*",
+	protected CharSequence[] IknowTag= new String[]{	"*",
 		"html",
 		"body",
 		"head",
@@ -131,22 +131,22 @@ public class Words
 		"image",
 		"animateTransform",};
 
-	protected String[] constword = new String[]{"null","true","false","NaN","NULL"};
-	public final static char[] fuhao= new char[]{
+	protected CharSequence[] constword = new String[]{"null","true","false","NaN","NULL"};
+	public static char[] fuhao= new char[]{
 		'(',')','{','}','[',']',
 		'=',';',',','.',':',
 		'+','-','*','/','%',
 		'^','|','&','<','>','?','@',
 		'!','~','\'','\n',' ','\t','#'
 	};
-	public final static char[] spilt= new char[]{
+	public static char[] spilt= new char[]{
         '\n',' ','\t','<','>',
 	};
 
-	public static Map<String,String> zhu_key_value;
+	public static Map<CharSequence,CharSequence> zhu_key_value;
 
 	static{
-		zhu_key_value= Collections.synchronizedMap(new HashMap<String,String>());
+		zhu_key_value= Collections.synchronizedMap(new HashMap<>());
 		sort();
 		zhu_key_value.put("//","\n");
 		zhu_key_value.put("/*","*/");

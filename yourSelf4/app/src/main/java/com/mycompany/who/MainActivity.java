@@ -36,8 +36,7 @@ public class MainActivity extends BaseActivity2
 
 	    Code.loadSize(Displaywidth,Displayheight,tmp);
 		Code.addEdit("/storage/emulated/0/htdocs/p.java");
-		
-		
+		//Code.addEdit("/storage/emulated/0/AppProjects/工程/Common/app/src/main/java/com/mycompany/common/Common/Getter.java");
 	}
 
 	@Override

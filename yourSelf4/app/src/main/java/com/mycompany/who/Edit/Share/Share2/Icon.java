@@ -4,26 +4,26 @@ public class Icon{
 	
 	private int icon;
 	private String path;
-	private String name;
+	private CharSequence name;
 	private byte flag;
 	
 	public Icon(){
 
 	}
-	public Icon(int resid,String name){
+	public Icon(int resid,CharSequence name){
 		this.icon=resid;
 		this.name=name;
 	}
-	public Icon(String path,String name){
+	public Icon(String path,CharSequence name){
 		this.path=path;
 		this.name=name;
 	}
 	
-	public String getName() {
+	public CharSequence getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(CharSequence name) {
         this.name = name;
     }
 

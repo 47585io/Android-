@@ -39,24 +39,24 @@ public class Array_Splitor
 		}
 	}
 	
-	public static void delSame(Collection<String> dst,Collection<String> src){
+	public static<T> void delSame(Collection<T> dst,Collection<T> src){
 		//删除dst中与src中相同的元素
 		for(Object o: dst.toArray()){
-			if(src.contains((String)o))
+			if(src.contains(o))
 				dst.remove(o);
 		}
 	}
-	public static void delSame(Collection<String> dst,String[] src){
+	public static void delSame(Collection<CharSequence> dst,CharSequence[] src){
 		for(Object o: dst.toArray()){
-			if(indexOf((String)o,src)!=-1)
+			if(indexOf((CharSequence)o,src)!=-1)
 				dst.remove(o);
 		}
 	}
 
-	public static void delNumber(Collection<String> dst){
+	public static void delNumber(Collection<CharSequence> dst){
 		//删除数字
 		for(Object o: dst.toArray()){
-			if(String_Splitor. indexOfNumber((String)o)){
+			if(String_Splitor. indexOfNumber((CharSequence)o)){
 				dst.remove(o);
 			}
 		}
@@ -80,7 +80,7 @@ public class Array_Splitor
 		return -1;  
 	}
 
-	public static int indexOf(String str,String[] keyword) {	
+	public static int indexOf(CharSequence str,CharSequence[] keyword) {	
 		//字符串是否在排好序的数组
 	    if(str.length()==0|| keyword==null)
 			return -1;
@@ -95,12 +95,12 @@ public class Array_Splitor
 		return -1;
 	}
 	
-	public static List<String> indexsOf(String str,String[] keyword,int start,Idea i) {	
+	public static List<CharSequence> indexsOf(CharSequence str,CharSequence[] keyword,int start,Idea i) {	
 		//查找数组中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.length==0)
 			return null;
-	    List<String> words = new ArrayList<String>();
-		for(String word:keyword){
+	    List<CharSequence> words = new ArrayList<>();
+		for(CharSequence word:keyword){
 			if(i.can(word,str,start)){
 				words.add(word);
 			}
@@ -109,12 +109,12 @@ public class Array_Splitor
 			return null;
 		return words;
 	}
-	public static List<String> indexsOf(String str,Collection<String> keyword,int start,Idea i) {	
+	public static List<CharSequence> indexsOf(CharSequence str,Collection<CharSequence> keyword,int start,Idea i) {	
 		//查找集合中所有出现了str的元素
 		if(str.length()==0 || keyword==null||keyword.size()==0)
 			return null;
-	    List<String> words = new ArrayList<String>();
-		for(String word:keyword){
+	    List<CharSequence> words = new ArrayList<>();
+		for(CharSequence word:keyword){
 			if(i.can(word,str,start)){
 				words.add(word);
 			}
@@ -126,11 +126,11 @@ public class Array_Splitor
 	
 
 	
-	public static void sort(List<String> words){
+	public static void sort(List<CharSequence> words){
 		//按长度排序
-		Collections.sort(words,new Comparator<String>(){
+		Collections.sort(words,new Comparator<CharSequence>(){
 				@Override
-				public int compare(String p1, String p2)
+				public int compare(CharSequence p1, CharSequence p2)
 				{
 					if(p1.length()>p2.length())
 						return 1;
@@ -141,11 +141,11 @@ public class Array_Splitor
 			});
 	}
 
-	public static void sort2(List<String> words){
+	public static void sort2(List<CharSequence> words){
 		//将大写字符放后面
-	    Collections.sort(words,new Comparator<String>(){
+	    Collections.sort(words,new Comparator<CharSequence>(){
 				@Override
-				public int compare(String p1, String p2)
+				public int compare(CharSequence p1, CharSequence p2)
 				{
 					if(p1.charAt(0)<p2.charAt(0)){
 						return 1;
@@ -231,15 +231,15 @@ public class Array_Splitor
 	
 	abstract public static class Idea
 	{
-		public abstract boolean can(String s,String want,int start);
+		public abstract boolean can(CharSequence s,CharSequence want,int start);
 	}
 	
 	
 	public static class INo extends Idea{
 		@Override
-		public boolean can(String s,String want,int start)
+		public boolean can(CharSequence s,CharSequence want,int start)
 		{
-			if(s.toLowerCase().indexOf(want.toLowerCase(),start)==start){
+			if(s.toString().toLowerCase().indexOf(want.toString().toLowerCase(),start)==start){
 				//字符串出现位置必须在start
 				return true;
 			}
@@ -248,9 +248,9 @@ public class Array_Splitor
 	}
 	public static class Iyes extends Idea{
 		@Override
-		public boolean can(String s,String want,int start)
+		public boolean can(CharSequence s,CharSequence want,int start)
 		{
-			if(s.toLowerCase().indexOf(want.toLowerCase(),start)!=-1){
+			if(s.toString().toLowerCase().indexOf(want.toString().toLowerCase(),start)!=-1){
 				////字符串出现位置可以在start后
 				return true;
 			}

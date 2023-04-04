@@ -3,20 +3,23 @@ package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import android.text.*;
 import java.util.*;
 import android.util.*;
+import android.widget.*;
 
 public abstract class EditInsertorListener extends EditListener
 {
-	private HashMap<String,String> words;
+	private HashMap<CharSequence,CharSequence> words;
 	public EditInsertorListener(){
-		words= new HashMap<String,String>();
+		words= new HashMap<>();
 	}
-	abstract public void putWords(HashMap<String,String> words)
 	
-	public int dothing_insert(Editable editor, int nowIndex){
+	abstract public void putWords(HashMap<CharSequence,CharSequence> words)
+	
+	public int dothing_insert(EditText self, int nowIndex){
+		Editable editor = self.getText();
 		String src = editor.toString();
-		for(String start:words.keySet()){
-			if(src.indexOf(start)==0){
-				String end = words.get(start);
+		for(CharSequence start:words.keySet()){
+			if(src.indexOf(start.toString())==0){
+				CharSequence end = words.get(start);
 				editor.insert(nowIndex+1,end);
 				return nowIndex+end.length();
 			}
@@ -24,13 +27,13 @@ public abstract class EditInsertorListener extends EditListener
 		return nowIndex+1;
 	}
 	
-	final public int LetMeInsert(Editable editor, int nowIndex)
+	final public int LetMeInsert(EditText self, int nowIndex)
 	{
 		int newIndex = nowIndex;
 		try
 		{
 			if (Enabled())
-				newIndex= Insert(editor,nowIndex);
+				newIndex= Insert(self,nowIndex);
 		}
 		catch (IndexOutOfBoundsException e)
 		{
@@ -40,7 +43,7 @@ public abstract class EditInsertorListener extends EditListener
 		return newIndex;
 	}
 	
-	protected int Insert(Editable editor, int nowIndex){
-		return dothing_insert(editor, nowIndex);
+	protected int Insert( EditText self, int nowIndex){
+		return dothing_insert(self, nowIndex);
 	}
 }
