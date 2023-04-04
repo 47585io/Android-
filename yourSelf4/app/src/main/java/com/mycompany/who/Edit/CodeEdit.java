@@ -814,6 +814,8 @@ _________________________________________
 		return EditListenerItrator.foreach(Group, run);
 		//阻塞以获得所有单词
 	}
+	
+	//在库中搜索单词，支持Span文本
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, CharSequence[] target, int before, int after)
 	{
 		List<CharSequence> words=null;
@@ -852,7 +854,7 @@ _________________________________________
 
 	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, byte flag, int icon)
 	{
-		//排序并添加一组的单词块
+		//排序并添加一组的单词块，支持Span文本
 		if (words == null || words.size() == 0)
 			return;
 		Array_Splitor.sort(words);
@@ -888,11 +890,10 @@ _________________________________________
 		return getCursorPos(Edit.getSelectionStart());
 	}
 	
-	
+	//插入单词，支持Span文本
 	final public void insertWord(CharSequence word, int index, int flag)
 	{
 		IsModify++;
-		
 		try
 		{
 			onInsertword(word,index,flag);
@@ -901,7 +902,6 @@ _________________________________________
 		{
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
-
 		IsModify--;
 	}
 	protected void onInsertword(CharSequence word, int index, int flag)

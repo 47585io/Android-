@@ -482,10 +482,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.getText().delete(start,end);
-					return null;
 				}
 			};
 		    d.dofor(start,end);
@@ -559,10 +558,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.reSAll(start,end,want,to);
-					return null;
 				}
 			};
 			d.dofor(start,end);
@@ -580,38 +578,39 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.reDraw(start, end);
-					return null;
 				}
 			};
 			d.dofor(start,end);
 		}
 		public List<Future> prepare(int start,int end)
 		{
+			final List<Future> results = new ArrayList<>();
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
-					return Edit.prepare(start,end,Edit.getText().toString());
+					Future f = Edit.prepare(start,end,Edit.getText().toString());
+					results.add(f);
 				}
 
 			};
-			return d.dofor(start,end);
+		    d.dofor(start,end);
+			return results;
 		}
-		public CharSequence subSpan(int start,int end)
+		public CharSequence subSequence(int start,int end)
 		{
 			final SpannableStringBuilder text = new SpannableStringBuilder();
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
 				   CharSequence tmp = Edit.getText().subSequence(start,end);
 				   text.append(tmp);
-			       return null;
 				}
 
 			};
@@ -629,10 +628,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				Future doOnce(int start, int end, CodeEdit Edit)
+				void doOnce(int start, int end, CodeEdit Edit)
 				{
 					 Edit.Format(start, end);
-					 return null;
 				}
 			};
 			d.dofor(start,end);
@@ -668,33 +666,29 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 
 		abstract class DoForAnyOnce
 		{
-			public List<Future> dofor(int start,int end)
+			public void dofor(int start,int end)
 			{
 				size s = new size();
 				size e = new size();
 				calaRange(start, end,s,e);
 				
-				List<Future> results = new ArrayList<>();
-				
 				//单个编辑器的情况下
 				if(s.start==e.start){
-					results.add(doOnce(s.end,e.end,EditList.get(s.start)));
-					return results;
+					doOnce(s.end,e.end,EditList.get(s.start));
 				}
 				
 				//多个编辑器的情况下
-				results.add( doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++)));
+				doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++));
 				//第一个编辑器的开头是start.end，结尾是它的长度
 				for (;s.start < e.start;s.start++)
 				{
-					results.add( doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start)));
+					doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start));
 					//中间编辑器的开头是0,结尾是它的长度
 				}
-				results.add( doOnce(0, e.end, EditList.get(e.start)));
+			    doOnce(0, e.end, EditList.get(e.start));
 				//最后一个编辑器的开头是0，结尾是end.end
-				return results;
 			}
-			abstract Future doOnce(int start, int end, CodeEdit Edit)
+			abstract void doOnce(int start, int end, CodeEdit Edit)
 		}
 
 		public int calaEditLen(){

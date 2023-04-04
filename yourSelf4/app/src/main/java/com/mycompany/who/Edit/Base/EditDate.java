@@ -63,6 +63,7 @@ public class EditDate
 		public int start;
 		public int end;
 		public CharSequence src;
+		//支持保存Span文本
 	}
 }
 

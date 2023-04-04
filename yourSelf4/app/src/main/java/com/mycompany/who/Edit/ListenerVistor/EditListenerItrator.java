@@ -25,20 +25,17 @@ public abstract class EditListenerItrator
 			return;
 		}
 		
-		List<Future<Boolean>> results = new ArrayList<>();
+		List<Future> results = new ArrayList<>();
 		for(final EditListener li:lis){
-			Callable<Boolean> ca = new Callable<Boolean>(){
+			Runnable run = new Runnable(){
 
 				@Override
-				public Boolean call()
+				public void run()
 				{
-					try{
-					Callback.runSelf(li);
-					}catch(Exception e){}
-					return null;
+					Callback.runSelf(li);	
 				}
 			};
-			results.add( pool.submit(ca));
+			results.add(pool.submit(run));
 		}
 		FuturePool.FuturePop(results);
 	}

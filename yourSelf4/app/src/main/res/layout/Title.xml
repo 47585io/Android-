@@ -36,12 +36,14 @@
 			android:background="@drawable/Uedo"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
-		
+
 		<com.mycompany.who.View.ReSpinner
 			android:id="@+id/More"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"/>
-		
+			android:layout_height="wrap_content"
+			android:src="?android:attr/selectableItemBackgroundBorderless"
+			android:clickable="true"/>
+
 	</LinearLayout>
 
 </merge>

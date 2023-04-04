@@ -56,7 +56,14 @@ public abstract class Extension
 	}
 	
 	protected void onDestory(){}
+	
     abstract void getListeners(List<EditListener> lis)
+	
 	abstract void Init(EditListenerInfo self)
+	
+	
+	public static interface Extension_Spiltor{
+			
+	}
 	
 }

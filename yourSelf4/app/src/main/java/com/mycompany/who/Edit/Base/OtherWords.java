@@ -19,6 +19,7 @@ public class OtherWords extends Words
 	public static final int words_const=7;
 
 	public List<Collection<CharSequence>> mdates;
+	//支持保存Span单词，但可能有一些异常
 	
 	public OtherWords(int size){
 		super();

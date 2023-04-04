@@ -32,10 +32,10 @@ public class FuturePool
 		return date;
 	}
 	
-	public static<T> void FuturePop(Collection<Future<T>> results){
+		public static void FuturePop(Collection<Future> results){
 		try
 		{
-			for (Future<T> result:results)
+			for (Future result:results)
 				result.get();
 		}
 		catch (ExecutionException e)
@@ -44,9 +44,16 @@ public class FuturePool
 		{}
 	}
 	
-	public static<T> List<Future<T>> addTotals(Collection<Callable<T>> totals,ThreadPoolExecutor pool){
-		List<Future<T>> results= new ArrayList<>();
-		for(Callable<T> total:totals)
+	
+	public static List<Future> addTotals(Collection<Runnable> totals,ThreadPoolExecutor pool){
+		List<Future> results= new ArrayList<>();
+		for(Runnable total:totals)
+		    results.add(pool.submit(total));
+		return results;
+	}
+	public static List<Future> addTotalS(Collection<Callable> totals,ThreadPoolExecutor pool){
+		List<Future> results= new ArrayList<>();
+		for(Callable total:totals)
 		    results.add(pool.submit(total));
 		return results;
 	}

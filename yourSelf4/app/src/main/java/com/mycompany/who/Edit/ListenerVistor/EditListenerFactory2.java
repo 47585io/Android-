@@ -59,6 +59,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				E.clearSpan(start,end,Colors.SpanType);
 				wordIndex[] tmp = nodes.toArray(new wordIndex[nodes.size()]);
 				Colors.ForeColorText(self.getText(),tmp,start,null);
+				//清理旧的Span，设置新的Span
 			}
 
 		}
