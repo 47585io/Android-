@@ -38,7 +38,7 @@ public abstract class EditInsertorListener extends EditListener
 		catch (IndexOutOfBoundsException e)
 		{
 			Log.e("Inserting Error", toString()+" "+e.toString());
-			return nowIndex;
+			return -1;
 		}
 		return newIndex;
 	}

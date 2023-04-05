@@ -22,6 +22,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import android.content.res.*;
 import java.math.*;
+import android.text.style.*;
+import static com.mycompany.who.Edit.Base.Colors.*;
 
 /*
    整理是一切的开始
@@ -197,63 +199,58 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	
 	public void trimListener()
 	{
-		setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
-		getCanvaserList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
-		setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
-		setInsertor(EditListenerFactory2.InsertorFactory.getDefultInsertor());
-		setFinder(EditListenerFactory2.FinderFactory.getTextFinder());
-		List<EditListener> cs=getCompletorList();
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getVillBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getObjectBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getFuncBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getTypeBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getDefaultBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getKeyBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getTagBox());
+		if(mfactory!=null)
+			mfactory.trimListener(this);
 	}
-	
 	public void clearListener()
 	{
+		if(mfactory!=null)
+			mfactory.clearListener(this);
 	}
-	public void setFinder(EditListener li)
-	{
-		Info.mlistenerF = li;
-	}
-	public EditListener getFinder()
-	{
-		return Info.mlistenerF;
+	public List<EditListener> getFinderList(){
+		if(Info!=null)
+			return Info.mlistenerFS;
+		return null;
 	}
 	public void setDrawer(EditListener li)
 	{
-		Info.mlistenerD = li;
+		if(Info!=null)
+		    Info.mlistenerD = li;
 	}
 	public EditListener getDrawer()
 	{
-		return Info.mlistenerD;
+		if(Info!=null)
+		    return Info.mlistenerD;
+		return null;
 	}
 	public void setFormator(EditListener li)
 	{
-	    Info.mlistenerM = (EditFormatorListener)li;
-	}
-	public void setInsertor(EditListener li)
-	{
-		Info.mlistenerI = (EditInsertorListener)li;
+		if(Info!=null)
+	        Info.mlistenerM = (EditFormatorListener)li;
 	}
 	public EditListener getFormator()
 	{
-		return Info.mlistenerM;
+		if(Info!=null)
+		    return Info.mlistenerM;
+		return null;
 	}
-	public EditListener getInsertor()
+	public List<EditListener> getInsertorList()
 	{
-		return Info.mlistenerI;
+		if(Info!=null)
+		    return Info.mlistenerIS;
+		return null;
 	}
 	public List<EditListener> getCompletorList()
 	{
-		return Info.mlistenerCS;
+		if(Info!=null)
+		    return Info.mlistenerCS;
+		return null;
 	}
 	public List<EditListener> getCanvaserList()
 	{
-		return Info.mlistenerVS;
+		if(Info!=null)
+		    return Info.mlistenerVS;
+		return null;
 	}
 	public EditListenerInfo getInfo(){
 		return Info;
@@ -264,8 +261,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 
 	public void setLuagua(String Lua)
 	{
-		laugua = Lua;
-		mfactory.SwitchLuagua(this,Lua);
+		if(mfactory!=null){
+		    laugua = Lua;
+	        mfactory.SwitchLuagua(this,Lua);
+	    }
 	}
 	public String getLuagua(){
 		return laugua;
@@ -335,9 +334,9 @@ _________________________________________
  
  prepare：准备文本，其调用onFindNodes和getHTML
  
- onFindNodes: 真正的找操作写在这里
+ onFindNodes: 真正的找操作写在这里，可以给很多Listener查找
  
- onDrawNodes: 真正的染色操作写在这里
+ onDrawNodes: 真正的染色操作写在这里，同时只能有一个Listener修改
  
  注意，不要直接调用FindFor，而是调用obFindNodes
 	 
@@ -395,16 +394,11 @@ Dreawr
 		isDraw=true;
 
 		if(nodes!=null&&nodes.size()!=0){
-		    Editable editor=getText();
-		    String text = editor.toString().substring(start,end);
-		
 		    try{
 				wordIndex[] tmp = new wordIndex[nodes.size()];
 				nodes.toArray(tmp);
-		        SpannableStringBuilder builder= Colors.ForeColorText(text,tmp,null);
 			    //在Edit中的真实下标开始，将范围内的单词染色
-			    editor.replace(start,end,builder);
-	
+				Colors.ForeColorText(getText(),tmp,start,null);
 		    }catch(Exception e){
 			    Log.e("Draw Don't know！","  Has Error "+e.toString());
 		    }
@@ -422,7 +416,7 @@ Dreawr
 		if(Color==null)
 			Color = new Colors.myColor2();
 			
-		StringBuffer arr = new StringBuffer();
+		StringBuilder arr = new StringBuilder();
 		int index=0;
 		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Color.getDefultS()+";background-color: "+Color.getDefultBgS()+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
 		for(wordIndex node:nodes){
@@ -437,7 +431,29 @@ Dreawr
 		arr.append("<br><br><br><hr><br><br></body></html>");
 		return arr.toString();
 	}
-
+	final public static String getHTML(SpannableStringBuilder b){
+		size[] nodes = Colors. subSpanPos(0,b.length(),b,Colors.SpanType);
+		Object[] spans = b.getSpans(0,b.length(),Colors.SpanType);
+		int index = 0;
+		String text = b.toString();
+		StringBuilder arr = new StringBuilder();
+		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Colors.Default_+";background-color: "+Colors.Bg+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
+		
+		for(int i=0;i<spans.length;++i){
+			size node = nodes[i];
+			if(!( spans[i] instanceof ForegroundColorSpan))
+				continue;
+			ForegroundColorSpan span = (ForegroundColorSpan) spans[i];
+			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
+			if(node.start>index)
+				arr.append(Colors.textForeColor(text.substring(index,node.start),Colors.Default_));
+			arr.append(Colors. textForeColor(text.substring(node.start,node.end),Colors.toString(span.getForegroundColor())));
+			index=node.end;
+		}
+		arr.append("<br><br><br><hr><br><br></body></html>");
+		return arr.toString();
+	}
+	
 	final public void reDraw(final int start,final int end){
 		//立即进行一次默认的完整的染色	
 		Runnable run = new Runnable(){
@@ -477,10 +493,13 @@ Dreawr
 				SpannableStringBuilder b = new SpannableStringBuilder(text.substring(start,end));
 				try
 				{
-					nodes = onFindNodes(start, end, text,getFinder());
+					Ep.start();
+					nodes = onFindNodes(start, end, text,getFinderList());
 					((EditDrawerListener)getDrawer()).setSpan(b,nodes);
 					CodeEdit. this.buider = b;
-					HTML= getHTML(nodes,text.substring(start,end),((EditDrawerListener)getFinder()).getByteToColor());
+					CodeEdit. this.HTML = getHTML(b);
+					//HTML= getHTML(nodes,text.substring(start,end),((EditDrawerListener)getDrawer()).getByteToColor());
+					Ep.stop();
 				}
 				catch (Exception e){}
 			}
@@ -513,7 +532,7 @@ Dreawr
 		Ep.start();//开始记录
 		try
 		{
-		    nodes= onFindNodes(start, end, text,getFinder());
+		    nodes= onFindNodes(start, end, text,getFinderList());
 		}
 		catch (Exception e)
 		{
@@ -526,12 +545,15 @@ Dreawr
 	}
 	//FindNodes不会修改文本和使用Ep，所以可以直接调用
 	//且其支持任意EditFinderListener查找
-	public List<wordIndex> onFindNodes(int start, int end, String text, EditListener l)throws Exception
+	public List<wordIndex> onFindNodes(int start, int end, String text, List<EditListener> lis)throws Exception
 	{
-		EditFinderListener li = (EditFinderListener) l;
-		if(li!=null){
-		    List<wordIndex> tmp = li.LetMeFind(start, end,text,getWordLib(), this);
-		    return tmp;
+		List<wordIndex> nodes = new ArrayList<>();
+		if(lis!=null){
+			for(EditListener li:lis){
+		        List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end,text,getWordLib(), this);
+				nodes.addAll(tmp);
+			}
+		    return nodes;
 		}
 		return null;
 	}
@@ -606,12 +628,12 @@ Dreawr
 	
 格式化
 
-Format：负责大量文本的格式化
+Format：负责大量文本的格式化，为了避免多个Formator把文本改的乱七八糟，只能有一个Formator修改文本
 
-onFormat: 真正修改文本
+onFormat: 修改文本，只能有一个Listener修改文本
 
 
-Insert：即时插词
+Insert：即时插词，只能有一个Listener修改文本
 
 onInsert：被Insert时调度
 
@@ -673,7 +695,7 @@ _________________________________________
 
 		try
 		{
-		    count = onInsert(index,getInsertor());
+		    onInsert(index,getInsertorList());
 		}
 		catch (Exception e)
 		{
@@ -686,12 +708,15 @@ _________________________________________
 		return count;
 	}	
 
-	protected int onInsert(int index,EditListener l)throws Exception
+	protected void onInsert(int index,List<EditListener> lis)throws Exception
 	{
-		EditInsertorListener li = ((EditInsertorListener)l);
-		if(li!=null)
-		    return li.LetMeInsert(this, index);
-		return index;
+		if(lis!=null){
+			for(EditListener li:lis){
+		       int p = ((EditInsertorListener)li).LetMeInsert(this, index);
+			   if(p>=0)
+			       setSelection(p);
+			}  
+		}
 	}
 	
 
@@ -934,6 +959,8 @@ _________________________________________
    Canvaser
    
    你可以进行任意的绘制操作
+   
+   DrawAndDraw: 为所有Listener绘制
 
 _________________________________________
 
@@ -1125,7 +1152,7 @@ _________________________________________
  
 	 onBeforeTextChanged
 	 
-	 Uedo
+	 put Token
 	 
 	 Add or Del Lines
 	 
@@ -1258,6 +1285,8 @@ _________________________________________
 	 
 	-> reDraw
  
+	Insert和reDraw并不冲突，即使是延迟染色也没事，因为只有输入时才染色，Insert默认向后插入，所以没事
+	
  _________________________________________
 
 */
@@ -1508,6 +1537,7 @@ _________________________________________
 			node.end+=start;
 		}
 	}
+	
 	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
 		IsModify++;
@@ -1524,6 +1554,7 @@ _________________________________________
 		isFormat = false;
 		IsModify--;
 	}
+	
 	public void zoomBy(float size)
 	{
 		super.zoomBy(size);
@@ -1546,6 +1577,13 @@ _________________________________________
 	public void IsDraw(boolean is){
 		isDraw = is;
 	}
+	public void IsFormat(boolean is){
+		isFormat = is;
+	}
+	public void IsUR(boolean is){
+		isUR = is;
+	}
+	
 	final public size getCursorPos(int offset)
 	{
 		//获取光标坐标
@@ -1604,31 +1642,18 @@ _________________________________________
 		}
 		return Line;
 	}
+	
 	public void setSpans(size[] nodes,Object[] spans,int start){
 		Colors.setSpans(nodes,spans,getText());
 	}
-	
 	public<T> void clearSpan(int start,int end,Class<T> type){
-		Object[] spans = getText().getSpans(start,end,type);
-		Editable editor = getText();
-		for(Object span: spans)
-		    editor.removeSpan(span);
+		Colors.clearSpan(start,end,getText(),type);
 	}
 	public<T> size[] subSpanPos(int start,int end,Class<T> type){
-		Object[] spans = getText().getSpans(start,end,type);
-		size[] nodes = new size[spans.length];
-		Editable editor = getText();
-		
-		for(int i=0;i<spans.length;++i ){
-			size s = new size();
-			Object span = spans[i];
-			s.start= editor.getSpanStart(span);
-			s.end = editor.getSpanEnd(span);
-			nodes[i] = s;
-		}
-		return nodes;
+		return Colors.subSpanPos(start,end,getText(),type);
 	}
 
+	
 /*
     为你省下更多开辟和释放空间的时间，但可能占很多内存
 */
@@ -1644,9 +1669,6 @@ _________________________________________
 		@Override
 		protected void resetE(wordIndex E)
 		{
-			E.start=0;
-			E.end=0;
-			E.b=-1;
 		}
 
 	}
@@ -1679,27 +1701,27 @@ _________________________________________
 			
 		public List<wordIndex> FindFor(int start, int end, String text)
 		
-		public void onFindNodes(int start, int end, String text, List<wordIndex>nodes,EditListener l)throws Exception
+		public void onFindNodes(int start, int end, String text, List<wordIndex>nodes,List<EditListener> lis)throws Exception
 		
 		public void Drawing(final int start, final int end, final List<wordIndex> nodes)
 		
-		public void onDrawNodes(int start, int end, List<wordIndex> nodes, EditListener l)throws Exception
+		public void onDrawNodes(int start, int end, List<wordIndex> nodes, EditListener li)throws Exception
 		
 	}
 	
 	
 	public static interface myFormator extends Formator{
 
-		public void onFormat(int start,int end,EditListener l)
+		public void onFormat(int start,int end,EditListener li)
 		
-		public int onInsert(int index,EditListener l)throws Exception
+		public int onInsert(int index,List<EditListener> lis)throws Exception
 	
 	}
 	
 	
 	public static interface myCompletor extends Completor{
 
-		public List<Icon> SearchInGroup(final CharSequence wantBefore, final CharSequence wantAfter, final int before, final int after,List<EditListener> ls)
+		public List<Icon> SearchInGroup(final CharSequence wantBefore, final CharSequence wantAfter, final int before, final int after,List<EditListener> lis)
 		
 		public void callOnopenWindow(ListView Window)
 		
@@ -1711,13 +1733,11 @@ _________________________________________
 	
 	}
 	
-	
 	public static interface myCanvaser {
 		
-		public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds,int flag,List<EditListener> ls)
+		public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds,int flag,List<EditListener> lis)
 		
 	}
-	
 	
 	public static interface myUedoWithRedo extends UedoWithRedo{
 		
@@ -1733,7 +1753,6 @@ _________________________________________
 		
 	}
 	
-	
 	public static interface UseListener{
 		
 		public EditListenerInfo getInfo()
@@ -1744,12 +1763,13 @@ _________________________________________
 		
 		public void clearListener()
 		
-		public void addListener(EditListener li)
+	}
+	
+	public static interface myChroot{
 		
-		public void delListener(EditListener li)
-		
-		public void EnabelListener(boolean is)
-		
+		public void compareChroot(EditChroot f)
+			
+		public EditChroot getChroot()
 	}
 	
 	

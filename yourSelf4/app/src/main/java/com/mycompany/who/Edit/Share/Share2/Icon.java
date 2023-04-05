@@ -3,7 +3,7 @@ package com.mycompany.who.Edit.Share.Share2;
 public class Icon{
 	
 	private int icon;
-	private String path; //通过icon或文件路径加载文本
+	private String path; //通过icon或文件路径加载图像
 	private CharSequence name; //支持Span文本
 	private byte flag;
 	

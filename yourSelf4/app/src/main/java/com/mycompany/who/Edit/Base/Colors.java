@@ -4,6 +4,7 @@ import android.text.*;
 import android.text.style.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
+import android.graphics.*;
 
 public class Colors
 {
@@ -18,15 +19,46 @@ public class Colors
 	public static int Function =0xff99c8ea;
 	public static int Type=0xffd4b876;
 	public static int Object =0xffd4b876;//金币
-
 	public static int Attribute=0xffcd9861;//枣
 	public static int Tag=0xffde6868;
-
 	public static int CSS_id=0xff99c8ea;
 	public static int CSS_class=0xffd4b876;
 	public static int CSS_felement=0xff57adbb;//淡湖绿
-
 	public static int Bg = 0xff1c2025;
+	
+	public static String Default_ ="#abb2bf";//灰白
+	public static String zhuShi_ ="#585f65";//深灰
+	public static String Str_="#98c379";//青草奶油
+	public static String FuHao_ ="#99c8ea";//蓝
+	public static String Number_="#ff9090";//橙红柚子
+	public static String KeyWord_="#cc80a9";//桃红乌龙
+	public static String Const_ ="#cd9861";//枯叶黄
+	public static String Villber_ ="#ff9090";
+	public static String Function_ ="#99c8ea";
+	public static String Type_="#d4b876";
+	public static String Attribute_="#cd9861";//枣
+	public static String Tag_="#de6868";
+	public static String Object_ ="#d4b876";//金币
+	public static String CSS_id_="#99c8ea";
+	public static String CSS_class_="#d4b876";
+	public static String CSS_felement_="#57adbb";//淡湖绿
+	
+	public final static byte color_white=0;
+	public final static byte color_zhu=1;
+	public final static byte color_str=2;
+	public final static byte color_fuhao=3;
+	public final static byte color_number=4;
+	public final static byte color_key=5;
+	public final static byte color_const=6;
+	public final static byte color_villber=7;
+	public final static byte color_func=8;
+	public final static byte color_type=9;
+	public final static byte color_obj=10;
+	public final static byte color_tag=11;
+	public final static byte color_attr=12;
+	public final static byte color_cssid=13;
+	public final static byte color_csscla=14;
+	public final static byte color_cssfl=15;
 	
 	public static int fromByteToColor(byte b){
 		switch(b){
@@ -50,26 +82,6 @@ public class Colors
 		return 0;
 	}
 
-	public static String Default_ ="#abb2bf";//灰白
-	public static String zhuShi_ ="#585f65";//深灰
-	public static String Str_="#98c379";//青草奶油
-	public static String FuHao_ ="#99c8ea";//蓝
-	public static String Number_="#ff9090";//橙红柚子
-	public static String KeyWord_="#cc80a9";//桃红乌龙
-	public static String Const_ ="#cd9861";//枯叶黄
-	public static String Villber_ ="#ff9090";
-	public static String Function_ ="#99c8ea";
-	public static String Type_="#d4b876";
-
-	public static String Attribute_="#cd9861";//枣
-	public static String Tag_="#de6868";
-
-	public static String Object_ ="#d4b876";//金币
-
-	public static String CSS_id_="#99c8ea";
-	public static String CSS_class_="#d4b876";
-	public static String CSS_felement_="#57adbb";//淡湖绿
-
 	public static String fromByteToColorS(byte b){
 		switch(b){
 			case 0: return Default_;
@@ -89,67 +101,26 @@ public class Colors
 			case 14:return CSS_class_;
 			case 15:return CSS_felement_;
 		}
-		return null;
-	}
-	
-	public static final char End = '#';
-	public static final char End2 = 'x';
-	
-	public static int vualeOf(String color){
-		int vuale=0;
-		for(int i=color.length()-1;i>-1&&color.charAt(i)!=End&&color.charAt(i)!=End2;--i){
-			int number = color.charAt(i)-'0';
-			vuale+= number*Math.pow(16,color.length()-i-1);
-		}
-		return vuale;
-	}
-	public static String toString(int color){
-		StringBuilder b= new StringBuilder();
-		while(color>15){
-			b.insert( 0,numberC(color%16));
-			color/=16;
-		}
-		b.insert(0,"0x");
-		return b.toString();
-	}
-	
-	public static String numberC(int n){
-		if(n>=0||n<=9)
-			return String.valueOf(n);
-		switch(n){
-			case 10:
-				return "a";
-			case 11:
-				return "b";
-			case 12:
-				return "c";
-			case 13:
-				return "d";
-			case 14:
-				return "e";
-			case 15:
-				return "f";
-		}
 		return "";
 	}
 	
-	public final static byte color_white=0;
-	public final static byte color_zhu=1;
-	public final static byte color_str=2;
-	public final static byte color_fuhao=3;
-	public final static byte color_number=4;
-	public final static byte color_key=5;
-	public final static byte color_const=6;
-	public final static byte color_villber=7;
-	public final static byte color_func=8;
-	public final static byte color_type=9;
-	public final static byte color_obj=10;
-	public final static byte color_tag=11;
-	public final static byte color_attr=12;
-	public final static byte color_cssid=13;
-	public final static byte color_csscla=14;
-	public final static byte color_cssfl=15;
-	
+	public static int vualeOf(String color){
+		return Integer.parseInt(color,16);
+	}
+	public static String toString(int color){
+		int red = Color.red(color);
+		int green = Color.green(color);
+		int blue = Color.blue(color);
+		int alpha = Color.alpha(color);
+		StringBuilder b = new StringBuilder();
+		b.append("rgba(");
+		b.append(red+",");
+		b.append(green+",");
+		b.append(blue+",");
+		b.append(alpha+")");
+		return b.toString();
+	}
+
 	
 	/* 自定义您的颜色  */
 	public static interface ByteToColor{
@@ -178,13 +149,13 @@ public class Colors
 		@Override
 		public int fromByteToColor(byte b)
 		{
-			return fromByteToColor(b);
+			return Colors. fromByteToColor(b);
 		}
 
 		@Override
 		public String fromByteToColorS(byte b)
 		{
-			return fromByteToColorS(b);
+			return Colors. fromByteToColorS(b);
 		}
 		
 	}
@@ -236,18 +207,15 @@ public class Colors
 				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 	}
-	public static void ForeColorText(SpannableStringBuilder builder,wordIndex[] nodes,ByteToColor Colors){
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        builder.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			else
-				builder.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}
-	}
-	public static Spanned ForeColorText(String text,String color) {
+	public static Spanned ForeColorText(CharSequence text,String color) {
 		//返回具有样式的Spanned
 		//因效率问题，已禁用
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
+	}
+	public static SpannableStringBuilder ForeColorText(CharSequence text,int color){
+		SpannableStringBuilder b = new SpannableStringBuilder(text);
+		b.setSpan(new ForegroundColorSpan(color),0,text.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		return b;
 	}
 	
 	public static SpannableStringBuilder BackColorText(CharSequence src,wordIndex[] nodes,ByteToColor Colors){
@@ -269,14 +237,10 @@ public class Colors
 				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 	    }
 	}
-	public static void BackColorText(SpannableStringBuilder builder,wordIndex[] nodes,ByteToColor Colors){
-		for(wordIndex node:nodes){
-			if(builder==null)
-		        builder.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			else
-				builder.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			
-	    }
+	public static SpannableStringBuilder BackColorText(CharSequence text,int color){
+		SpannableStringBuilder b = new SpannableStringBuilder(text);
+		b.setSpan(new BackgroundColorSpan(color),0,text.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		return b;
 	}
 	
 	public static String textForeColor(String src,String fgcolor){
@@ -321,19 +285,31 @@ public class Colors
 			editor.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 	}
-	public static void setSpans(size[] nodes,Object[] spans,SpannableStringBuilder builder){
-		int i;
-		for(i=0;i<nodes.length;++i){
+	
+	public static<T> size[] subSpanPos(int start,int end,Editable editor,Class<T> type){
+		Object[] spans = editor.getSpans(start,end,type);
+		size[] nodes = new size[spans.length];
+		
+		for(int i=0;i<spans.length;++i ){
+			size s = new size();
 			Object span = spans[i];
-			size node = nodes[i];
-			builder.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			s.start= editor.getSpanStart(span);
+			s.end = editor.getSpanEnd(span);
+			nodes[i] = s;
 		}
+		return nodes;
+	}
+	public static<T> void clearSpan(int start,int end,Editable editor,Class<T> type){
+		Object[] spans = editor.getSpans(start,end,type);
+		for(Object span: spans)
+		    editor.removeSpan(span);
 	}
 	
 	
-	public static Class SpanType = ParcelableSpan.class;
 	
-	public static Class BackSpanType = BackgroundColorSpan.class;
+	public static Class<ParcelableSpan> SpanType = ParcelableSpan.class;
 	
-	public static Class ForeSpanType = ForegroundColorSpan.class;
+	public static Class<BackgroundColorSpan> BackSpanType = BackgroundColorSpan.class;
+	
+	public static Class<ForegroundColorSpan> ForeSpanType = ForegroundColorSpan.class;
 }

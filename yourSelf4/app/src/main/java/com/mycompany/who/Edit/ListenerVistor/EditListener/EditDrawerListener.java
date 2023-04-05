@@ -37,7 +37,7 @@ public abstract class EditDrawerListener extends EditListener
 	public void setSpan(SpannableStringBuilder b,List<wordIndex> nodes){
 		wordIndex[] tmp = new wordIndex[nodes.size()];
 		nodes.toArray(tmp);
-		Colors.ForeColorText(b,tmp,getByteToColor());
+		Colors.ForeColorText(b,tmp,0,getByteToColor());
 	}
 	
 }

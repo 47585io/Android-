@@ -19,6 +19,39 @@ public class EditListenerFactory2 implements EditListenerFactory
 {
 
 	@Override
+	public void clearListener(EditText Edit)
+	{
+		CodeEdit E = (CodeEdit) Edit;
+		E.getFinderList().clear();
+		E.setDrawer(null);
+		E.setFormator(null);
+		E.getInsertorList().clear();
+		E.getCompletorList().clear();
+		E.getCanvaserList().clear();
+	}
+
+
+	@Override
+	public void trimListener(EditText Edit)
+	{
+		CodeEdit E = (CodeEdit) Edit;
+		E. setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
+		E.getCanvaserList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
+		E.setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
+		E.getInsertorList().add((EditListenerFactory2.InsertorFactory.getDefultInsertor()));
+		//E.getFinderList().add((EditListenerFactory2.FinderFactory.getTextFinder()));
+		List<EditListener> cs=E.getCompletorList();
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getVillBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getObjectBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getFuncBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getTypeBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getDefaultBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getKeyBox());
+		cs.add(EditListenerFactory2.EditCompletorBoxes.getTagBox());
+	}
+	
+
+	@Override
 	public void SwitchLuagua(EditText self, String Lua)
 	{
 		getFinderFactory().SwitchListener(self,Lua);
@@ -254,7 +287,8 @@ public class EditListenerFactory2 implements EditListenerFactory
 		public void SwitchListener(EditText Edit, String Lua)
 		{
 			EditListener li = ToLisrener(Lua);
-			((CodeEdit)Edit).setInsertor(li);
+			((CodeEdit)Edit).getInsertorList().clear();
+			((CodeEdit)Edit).getInsertorList().add(li);
 		}
 
 		public static EditListener getDefultInsertor()
@@ -280,24 +314,30 @@ public class EditListenerFactory2 implements EditListenerFactory
 				Editable editor = self.getText();
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
-
+				char nc = src.charAt(nowIndex+1);
+				
 				switch (c)
 				{
 					case '{':
-						editor.insert(nowIndex + 1, "}");
-						break;
+						if(nc!='}')
+						    editor.insert(nowIndex + 1, "}");
+						return nowIndex+1;
 					case '(':
-						editor.insert(nowIndex + 1, ")");
-						break;
+						if(nc!=')')
+						    editor.insert(nowIndex + 1, ")");
+						return nowIndex+1;
 					case '[':
-						editor.insert(nowIndex + 1, "]");
-						break;
+						if(nc!=']')
+						    editor.insert(nowIndex + 1, "]");
+						return nowIndex+1;
 					case '\'':
-						editor.insert(nowIndex + 1, "'");
-						break;
+						if(nc!='\'')
+						    editor.insert(nowIndex + 1, "'");
+						return nowIndex+1;
 					case '"':
-						editor.insert(nowIndex + 1, "\"");
-						break;
+						if(nc!='"')
+						    editor.insert(nowIndex + 1, "\"");
+						return nowIndex+1;
 					case '\n':
 						int index = CodeEdit.tryLine_Start(src, nowIndex);
 						int count = String_Splitor.calaN(src, index);
@@ -305,7 +345,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 						break;
 				}
 
-				return nowIndex + 1;
+				return -1;
 			}
 		}
 		
@@ -561,7 +601,8 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 			CodeEdit E = (CodeEdit) Edit;
 			EditListener li = ToLisrener(Lua);	
-			E.setFinder(li);
+			E.getFinderList().clear();
+			E.getFinderList().add(li);
 		}
 
 

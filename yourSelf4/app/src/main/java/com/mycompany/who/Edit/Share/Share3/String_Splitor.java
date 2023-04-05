@@ -98,16 +98,13 @@ public class String_Splitor
 	public static int calaN(CharSequence src,int index){
 		int count = 0;
 		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){
-			if(src.charAt(index)=='\t'){
-				count+=4;
-			}
 			count++;
 			index++;
 		}
 		return count;
 	}
 	public static CharSequence getNStr(CharSequence src,int n){
-		StringBuffer arr= new StringBuffer("");
+		StringBuilder arr= new StringBuilder("");
 		while(n-- >0){
 			arr.append(src);
 		}

@@ -6,13 +6,13 @@ import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 
 public class EditListenerInfo
 {
-	public EditListener mlistenerF;
+	public List<EditListener> mlistenerFS;
 	
 	public EditListener mlistenerD;
 	
 	public EditListener mlistenerM;
 	
-	public EditListener mlistenerI;
+	public List<EditListener> mlistenerIS;
 	
 	public List<EditListener> mlistenerCS;
 	
@@ -20,54 +20,68 @@ public class EditListenerInfo
 	
 	
 	public EditListenerInfo(){
+		mlistenerFS = new ArrayList<>();
+		mlistenerIS = new ArrayList<>();
 		mlistenerVS = new ArrayList<>();
 		mlistenerCS = new ArrayList<>();				
 	}
 	
 	
-	public void addAListener(EditListener li){
+	public boolean addAListener(EditListener li){
 		
 		if(li==null)
-			return;
+			return false;
 			
 		if(li instanceof EditFinderListener){
-			mlistenerF=li;
+			mlistenerFS.add(li);
+			return true;
 		}
 		else if(li instanceof EditDrawerListener){
 			mlistenerD=li;
+			return true;
 		}
 		else if(li instanceof EditFormatorListener){
 			mlistenerM=li;
+			return true;
 		}
 		else if(li instanceof EditInsertorListener){
-			mlistenerI=li;
+			mlistenerIS.add(li);
+			return true;
 		}
 		else if(li instanceof EditCompletorListener){
 			mlistenerCS.add(li);
+			return true;
 		}
 		else if(li instanceof EditCanvaserListener){
 			mlistenerVS.add(li);
+			return true;
 		}
+		return false;
 	}
 	
-	public void delAListener(EditListener li){
+	public boolean delAListener(EditListener li){
 		if(li==null)
-			return;
+			return false;
 		
 		if(li.equals(mlistenerD)){
 			mlistenerD=null;
+			return true;
 		}
-		else if(li.equals(mlistenerF)){
-			mlistenerF=null;
+		else if(mlistenerFS.remove(li)){
+			return true;
 		}
 		else if(li.equals(mlistenerM)){
 			mlistenerM=null;
+			return true;
 		}
-		else if(li.equals(mlistenerI)){
-			mlistenerI=null;
+		else if(mlistenerIS.remove(li)){
+			return true;
 		}
-		mlistenerCS.remove(li);
-		mlistenerVS.remove(li);
+		else if(mlistenerCS.remove(li))
+			return true;
+		else if(mlistenerVS.remove(li))
+			return true;
+		return false;
 	}
 	
 	public EditListener findListener(String name){

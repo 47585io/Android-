@@ -44,6 +44,7 @@ public abstract class EditFinderListener extends EditListener
 		OnFindWord(totalList, WordLib,self);
 		CodeEdit. startFind(text.substring(start,end), totalList,nodes);
 		totalList.clear();
+		nodes.clear();
 		OnClearFindWord(WordLib,self);
 		
 		OnFindNodes(totalList,WordLib,self);

@@ -19,4 +19,8 @@ public interface EditListenerFactory
 	
 	abstract public void SwitchLuagua(EditText Edit,String Lua)
 	
+	abstract public void trimListener(EditText Edit)
+	
+	abstract public void clearListener(EditText Edit)
+	
 }

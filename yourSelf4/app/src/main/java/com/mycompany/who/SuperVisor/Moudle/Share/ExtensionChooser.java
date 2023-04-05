@@ -1,7 +1,6 @@
 package com.mycompany.who.SuperVisor.Moudle.Share;
+import com.mycompany.who.Edit.ListenerVistor.*;
 import java.util.*;
-import java.security.cert.*;
-
 
 /*
 
@@ -15,22 +14,30 @@ import java.security.cert.*;
 
  Drawer之类的，将由用户选择一个默认的
 
-
- 一般地，一个Extension应该实现一个Runner和其对应的Listener，这由具体的Extension类决定
-
- 基类Extension拥有获取Listener和Runner的抽象方法，并且提供禁用和删除功能
-
- Extension分配的Listener和Runner实例的hashCode将被记录在列表中
-
- 若删除一个Extension，应该可以通过hashCode去所有编辑器中找，然后删除
-
- 若禁用一个Extension，应该可以通过hashCode去所有编辑器中找，然后将它的Enabled属性赋值false
-
- 若启用一个Extension，其和禁用做相反操作
-
  */
-public class ExtensionChooser
+public class ExtensionChooser implements Extension.Extension_Spiltor
 {
+
+	@Override
+	public void findExtension(String name)
+	{
+		
+	}
+	
+	@Override
+	public void addAExtension(com.mycompany.who.Edit.ListenerVistor.Extension E)
+	{
+		Extensions.add(E);
+		giveAllInfoForAExtension(E);
+	}
+
+	@Override
+	public void delAExtension(com.mycompany.who.Edit.ListenerVistor.Extension E)
+	{
+		if(Extensions.remove(E))
+		    E.Delete();
+	}
+	
 	List<Extension> Extensions;
 
 	public ExtensionChooser(){
@@ -38,5 +45,18 @@ public class ExtensionChooser
 	}
 	
 	
+	//给所有Extension一个Info
+	public void giveAInfoForAllExtension(EditListenerInfo Info){
+		for(Extension E:Extensions)
+		    E.creatListener(Info);
+	}
+	//给一个Extension所有Info
+	public void giveAllInfoForAExtension(Extension E){
+		for(Extension e:Extensions){
+			for(EditListenerInfo Info:e.getInfos()){
+				E.creatListener(Info);
+			}
+		}
+	}
 	
 }

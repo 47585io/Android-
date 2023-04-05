@@ -10,6 +10,8 @@ import android.widget.*;
 import com.mycompany.who.SuperVisor.*;
 import com.mycompany.who.Activity.*;
 import android.content.res.*;
+import java.util.*;
+import com.mycompany.who.Edit.Share.Share4.*;
 
 public class MainActivity extends BaseActivity2
 {
@@ -36,7 +38,14 @@ public class MainActivity extends BaseActivity2
 
 	    Code.loadSize(Displaywidth,Displayheight,tmp);
 		Code.addEdit("/storage/emulated/0/htdocs/p.java");
-		//Code.addEdit("/storage/emulated/0/AppProjects/工程/Common/app/src/main/java/com/mycompany/common/Common/Getter.java");
+		
+		EditGroup.EditBuilder b = Code.getPages().getEditGroup(0).getEditBuilder();
+		List<Future> r = b.prepare(0,b.calaEditLen());
+		FuturePool.FuturePop(r);
+		StringBuilder bu = new StringBuilder();
+		b.GetString(bu,null);
+		log.e(bu.toString(),true);
+		
 	}
 
 	@Override
@@ -45,7 +54,6 @@ public class MainActivity extends BaseActivity2
 		super.onResume();
 		//每次从后台切回前台都会重新调用
 	}
-	
 	
 	
 	protected void init(){

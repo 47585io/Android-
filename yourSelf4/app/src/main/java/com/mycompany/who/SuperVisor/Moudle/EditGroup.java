@@ -20,6 +20,7 @@ import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
 import com.mycompany.who.Edit.Share.Share3.*;
+import com.mycompany.who.SuperVisor.Moudle.Share.*;
 
 public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnTouchListener
 {
@@ -74,6 +75,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		super.init();
 		Creator = new GroupCreator(R.layout.EditGroup);
 		Creator.ConfigSelf(this);
+		setId(hashCode());
 	}
 
 	@Override
@@ -170,7 +172,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			//剩下的编辑器会复制第一个的Clip，因此不再添加，至于名字嘛...
 			CodeEdit E = EditList.get(0);
 			Edit = new RCodeEdit(getContext(),E );
+			EditListenerInfo Info= E.getInfo();
+			E.setInfo(null);  //不允许重复添加Listener
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
+			E.setInfo(Info);
 			Edit.compareChroot(root); //设置root
 		}
 		//组内的每个编辑器都设置Click
@@ -526,6 +531,24 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			for(CodeEdit E:EditList)
 			    E.setPool(pool);
 		}
+		public void setWordLib(Words Lib){
+			for(CodeEdit E:EditList)  
+			    E.setWordLib(Lib);
+		}
+		
+		public String getLuagua(){
+			return EditList.get(0).getLuagua();
+		}
+		public EditListenerInfo getInfo(){
+			return EditList.get(0).getInfo();
+		}
+		public EditListenerFactory getFactory(){
+			return EditList.get(0).getFactory();
+		}
+		public Words getWordLib(){
+			return EditList.get(0).getWordLib();
+		}
+		
 		public void lockThem(boolean is){
 			for(CodeEdit E:EditList)
 			    E.lockSelf(is);
@@ -779,50 +802,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	}
 
 
-	/*
-	 将int类型的数据作为指针传递
-
-	 对于同一个Int对象，可进行安全的读写操作
-
-	 注意，若以指针传递，小心误修改对象，少使用set
-	 */
-	final public static class Int
-	{
-
-		private int date;
-
-		public Int()
-		{
-			date = 0;
-		}
-		public Int(int d)
-		{
-			date = d;
-		}
-
-		public int get()
-		{
-			return date;
-		}
-		synchronized public void set(int d)
-		{
-			date = d;
-		}
-		synchronized public int add()
-		{
-			int before = date;
-			++date;
-			return before;
-		}
-		synchronized public int less()
-		{
-			int before = date;
-			--date;
-			return before;
-		}
-	}
-	
-	
 	//一顿操作后，EditGroup所有成员都分配好了空间
 	final static class GroupCreator extends Creator<EditGroup>
 	{

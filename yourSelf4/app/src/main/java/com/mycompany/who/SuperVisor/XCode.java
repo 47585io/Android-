@@ -100,6 +100,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			target.mTitle = root.findViewById(R.id.Title);
 			target.mPages = root.findViewById(R.id.PageHandler);
 			target.mDownBar = root.findViewById(R.id.DownBar);
+			
 			target.Configer = new Config_hesView(target);
 			target.config = new Config_ChildsPos(target);
 		}
@@ -243,7 +244,8 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			}
 			else if(is==Configuration.ORIENTATION_LANDSCAPE){
 				configT.set((int)(width*0.1),height,is,target.mTitle);
-				configP.set((int)(width*0.9),height,is,target.mPages);
+				configP.set(height,(int)(width*0.9),Configuration.ORIENTATION_PORTRAIT,target.mPages);
+				configP.change(target.mPages,is);
 			}
 			super.set(width,height,is,target);
 		}
