@@ -42,6 +42,8 @@ public class Colors
 	public static String CSS_id_="#99c8ea";
 	public static String CSS_class_="#d4b876";
 	public static String CSS_felement_="#57adbb";//淡湖绿
+	public static String Bg_ = "#1c2025";
+	
 	
 	public final static byte color_white=0;
 	public final static byte color_zhu=1;

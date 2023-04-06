@@ -22,29 +22,30 @@ import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
 import com.mycompany.who.Edit.Share.Share3.*;
 import com.mycompany.who.SuperVisor.Moudle.Share.*;
 
+
+/*
+  为提升编辑器效率，增加EditGroup
+  编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
+  解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
+
+  编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
+  解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
+  另外的，除EditText外，其它的View应尽量设置为固定大小，这可以减少测量时间
+
+  编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
+  解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
+
+*/
+
+/*
+  我什么也不知道
+  我只完善了Edit的功能，管理一组的Edit以及如何操作它们
+  我只在适时扩展大小
+  我需要Window，请让外部类给我Window，并尽可能地自己展示 
+*/
 public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnTouchListener
 {
 	
-  /*
-	 为提升编辑器效率，增加EditGroup
-	 编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
-	 解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
-
-	 编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
-	 解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
-	 另外的，除EditText外，其它的View应尽量设置为固定大小，这可以减少测量时间
-
-	 编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
-	 解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
-
-  */
-
-  /*
-	 我什么也不知道
-	 我只完善了Edit的功能，管理一组的Edit以及如何操作它们
-	 我只在适时扩展大小
-	 我需要Window，请让外部类给我Window，并尽可能地自己展示
-  */
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	protected Int EditFlag=new Int();
@@ -83,7 +84,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	{
 		return false;
 	}
-	
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -409,21 +409,15 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		return Edit.getCursorPos(Edit.getSelectionStart());
 	}
 	
+	//默认啥也不做，子类可以重写
 	protected class Clip extends EditCanvaserListener
 	{
+		@Override
+		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds){}
 
 		@Override
-		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
-		{
-			// TODO: Implement this method
-		}
-
-
-		@Override
-		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
-		{
-			//默认啥也不做，子类可以重写
-		}
+		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds){}
+		
 	}
 	protected EditCanvaserListener getOneClipCanvaser(){
 		return null;
@@ -595,7 +589,18 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			}
 			return String_Splitor.indexsOf(want,b.toString());
 		}
-	
+		public<T> void clearSpan(int start,int end,final Class<T>type){
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				void doOnce(int start, int end, CodeEdit Edit)
+				{
+				    Edit.clearSpan(start,end,type);
+				}
+			};
+			d.dofor(start,end);
+		}
+		
 		public void reDraw(int start, int end)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
@@ -608,6 +613,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			d.dofor(start,end);
 		}
+		
 		public List<Future> prepare(int start,int end)
 		{
 			final List<Future> results = new ArrayList<>();
@@ -624,6 +630,11 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		    d.dofor(start,end);
 			return results;
 		}
+		public void GetString(StringBuilder b,SpannableStringBuilder bu){
+			for(CodeEdit E : EditList){
+				E.GetString(b,bu);
+			}
+		}
 		public CharSequence subSequence(int start,int end)
 		{
 			final SpannableStringBuilder text = new SpannableStringBuilder();
@@ -639,11 +650,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			d.dofor(start,end);
 			return text;
-		}
-		public void GetString(StringBuilder b,SpannableStringBuilder bu){
-			for(CodeEdit E : EditList){
-				E.GetString(b,bu);
-			}
 		}
 		
 		public void Format(int start, int end)

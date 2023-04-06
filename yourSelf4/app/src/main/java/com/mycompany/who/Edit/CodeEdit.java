@@ -437,7 +437,7 @@ Dreawr
 		int index = 0;
 		String text = b.toString();
 		StringBuilder arr = new StringBuilder();
-		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Colors.Default_+";background-color: "+Colors.Bg+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
+		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Colors.Default_+";background-color: "+Colors.Bg_+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
 		
 		for(int i=0;i<spans.length;++i){
 			size node = nodes[i];
@@ -1235,7 +1235,7 @@ _________________________________________
 		 }
 		 */
 
-		if (isDraw || isUR)
+		if (isUR)
 		{
 			return;
 			//如果它是由于Uedo本身或无需处理的（例如染色）造成的修改，则不能装入

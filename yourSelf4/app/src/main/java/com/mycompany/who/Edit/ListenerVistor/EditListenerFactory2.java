@@ -12,8 +12,12 @@ import com.mycompany.who.Edit.Share.Share2.*;
 import com.mycompany.who.Edit.Share.Share3.*;
 import java.util.*;
 
+
 /*
+  各种Listener的工厂，可以直接get使用，或者继承，全部都是static
+
   若没有特殊情况，Extension关我什么事
+  
 */
 public class EditListenerFactory2 implements EditListenerFactory
 {
@@ -62,7 +66,16 @@ public class EditListenerFactory2 implements EditListenerFactory
 		getCanvaserFactory().SwitchListener(self,Lua);
 	}
 
-    //DrawerFactory
+/*
+    ___________________________________________________________________________________________________________________________
+    
+	DrawerFactory
+	
+	->  DefaultDrawer
+
+	___________________________________________________________________________________________________________________________
+	
+*/
 	public static class DrawerFactory implements Factory
 	{
 
@@ -100,9 +113,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-	//	___________________________________________________________________________________________________________________________
+/*	___________________________________________________________________________________________________________________________
 
-	//CanvaserFactory
+    CanvaserFactory
+	
+	->  DefaultCanvaser
+	
+	___________________________________________________________________________________________________________________________
+*/
+	
 	public static class CanvaserFactory implements Factory
 	{
 
@@ -151,10 +170,14 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-//	___________________________________________________________________________________________________________________________
+/*	___________________________________________________________________________________________________________________________
 
-	//FormatorFactory
-	//请完成XML
+	FormatorFactory
+	
+	->  DefaultFormator
+	 
+	___________________________________________________________________________________________________________________________
+*/
 
 	public static class FormatorFactory implements Factory
 	{
@@ -269,9 +292,18 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-//	___________________________________________________________________________________________________________________________
+/*	___________________________________________________________________________________________________________________________
 
 	//InsertorFactory
+	
+	  ->  DefaultInsertor
+	
+	  ->  XMLInsertor
+	  
+	___________________________________________________________________________________________________________________________
+	
+*/
+
 	public static class InsertorFactory implements Factory
 	{
 
@@ -373,9 +405,28 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-//	___________________________________________________________________________________________________________________________
+/*	
+    ___________________________________________________________________________________________________________________________
 
 	//EditCompletorBoxes
+	
+	  ->  keyBox
+	
+	  ->  DefultBox
+	
+	  ->  VillBox
+	
+	  ->  FuncBox
+	
+	  ->  ObjectBox
+	
+	  ->  TypeBox
+	
+	  ->  TagBox
+	
+	___________________________________________________________________________________________________________________________
+
+*/
 	public static class EditCompletorBoxes implements Factory
 	{
 
@@ -570,9 +621,26 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 	}
 
-//	___________________________________________________________________________________________________________________________
+	
+/*	
+    ___________________________________________________________________________________________________________________________
 
 	//FinderFactory
+	
+	  -> FinderText
+
+	  -> FinderJava
+ 
+	  -> FinderXML
+
+	  -> FinderCSS
+	 
+	  -> FinderHTML
+	 
+	___________________________________________________________________________________________________________________________
+	
+*/
+	
 	public static class FinderFactory implements Factory
 	{
 
@@ -999,22 +1067,23 @@ public class EditListenerFactory2 implements EditListenerFactory
 		return new CanvaserFactory();
 	}
 
-	/*
-	 _________________________________________
+	
+/*
+     _________________________________________
 
 	 AnyThingFactory
 
-	 AnyThingForText ->
+	   AnyThingForText ->
 
-	 -> AnyThingForXML
+	   -> AnyThingForXML
+ 
+	   -> AnyThingForJava
 
-	 -> AnyThingForJava
-
-	 -> AnyThingForCSS
+	   -> AnyThingForCSS
 
 	 _________________________________________
-
-	 */
+	 
+*/
 	public static class AnyThingFactory
 	{
 		//Text工厂
@@ -1816,4 +1885,3 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 
 	}
-}

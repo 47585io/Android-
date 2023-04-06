@@ -38,6 +38,7 @@ public abstract class EditListener extends Object
 	public String getName(){
 		return name;
 	}
+	
 	/* 
 	   解析参数比较麻烦，传参也很难，已废弃
 	public final void LetMeDo(EditText self,Object... args){

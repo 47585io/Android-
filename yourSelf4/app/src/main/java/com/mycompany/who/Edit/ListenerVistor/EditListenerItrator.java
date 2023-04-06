@@ -6,7 +6,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import javax.security.auth.callback.*;
 
-public abstract class EditListenerItrator
+
+public class EditListenerItrator
 {
 	public static void foreach(RunLi Callback,Collection<EditListener> lis){
 		if(lis==null)
