@@ -28,8 +28,10 @@ public class Interfaces
 			@Override
 			public void ConfigSelf(T target)
 			{
-				View tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
-				init(target,tmp);
+				View tmp = null;
+				if(id!=0)
+				    tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
+			    init(target,tmp);
 			}
 
 			abstract public void init(T target,View root)

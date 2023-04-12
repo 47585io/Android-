@@ -161,6 +161,13 @@ public class Colors
 		}
 		
 	}
+	Spanned h;
+	SpannedString h1;
+	Spannable h2;
+	SpannedString h3;
+	SpannableStringBuilder h4;
+	SpannableStringInternal h5;
+	SpanWatcher h6;
 	
 	public static class myColor2 extends myColor implements ByteToColor2
 	{

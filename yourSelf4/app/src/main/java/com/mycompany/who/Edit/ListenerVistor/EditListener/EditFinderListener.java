@@ -18,7 +18,6 @@ public abstract class EditFinderListener extends EditListener
 	
 	abstract public void OnClearFindNodes(int start,int end,String text,EditText self,List<wordIndex> nodes);
 	
-	
 	final public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib, EditText self)
 	{
 		if (!Enabled())

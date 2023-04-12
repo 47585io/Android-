@@ -17,6 +17,7 @@ public class MainActivity extends BaseActivity2
 {
 	private XCode Code;
 	private PageHandler handler;
+	private EditGroup Group;
 	protected ThreadPoolExecutor pool;
 	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	
@@ -26,6 +27,7 @@ public class MainActivity extends BaseActivity2
 		can=true;
 		super.onCreate(savedInstanceState);
 		init();
+		
 		Code = new XCode(this);
 		Code.config();
 		Code.setPool(pool);
@@ -37,9 +39,11 @@ public class MainActivity extends BaseActivity2
 			tmp = Configuration.ORIENTATION_PORTRAIT;
 
 	    Code.loadSize(Displaywidth,Displayheight,tmp);
-		Code.addEdit("/storage/emulated/0/htdocs/p.java");
+		Code.addEdit("/storage/emulated/0/Linux/1.java");
+		Code.addEdit(".html");
 		
-		EditGroup.EditBuilder b = Code.getPages().getEditGroup(0).getEditBuilder();
+		Group = (EditGroup) Code.getPages().getView(0);
+		EditGroup.EditBuilder b = Group.getEditBuilder();
 		List<Future> r = b.prepare(0,b.calaEditLen());
 		FuturePool.FuturePop(r);
 		StringBuilder bu = new StringBuilder();

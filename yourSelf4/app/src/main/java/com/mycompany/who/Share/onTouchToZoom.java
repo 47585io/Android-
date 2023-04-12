@@ -8,9 +8,21 @@ public abstract class onTouchToZoom implements OnTouchListener
 	abstract boolean onNarrow(View p1, MotionEvent p2);
 	abstract boolean onAmplification(View p1, MotionEvent p2);
 	
+	public static final boolean onAmplification = true;
+	public static final boolean onNarrow = false;
+	
 	@Override
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
+		boolean is = Iszoom(p2);
+		if(is)
+			return onAmplification(p1,p2);
+		else
+			return onNarrow(p1,p2);
+	}
+	
+	public static boolean Iszoom(MotionEvent p2){
+		
 		if (p2.getPointerCount() == 2 && p2.getHistorySize() != 0)
 		{
 			if (
@@ -39,10 +51,10 @@ public abstract class onTouchToZoom implements OnTouchListener
 				)
 				)
 				)		
-			    return onAmplification(p1,p2);
-			}
-			 
-			return onNarrow(p1,p2);
+			    return onAmplification;
+		}
+
+		return onNarrow;
 		
 	}
 	

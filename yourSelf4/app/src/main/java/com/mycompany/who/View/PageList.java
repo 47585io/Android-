@@ -7,8 +7,9 @@ import android.widget.*;
 import com.mycompany.who.Share.*;
 import java.util.*;
 import com.mycompany.who.Edit.Share.Share2.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
-public class PageList extends LinearLayout
+public class PageList extends HasAll
 {
 	private static int noRepeatId=-1;
 	private int nowIndex;
@@ -23,10 +24,6 @@ public class PageList extends LinearLayout
 	}
 	public PageList(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		mPages=new ArrayList<>();
-	}
-	public PageList(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
 		mPages=new ArrayList<>();
 	}
 

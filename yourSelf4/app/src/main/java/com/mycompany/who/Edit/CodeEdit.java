@@ -112,6 +112,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	
 	protected boolean isDraw=false;
 	protected boolean isFormat=false;
+	protected boolean isComplete=false;
 	protected boolean isUR=false;
 	protected int IsModify;
 	protected boolean IsModify2;
@@ -189,7 +190,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	public void Creat()
 	{
 		super.Creat();
-		WordLib=new OtherWords(6);
+		WordLib=new Words(6);
 		stack = new EditDate();
 		Info = new EditListenerInfo();
 		addTextChangedListener(new DefaultText());
@@ -277,7 +278,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 	
 	/*
-	  我真服了，在构造自己前会调用onTextChanged，这时候自己的成员全是null，
+	  我真服了，在super()中会调用setText("")，然后会调用onTextChanged，这时候自己的成员全是null，
 	  
 	  而是最坑的是: 居然也没有与外部类绑定，那么就不能直接在任何函数中返回外部类的成员，因为外部类对象为null
 	  
@@ -796,6 +797,7 @@ _________________________________________
 						@Override
 						public void run()
 						{
+							isComplete=true;
 							getWindow().setAdapter(adapter);
 							try
 							{
@@ -808,6 +810,7 @@ _________________________________________
 							Epp.stop();
 							Log.w("After OpenWindow", Epp.toString());
 							//将单词放入Window后回收
+							isComplete=false;
 						}
 					};
 					post(run2);//将UI任务交给主线程
@@ -1297,7 +1300,7 @@ _________________________________________
 			return;
 		//如果正被修改，不允许再次修改	
 		
-		if(Enabled_Complete){
+		if(Enabled_Complete&&!isComplete){
 			//是否启用自动补全
 			openWindow(getSelectionStart());
 		}
@@ -1479,28 +1482,34 @@ _________________________________________
 	public static class EditChroot{	
 	
 	    public EditChroot(){}
-		public EditChroot(boolean m,boolean d,boolean f,boolean u){
-			IsModify = m;
-			isDraw = d;
-			isFormat = f;
-			isUR = u;
+		public EditChroot(boolean m,boolean d,boolean f,boolean c,boolean u){
+			set(m,d,f,c,u);
 		}
 		public EditChroot(EditChroot o){
 			compare(o);
+		}
+		public void set(boolean m,boolean d,boolean f,boolean c,boolean u){
+			IsModify = m;
+			isDraw = d;
+			isFormat = f;
+			isComplete = c;
+			isUR = u;
 		}
 		public void compare(EditChroot f){
 			IsModify = f.IsModify;
 			isDraw = f.isDraw;
 			isFormat = f.isFormat;
+			isComplete = f.isComplete;
 			isUR = f.isUR;
 		}
 		public EditChroot getChroot(){
-			return new EditChroot(IsModify,isDraw,isFormat,isUR);
+			return new EditChroot(IsModify,isDraw,isFormat,isComplete,isUR);
 		}
 		
 		public boolean IsModify;
 		public boolean isDraw;
 		public boolean isFormat;
+		public boolean isComplete;
 		public boolean isUR;
 	}
 	
@@ -1562,14 +1571,16 @@ _________________________________________
 		    lines.zoomBy(size);
 		}
 	}
+	
 	public void compareChroot(EditChroot f){
 		IsModify2 = f.IsModify;
 		isDraw = f.isDraw;
 		isFormat = f.isFormat;
+		isComplete = f.isComplete;
 		isUR = f.isUR;
 	}
 	public EditChroot getChroot(){
-		return new EditChroot(IsModify2,isDraw,isFormat,isUR);
+		return new EditChroot(IsModify2,isDraw,isFormat,isComplete,isUR);
 	}
 	public void IsModify(boolean is){
 		IsModify2 = is;
@@ -1580,8 +1591,26 @@ _________________________________________
 	public void IsFormat(boolean is){
 		isFormat = is;
 	}
+	public void IsComplete(boolean is){
+		isComplete = is;
+	}
 	public void IsUR(boolean is){
 		isUR = is;
+	}
+	public boolean IsModify(){
+		return IsModify2;
+	}
+	public boolean IsDraw(){
+		return isDraw;
+	}
+	public boolean IsFormat(){
+		return isFormat;
+	}
+	public boolean IsComplete(){
+		return isComplete;
+	}
+	public boolean IsUR(){
+		return isUR;
 	}
 	
 	final public size getCursorPos(int offset)
@@ -1688,6 +1717,7 @@ _________________________________________
 		}
 
 	}
+	
 	
  /*
  _________________________________________

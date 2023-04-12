@@ -1,26 +1,29 @@
 package com.mycompany.who.SuperVisor.Moudle;
 
 import android.content.*;
+import android.content.res.*;
+import android.graphics.*;
+import android.text.*;
 import android.util.*;
 import android.view.*;
 import android.view.View.*;
 import android.widget.*;
+import com.mycompany.who.*;
 import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Edit.*;
+import com.mycompany.who.Edit.ListenerVistor.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.Share.Share1.*;
+import com.mycompany.who.Edit.Share.Share2.*;
+import com.mycompany.who.Edit.Share.Share3.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
+import com.mycompany.who.SuperVisor.Moudle.Share.*;
+import com.mycompany.who.View.*;
 import java.util.*;
 import java.util.concurrent.*;
-import com.mycompany.who.Edit.Share.Share4.*;
-import android.text.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import android.graphics.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.*;
-import com.mycompany.who.SuperVisor.Moudle.Config.*;
-import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
-import com.mycompany.who.Edit.Share.Share3.*;
-import com.mycompany.who.SuperVisor.Moudle.Share.*;
+import android.widget.AdapterView.*;
+import com.mycompany.who.Share.*;
 
 
 /*
@@ -40,8 +43,6 @@ import com.mycompany.who.SuperVisor.Moudle.Share.*;
 /*
   我什么也不知道
   我只完善了Edit的功能，管理一组的Edit以及如何操作它们
-  我只在适时扩展大小
-  我需要Window，请让外部类给我Window，并尽可能地自己展示 
 */
 public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnTouchListener
 {
@@ -49,10 +50,14 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	protected Int EditFlag=new Int();
+    protected Int EditDrawFlag=new Int();
 	protected Int historyId;
 	protected CodeEdit.EditChroot root;
 
+	protected ScrollBar Scro;
+	protected HScrollBar hScro;
 	protected LinearLayout ForEdit;
+	protected LinearLayout ForEditSon;
 	protected EditLine EditLines;
 	protected ListView mWindow;
 
@@ -76,7 +81,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		super.init();
 		Creator = new GroupCreator(R.layout.EditGroup);
 		Creator.ConfigSelf(this);
-		setId(hashCode());
 	}
 
 	@Override
@@ -87,11 +91,29 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	@Override
 	public boolean equals(Object obj)
 	{
-		if (obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag()))
+		if (super.equals(obj)||(obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag())))
 			return true;
 		return false;
 	}
 	
+	public ScrollView getScro(){
+		return Scro;
+	}
+	public HorizontalScrollView getHscro(){
+		return hScro;
+	}
+	public ViewGroup getForEdit(){
+		return ForEdit;
+	} 
+	public ViewGroup getForEditSon(){
+		return ForEditSon;
+	}
+	public EditLine getLines(){
+		return EditLines;
+	}
+	public ListView getWindow(){
+		return mWindow;
+	}
 
 	public EditBuilder getEditBuilder()
 	{
@@ -110,24 +132,18 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	{
 		return pool;
 	}
+		
 	@Override
-	public ListView getWindow()
-	{
-		return mWindow;
-	}
-	public EditLine getLines(){
-		return EditLines;
-	}
-
 	public void setWindow(ListView Window)
 	{
 		mWindow = Window;
-		builder.setWindow(Window);
+		getEditBuilder().setWindow(Window);
 	}
+	@Override
 	public void setPool(ThreadPoolExecutor pool)
 	{
 		this.pool = pool;
-		builder.setPool(pool);
+		getEditBuilder().setPool(pool);
 	}
 	public void setEditFactory(EditFactory factory)
 	{
@@ -142,7 +158,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		RCodeEdit Edit= creatAEdit(name);
 		Edit.index.set(EditList.size());
 		EditList.add(Edit);
-		ForEdit.addView(Edit);
+		getForEditSon().addView(Edit);
 	}
 	/* 为了安全，不允许调用 */
 	final private void AddEditAt(int index)
@@ -150,7 +166,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		RCodeEdit Edit= creatAEdit("");
 		Edit.index.set(index);
 		EditList.add(index, Edit);
-		ForEdit.addView(Edit, index);
+		getForEditSon().addView(Edit, index);
 		reIndex();
 	}
 
@@ -165,7 +181,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
 			Edit.getCanvaserList().add(getOneClipCanvaser());
 			mfactory. configEdit(Edit, name, this);
-			root = Edit.getChroot(); //复制root
 		}
 		else
 		{
@@ -176,10 +191,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			E.setInfo(null);  //不允许重复添加Listener
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
 			E.setInfo(Info);
-			Edit.compareChroot(root); //设置root
 		}
 		//组内的每个编辑器都设置Click
 		Edit.setOnClickListener(getOneClick());
+		Edit.compareChroot(root); //设置root
 		Edit.setTarget(this);
 		Edit.setId(Edit.hashCode());
 		return Edit;
@@ -201,14 +216,18 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	protected void trimToFather()
 	{
 		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-		size size = builder.WAndH();
+		size size = getEditBuilder().WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
-		trim(ForEdit, width - EditLines.maxWidth(), height);
-		trim(this, width, height);
-		config.set(width,height,0,this);
-		//为两个Edit的父元素扩展空间，一个ForEdit，一个this
+		trim(getForEditSon(), width - EditLines.maxWidth(), height);
+		trim(getForEdit(), width, height);
+		//为两个Edit的父元素扩展空间，一个ForEdit，一个ForEditSon
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
+		
+		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
+		config.EditWidth = width;
+		config.EditHeight = height;
+		//记得实际大小
 	}
 
 
@@ -264,7 +283,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 				return ;
 			//已经被修改，不允许再修改
 
-			Log.w("onTextChanged", "My index is " + index);
+			Log.w("onTextChanged", "My index is " + index.get());
 
 			if(EditFlag.get()==0)
 				trimToFather();    //第一个编辑器扩展大小
@@ -290,7 +309,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 
 			if (EditFlag.get() == 0)
 			{
-				int line = builder.calaEditLines();
+				int line = getEditBuilder().calaEditLines();
 				EditLines. reLines(line);	//最后一个编辑器单独计算行
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
@@ -353,14 +372,13 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			size pos=Calc(((RCodeEdit)Edit), EditGroup.this);
 			return pos;
 		}
-
+		
 		@Override
 		public boolean onKeyUp(int keyCode, KeyEvent event)
 		{
 			//只有获取焦点的View，才能被调用，并继续分发，这里Edit可以获取焦点，将其实现交给外部类
 		    return BubbleKeyEvent(keyCode,event);
 		}
-
 		@Override
 		public boolean onTouchEvent(MotionEvent event)
 		{
@@ -377,7 +395,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			    return Target.onKeyUp(keyCode,event);
 			return is;
 		}
-
 		@Override
 		public boolean BubbleMotionEvent(MotionEvent event)
 		{
@@ -392,53 +409,166 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 			Target = target;
 		}
-
 		@Override
 		public Interfaces.BubbleEvent getTarget()
 		{
 			return Target;
 		}
-
+		
 	}
 
-	
-	// 默认是以光标位置显示窗口，子类可以重写 
-    protected size Calc(RCodeEdit Edit, EditGroup self)
+	protected size Calc(RCodeEdit Edit, EditGroup self)
 	{
-		historyId = Edit.index;
-		return Edit.getCursorPos(Edit.getSelectionStart());
+	
+		//测量并修改Window大小
+		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
+		config.ConfigSelf(this);
+
+		//请求测量
+		self.historyId = Edit.index;
+		//本次窗口谁请求，单词给谁
+		int offset=Edit.getSelectionStart();
+		int xlen = self.getEditBuilder().calaEditHeight(Edit.index.get());
+		size pos = ((CodeEdit)Edit).getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
+
+		pos.start += EditLines.getWidth();
+		int WindowWidth=config.WindowWidth;
+		int WindowHeight=config.WindowHeight;
+		int selfWidth=config.width;
+		int selfHeight=config.height;
+
+		if (pos.start + WindowWidth >selfWidth)
+			pos.start =selfWidth - WindowWidth;
+		//如果x超出屏幕，总是设置在最右侧
+
+		if (pos.end + WindowHeight + Edit.getLineHeight() > selfHeight)
+			pos.end = pos.end - WindowHeight - Edit.getLineHeight();
+		//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
+		else
+			pos.end = pos.end + Edit.getLineHeight() ;
+
+		return pos;
 	}
-	
-	//默认啥也不做，子类可以重写
-	protected class Clip extends EditCanvaserListener
+
+	protected final class ClipCanvaser extends EditCanvaserListener
 	{
+
 		@Override
 		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds){}
 
+		//提升效率，不想用可以remove
 		@Override
-		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds){}
-		
+		public void onDraw(EditText self, Canvas canvas, TextPaint paint, Rect Cursor_bounds)
+		{	
+			/*关键代码*/
+			Rect rect =selfRect(self);
+			canvas.clipRect(rect);
+			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
+
+			if(EditDrawFlag.get()==0){
+				//第一个编辑器还要遍历所有其它编辑器，并显示
+				EditDrawFlag.set(EditList.size()); //当前还有size个编辑器要显示
+				Int id = historyId;
+				historyId=((RCodeEdit)self).index;
+				for(CodeEdit e: EditList){
+					//如果是第一个编辑器，则不用重新绘制
+					if(((RCodeEdit)e).index.get()!=historyId.get())
+						e.invalidate();
+				}
+				historyId=id;
+			}
+			EditDrawFlag.less();
+			//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
+		}
+
+		public Rect selfRect(EditText self){
+
+			int index = ((RCodeEdit)self).index.get();
+			//计算编辑器在可视区域中的自己的范围
+
+			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
+			int EditTop=getEditBuilder().calaEditHeight(index); //编辑器较ForEdit的顶部位置
+			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
+			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
+
+			int left = SeeLeft - EditLines.maxWidth();
+			//编辑器左边是当前可视区域左边减EditLines的宽
+			int top = SeeTop - EditTop;
+			//编辑器顶部为从0开始至可视区域顶部的偏移
+			int right = config.width + left;
+			//编辑器右边是左边加一个可视区域的宽
+			int bottom= top+ config.height;
+			//编辑器底部是上面加一个可视区域的高
+			return new Rect(left,top,right,bottom);
+		}
+
 	}
-	protected EditCanvaserListener getOneClipCanvaser(){
-		return null;
-		//让孑类重写
+	protected EditCanvaserListener getOneClipCanvaser()
+	{
+		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
+		//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
+		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
+		//其实不安全
+		return new ClipCanvaser();
 	}
 	
+	
 	//这个...
-	protected class Click implements OnClickListener
+	protected final class Click implements OnClickListener
 	{
 		@Override
 		public void onClick(View p1)
 		{
 			historyId = ((RCodeEdit) p1).index;
-			if (mWindow != null)
-			    mWindow.setX(-9999);
+			if (getWindow() != null)
+			    getWindow().setX(-9999);
 		}
 	}
 	protected OnClickListener getOneClick(){
 		return new Click();
 	}
+	
+	
+	@Override
+	public boolean BubbleMotionEvent(MotionEvent p2)
+	{
+		return super.BubbleMotionEvent(p2);
+	}	
+	@Override
+	public boolean onTouchEvent(MotionEvent p2)
+	{	
+		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0&&p2.getAction()==MotionEvent.ACTION_MOVE){
+		    Scro.setCanScroll(false);
+		    hScro.setCanScroll(false);
+			boolean is = onTouchToZoom.Iszoom(p2);
+			Edit E = EditList.get(0);
+			if(is==onTouchToZoom.onAmplification)
+				getEditBuilder().zoomBy(E.TextSize+0.25f);
+			else
+				getEditBuilder().zoomBy(E.TextSize-0.25f);	
+	    }
+	    else if(p2.getAction()==MotionEvent.ACTION_UP||p2.getAction()==MotionEvent.ACTION_DOWN){
+		    Scro.setCanScroll(true);
+		    hScro.setCanScroll(true);
+		}	
+	    return true;
+	}
 
+	@Override
+	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+	{
+		return super.BubbleKeyEvent(keyCode, event);
+	}
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event)
+	{	
+		if((Scro.size()!=0||hScro.size()!=0)&&keyCode==KeyEvent.KEYCODE_BACK){
+		    Scro.goback();
+		    hScro.goback();
+		    return true;
+		}
+		return false;
+	}
 	
 	//通过EditBuilder直接操作Edit
 	final public class EditBuilder
@@ -466,15 +596,53 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			calaIndex(end,e);
 		}
 		
+		private void dispatchTextBlock(size s,CharSequence str){
+			SpannableStringBuilder text = new SpannableStringBuilder(str);
+			int index = s.start;
+			Editable E = EditList.get(index).getText();
+			str = E.subSequence(s.end,E.length());
+			text.append(str);
+			E.delete(s.end,E.length());
+			//要插入的编辑器，从要插入的位置之后截取了文本，添加要插入的文本之后
+			//在之后创建一些编辑器，并均分文本
+			
+			int toIndex = CodeEdit.getLineCount(text.toString())/MaxLine+1+index;
+			int nowLine = 0;
+			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
+			//每次向后截取MaxLine，并插入到刚创建的编辑器中
+			for(index+=1;index<=toIndex;++index){
+				AddEditAt(index);
+				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,text.toString());
+				str = text.subSequence(s.start,s.end);
+				EditList.get(index).setText(str);
+			}
+		}
+		public void clearText(){
+			String lua = getLuagua();
+			EditList.clear();
+			ForEditSon.removeAllViews();
+			EditLines.reLines(1);
+			AddEdit("."+lua);
+		}
+		public void setText(CharSequence str){		
+			clearText();
+			dispatchTextBlock(new size(0,0),str);
+		}
 		public void append(CharSequence str){
 			size start = new size();
 			calaIndex(calaEditLen(),start);
-			EditList.get( start.start).append(str);
+			if(CodeEdit.getLineCount(str.toString())>2000)
+			    dispatchTextBlock(start,str);
+			else
+			    EditList.get(start.start).append(str);
 		}
 		public void insert(int index,CharSequence str){
 			size start = new size();
 			calaIndex(calaEditLen(),start);
-			EditList.get( start.start).getText().insert(start.end,str);
+			if(CodeEdit.getLineCount(str.toString())>2000)
+			    dispatchTextBlock(start,str);
+			else
+			    EditList.get(start.start).getText().insert(start.end,str);
 		}
 		public void delete(int start,int end){
 			
@@ -492,6 +660,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			delete(start,end);
 			insert(start,str);
 		}
+		
 		/*
 		  一组的Edit共享Info，对于Info的操作都是内存空间的修改
 		*/
@@ -529,6 +698,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			for(CodeEdit E:EditList)  
 			    E.setWordLib(Lib);
 		}
+		public void setSearchBit(int bit){
+			for(CodeEdit E:EditList)  
+			    E.setSearchBit(bit);
+		}
 		
 		public String getLuagua(){
 			return EditList.get(0).getLuagua();
@@ -541,6 +714,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		}
 		public Words getWordLib(){
 			return EditList.get(0).getWordLib();
+		}
+	    public int getSearchBit(){
+			return EditList.get(0).getSearchBit();
 		}
 		
 		public void lockThem(boolean is){
@@ -555,7 +731,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		}
 		
 		public void IsModify(boolean is){
-			root.isFormat = is;
+			root.IsModify = is;
 			compareChroot(root);
 		}
 		public void IsDraw(boolean is){
@@ -566,9 +742,21 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			root.isFormat = is;
 			compareChroot(root);
 		}
+		public void IsComplete(boolean is){
+			root.isComplete = is;
+			compareChroot(root);
+		}
+		public void IsUR(boolean is){
+			root.isUR = is;
+			compareChroot(root);
+		}
 		public void compareChroot(CodeEdit.EditChroot f){
+			root = f;
 			for(CodeEdit E: EditList)    
 			    E.compareChroot(f);
+		}
+		public CodeEdit.EditChroot getRoot(){
+			return root;
 		}
 		
 		public void reSAll(int start,int end,final String want,final String to){
@@ -613,7 +801,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			d.dofor(start,end);
 		}
-		
 		public List<Future> prepare(int start,int end)
 		{
 			final List<Future> results = new ArrayList<>();
@@ -773,7 +960,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	}
 
 	
-	
     //创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
 	public static interface EditFactory
 	{
@@ -784,7 +970,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	//默认的工厂
 	final static class Factory implements EditGroup.EditFactory
 	{
-
+		
 		@Override
 		public CodeEdit getEdit(EditGroup self)
 		{
@@ -795,7 +981,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
 			Edit.setPool(self. pool);
-			Edit.setWindow(self. mWindow);
+			Edit.setWindow(self. getWindow());
 			Edit.setEditLine(self.getLines());
 			com.mycompany.who.Share.Share.setEdit(Edit, name);
 		}
@@ -823,14 +1009,20 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Group.EditList = new ArrayList<>();
 			Group.Last = new Stack<>();
 			Group.Next = new Stack<>();
+			Group.root = new CodeEdit.EditChroot();
 		    Group.creatEditBuilder();
 			Group.creatEditFactory();
+			Group.setId(Group.hashCode());
 			init2(Group,root);
 		}
 		private static void init2( EditGroup Group,View root)
 		{	
+		    Group. Scro = root.findViewById(R.id.Scro);
+			Group. hScro = root.findViewById(R.id.hScro);
 		   	Group. ForEdit = root.findViewById(R.id.ForEdit);
 			Group. EditLines = root.findViewById(R.id.EditLine);
+			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
+			Group. mWindow = root.findViewById(R.id.mWindow);
 		}	
 	}
 
@@ -840,10 +1032,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	{
 
 		@Override
-		public void clearConfig(EditGroup target)
-		{
-			// TODO: Implement this method
-		}
+		public void clearConfig(EditGroup target){}
 
 		@Override
 		public void ConfigSelf(EditGroup target)
@@ -853,35 +1042,97 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void config(EditGroup target)
 		{
 			target. EditLines.setFocusable(false);
-			target. ForEdit.setOrientation(LinearLayout.VERTICAL);
+			target. ForEdit.setOrientation(LinearLayout.HORIZONTAL);
+			target. ForEditSon.setOrientation(LinearLayout.VERTICAL);
+			target. mWindow.setBackgroundColor(Colors.Bg);
+			target. mWindow.setDivider(null);
+			target. mWindow.setOnItemClickListener(target.getOneItemClick());
 			CodeEdit.Enabled_Drawer = true;
 			CodeEdit.Enabled_Complete = true;
 			CodeEdit.Enabled_Format = true;
 		}
 	}
+	final class onMyWindowClick implements OnItemClickListener
+	{
+		@Override
+		public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+		{
+			//如果点击了就插入单词并关闭窗口
+			WordAdpter adapter = (WordAdpter) p1.getAdapter();
+			Icon icon = adapter.getItem(p3);
+			if(historyId!=null){
+				CodeEdit Edit = getHistoryEdit();
+				Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
+			}
+			getWindow().setX(-9999);
+			getWindow().setY(-9999);
+		}
+	}
+	protected OnItemClickListener getOneItemClick(){
+		return new onMyWindowClick();
+	}
+	
+	
 	//配置我的大小
-	final public static class Config_hesSize implements Config_Size<EditGroup>
+	final public static class Config_hesSize extends Config_Size2<EditGroup>
 	{
 		
-		public int width,height;
-		
+		public int WindowHeight=600, WindowWidth=600;
+		public int EditWidth,EditHeight;
+
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
-			target.trimToFather();
+			int Wheight=MeasureWindowHeight(target.mWindow);
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				WindowWidth=WindowHeight=(int)(height*0.475);
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				WindowWidth=(int)(width*0.7);
+				WindowHeight= (int)(height*0.3);
+			}	
+			if (Wheight < WindowHeight)
+				WindowHeight=Wheight;
+			trim(target.mWindow,WindowWidth,WindowHeight);
+			//立即设置Window大小
+		}	
+		//每次change，改变我的大小，即我自己和滚动条的大小
+		public void onChange(EditGroup target,int src){
+		    trim(target,width,height);
+			trim(target.Scro,width,height);
+		    trim(target.hScro,width,height);
 		}
-
-		@Override
-		public void set(int width, int height, int is, EditGroup target){
-			this.width = width;
-			this.height = height;
+		//测量窗口高度
+		public static int MeasureWindowHeight(ListView mWindow)
+		{
+			int height=0;
+			int i;
+			WordAdpter adapter= (WordAdpter) mWindow.getAdapter();
+			if(adapter==null)
+				return 0;
+			for (i = 0;i < adapter.getCount();i++)
+			{
+				View view = adapter.getView(i, null, mWindow);
+				view.measure(0, 0);
+				height += view.getMeasuredHeight();
+				//若View没有明确设定width和height时，它的大小为0
+				//可以measure方法测量它的大小，这样测量的大小会被保存，然后获取测量的高
+				//注意，getWidth不等于getMeasuredHeight
+			}
+			return height;
 		}
-
-		@Override
-		public void change(EditGroup target,int is){}
-
-		@Override
-		public void onChange(EditGroup target,int src){}
+		
+	}
+	@Override
+	protected void onConfigurationChanged(Configuration newConfig)
+	{
+		/*
+		 横竖屏切换了 ，改变我的大小
+		 为什么要手动改变大小呢？
+		 因为我设置的是固定的宽高，在旋转屏幕时，屏幕坐标轴会旋转，此时原屏幕的宽变为高，原来的高变为宽，但View宽高不变！
+		*/
+		super.onConfigurationChanged(newConfig);
+	    getConfig().change(this,newConfig.orientation);
 	}
 	
 	
@@ -895,6 +1146,5 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public EditFactory getEditFactory()
 
 	}
-
 
 }

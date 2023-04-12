@@ -2,16 +2,43 @@
 <merge
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	attachToroot="true">
-	
-	<com.mycompany.who.Edit.Base.Edit.EditLine
-		android:focusable="false"
-		android:id="@+id/EditLine"
+
+	<com.mycompany.who.View.ScrollBar
+		android:id="@+id/Scro"
 		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"/>
+		android:layout_height="wrap_content">
+
+		<com.mycompany.who.View.HScrollBar
+			android:id="@+id/hScro"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+
+			<LinearLayout
+				android:id="@+id/ForEdit"
+				android:orientation="horizontal"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content">
+				
+				<com.mycompany.who.Edit.Base.Edit.EditLine
+					android:focusable="false"
+					android:id="@+id/EditLine"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"/>
+				
+				<LinearLayout
+					android:id="@+id/ForEditSon"
+				    android:orientation="vertical"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"/>
+				
+			</LinearLayout>
+			
+		</com.mycompany.who.View.HScrollBar>
+
+	</com.mycompany.who.View.ScrollBar>
 	
-	<LinearLayout
-		android:id="@+id/ForEdit"
-		android:orientation="horizontal"
+	<ListView
+		android:id="@+id/mWindow"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
 

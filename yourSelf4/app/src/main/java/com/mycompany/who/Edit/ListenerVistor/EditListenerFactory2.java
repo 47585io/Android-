@@ -475,7 +475,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				{
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_key))
-					    return ((OtherWords)Wordlib). getKeyword();
+					    return Wordlib. getKeyword();
 					return null;
 				}
 
@@ -496,9 +496,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					List<CharSequence> words=new ArrayList<>();
 					if (Share.getbit(Search_Bit, Colors.color_attr))
-						words.addAll(((OtherWords)Wordlib). getAttribute());
+						words.addAll(Wordlib. getAttribute());
 					if (Share.getbit(Search_Bit, Colors.color_const))
-					    words.addAll(((OtherWords)Wordlib). getConstword());
+					    words.addAll(Wordlib. getConstword());
 
 					return words;
 				}
@@ -520,7 +520,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				{
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_villber))
-					    return ((OtherWords)Wordlib). getHistoryVillber();
+					    return Wordlib. getHistoryVillber();
 					return null;
 				}
 
@@ -542,7 +542,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				{
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_func))
-					    return ((OtherWords)Wordlib). getLastfunc();
+					    return Wordlib. getLastfunc();
 					return null;
 				}
 
@@ -564,7 +564,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				{
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_obj))
-						return ((OtherWords)Wordlib). getThoseObject();
+						return Wordlib. getThoseObject();
 					return null;
 				}
 
@@ -585,7 +585,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 				{
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_type))
-					    return ((OtherWords)Wordlib). getBeforetype();
+					    return Wordlib. getBeforetype();
 					return null;
 				}
 
@@ -607,7 +607,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 					int Search_Bit = ((CodeEdit)self).getSearchBit();
 					if (Share.getbit(Search_Bit, Colors.color_tag))
 					{
-						return ((OtherWords)Wordlib). getTag();
+						return Wordlib. getTag();
 					}
 					return null;
 				}
@@ -804,25 +804,24 @@ public class EditListenerFactory2 implements EditListenerFactory
 			@Override
 			public void OnClearFindWord(Words WordLib, EditText self)
 			{
-				OtherWords tmp = (OtherWords) WordLib;
-				Array_Splitor. delSame(tmp.getLastfunc(), tmp.getKeyword());
+				Array_Splitor. delSame(WordLib.getLastfunc(), WordLib.getKeyword());
 				//函数名不可是关键字，但可以和变量或类型重名	
-				Array_Splitor.delSame(tmp.getLastfunc(), tmp.getKeyword());
+				Array_Splitor.delSame(WordLib.getLastfunc(), WordLib.getKeyword());
 				//类型不可是关键字
-				Array_Splitor.delSame(tmp.getBeforetype(), tmp.getHistoryVillber());
+				Array_Splitor.delSame(WordLib.getBeforetype(), WordLib.getHistoryVillber());
 				//类型不可是变量，类型可以和函数重名
-				Array_Splitor.delSame(tmp.getBeforetype(), tmp.getConstword());
+				Array_Splitor.delSame(WordLib.getBeforetype(), WordLib.getConstword());
 				//类型不可是保留字
-				Array_Splitor. delSame(tmp.getHistoryVillber(), tmp.getKeyword());
-				Array_Splitor. delSame(tmp.getThoseObject(), tmp.getKeyword());
+				Array_Splitor. delSame(WordLib.getHistoryVillber(), WordLib.getKeyword());
+				Array_Splitor. delSame(WordLib.getThoseObject(), WordLib.getKeyword());
 				//变量不可是关键字
-				Array_Splitor. delSame(tmp.getThoseObject(), tmp.getConstword());
-				Array_Splitor.delSame(tmp.getHistoryVillber(), tmp.getConstword());
+				Array_Splitor. delSame(WordLib.getThoseObject(), WordLib.getConstword());
+				Array_Splitor.delSame(WordLib.getHistoryVillber(), WordLib.getConstword());
 				//变量不可是保留字
-				Array_Splitor.delNumber(tmp.getBeforetype());
-				Array_Splitor.delNumber(tmp.getHistoryVillber());
-				Array_Splitor.delNumber(tmp.getLastfunc());
-				Array_Splitor.delNumber(tmp.getThoseObject());
+				Array_Splitor.delNumber(WordLib.getBeforetype());
+				Array_Splitor.delNumber(WordLib.getHistoryVillber());
+				Array_Splitor.delNumber(WordLib.getLastfunc());
+				Array_Splitor.delNumber(WordLib.getThoseObject());
 				//去掉数字
 			}
 
@@ -1084,9 +1083,11 @@ public class EditListenerFactory2 implements EditListenerFactory
 	 _________________________________________
 	 
 */
+
+    /*  Text工厂  */
 	public static class AnyThingFactory
 	{
-		//Text工厂
+		
 		public static class AnyThingForText
 		{
 
@@ -1257,11 +1258,11 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 			public Collection<CharSequence> getKeyword()
 			{
-				return ((OtherWords)WordLib).getKeyword();
+				return WordLib.getKeyword();
 			}
 			public Collection<CharSequence> getConstword()
 			{
-				return  ((OtherWords)WordLib).getConstword();
+				return  WordLib.getConstword();
 			}
 			public char[] getFuhao()
 			{
@@ -1277,36 +1278,34 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 			public Collection<CharSequence> getLastfunc()
 			{
-				return  ((OtherWords)WordLib).getLastfunc();
+				return  WordLib.getLastfunc();
 			}
 			public Collection<CharSequence> getHistoryVillber()
 			{
-				return  ((OtherWords)WordLib).getHistoryVillber();
+				return WordLib.getHistoryVillber();
 			}
 			public Collection<CharSequence> getThoseObject()
 			{
-				return  ((OtherWords)WordLib).getThoseObject();
+				return  WordLib.getThoseObject();
 			}
 			public Collection<CharSequence> getBeforetype()
 			{
-				return  ((OtherWords)WordLib).getBeforetype();
+				return  WordLib.getBeforetype();
 			}
 
 			public Collection<CharSequence> getTag()
 			{
-				return  ((OtherWords)WordLib).getTag();
+				return  WordLib.getTag();
 			}
 			public Collection<CharSequence> getAttribute()
 			{
-				return ((OtherWords)WordLib).getAttribute() ;
+				return WordLib.getAttribute() ;
 			}
 
 		}
 
 
-//	___________________________________________________________________________________________________________________________
-
-		//XML工厂
+       /*	XML工厂  */			
 		public static class AnyThingForXML extends AnyThingForText
 		{
 
@@ -1363,9 +1362,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 
 
-//	___________________________________________________________________________________________________________________________
-
-		//Java工厂
+		/*  Java工厂  */
 		public static class AnyThingForJava extends AnyThingForText
 		{
 
@@ -1615,9 +1612,8 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 		}
 
-//	___________________________________________________________________________________________________________________________
 
-		//CSS工厂
+		/*  CSS工厂  */
 		public static class AnyThingForCSS extends AnyThingForText
 		{
 
@@ -1885,3 +1881,4 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 
 	}
+}

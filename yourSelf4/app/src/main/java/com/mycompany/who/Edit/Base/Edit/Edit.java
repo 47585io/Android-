@@ -11,6 +11,7 @@ import java.util.*;
 import org.xml.sax.ext.*;
 import android.util.*;
 import android.text.*;
+import android.net.wifi.aware.*;
 
 
 /*
@@ -24,6 +25,7 @@ public class Edit extends EditText implements Creat<Edit>
 	{
 		config();
 		listener = new EditText(getContext()).getKeyListener();
+		
 	}
 
 	@Override
@@ -81,9 +83,10 @@ public class Edit extends EditText implements Creat<Edit>
 	}
 	
 	public int getLineCount(){
-		String src = getText().toString();	
-		int Count = String_Splitor.Count('\n',src)+1;
-		return Count;
+		return getLineCount(getText().toString());
+	}
+	public static int getLineCount(String src){
+		return String_Splitor.Count('\n',src)+1;
 	}
 	
 	public int maxHeight(){
@@ -106,28 +109,11 @@ public class Edit extends EditText implements Creat<Edit>
 		width=(width>editor.length()-last)?width:editor.length()-last;
 		return (int)(width*getTextSize());
 	}
-	public size WAndH(){
-		size size=new size();
-		Editable editor = getText();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',editor.toString());
-		if(indexs==null||indexs.size()==0){
-			size.start= (int)(editor.length()*getTextSize());
-			size.end=getLineHeight();
-			return size;
-		}
-		int width=0;
-		int last=0;
-		for(int i: indexs){
-			int w=(i-last);
-			if(w>width)
-				width=w;
-			last=i;
-		}
-		width=(width>editor.length()-last)?width:editor.length()-last;
-		//最后一行的长度是？
-		size.start=(int)(width*getTextSize());
-		size.end=(indexs.size()+1)*getLineHeight();
-		return size;
+    public size WAndH(){
+		size s = LAndC(getText().toString());
+		s.start=(int)(s.start*getTextSize());
+		s.end=s.end*getLineHeight();
+		return s;
 	}
 	
 	public static final size LAndC(String text){
@@ -148,28 +134,49 @@ public class Edit extends EditText implements Creat<Edit>
 			last=i;
 		}
 		width=(width>text.length()-last)?width:text.length()-last;
+		//最后一行的长度是？
 		size.start=width;
 		size.end=(indexs.size()+1);
 		return size;
 	}
-	
 
 	final public size subLines(int startLine){
-		size j = new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
-			return j;
-		j.start= indexs.get(startLine-2)+1;
-		j.end=getText().toString().length();
-		return j;
+		return subLines(startLine,getText().toString());
 	}
 	final public size subLines(int startLine,int endLine){
+		return subLines(startLine,endLine,getText().toString());
+	}
+	
+	final public static size subLines(int startLine,int endLine,String src){
 		size j = new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',getText().toString());
-		if(indexs==null)
-			return j;
-		j.start= indexs.get(startLine-2)+1;
-		j.end=indexs.get(endLine-2)+1;
+		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
+		
+		if(startLine<2)
+		    j.start=0;
+		else if(startLine-1>indexs.size())
+			j.start=src.length();
+		else
+			j.start= indexs.get(startLine-2)+1;
+		
+		if(endLine<2)
+		    j.end=0;
+		else if(endLine-1>indexs.size())
+			j.end=src.length();
+		else
+		    j.end=indexs.get(endLine-2)+1;
+		
+		return j;
+	}
+	final public static size subLines(int startLine,String src){
+		size j = new size();
+		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
+		if(startLine<2)
+		    j.start=0;
+		else if(startLine-1>indexs.size())
+			j.start=src.length();
+	    else
+		    j.start= indexs.get(startLine-2)+1;
+		j.end=src.length();
 		return j;
 	}
 	

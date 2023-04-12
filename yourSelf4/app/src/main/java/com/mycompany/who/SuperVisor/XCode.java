@@ -118,7 +118,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 		public Config_hesView(XCode target){
 			spinner = target.mTitle.getReSpinner();
 			ButtonBar = target.mTitle.getButtonBar();
-			pages = target.mPages.getEditGroupPages();
+			pages = target.mPages;
 			this.target = target;
 		}
 		
@@ -157,7 +157,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			public void onClick(View p1)
 			{
 				PageHandler h = target.getPages();
-				EditGroup Group = h.getEditGroup(h.getNowIndex());
+				EditGroup Group = (EditGroup) h.getView(h.getNowIndex());
 				Group.getEditBuilder().Uedo();
 			}
 		}
@@ -178,10 +178,6 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4)
 			{
 				pages.tabView(p3);
-				View v=pages.getView(p3);
-				ViewGroup.LayoutParams pa = v.getLayoutParams();
-			    trim(pages,pa.width,pa.height);
-				v.requestFocus();
 			}
 
 			@Override

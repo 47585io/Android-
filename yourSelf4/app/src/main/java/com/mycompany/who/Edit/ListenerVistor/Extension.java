@@ -26,10 +26,24 @@ public abstract class Extension
 		return Infos;
 	}
 	
+	public void creatListener(EditText Edit){
+		//创建一些Listener，并将它的指针添加至Lis，之后将它的指针添加至Info
+		//将Info的指针加入Infos
+		onInit(Edit);
+		EditListenerInfo self = ((CodeEdit)Edit).getInfo();
+		List<EditListener> lis= new ArrayList<>();
+		onGetListeners(lis);
+		if(lis.size()!=0){
+			Infos.add(self);
+			for(EditListener li:lis){
+				if(self.addAListener(li))
+				    Lis.add(li);
+			}
+		}
+	}
 	public void creatListener(EditListenerInfo self){
 		//创建一些Listener，并将它的指针添加至Lis，之后将它的指针添加至Info
 		//将Info的指针加入Infos
-		onInit(self);
 		List<EditListener> lis= new ArrayList<>();
 		onGetListeners(lis);
 		if(lis.size()!=0){
@@ -73,7 +87,7 @@ public abstract class Extension
 	
     abstract public void onGetListeners(List<EditListener> lis)
 	
-	abstract public void onInit(EditListenerInfo self)
+	abstract public void onInit(EditText self)
 	
 	
 	public static interface Extension_Spiltor{

@@ -44,9 +44,7 @@ public class String_Splitor
 	}
 	public static List<Integer> indexsOf(String str,String text){
 		//查找文本中所有出现str的index
-		if(str.length()==0||text.length()==0)
-			return null;
-		int index = 0-str.length();
+		int index = 0;
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
 		    index = text.indexOf(str,index);
