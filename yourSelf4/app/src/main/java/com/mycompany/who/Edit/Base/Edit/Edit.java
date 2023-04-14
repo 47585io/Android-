@@ -180,6 +180,7 @@ public class Edit extends EditText implements Creat<Edit>
 		return j;
 	}
 	
+	
 	final public void lockSelf(boolean is){
 		if(is)
 			setKeyListener(null);

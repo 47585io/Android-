@@ -61,28 +61,6 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,Interfac
 		return config;
 	}
 
-	final public static void trim(View Father, int width, int height)
-	{
-		//调整空间
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width = width;
-		p.height = height;
-		Father.setLayoutParams(p);
-	}
-	final public static void trimAdd(View Father, int addWidth, int addHeight)
-	{
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width += addWidth;
-		p.height += addHeight;
-		Father.setLayoutParams(p);
-	}
-	final public static void trimXel(View Father, float WidthX, float HeightX)
-	{
-		ViewGroup.LayoutParams p = Father.getLayoutParams();
-		p.width *= WidthX;
-		p.height *= HeightX;
-		Father.setLayoutParams(p);
-	}
 
 	//在事件发生时，向上冒泡
 	@Override

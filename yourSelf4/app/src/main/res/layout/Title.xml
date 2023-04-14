@@ -14,7 +14,8 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:src="?android:attr/selectableItemBackgroundBorderless"
-		android:clickable="true">
+		android:clickable="true"
+		android:gravity="right|center_vertical">
 
 		<ImageButton
 			android:layout_width="wrap_content"
@@ -26,14 +27,14 @@
 		<ImageButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:background="@drawable/Uedo"
+			android:background="@drawable/Redo"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 
 		<ImageButton
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:background="@drawable/Uedo"
+			android:background="@drawable/write"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 

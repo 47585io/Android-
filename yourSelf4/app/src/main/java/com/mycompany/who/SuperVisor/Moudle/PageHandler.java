@@ -67,7 +67,7 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 		super.tabView(index);
 		View v=getView(index);
 		ViewGroup.LayoutParams pa = v.getLayoutParams();
-		trim(this,pa.width,pa.height);
+		Config_Size2. trim(this,pa.width,pa.height);
 		//v.requestFocus();
 	}
 	@Override

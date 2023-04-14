@@ -2,6 +2,7 @@ package com.mycompany.who.SuperVisor.Moudle.Config;
 import android.content.res.*;
 import android.view.*;
 import android.widget.*;
+import com.mycompany.who.Edit.Share.Share1.*;
 
 public class Interfaces
 {
@@ -16,7 +17,8 @@ public class Interfaces
 		
 		public void ShiftConfig(Level Configer)
 		
-
+		public Config_Size getConfig()
+		
 		/* 非常好用 */
 		public static abstract class Creator<T extends ViewGroup> implements Configer<T>{
 
@@ -61,6 +63,8 @@ public class Interfaces
 			public void change(T target,int is)
 
 			public void onChange(T target,int src)
+			
+			public size getSize()
 		}
 
 
@@ -73,6 +77,12 @@ public class Interfaces
 			public void ConfigSelf(T target)
 			{
 				// TODO: Implement this method
+			}
+			
+			@Override
+			public size getSize()
+			{
+				return new size(width,height);
 			}
 
 			@Override
@@ -131,6 +141,37 @@ public class Interfaces
 					return LinearLayout.HORIZONTAL;
 				}
 				return -9999;
+			}
+			
+			final public static void trim(View Father, int width, int height)
+			{
+				//调整空间
+				ViewGroup.LayoutParams p = Father.getLayoutParams();
+				p.width = width;
+				p.height = height;
+				Father.setLayoutParams(p);
+			}
+			final public static void trim(View Father, size s)
+			{
+				//调整空间
+				ViewGroup.LayoutParams p = Father.getLayoutParams();
+				p.width = s.start;
+				p.height = s.end;
+				Father.setLayoutParams(p);
+			}
+			final public static void trimAdd(View Father, int addWidth, int addHeight)
+			{
+				ViewGroup.LayoutParams p = Father.getLayoutParams();
+				p.width += addWidth;
+				p.height += addHeight;
+				Father.setLayoutParams(p);
+			}
+			final public static void trimXel(View Father, float WidthX, float HeightX)
+			{
+				ViewGroup.LayoutParams p = Father.getLayoutParams();
+				p.width *= WidthX;
+				p.height *= HeightX;
+				Father.setLayoutParams(p);
 			}
 
 		}

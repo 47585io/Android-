@@ -21,16 +21,16 @@ public class String_Splitor
 		return false;
 	}
 
-	public static boolean indexOfNumber(char ch){
+	public static boolean IsNumber(char ch){
 		if(ch>='0'&&ch<='9')
 			return true;
 		return false;
 	}
 
-	public static boolean indexOfNumber(CharSequence src){
+	public static boolean IsNumber(CharSequence src){
 		int i;
 	    for(i=0;i<src.length();i++){
-			if(!indexOfNumber(src.charAt(i)))
+			if(!IsNumber(src.charAt(i)))
 				return false;
 		}
 		return true;
@@ -92,6 +92,31 @@ public class String_Splitor
 		}
 		return count;
 	}
+	
+	//字符c第n次出现的下标
+	public static int NIndex(char c,String text,int n){
+		int index = 0;
+		while(n-->0){
+		    int tmp = text.indexOf(c,index);
+			if(tmp==-1)
+				break;
+			index = tmp;
+			++index;
+		}
+		return index;
+	}
+	public static int NIndex(String c,String text,int n){
+		int index = 0;
+		while(n-->0){
+		    int tmp = text.indexOf(c,index);
+			if(tmp==-1)
+				break;
+			index = tmp;
+			index+=c.length();
+		}
+		return index;
+	}
+	
 	
 	public static int calaN(CharSequence src,int index){
 		int count = 0;

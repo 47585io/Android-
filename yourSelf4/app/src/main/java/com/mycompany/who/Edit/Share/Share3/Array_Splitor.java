@@ -56,7 +56,7 @@ public class Array_Splitor
 	public static void delNumber(Collection<CharSequence> dst){
 		//删除数字
 		for(Object o: dst.toArray()){
-			if(String_Splitor. indexOfNumber((CharSequence)o)){
+			if(String_Splitor. IsNumber(((CharSequence)o))){
 				dst.remove(o);
 			}
 		}

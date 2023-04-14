@@ -113,12 +113,14 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 		ReSpinner spinner;
 		PageList pages;
 		LinearLayout ButtonBar;
+		DownBar downBar;
 		XCode target;
 		
 		public Config_hesView(XCode target){
 			spinner = target.mTitle.getReSpinner();
 			ButtonBar = target.mTitle.getButtonBar();
 			pages = target.mPages;
+			downBar = target.mDownBar;
 			this.target = target;
 		}
 		
@@ -131,6 +133,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			target. mDownBar.setTarget(target);
 			target.mTitle.config();
 			target.mPages.config();
+			target.mDownBar.config();
 			config(target);
 		}
 
@@ -216,12 +219,14 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 	final public static class Config_ChildsPos extends Config_Size2<XCode>
 	{
 
-		Title.Config_hesSize configT;
-		PageHandler.Config_hesSize configP;
+	    public Config_Size configT;
+		public Config_Size configP;
+		public Config_Size configD;
 		
 		public Config_ChildsPos(XCode target){
-			configT=(Title.Config_hesSize) target.mTitle.getConfig();
-			configP=(PageHandler.Config_hesSize) target.mPages.getConfig();
+			configT= target.mTitle.getConfig();
+			configP= target.mPages.getConfig();
+			configD= target.mDownBar.getConfig();
 		}
 		
 		@Override
@@ -237,11 +242,13 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			if(is==Configuration.ORIENTATION_PORTRAIT){
 			    configT.set(width,(int)(height*0.1),is,target.mTitle);
 			    configP.set(width,(int)(height*0.9),is,target.mPages);
+				configD.set(width,(int)(height*0.5),is,target.mDownBar);
 			}
 			else if(is==Configuration.ORIENTATION_LANDSCAPE){
-				configT.set((int)(width*0.1),height,is,target.mTitle);
-				configP.set(height,(int)(width*0.9),Configuration.ORIENTATION_PORTRAIT,target.mPages);
-				configP.change(target.mPages,is);
+				configT.set(height,(int)(width*0.1),Configuration.ORIENTATION_PORTRAIT,target.mTitle);
+				configT.change(target.mTitle,is);
+				configP.set((int)(width*0.9),height,is,target.mPages);
+				configD.set((int)(width*0.5),height,is,target.mDownBar);
 			}
 			super.set(width,height,is,target);
 		}

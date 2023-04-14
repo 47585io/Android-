@@ -44,7 +44,7 @@ import com.mycompany.who.Share.*;
   我什么也不知道
   我只完善了Edit的功能，管理一组的Edit以及如何操作它们
 */
-public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnTouchListener
+public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.IneedWindow,OnClickListener,OnItemClickListener
 {
 	
 	public static int MaxLine=2000,OnceSubLine=0;
@@ -82,12 +82,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		Creator = new GroupCreator(R.layout.EditGroup);
 		Creator.ConfigSelf(this);
 	}
-
-	@Override
-	public boolean onTouch(View p1, MotionEvent p2)
-	{
-		return false;
-	}
+	
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -193,7 +188,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			E.setInfo(Info);
 		}
 		//组内的每个编辑器都设置Click
-		Edit.setOnClickListener(getOneClick());
+		Edit.setOnClickListener(this);
 		Edit.compareChroot(root); //设置root
 		Edit.setTarget(this);
 		Edit.setId(Edit.hashCode());
@@ -219,8 +214,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		size size = getEditBuilder().WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
-		trim(getForEditSon(), width - EditLines.maxWidth(), height);
-		trim(getForEdit(), width, height);
+		Config_Size2. trim(getForEditSon(), width - EditLines.maxWidth(), height);
+		Config_Size2. trim(getForEdit(), width, height);
 		//为两个Edit的父元素扩展空间，一个ForEdit，一个ForEditSon
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 		
@@ -383,6 +378,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public boolean onTouchEvent(MotionEvent event)
 		{
 			//只有被touch的View，才能被调用，并继续分发，这里Edit可以被touch，将其实现交给外部类
+			invalidate();
 			return BubbleMotionEvent(event);
 		}
 	
@@ -511,23 +507,27 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		//其实不安全
 		return new ClipCanvaser();
 	}
-	
-	
-	//这个...
-	protected final class Click implements OnClickListener
+		
+	@Override
+	public void onClick(View p1)
 	{
-		@Override
-		public void onClick(View p1)
-		{
-			historyId = ((RCodeEdit) p1).index;
-			if (getWindow() != null)
-			    getWindow().setX(-9999);
+		historyId = ((RCodeEdit) p1).index;
+		if (getWindow() != null)
+			getWindow().setX(-9999);
+		
+	}
+	@Override
+	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+	{
+		//如果点击了就插入单词并关闭窗口
+		WordAdpter adapter = (WordAdpter) p1.getAdapter();
+		Icon icon = adapter.getItem(p3);
+		if(historyId!=null){
+			CodeEdit Edit = getHistoryEdit();
+			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
 		}
+		getWindow().setX(-9999);
 	}
-	protected OnClickListener getOneClick(){
-		return new Click();
-	}
-	
 	
 	@Override
 	public boolean BubbleMotionEvent(MotionEvent p2)
@@ -537,21 +537,15 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	@Override
 	public boolean onTouchEvent(MotionEvent p2)
 	{	
-		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0&&p2.getAction()==MotionEvent.ACTION_MOVE){
-		    Scro.setCanScroll(false);
-		    hScro.setCanScroll(false);
-			boolean is = onTouchToZoom.Iszoom(p2);
-			Edit E = EditList.get(0);
-			if(is==onTouchToZoom.onAmplification)
-				getEditBuilder().zoomBy(E.TextSize+0.25f);
-			else
-				getEditBuilder().zoomBy(E.TextSize-0.25f);	
-	    }
-	    else if(p2.getAction()==MotionEvent.ACTION_UP||p2.getAction()==MotionEvent.ACTION_DOWN){
-		    Scro.setCanScroll(true);
-		    hScro.setCanScroll(true);
-		}	
-	    return true;
+	    if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){
+	        Edit E = EditList.get(0);
+	        boolean is = onTouchToZoom.Iszoom(p2);
+		    if(is)
+		        getEditBuilder().zoomBy(E.TextSize+0.25f);	
+		    else	
+			    getEditBuilder().zoomBy(E.TextSize-0.25f); 
+		}
+		return true;
 	}
 
 	@Override
@@ -569,6 +563,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		}
 		return false;
 	}
+	
 	
 	//通过EditBuilder直接操作Edit
 	final public class EditBuilder
@@ -631,7 +626,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void append(CharSequence str){
 			size start = new size();
 			calaIndex(calaEditLen(),start);
-			if(CodeEdit.getLineCount(str.toString())>2000)
+			if(CodeEdit.getLineCount(str.toString())>MaxLine)
 			    dispatchTextBlock(start,str);
 			else
 			    EditList.get(start.start).append(str);
@@ -639,7 +634,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public void insert(int index,CharSequence str){
 			size start = new size();
 			calaIndex(calaEditLen(),start);
-			if(CodeEdit.getLineCount(str.toString())>2000)
+			if(CodeEdit.getLineCount(str.toString())>MaxLine)
 			    dispatchTextBlock(start,str);
 			else
 			    EditList.get(start.start).getText().insert(start.end,str);
@@ -770,12 +765,30 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			d.dofor(start,end);
 		}
+		
 		public List<Integer> SearchWord(String want){
 			StringBuilder b = new StringBuilder();
 			for(CodeEdit E:EditList){
 				b.append(E.getText().toString());
 			}
 			return String_Splitor.indexsOf(want,b.toString());
+		}
+		
+		public void setSpan(size[] poses,Object[] spans){
+			
+			for(int i=0;i<spans.length;++i){
+				size pos = poses[i];
+				final Object span = spans[i];
+				DoForAnyOnce d= new DoForAnyOnce(){
+					
+					@Override
+					void doOnce(int start, int end, CodeEdit Edit)
+					{
+						Edit.getText().setSpan(start,end,span,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+					}
+				};
+				d.dofor(pos.start,pos.end);
+			}
 		}
 		public<T> void clearSpan(int start,int end,final Class<T>type){
 			DoForAnyOnce d= new DoForAnyOnce(){
@@ -801,6 +814,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			};
 			d.dofor(start,end);
 		}
+		
 		public List<Future> prepare(int start,int end)
 		{
 			final List<Future> results = new ArrayList<>();
@@ -951,6 +965,10 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			}
 			return size;
 		}
+		
+		public CodeEdit getFocusEdit(){
+			return (CodeEdit)ForEditSon.getFocusedChild();
+		}
 
 	}
 	private void creatEditBuilder()
@@ -1030,7 +1048,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	// 如何配置View，不要做创建工作
 	final static class Config_hesView implements Level<EditGroup>
 	{
-
+		
 		@Override
 		public void clearConfig(EditGroup target){}
 
@@ -1046,30 +1064,11 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			target. ForEditSon.setOrientation(LinearLayout.VERTICAL);
 			target. mWindow.setBackgroundColor(Colors.Bg);
 			target. mWindow.setDivider(null);
-			target. mWindow.setOnItemClickListener(target.getOneItemClick());
+			target. mWindow.setOnItemClickListener(target);
 			CodeEdit.Enabled_Drawer = true;
 			CodeEdit.Enabled_Complete = true;
 			CodeEdit.Enabled_Format = true;
 		}
-	}
-	final class onMyWindowClick implements OnItemClickListener
-	{
-		@Override
-		public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
-		{
-			//如果点击了就插入单词并关闭窗口
-			WordAdpter adapter = (WordAdpter) p1.getAdapter();
-			Icon icon = adapter.getItem(p3);
-			if(historyId!=null){
-				CodeEdit Edit = getHistoryEdit();
-				Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
-			}
-			getWindow().setX(-9999);
-			getWindow().setY(-9999);
-		}
-	}
-	protected OnItemClickListener getOneItemClick(){
-		return new onMyWindowClick();
 	}
 	
 	
@@ -1096,6 +1095,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			trim(target.mWindow,WindowWidth,WindowHeight);
 			//立即设置Window大小
 		}	
+		
 		//每次change，改变我的大小，即我自己和滚动条的大小
 		public void onChange(EditGroup target,int src){
 		    trim(target,width,height);

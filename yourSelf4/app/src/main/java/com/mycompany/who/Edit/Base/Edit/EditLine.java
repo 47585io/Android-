@@ -4,6 +4,7 @@ import android.view.*;
 import com.mycompany.who.Edit.Share.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import android.util.*;
+import android.text.*;
 
 public class EditLine extends Edit
 {
@@ -45,27 +46,32 @@ public class EditLine extends Edit
 	public void reLines(int line){
 		int caline= line-LineCount;
 		if(caline<0){
-			while(caline++<0){
-				delALine();
-			}
+			delLines(-caline);
 		}
 		else if(caline>0){
-			while(caline-->0){
-				addALine();
-			}
+			addLines(caline);
 		}
 	}
+	//如果需处理大量行，都应该调用addLines和delLines，因为它们更快
 	final public void addLines(int count){
+		StringBuilder b = new StringBuilder();
 		while (count-->0)
 		{
-			addALine();
+			++LineCount;
+			b.append(LineCount+"\n");
 		} 	 	 
+		append(b);
 	}
 	final public void delLines(int count){
+		Editable e = getText();
+		int end = e.length()-1;
+		String src = e.toString();
 		while (count-->0)
 		{
-			delALine();
+			--LineCount;
+			end = src.lastIndexOf('\n', end-1);
 		} 	 	 
+		e.delete(end+1,e.length());
 	}
 	final public void addALine()
 	{

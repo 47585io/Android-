@@ -7,6 +7,7 @@ import com.mycompany.who.*;
 import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import com.mycompany.who.View.*;
 import android.content.res.*;
+import com.mycompany.who.Edit.Share.Share1.*;
 
 
 /*
@@ -48,6 +49,21 @@ public class Title extends HasAll
 	final public static class Config_hesSize extends Config_Size2<Title>
 	{
 
+		public size getSpinnerSize(){
+			if(flag==Configuration.ORIENTATION_PORTRAIT)
+				return new size((int)(width*0.6),height);
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE)
+				return new size(width,(int)(height*0.6));
+			return null;
+		}
+		public size getButtonBarSize(){
+			if(flag==Configuration.ORIENTATION_PORTRAIT)
+				return new size((int)(width*0.4),height);
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE)
+				return new size(width,(int)(height*0.4));
+			return null;
+		}
+		
 		@Override
 		public void onPort(Title target, int src)
 		{

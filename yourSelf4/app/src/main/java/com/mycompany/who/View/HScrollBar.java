@@ -30,8 +30,9 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	{
 		if(ev.getAction()==MotionEvent.ACTION_UP&&canSave)
 			historyL.push(getScrollX());
-		if(canScroll)
+		if(canScroll){
 		    return super.onTouchEvent(ev);
+		}
 		return false;
 	}
 

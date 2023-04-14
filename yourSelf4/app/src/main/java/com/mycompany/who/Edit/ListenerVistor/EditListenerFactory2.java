@@ -724,6 +724,14 @@ public class EditListenerFactory2 implements EditListenerFactory
 			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
 			{
 				CodeEdit.clearRepeatNode(nodes);
+				/* List<CodeEdit.DoAnyThing> total = new ArrayList<>();
+				List<wordIndex> no = new ArrayList<>();
+			    Words lib = ((CodeEdit)self).getWordLib();
+				total.add(AnyThingFactory.getAnyThingText(lib).getGoTo_Str());
+				total.add(AnyThingFactory.getAnyThingText(lib).getGoTo_zhuShi());
+				CodeEdit.startFind(self.getText().toString(),total,no);
+				CodeEdit.offsetNode(no,-start);
+				nodes.addAll(no);*/
 			}
 		}
 
@@ -734,6 +742,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
 			{
 				CodeEdit.clearRepeatNode(nodes);
+				
 			}
 
 
@@ -761,7 +770,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 			@Override
 			public void OnClearFindWord(Words WordLib, EditText self)
 			{
-
+				
 			}
 		}
 
@@ -829,6 +838,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
 			{
 				CodeEdit.clearRepeatNode(nodes);	
+				//((FinderText)getTextFinder()).OnClearFindNodes(start,end,text,self,nodes);
 			}
 		}
 
@@ -1121,8 +1131,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 							else
 							{
 								//如果找不到默认认为到达了末尾
-								saveChar(src, nowIndex, src.length(), Colors.color_zhu, nodes);
-								nowIndex = src.length() - 1;
+								nowIndex +=1;
 							}
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -1151,9 +1160,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 							}
 							else
 							{
-								//如果找不到默认认为到达了末尾
-								saveChar(src, nowIndex, src.length(), Colors.color_str, nodes);
-								nowIndex = src.length() - 1;
+								nowIndex+=1;
 							}
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -1190,7 +1197,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						if (String_Splitor. indexOfNumber(src.charAt(nowIndex))&&!String_Splitor.IsAtoz( src.charAt(nowIndex-1))&&!String_Splitor.IsAtoz( src.charAt(nowIndex+1)))
+						if (String_Splitor. IsNumber(src.charAt(nowIndex))&&!String_Splitor.IsAtoz( src.charAt(nowIndex-1))&&!String_Splitor.IsAtoz( src.charAt(nowIndex+1)))
 						{
 							//否则如果当前的字符是一个数字，就把它加进nodes
 							//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
@@ -1566,7 +1573,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						wordIndex node;
-						if (src.charAt(nowIndex) == '.' && !String_Splitor.indexOfNumber(src.charAt(nowIndex + 2)))
+						if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex + 2)))
 						{
 							node = CodeEdit.tryWord(src, nowIndex - 1);
 							getThoseObject().add(src.substring(node.start, node.end));
@@ -1694,7 +1701,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 							return node2.end - 1;
 
 						}
-						else if (src.charAt(nowIndex) == '.' && !String_Splitor.indexOfNumber(src.charAt(nowIndex - 1)) && !String_Splitor.indexOfNumber(src.charAt(nowIndex + 1)))
+						else if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex - 1)) && !String_Splitor.IsNumber(src.charAt(nowIndex + 1)))
 						{
 							node = CodeEdit.Ep.get();
 							node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
