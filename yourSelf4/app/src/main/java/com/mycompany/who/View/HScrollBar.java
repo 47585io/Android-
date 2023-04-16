@@ -4,9 +4,39 @@ import android.view.*;
 import android.widget.*;
 import java.util.*;
 import android.util.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
 public class HScrollBar extends HorizontalScrollView implements Scroll
 {
+
+	@Override
+	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+	{
+		// TODO: Implement this method
+		return false;
+	}
+
+	@Override
+	public boolean BubbleMotionEvent(MotionEvent event)
+	{
+		// TODO: Implement this method
+		return false;
+	}
+
+	@Override
+	public void setTarget(Interfaces.BubbleEvent target)
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public Interfaces.BubbleEvent getTarget()
+	{
+		// TODO: Implement this method
+		return null;
+	}
+	
 	Stack<Integer> historyL;
 	Stack<Integer> historyN;
 	boolean canSave=true;

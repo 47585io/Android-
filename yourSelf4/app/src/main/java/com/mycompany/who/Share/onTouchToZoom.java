@@ -22,6 +22,7 @@ public abstract class onTouchToZoom implements OnTouchListener
 	    if (p2.getPointerCount() == 2)
 		{
 			if(p2.getHistorySize()==0){
+				//初始化
 				id1=p2.getPointerId(0);
 				id2=p2.getPointerId(1);
 				hp1x=p2.getX(0);
@@ -32,13 +33,24 @@ public abstract class onTouchToZoom implements OnTouchListener
 			else{
 				index1=p2.findPointerIndex(id1);
 				index2=p2.findPointerIndex(id2);
+				//原来的手指上升了，切换为新的手指
+				if(index1==-1){
+					index1=index2==0 ? 1:0;
+					id1=p2.findPointerIndex(index1);
+				}
+				if(index2==-1){
+					index2=index1==0 ? 1:0;
+					id2=p2.findPointerIndex(index2);
+				}
+				
 				p1x=p2.getX(index1);
 				p1y=p2.getY(index1);
 				p2x=p2.getX(index2);
 				p2y=p2.getY(index2);
 				
-				if(Math.pow(p1x-p2x,2)+Math.pow(p1y-p2y,2)
-				  >Math.pow(hp1x-hp2x,2)+Math.pow(hp1y-hp2y,2))
+				//两点间的距离
+				if((Math.pow(p1x-p2x,2)+Math.pow(p1y-p2y,2))
+				  >(Math.pow(hp1x-hp2x,2)+Math.pow(hp1y-hp2y,2)))
 				    onAmplification(p1,p2);
 				else
 				    onNarrow(p1,p2);

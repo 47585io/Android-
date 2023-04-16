@@ -187,11 +187,11 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
 			E.setInfo(Info);
 		}
-		//组内的每个编辑器都设置Click
-		Edit.setOnClickListener(this);
+		
+		Edit.setOnClickListener(this);//组内的每个编辑器都设置Click
 		Edit.compareChroot(root); //设置root
-		Edit.setTarget(this);
-		Edit.setId(Edit.hashCode());
+		Edit.setTarget(this);//设置target，将事件冒泡给EditGroup
+		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
 
@@ -315,16 +315,19 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 			/*关键代码*/
 			boolean need = true;
+			Editable editor = getText();
+			int selfIndex = index.get();
 			int lineCount= getLineCount();
+			
 			if (lineCount > MaxLine)
 			{
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				size j = subLines(MaxLine + 1 - OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
 				j.start--; //连带着把MaxLine行的\n也截取
-				CharSequence src = getText().subSequence(j.start, j.end); 
-				IsModify++;
-				getText().delete(j.start, j.end);	
-				IsModify--;
+				CharSequence src = editor.subSequence(j.start, j.end); 
+				++IsModify;
+				editor. delete(j.start, j.end);	
+				--IsModify;
 
 				if (start + lengthAfter < j.start){
 					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
@@ -332,19 +335,25 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 				}
 				else
 				    super.onTextChanged(text, start, lengthBefore, j.start - start);	
-				
 				//截取后，只把本次未被截取的前半部分染色，
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
-				if (EditList.size() - 1 == index.get())
-					AddEdit("");
-				else if (EditList.get(index.get() + 1).getLineCount() + (lineCount - MaxLine) > MaxLine)
-					AddEditAt(index.get() + 1);
+				if(CodeEdit.getLineCount(src.toString())>MaxLine){
+					//大段文本需要插入，必须使用dispatchTextBlock
+					size s = new size(selfIndex,editor.length());
+					getEditBuilder().dispatchTextBlock(s,src);
+					return;
+				}
 				
+				if (EditList.size() - 1 == selfIndex)
+					AddEdit("");
+				else if (EditList.get(selfIndex + 1).getLineCount() + (lineCount - MaxLine) > MaxLine)
+					AddEditAt(selfIndex + 1);
 				//若无下个编辑器，则添加一个
 				//若有下个编辑器，但它的行也不足，那么在我之后添加一个
-				CodeEdit Edit = EditList.get(index.get() + 1);
+				
+				CodeEdit Edit = EditList.get(selfIndex + 1);
 				if(!need)
 					Edit.IsDraw(true);//不用染色了
 				Edit.getText().insert(0, src);
@@ -354,11 +363,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 
 			}
 			else
-			{
 			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				//否则正常调用
-			}
-
+			
 		}
 
 		@Override
@@ -378,7 +385,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		public boolean onTouchEvent(MotionEvent event)
 		{
 			//只有被touch的View，才能被调用，并继续分发，这里Edit可以被touch，将其实现交给外部类
-			invalidate();
 			return BubbleMotionEvent(event);
 		}
 	
@@ -514,7 +520,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		historyId = ((RCodeEdit) p1).index;
 		if (getWindow() != null)
 			getWindow().setX(-9999);
-		
 	}
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
@@ -537,6 +542,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	@Override
 	public boolean onTouchEvent(MotionEvent p2)
 	{	
+	    super.onTouchEvent(p2);
 	    if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){
 	        Edit E = EditList.get(0);
 	        boolean is = onTouchToZoom.Iszoom(p2);
@@ -545,6 +551,9 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		    else	
 			    getEditBuilder().zoomBy(E.TextSize-0.25f); 
 		}
+		
+		/*  横向滚动距离大于纵向滚动距离，禁止Scro滚动  */
+		
 		return true;
 	}
 
@@ -556,6 +565,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event)
 	{	
+	    super.onKeyUp(keyCode,event);
+		//如果返回了，先让滚动到上个位置
 		if((Scro.size()!=0||hScro.size()!=0)&&keyCode==KeyEvent.KEYCODE_BACK){
 		    Scro.goback();
 		    hScro.goback();
@@ -591,7 +602,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			calaIndex(end,e);
 		}
 		
-		private void dispatchTextBlock(size s,CharSequence str){
+		void dispatchTextBlock(size s,CharSequence str)
+		{
 			SpannableStringBuilder text = new SpannableStringBuilder(str);
 			int index = s.start;
 			Editable E = EditList.get(index).getText();
@@ -601,29 +613,36 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			//要插入的编辑器，从要插入的位置之后截取了文本，添加要插入的文本之后
 			//在之后创建一些编辑器，并均分文本
 			
+			String src = text.toString();
 			int toIndex = CodeEdit.getLineCount(text.toString())/MaxLine+1+index;
 			int nowLine = 0;
 			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
 			//每次向后截取MaxLine，并插入到刚创建的编辑器中
 			for(index+=1;index<=toIndex;++index){
 				AddEditAt(index);
-				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,text.toString());
+				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,src);
 				str = text.subSequence(s.start,s.end);
 				EditList.get(index).setText(str);
 			}
 		}
-		public void clearText(){
+		public void clearText()
+		{
 			String lua = getLuagua();
 			EditList.clear();
 			ForEditSon.removeAllViews();
 			EditLines.reLines(1);
 			AddEdit("."+lua);
 		}
-		public void setText(CharSequence str){		
+		public void setText(CharSequence str)
+		{		
 			clearText();
-			dispatchTextBlock(new size(0,0),str);
+			if(CodeEdit.getLineCount(str.toString())>MaxLine)
+			    dispatchTextBlock(new size(0,0),str);
+			else
+				EditList.get(0).setText(str);
 		}
-		public void append(CharSequence str){
+		public void append(CharSequence str)
+		{
 			size start = new size();
 			calaIndex(calaEditLen(),start);
 			if(CodeEdit.getLineCount(str.toString())>MaxLine)
@@ -631,7 +650,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			else
 			    EditList.get(start.start).append(str);
 		}
-		public void insert(int index,CharSequence str){
+		public void insert(int index,CharSequence str)
+		{
 			size start = new size();
 			calaIndex(calaEditLen(),start);
 			if(CodeEdit.getLineCount(str.toString())>MaxLine)
@@ -639,8 +659,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			else
 			    EditList.get(start.start).getText().insert(start.end,str);
 		}
-		public void delete(int start,int end){
-			
+		public void delete(int start,int end)
+		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -659,8 +679,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		/*
 		  一组的Edit共享Info，对于Info的操作都是内存空间的修改
 		*/
-		public void setLuagua(String luagua)
-		{
+		public void setLuagua(String luagua){
 			EditList.get(0).setLuagua(luagua);
 		}
 		public void setListener(EditListener li){
@@ -754,7 +773,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			return root;
 		}
 		
-		public void reSAll(int start,int end,final String want,final String to){
+		public void reSAll(int start,int end,final String want,final String to)
+		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -766,7 +786,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			d.dofor(start,end);
 		}
 		
-		public List<Integer> SearchWord(String want){
+		public List<Integer> SearchWord(String want)
+		{
 			StringBuilder b = new StringBuilder();
 			for(CodeEdit E:EditList){
 				b.append(E.getText().toString());
@@ -774,8 +795,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			return String_Splitor.indexsOf(want,b.toString());
 		}
 		
-		public void setSpan(size[] poses,Object[] spans){
-			
+		public void setSpan(size[] poses,Object[] spans)
+		{
 			for(int i=0;i<spans.length;++i){
 				size pos = poses[i];
 				final Object span = spans[i];
@@ -790,7 +811,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 				d.dofor(pos.start,pos.end);
 			}
 		}
-		public<T> void clearSpan(int start,int end,final Class<T>type){
+		public<T> void clearSpan(int start,int end,final Class<T>type)
+		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -921,7 +943,8 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			abstract void doOnce(int start, int end, CodeEdit Edit)
 		}
 
-		public int calaEditLen(){
+		public int calaEditLen()
+		{
 			int len = 0;
 			for (Edit e:EditList)
 			    len+=e.getText().length();
@@ -1030,7 +1053,6 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Group.root = new CodeEdit.EditChroot();
 		    Group.creatEditBuilder();
 			Group.creatEditFactory();
-			Group.setId(Group.hashCode());
 			init2(Group,root);
 		}
 		private static void init2( EditGroup Group,View root)
@@ -1041,7 +1063,17 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			Group. EditLines = root.findViewById(R.id.EditLine);
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
+			
+			//重新设置一个不同的id，防止xml文件被多次加载，内存中有多个相同id的View
+			Group.setId(Group.hashCode());
+			Group.mWindow.setId(Group.mWindow.hashCode());
+			Group.Scro.setId(Group.Scro.hashCode());
+			Group.hScro.setId(Group.hScro.hashCode());
+			Group.ForEdit.setId(Group.ForEdit.hashCode());
+			Group.ForEditSon.setId(Group.ForEditSon.hashCode());
+			Group.EditLines.setId(Group.EditLines.hashCode());
 		}	
+		
 	}
 
 	
@@ -1057,6 +1089,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 		{
 			config(target);
 		}
+		
 		public void config(EditGroup target)
 		{
 			target. EditLines.setFocusable(false);
@@ -1069,6 +1102,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			CodeEdit.Enabled_Complete = true;
 			CodeEdit.Enabled_Format = true;
 		}
+		
 	}
 	
 	
@@ -1102,6 +1136,7 @@ public class EditGroup extends HasAll implements CodeEdit.IlovePool,CodeEdit.Ine
 			trim(target.Scro,width,height);
 		    trim(target.hScro,width,height);
 		}
+		
 		//测量窗口高度
 		public static int MeasureWindowHeight(ListView mWindow)
 		{

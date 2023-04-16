@@ -65,9 +65,7 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 	public void tabView(int index)
 	{
 		super.tabView(index);
-		View v=getView(index);
-		ViewGroup.LayoutParams pa = v.getLayoutParams();
-		Config_Size2. trim(this,pa.width,pa.height);
+		getConfig().ConfigSelf(this);
 		//v.requestFocus();
 	}
 	@Override
@@ -122,6 +120,13 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 	
 	final public static class Config_hesSize extends Config_Size2<PageHandler>
 	{
+
+		@Override
+		public void ConfigSelf(PageHandler target)
+		{
+			onChange(target,0);
+			super.ConfigSelf(target);
+		}
 
 		@Override
 		public void onChange(PageHandler target, int src)
@@ -225,8 +230,12 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 			root.set(false,false,false,false,false);
 			builder.compareChroot(root);
 			
-			builder.Format(0,text.length());
-			builder.reDraw(0,builder.calaEditLen());
+			for(CodeEdit E:Group.getEditList()){
+				int end = E.getText().length();
+				E.Format(0,end);
+				end = E.getText().length();
+				E.reDraw(0,end);
+			}
 			
 		}
 	}

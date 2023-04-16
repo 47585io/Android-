@@ -147,20 +147,26 @@ public class Interfaces
 			{
 				//调整空间
 				ViewGroup.LayoutParams p = Father.getLayoutParams();
-				p.width = width;
-				p.height = height;
-				Father.setLayoutParams(p);
+				if(p.width!=width||p.height!=height){
+				    p.width = width;
+				    p.height = height;
+				    Father.setLayoutParams(p);
+			    }
 			}
 			final public static void trim(View Father, size s)
 			{
 				//调整空间
 				ViewGroup.LayoutParams p = Father.getLayoutParams();
-				p.width = s.start;
-				p.height = s.end;
-				Father.setLayoutParams(p);
+				if(p.width!=s.start||p.height!=s.end){
+				    p.width = s.start;
+				    p.height = s.end;
+			     	Father.setLayoutParams(p);
+			    }
 			}
 			final public static void trimAdd(View Father, int addWidth, int addHeight)
 			{
+				if(addWidth==0&&addHeight==0)
+					return;
 				ViewGroup.LayoutParams p = Father.getLayoutParams();
 				p.width += addWidth;
 				p.height += addHeight;
@@ -168,6 +174,8 @@ public class Interfaces
 			}
 			final public static void trimXel(View Father, float WidthX, float HeightX)
 			{
+				if(WidthX==1&&HeightX==1)
+					return;
 				ViewGroup.LayoutParams p = Father.getLayoutParams();
 				p.width *= WidthX;
 				p.height *= HeightX;

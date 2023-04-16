@@ -9,6 +9,7 @@ import android.util.*;
 import com.mycompany.who.Edit.Share.Share1.*;
 import android.content.res.*;
 import com.mycompany.who.View.*;
+import android.graphics.*;
 
 public class DownBar extends HasAll
 {
@@ -36,16 +37,25 @@ public class DownBar extends HasAll
 		if(hander!=null)
 		    removeView(hander);
 		addView(v,0);
-		//Config_hesSize config = (DownBar.Config_hesSize) getConfig();
-		//config.trim(v,config.getHanderSize());
+		
 	}
 	public void setVector(View v){
 		vector = v;
 		if(vector!=null)
 		    removeView(vector);
 		addView(v,1);
-		//Config_hesSize config = (DownBar.Config_hesSize) getConfig();
-		//config.trim(v,config.getVectorSize());
+		Rect delegateArea = new Rect();
+		//获取按钮在父视图中的位置（区域，相对于父视图坐标）
+		delegateArea.top = 0;
+		delegateArea.left = 0;
+		delegateArea.right = hander.getRight()+100;
+		//扩大区域范围，这里向下扩展200像素
+		delegateArea.bottom = hander.getBottom()+ 200;
+		//新建委托
+		TouchDelegate touchDelegate = new TouchDelegate(delegateArea, hander);
+		vector.setTouchDelegate(touchDelegate);
+		//在父View的onTouchEvent中，如果触摸在指定的区域，都先调用hander的onTouchEvent
+		//在hander的onTouchEvent中，会先调用自己的onTouchListener的方法
 		
 	}
 
@@ -104,10 +114,18 @@ public class DownBar extends HasAll
 		{
 			if(p2.getAction()==MotionEvent.ACTION_UP){
 				Config_hesSize config= (DownBar.Config_hesSize) getConfig();
-			    if(config.isOpen)
-					close();
-				else
-				    open();
+				if(getOrientation()==VERTICAL){
+					if(getBottom()-getTop()>config.height*0.5)
+						open();
+					else
+						close();
+				}
+				else if(getOrientation()==HORIZONTAL){
+					if(getRight()-getLeft()>config.width*0.5)
+						open();
+					else
+						close();
+				}
 			}
 			invalidate();
 			return true;
@@ -115,39 +133,6 @@ public class DownBar extends HasAll
 
 	}
 	
-	class VectorTouch extends OnTouchToMove
-	{
-
-		@Override
-		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
-		{
-			p1.scrollBy(-(int)dx,0);
-		}
-
-		@Override
-		public void onMoveToRight(View p1, MotionEvent p2, float dx)
-		{
-			p1.scrollBy((int)dx,0);
-		}
-
-		@Override
-		public void onMoveToTop(View p1, MotionEvent p2, float dy)
-		{
-			// TODO: Implement this method
-		}
-
-		@Override
-		public void onMoveToDown(View p1, MotionEvent p2, float dy)
-		{
-			// TODO: Implement this method
-		}
-
-		@Override
-		public boolean onMoveEnd(View p1, MotionEvent p2)
-		{
-			return true;
-		}
-	}
 
 	public void open(){
 		Config_hesSize config= (DownBar.Config_hesSize) getConfig();
@@ -164,6 +149,13 @@ public class DownBar extends HasAll
 		    AnimatorColletion.getOpenAnimator(getLeft(),getRight()-hander.getWidth(),this,AnimatorColletion.Left).start();
 		else if(getOrientation()==VERTICAL)
 			AnimatorColletion.getOpenAnimator(getTop(),getBottom()-hander.getHeight(),this,AnimatorColletion.Top).start();
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		super.onTouchEvent(event);
+		return false;
 	}
 
 

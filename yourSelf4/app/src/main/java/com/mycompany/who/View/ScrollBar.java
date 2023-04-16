@@ -4,9 +4,39 @@ import android.content.*;
 import android.view.*;
 import java.util.*;
 import android.util.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.Interfaces.*;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
 public class ScrollBar extends ScrollView implements Scroll
 {
+
+	@Override
+	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
+	{
+		// TODO: Implement this method
+		return false;
+	}
+
+	@Override
+	public boolean BubbleMotionEvent(MotionEvent event)
+	{
+		// TODO: Implement this method
+		return false;
+	}
+
+	@Override
+	public void setTarget(Interfaces.BubbleEvent target)
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public Interfaces.BubbleEvent getTarget()
+	{
+		// TODO: Implement this method
+		return null;
+	}
+
 	
 	Stack<Integer> historyL;
 	Stack<Integer> historyN;

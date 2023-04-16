@@ -1,6 +1,7 @@
 package com.mycompany.who.View;
+import com.mycompany.who.SuperVisor.Moudle.Config.*;
 
-public interface Scroll{
+public interface Scroll extends Interfaces.BubbleEvent{
 
 	public void setCanScroll(boolean can)
 

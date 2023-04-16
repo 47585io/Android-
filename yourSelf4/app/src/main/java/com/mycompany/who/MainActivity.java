@@ -13,8 +13,9 @@ import android.content.res.*;
 import java.util.*;
 import com.mycompany.who.Edit.Share.Share4.*;
 
-public class MainActivity extends BaseActivity2
+public class MainActivity extends BaseActivity2 implements Runnable
 {
+
 	private XCode Code;
 	private PageHandler handler;
 	private EditGroup Group;
@@ -27,20 +28,12 @@ public class MainActivity extends BaseActivity2
 		can=true;
 		super.onCreate(savedInstanceState);
 		init();
-		
 		Code = new XCode(this);
 		Code.config();
 		Code.setPool(pool);
 		setContentView(Code);	
-		int tmp = 0;
-		if(Displaywidth>Displayheight)
-			tmp=Configuration.ORIENTATION_LANDSCAPE;
-		else
-			tmp = Configuration.ORIENTATION_PORTRAIT;
-
-	    Code.loadSize(Displaywidth,Displayheight,tmp);
-		Code.addEdit("/storage/emulated/0/BaiduNetdisk/AIDE(6).txt");
-		Code.addEdit(".html");
+		
+		new Handler().postDelayed(this,50);
 		
 		/*
 		Group = (EditGroup) Code.getPages().getView(0);
@@ -122,6 +115,19 @@ public class MainActivity extends BaseActivity2
 	}
 	
 	
+	@Override
+	public void run()
+	{
+		int tmp = 0;
+		if(Displaywidth>Displayheight)
+			tmp=Configuration.ORIENTATION_LANDSCAPE;
+		else
+			tmp = Configuration.ORIENTATION_PORTRAIT;
+		
+		Code.loadSize(Displaywidth,Displayheight,tmp);
+		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
+		//Code.addEdit("/storage/emulated/0/Linux/1.java");
+	}
 	
 }
 
