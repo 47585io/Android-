@@ -1,10 +1,9 @@
 package com.mycompany.who.Edit.ListenerVistor;
 
+import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.Share.Share4.*;
 import java.util.*;
 import java.util.concurrent.*;
-import javax.security.auth.callback.*;
 
 
 public class EditListenerItrator
@@ -52,7 +51,6 @@ public class EditListenerItrator
 		}
 		return r;
 	}
-	
 	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback,ThreadPoolExecutor pool){
 		if(lis==null)
 			return null;
@@ -123,8 +121,5 @@ public class EditListenerItrator
 			return null;
 		}
 	}
-	
-	
-	
 	
 }

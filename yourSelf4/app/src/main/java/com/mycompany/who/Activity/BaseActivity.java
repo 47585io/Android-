@@ -22,18 +22,21 @@ public class BaseActivity extends Activity
         super.onCreate(savedInstanceState);
 		input = new InputorDialog(this);
 		if(can){
-	        dismiss_Title_And_ActionBar(this);
+	        dismiss_Title(this);
+			dismiss_ActionBar(this);
 		    dismiss_DownBar(this);
 		}
 		getWindow().setBackgroundDrawable(null);
     }
 
-	public static void dismiss_Title_And_ActionBar(Activity act){
+	public static void dismiss_Title(Activity act){
+		//取消标题
 		act.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        //取消标题
-        act.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-								 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+	}
+	public static void dismiss_ActionBar(Activity act){
 		//取消状态栏		
+		act.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+								 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 	}
 	public static void dismiss_DownBar(Activity act){
 		//隐藏底部工具栏
@@ -42,19 +45,26 @@ public class BaseActivity extends Activity
 			| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 			| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 	}
-	public static void setActionBarColor(Activity act,int color){
-	    Window window = act.getWindow();
-	    window.setStatusBarColor(color);
+	public static void restore_ActionBar(Activity act){
+		//显示状态栏
+		act.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 	}
+	public static void restore_Title(Activity act){
+		act.getActionBar().show();
+		
+	}
+	/*  每一个Activity中都有一个Window，Window中有三大组件，状态栏，标题，底部栏，在这之中还有一个DecorView，这里用于放我们自己的布局  */
 	
 	public void onWindowFocusChanged(boolean hasFocus)
 	{
         //被切换到后台及切回前台窗口焦点都会变化，而只有切回才重新隐藏系统UI控件
-		super.onWindowFocusChanged(hasFocus);
-        if (hasFocus&&can)
-			dismiss_DownBar(this);
+		super.onWindowFocusChanged(hasFocus);    
+		
+		if(can)
+		    dismiss_DownBar(this);
+		else
+			getWindow().setNavigationBarColor(Colors.Bg);	
     }
-	
 	
 	public static class InputorDialog extends Dialog{
 		
@@ -83,8 +93,12 @@ public class BaseActivity extends Activity
 		{
 			//展示Dialog时，Dialog获得焦点，配置一下
 			super.onWindowFocusChanged(hasFocus);
-			if (hasFocus&&can)
+			
+			if(can)
 				dismiss_DownBar(this);
+			else
+				getWindow().setNavigationBarColor(Colors.Bg);
+				
 		}
 		@Override
 		public boolean onKeyUp(int keyCode, KeyEvent event)

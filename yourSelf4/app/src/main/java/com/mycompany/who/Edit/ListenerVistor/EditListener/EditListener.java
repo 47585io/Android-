@@ -3,13 +3,13 @@ import android.graphics.*;
 import android.text.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.Share.*;
 import java.util.*;
 
 public abstract class EditListener extends Object
 {
 	private boolean Enabled;
 	private String name;
+	
 	public EditListener(){
 		name="@default";
 		Enabled=true;

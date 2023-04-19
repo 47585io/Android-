@@ -3,7 +3,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	attachToroot="true">
 
-	<com.mycompany.who.View.ReSpinner
+	<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ReSpinner
 		android:id="@+id/ReSpinner"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
@@ -38,7 +38,7 @@
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 
-		<com.mycompany.who.View.ReSpinner
+		<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ReSpinner
 			android:id="@+id/More"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"

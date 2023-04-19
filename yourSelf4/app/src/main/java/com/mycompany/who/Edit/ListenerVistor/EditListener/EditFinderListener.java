@@ -4,9 +4,9 @@ import android.text.*;
 import android.util.*;
 import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.Share.Share1.*;
 import java.util.*;
 import android.widget.*;
+import com.mycompany.who.Edit.Base.Share.Share1.*;
 
 public abstract class EditFinderListener extends EditListener
 {

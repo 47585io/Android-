@@ -1,8 +1,7 @@
 package com.mycompany.who.Edit.Base;
 
 import java.util.*;
-import com.mycompany.who.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.Base.Share.Share3.*;
 
 public class Words
 {
@@ -182,9 +181,9 @@ public class Words
 	}
 
 	public void init(int size){
-		add( EditCompletorListener.toColletion( keyword));
-		add( EditCompletorListener.toColletion(constword));
-		mdates.get(words_tag).addAll(EditCompletorListener.toColletion(IknowTag));
+		add( Array_Splitor.toColletion( keyword));
+		add( Array_Splitor.toColletion(constword));
+		mdates.get(words_tag).addAll(Array_Splitor.toColletion(IknowTag));
 		IknowTag=null;
 		keyword=null;
 		constword=null;

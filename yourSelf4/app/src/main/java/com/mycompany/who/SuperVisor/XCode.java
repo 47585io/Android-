@@ -1,21 +1,20 @@
 package com.mycompany.who.SuperVisor;
-import com.mycompany.who.SuperVisor.Moudle.*;
-import com.mycompany.who.SuperVisor.Moudle.Config.*;
 import android.content.*;
-import android.util.*;
-import com.mycompany.who.Edit.*;
-import java.util.concurrent.*;
-import com.mycompany.who.SuperVisor.Moudle.Share.*;
-import java.util.*;
-import android.view.*;
-import com.mycompany.who.R;
 import android.content.res.*;
+import android.util.*;
+import android.view.*;
 import android.widget.*;
-import com.mycompany.who.View.*;
 import android.widget.AdapterView.*;
-
-import com.mycompany.who.Edit.Share.Share2.*;
-import java.security.acl.*;
+import com.mycompany.who.*;
+import com.mycompany.who.Edit.*;
+import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.Edit.Base.Share.Share2.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Share.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 
 /*
@@ -45,7 +44,6 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 	public XCode(Context cont,AttributeSet attrs){
 		super(cont,attrs);
 	}
-
 	@Override
 	public void init()
 	{
@@ -53,7 +51,6 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 		Creator = new CodeCreator(R.layout.XCode);
 		Creator.ConfigSelf(this);
 	}
-	
 	
 	@Override
 	public void setPool(ThreadPoolExecutor pool)
@@ -144,7 +141,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			spinner.setonSelectionListener(new onSeletion());
 			ButtonBar.getChildAt(0).setOnClickListener(new Click());
 			pages.setonTabListener(new onTabPage());
-			target.setBackgroundColor(0xff222222);
+			target.setBackgroundColor(Colors.Bg);
 		}
 		
 		@Override
@@ -201,7 +198,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			@Override
 			public void onAddPage(View v,String name)
 			{
-				List<Icon> list = new ArrayList<>();
+				List<Icon> list = new LinkedList<>();
 				pages.toList(list);
 				spinner.setAdapter(new WordAdpter(target.getContext(),list,R.layout.FileIcon));
 			}
@@ -209,7 +206,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			@Override
 			public void onDelPage(int index)
 			{
-				// TODO: Implement this method
+				
 			}
 		}
 		
@@ -228,14 +225,8 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			configP= target.mPages.getConfig();
 			configD= target.mDownBar.getConfig();
 		}
-		
-		@Override
-		public void ConfigSelf(XCode target)
-		{
-			
-		}
 
-		/* 只要在初始化时设置好孩子们的位置，之后孩子们会自动改变 */
+		/* 在初始化时设置好孩子们的位置 */
 		@Override
 		public void set(int width, int height, int is, XCode target)
 		{
@@ -258,6 +249,9 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 		{
 			trim(target,width,height);
 			target.setOrientation(CastFlag(flag));
+			configT.change(target.mTitle,flag);
+			configP.change(target.mPages,flag);
+			configD.change(target.mDownBar,flag);
 		}
 		
 	}
@@ -267,21 +261,10 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 	{
 		return true;
 	}
-
 	@Override
 	public boolean BubbleKeyEvent(int keyCode, KeyEvent event)
 	{
 		return false;
 	}
-	
-
-	@Override
-	protected void onConfigurationChanged(Configuration newConfig)
-	{
-		super.onConfigurationChanged(newConfig);
-		getConfig(). change(this,newConfig.orientation);
 		
-	}
-	
-	
 }

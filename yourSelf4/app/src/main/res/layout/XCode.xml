@@ -2,17 +2,17 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	attachToroot="true">
 
-	<com.mycompany.who.SuperVisor.Moudle.Title
+	<com.mycompany.who.SuperVisor.CodeMoudle.Title
 		android:id="@+id/Title"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
 
-	<com.mycompany.who.SuperVisor.Moudle.PageHandler
+	<com.mycompany.who.SuperVisor.CodeMoudle.PageHandler
 		android:id="@+id/PageHandler"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
 
-	<com.mycompany.who.SuperVisor.Moudle.DownBar
+	<com.mycompany.who.SuperVisor.CodeMoudle.DownBar
 		android:id="@+id/DownBar"
 		android:layout_width="match_parent"
 		android:layout_height="800px"

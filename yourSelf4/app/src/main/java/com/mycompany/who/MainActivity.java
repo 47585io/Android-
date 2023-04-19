@@ -1,19 +1,20 @@
 package com.mycompany.who;
 
-import android.app.*;
+import android.content.res.*;
 import android.os.*;
 import android.view.*;
-import com.mycompany.who.Share.*;
-import com.mycompany.who.SuperVisor.Moudle.*;
-import java.util.concurrent.*;
-import android.widget.*;
-import com.mycompany.who.SuperVisor.*;
 import com.mycompany.who.Activity.*;
-import android.content.res.*;
+import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.SuperVisor.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
+import java.util.concurrent.*;
+import com.mycompany.who.Edit.*;
 import java.util.*;
-import com.mycompany.who.Edit.Share.Share4.*;
+import com.mycompany.who.Edit.Base.Share.Share4.*;
 
-public class MainActivity extends BaseActivity2 implements Runnable
+public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
 
 	private XCode Code;
@@ -25,15 +26,70 @@ public class MainActivity extends BaseActivity2 implements Runnable
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		can=true;
 		super.onCreate(savedInstanceState);
+		dismiss_Title(this);
+		new Handler().post(this);
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		//每次从后台切回前台都会重新调用
+	}
+	
+	@Override
+	public void run()
+	{
 		init();
+		config();
+		int tmp = 0;
+		if(Displaywidth>Displayheight)
+			tmp=Configuration.ORIENTATION_LANDSCAPE;
+		else
+			tmp = Configuration.ORIENTATION_PORTRAIT;
+		loadSize(Displaywidth,Displayheight,tmp);
+	}
+	
+	public void init(){
 		Code = new XCode(this);
+		RejectedExecutionHandler rejected = new RejectedExecutionHandler(){
+
+			@Override
+			public void rejectedExecution(Runnable p1, ThreadPoolExecutor p2)
+			{
+				//制定拒绝策略，避免线程池溢出后直接丢弃任务
+				try {
+					// 等待1秒后，尝试将当前被拒绝的任务重新加入线程队列
+					// 此时主线程是会被阻塞的
+					Thread.sleep(1000);
+					p2.execute(p1);
+				} catch (Exception e) {}
+			}
+		};
+		LinkedBlockingQueue queue = new LinkedBlockingQueue();
+		// 初始化线程池
+		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
+	}
+	
+	public void config(){
 		Code.config();
 		Code.setPool(pool);
+		getWindow().setStatusBarColor(Colors.Bg);
+		getWindow().setNavigationBarColor(Colors.Bg);
+		CodeEdit.Enabled_Drawer = true;
+		CodeEdit.Enabled_Complete = true;
+		CodeEdit.Enabled_Format = true;
+	}
+	
+	@Override
+	public void loadSize(int width, int height, int is)
+	{
 		setContentView(Code);	
 		
-		new Handler().postDelayed(this,50);
+		Code.loadSize(width,height,is);
+		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
+		//Code.addEdit("/storage/emulated/0/Linux/1.java");
 		
 		/*
 		Group = (EditGroup) Code.getPages().getView(0);
@@ -47,61 +103,43 @@ public class MainActivity extends BaseActivity2 implements Runnable
 	}
 
 	@Override
-	protected void onResume()
+	public void ShiftConfig(Level Configer)
 	{
-		super.onResume();
-		//每次从后台切回前台都会重新调用
-	}
-	
-	
-	protected void init(){
-		RejectedExecutionHandler rejected = new RejectedExecutionHandler(){
-
-			@Override
-			public void rejectedExecution(Runnable p1, ThreadPoolExecutor p2)
-			{
-				//制定拒绝策略，避免线程池溢出后直接丢弃任务
-				try {
-					// 等待1秒后，尝试将当前被拒绝的任务重新加入线程队列
-					// 此时主线程是会被阻塞的
-					Thread.sleep(1000);
-					p2.execute(p1);
-				} catch (Exception e) {
-				}
-			}
-		};
-		// 将线程池队列设置为有界队列
-		LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		// 初始化线程池
-		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
-
+		Code.ShiftConfig(Configer);
 	}
 
 	@Override
+	public Config_Size getConfig()
+	{
+		return Code.getConfig();
+	}
+	
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
-	{/*
-		switch(item.getItemId()){
-			case 0:
-				Group.getEditBuilder().Uedo();
-				break;
-			case 1:
-				Group.getEditBuilder().Redo();
-				break;
-			case 2:	
-				Group.getEditBuilder().Format();	
-				break;
-			case 3:
-				String src= Group.getEditBuilder().reDraw();
-				log.e(src,true);
-				break;
-			case 4:
-				Group.scrollTo(0,0);
-				break;
-		}*/
+	{
+		/*
+		 switch(item.getItemId()){
+		 case 0:
+		 Group.getEditBuilder().Uedo();
+		 break;
+		 case 1:
+		 Group.getEditBuilder().Redo();
+		 break;
+		 case 2:	
+		 Group.getEditBuilder().Format();	
+		 break;
+		 case 3:
+		 String src= Group.getEditBuilder().reDraw();
+		 log.e(src,true);
+		 break;
+		 case 4:
+		 Group.scrollTo(0,0);
+		 break;
+		 }*/
 		return super.onOptionsItemSelected(item);
 	}
 
-	
+
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
@@ -113,20 +151,17 @@ public class MainActivity extends BaseActivity2 implements Runnable
 		menu.add(4,4,4,"GoBack");
 		return super.onCreateOptionsMenu(menu);
 	}
-	
-	
+
 	@Override
-	public void run()
+	public void onConfigurationChanged(Configuration newConfig)
 	{
-		int tmp = 0;
-		if(Displaywidth>Displayheight)
-			tmp=Configuration.ORIENTATION_LANDSCAPE;
-		else
-			tmp = Configuration.ORIENTATION_PORTRAIT;
-		
-		Code.loadSize(Displaywidth,Displayheight,tmp);
-		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
-		//Code.addEdit("/storage/emulated/0/Linux/1.java");
+		super.onConfigurationChanged(newConfig);
+		Code.getConfig().change(Code,newConfig.orientation);
+		if(newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE)
+			dismiss_ActionBar(this);
+		else if(newConfig.orientation==Configuration.ORIENTATION_PORTRAIT){
+			restore_ActionBar(this);
+		}
 	}
 	
 }

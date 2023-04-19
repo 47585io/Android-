@@ -7,25 +7,8 @@ import android.widget.*;
 
 public abstract class EditInsertorListener extends EditListener
 {
-	private HashMap<CharSequence,CharSequence> words;
-	public EditInsertorListener(){
-		words= new HashMap<>();
-	}
 	
-	abstract public void putWords(HashMap<CharSequence,CharSequence> words)
-	
-	public int dothing_insert(EditText self, int nowIndex){
-		Editable editor = self.getText();
-		String src = editor.toString();
-		for(CharSequence start:words.keySet()){
-			if(src.indexOf(start.toString())==0){
-				CharSequence end = words.get(start);
-				editor.insert(nowIndex+1,end);
-				return nowIndex+end.length();
-			}
-		}
-		return nowIndex+1;
-	}
+	abstract public int dothing_insert(EditText self, int nowIndex)
 	
 	final public int LetMeInsert(EditText self, int nowIndex)
 	{

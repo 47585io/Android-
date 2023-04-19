@@ -3,12 +3,12 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	attachToroot="true">
 
-	<com.mycompany.who.View.ScrollBar
+	<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ScrollBar
 		android:id="@+id/Scro"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content">
 
-		<com.mycompany.who.View.HScrollBar
+		<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.HScrollBar
 			android:id="@+id/hScro"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content">
@@ -19,7 +19,7 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content">
 				
-				<com.mycompany.who.Edit.Base.Edit.EditLine
+				<com.mycompany.who.Edit.EditLine
 					android:focusable="false"
 					android:id="@+id/EditLine"
 					android:layout_width="wrap_content"
@@ -33,11 +33,11 @@
 				
 			</LinearLayout>
 			
-		</com.mycompany.who.View.HScrollBar>
+		</com.mycompany.who.SuperVisor.CodeMoudle.Base.View.HScrollBar>
 
-	</com.mycompany.who.View.ScrollBar>
+	</com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ScrollBar>
 	
-	<ListView
+    <ListView
 		android:id="@+id/mWindow"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
