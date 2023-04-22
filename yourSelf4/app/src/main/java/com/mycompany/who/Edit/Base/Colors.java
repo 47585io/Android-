@@ -6,6 +6,19 @@ import android.text.style.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import java.util.*;
 
+
+/*
+ EditText管理文本数据，也管理文本绘制，文本数据由其内部SpannableStringBuilder容器管理，而文本绘制是用TextPaint画的
+ EditText在onDraw中可以将画笔分享给别人，这个人就是Span，所以自定义Span可以将文本绘制成任何样子
+
+ 每次onDraw，EditText遍历每个Span，并调用它们的方法，至于如何绘制这段文本由Span自己决定
+ (另外的，文本起始和末尾的位置是由EditText内部的Layout测量后决定的)
+
+ 您只要使用支持设置Span的文本容器的setSpan方法就可以设置一个Span
+ setSpan 内部会判断 Span 对象是否之前设置过了，如果是同一个对象，会修改它的位置和flag值
+ 但单个Span可以应用到多个Span容器中，这样可以节省内存
+
+ */
 public class Colors
 {
 	//所有颜色
@@ -197,18 +210,18 @@ public class Colors
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 			else
-				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		}
 	    return styled;	
 	}
 	public static void ForeColorText(Spannable editor,wordIndex[] nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 			else
-				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 		}
 	}
 	public static SpannableStringBuilder ForeColorText(CharSequence src,List<wordIndex> nodes,ByteToColor Colors){
@@ -216,18 +229,18 @@ public class Colors
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 			else
-				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		}
 	    return styled;	
 	}
 	public static void ForeColorText(Spannable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 			else
-				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 		}
 	}
 	public static Spanned ForeColorText(CharSequence text,String color) {
@@ -237,7 +250,7 @@ public class Colors
 	}
 	public static SpannableStringBuilder ForeColorText(CharSequence text,int color){
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		b.setSpan(new ForegroundColorSpan(color),0,text.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		b.setSpan(new ForegroundColorSpan(color),0,text.length(),SpanFlag);
 		return b;
 	}
 	
@@ -246,18 +259,18 @@ public class Colors
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		    else
-				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		}
 	    return styled;	
 	}
 	public static void BackColorText(Spannable editor,wordIndex[] nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 			else
-				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 	    }
 	}
 	public static SpannableStringBuilder BackColorText(CharSequence src,List<wordIndex> nodes,ByteToColor Colors){
@@ -265,23 +278,23 @@ public class Colors
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		    else
-				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 		}
 	    return styled;	
 	}
 	public static void BackColorText(Spannable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
 		for(wordIndex node:nodes){
 			if(Colors==null)
-		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
 			else
-				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
 	    }
 	}
 	public static SpannableStringBuilder BackColorText(CharSequence text,int color){
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		b.setSpan(new BackgroundColorSpan(color),0,text.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		b.setSpan(new BackgroundColorSpan(color),0,text.length(),SpanFlag);
 		return b;
 	}
 	
@@ -314,7 +327,7 @@ public class Colors
 		for(i=0;i<nodes.length;++i){
 			Object span = spans[i];
 			size node = nodes[i];
-			builder.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			builder.setSpan(span,node.start,node.end,SpanFlag);
 		}
 		return builder;
 	}
@@ -323,11 +336,11 @@ public class Colors
 		for(i=0;i<nodes.length;++i){
 			Object span = spans[i];
 			size node = nodes[i];
-			editor.setSpan(span,node.start,node.end,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			editor.setSpan(span,node.start,node.end,SpanFlag);
 		}
 	}
 	
-	public static<T> size[] subSpanPos(int start,int end,Spannable editor,Class<T> type){
+	public static<T> size[] subSpanPos(int start,int end,Spanned editor,Class<T> type){
 		Object[] spans = editor.getSpans(start,end,type);
 		size[] nodes = new size[spans.length];
 		
@@ -347,10 +360,12 @@ public class Colors
 	}
 	
 	
-	
 	public static Class<ParcelableSpan> SpanType = ParcelableSpan.class;
 	
 	public static Class<BackgroundColorSpan> BackSpanType = BackgroundColorSpan.class;
 	
 	public static Class<ForegroundColorSpan> ForeSpanType = ForegroundColorSpan.class;
+	
+	public static int SpanFlag = Spannable.SPAN_EXCLUSIVE_EXCLUSIVE;
+	
 }

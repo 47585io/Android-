@@ -207,7 +207,7 @@ public class PageList extends HasAll
 		list.clear();
 		for(View v:mPages){
 			String name = (String) v.getTag();
-			Icon icon = new Icon(Share.getFileIcon(name),name);
+			Icon icon = new Icon3(Share.getFileIcon(name),name);
 			list.add(icon);
 		}
 	}

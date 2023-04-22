@@ -10,12 +10,22 @@ public interface EditListenerInfo
 	public boolean delAListener(EditListener li)
 
 	public EditListener findAListener(String name)
+
+	public boolean addListenerTo(EditListener li,int toIndex)
+
+	public boolean delListenerFrom(int fromIndex)
+
+	public EditListener findAListener(int fromIndex)
+
 	
-	
-	public static class FindHelper{
+	public static class Helper{
 		
-		public static EditListener checkName(List<EditListener> lis,String name){
-			for(EditListener li:lis){
+		public static EditListener checkName(EditListenerList lis,String name){
+			
+			if(lis.getName().equals(name))
+				return lis;
+			
+			for(EditListener li:lis.getList()){
 				if(li.getName().equals(name)){
 					return li;
 				}

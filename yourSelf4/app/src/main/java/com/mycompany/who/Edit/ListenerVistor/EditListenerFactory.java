@@ -7,6 +7,7 @@ import com.mycompany.who.Edit.*;
   知道interface里的函数加abstract有什么用吗？
   
   这是为了方便以后将interfac改成abstract class
+  
 */
 public interface EditListenerFactory
 {

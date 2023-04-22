@@ -4,45 +4,63 @@ import android.text.*;
 import android.util.*;
 import android.widget.*;
 
+
+/*
+  对齐文本
+  
+  editor表示编辑器的文本容器，start和end分别表示文本格式化的起始和末尾，nowIndex表示文本格式到了哪儿，beforeIndex表示最后一次之前的位置
+  
+  三个抽象方法顺次调用，dothing_Start和dothing_End只在起始和末尾调一次，而dothing_Run只要没到end就一直调
+  
+*/
 public abstract class EditFormatorListener extends EditListener
 {
-	public abstract int dothing_Run(EditText self, int nowIndex);
+	protected abstract int dothing_Run(Editable editor, int nowIndex);
 	//开始做事
-	public abstract int dothing_Start(EditText self, int nowIndex,int start,int end);
+	protected abstract int dothing_Start(Editable editor, int nowIndex,int start,int end);
 	//为了避免繁琐的判断，一开始就调用start方法，将事情初始化为你想要的样子
-	public abstract int dothing_End(EditText self, int beforeIndex,int start,int end);
+	protected abstract int dothing_End(Editable editor, int beforeIndex,int start,int end);
 	//收尾工作
 	
-	final public void LetMeFormat(int start, int end, EditText self)
+	final public void LetMeFormat(int start, int end, Editable editor)
 	{
-		if (!Enabled())
-			return ;
-
-		try
-		{
-			Format(start,end,self);
+		try{
+			if(Enabled())
+			    Format(start,end,editor);
 		}
-		catch (IndexOutOfBoundsException e)
-		{
+		catch (IndexOutOfBoundsException e){
 			Log.e("Formating Error", toString()+" "+e.toString());
-			//格式化的过程中出现了问题，返回原字符串
 		}
 	}
 	
-	protected void Format(int start, int end, EditText self){
-		
+	protected void Format(int start, int end, Editable editor)
+	{
 		int beforeIndex = 0;
 		int nowIndex=start;
 		
-		nowIndex = dothing_Start(self, nowIndex, start, end);
+		nowIndex = dothing_Start(editor, nowIndex, start, end);
 		
 		for (;nowIndex < end && nowIndex != -1;)
 		{
 			beforeIndex = nowIndex;
-			nowIndex = dothing_Run(self, nowIndex);
+			nowIndex = dothing_Run(editor, nowIndex);
+			//您可以在上次返回一个index，这个index决定下次传入的nowIndex
 		}
-		nowIndex =  dothing_End(self, beforeIndex, start, end);		
+		nowIndex =  dothing_End(editor, beforeIndex, start, end);		
 		
 	}
+	
+	/* 从起始位置开始，反向把字符串中的want替换为to */
+	final public static void reSAll(int start, int end, String want, CharSequence to,Editable editor)
+	{
+		String src=editor.toString().substring(start, end);
+		int nowIndex = src.lastIndexOf(want);
+		while (nowIndex != -1)
+		{
+			editor.replace(nowIndex + start, nowIndex + start + want.length(), to);	
+			nowIndex = src.lastIndexOf(want, nowIndex - 1);
+		}
+	}
+	
 }
 

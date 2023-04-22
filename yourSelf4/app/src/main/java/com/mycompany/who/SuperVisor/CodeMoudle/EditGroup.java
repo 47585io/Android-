@@ -45,9 +45,9 @@ import android.view.View.OnClickListener;
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  实现了EditListenerInfoUser接口，可直接将我给Extension
 */
-public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnItemClickListener
+public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnItemClickListener
 {
-	
+
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	
@@ -106,7 +106,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public ViewGroup getForEditSon(){
 		return ForEditSon;
 	}
-	public EditLine getLines(){
+	public EditLine getEditLine(){
 		return EditLines;
 	}
 	public ListView getWindow(){
@@ -130,13 +130,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		return pool;
 	}
-		
-	@Override
-	public void setWindow(ListView Window)
-	{
-		mWindow = Window;
-		getEditBuilder().setWindow(Window);
-	}
+	
 	@Override
 	public void setPool(ThreadPoolExecutor pool)
 	{
@@ -208,8 +202,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			//第一个编辑器是get的，然后添加Clip
 	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
-			Edit.getCanvaserList().add(0,getOneClipCanvaser());
 			mfactory.configEdit(Edit, name, this);
+			Edit.getCanvaserList().getList().add(getOneClipCanvaser());
 		}
 		else
 		{
@@ -560,10 +554,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		//如果点击了就插入单词并关闭窗口
 		WordAdpter adapter = (WordAdpter) p1.getAdapter();
-		Icon icon = adapter.getItem(p3);
+		IconX icon = (IconX) adapter.getItem(p3);
 		if(historyId!=null){
 			CodeEdit Edit = getHistoryEdit();
-			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), icon.getflag());
+			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), adapter.posFlag(p3));
 		}
 		getWindow().setX(-9999);
 	}
@@ -746,10 +740,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			for(CodeEdit E:EditList)  
 			    E.setWordLib(Lib);
 		}
-		public void setSearchBit(int bit){
-			for(CodeEdit E:EditList)  
-			    E.setSearchBit(bit);
-		}
 		
 		public String getLuagua(){
 			return EditList.get(0).getLuagua();
@@ -762,9 +752,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public Words getWordLib(){
 			return EditList.get(0).getWordLib();
-		}
-	    public int getSearchBit(){
-			return EditList.get(0).getSearchBit();
 		}
 		
 		public void lockThem(boolean is){
@@ -839,7 +826,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 					@Override
 					void doOnce(int start, int end, CodeEdit Edit)
 					{
-						Edit.getText().setSpan(start,end,span,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+						Edit.getText().setSpan(start,end,span,Colors.SpanFlag);
 					}
 				};
 				d.dofor(pos.start,pos.end);
@@ -865,7 +852,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				@Override
 				void doOnce(int start, int end, CodeEdit Edit)
 				{
-				    Edit.reDraw(start, end);
+					Runnable run = Edit.ReDraw(start, end);
+					if(pool!=null)
+				        pool.execute(run);
+					else
+						run.run();
 				}
 			};
 			d.dofor(start,end);
@@ -879,8 +870,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				@Override
 				void doOnce(int start, int end, CodeEdit Edit)
 				{
-					Future f = Edit.prepare(start,end,Edit.getText().toString());
-					results.add(f);
+					Runnable run = Edit.Prepare(start,end,Edit.getText().toString());
+					if(pool!=null){
+				        Future f = pool.submit(run);
+						results.add(f);
+					}
+					else
+						run.run();
 				}
 
 			};
@@ -1058,7 +1054,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			Edit.setPool(self. pool);
 			Edit.setWindow(self. getWindow());
-			Edit.setEditLine(self.getLines());
+			Edit.setEditLine(self.getEditLine());
 			Share.setEdit(Edit, name);
 		}
 
@@ -1105,6 +1101,24 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public EditListenerInfo getLineInfo(){
 			return LineInfo;
+		}
+		
+		@Override
+		public boolean addListenerTo(EditListener li, int toIndex)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean delListenerFrom(int fromIndex)
+		{
+			return false;
+		}
+
+		@Override
+		public EditListener findAListener(int fromIndex)
+		{
+			return null;
 		}
 		
 	}
@@ -1254,5 +1268,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public EditFactory getEditFactory()
 
 	}
+	
+	/*  第一次知道，interface可以继承多个interface，天哪  */
+	
+	public static interface requestWithEditGroup extends IneedFactory,IlovePool{}
 
 }

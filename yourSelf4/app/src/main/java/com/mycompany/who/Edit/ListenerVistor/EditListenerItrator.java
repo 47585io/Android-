@@ -8,16 +8,18 @@ import java.util.concurrent.*;
 
 public class EditListenerItrator
 {
-	public static void foreach(RunLi Callback,Collection<EditListener> lis){
+	public static void foreach(RunLi Callback,Collection<EditListener> lis)
+	{
 		if(lis==null)
 			return;
 		for(EditListener li:lis){
 			try{
-			Callback.runSelf(li);
+			    Callback.runSelf(li);
 			}catch(Exception e){}
 		}
 	}
-	public static void foreach(final RunLi Callback,Collection<EditListener> lis,ThreadPoolExecutor pool){
+	public static void foreach(final RunLi Callback,Collection<EditListener> lis,ThreadPoolExecutor pool)
+	{
 		if(lis==null)
 			return;
 		if(pool==null){
@@ -26,7 +28,8 @@ public class EditListenerItrator
 		}
 		
 		List<Future> results = new ArrayList<>();
-		for(final EditListener li:lis){
+		for(final EditListener li:lis)
+		{
 			Runnable run = new Runnable(){
 
 				@Override
@@ -40,7 +43,8 @@ public class EditListenerItrator
 		FuturePool.FuturePop(results);
 	}
 	
-	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback){
+	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback)
+	{
 		if(lis==null)
 			return null;
 		List<T> r=new ArrayList<>();
@@ -51,7 +55,8 @@ public class EditListenerItrator
 		}
 		return r;
 	}
-	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback,ThreadPoolExecutor pool){
+	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback,ThreadPoolExecutor pool)
+	{
 		if(lis==null)
 			return null;
 		if(pool==null){
@@ -76,18 +81,20 @@ public class EditListenerItrator
 		return FuturePool.FutureGetAll(results);
 	}
 	
-	public static<T> List<T> foreach(final RunLi<T> Callback,Collection<EditListener> lis,boolean is){
+	public static<T> List<T> foreach(final RunLi<T> Callback,Collection<EditListener> lis,boolean is)
+	{
 		if(lis==null)
 			return null;
 		List<T> r=new ArrayList<>();
 		for(EditListener li:lis){
 			try{
-				r.add( Callback.runSelf(li));
+				r.add(Callback.runSelf(li));
 			}catch(Exception e){}
 		}
 		return r;
 	}
-	public static<T> List<T> foreach(final RunLi<T> Callback,ThreadPoolExecutor pool,Collection<EditListener> lis){
+	public static<T> List<T> foreach(final RunLi<T> Callback,ThreadPoolExecutor pool,Collection<EditListener> lis)
+	{
 		if(lis==null)
 			return null;
 		if(pool==null){
@@ -113,7 +120,8 @@ public class EditListenerItrator
 	}
 	
 	
-	public static abstract class RunLi<T>{
+	public static abstract class RunLi<T>
+	{
 		abstract public T run(EditListener li);
 		public T runSelf(EditListener li){
 			if(li.Enabled())

@@ -6,15 +6,26 @@ import android.util.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 
+
+/*
+  在画布上绘画
+
+  self表示编辑器本身，canvas和paint分别表示编辑器的画布和画笔，pos是一个坐标，它可能是编辑器上次被触摸的坐标，也可能是光标坐标，这由具体的编辑器决定
+  
+  在onDraw和afterDraw中都可以进行绘制，不同的是，onDraw在super.onDraw之前，而afterDraw在super.onDraw之后
+  
+*/
 public abstract class EditCanvaserListener extends EditListener
 {
 	
 	public static final int OnDraw = 0;
 	public static final int AfterDraw = 1;
+	//用flag值分别表示调用哪个
 	
-	public abstract void onDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
-
-	public abstract void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
+	protected abstract void onDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
+	//在编辑器绘制前，进行绘制
+	protected abstract void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
+	//在编辑器绘制后，进行绘制
 	
 	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
@@ -26,7 +37,8 @@ public abstract class EditCanvaserListener extends EditListener
 		}
 	}
 	
-	protected void Canvaser(EditText self, Canvas canvas, TextPaint paint,size pos,int flag){
+	protected void Canvaser(EditText self, Canvas canvas, TextPaint paint,size pos,int flag)
+	{
 		if(flag == OnDraw)
 		    onDraw(self,canvas,paint,pos);
 		else if(flag==AfterDraw)

@@ -72,7 +72,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	public List<EditListener> getCanvaserList()
 	{
 		if(Info!=null)
-			return Info.mlistenerVS;
+			return Info.mlistenerVS.getList();
 		return null;
 	}
 	
@@ -107,7 +107,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	public void clearListener()
 	{
 		if(Info!=null)
-		    Info.mlistenerVS.clear();
+		    Info.mlistenerVS.getList().clear();
 	}
 
 	public void reLines(int line){
@@ -203,17 +203,17 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	public static class EditLineListenerInfo implements EditListenerInfo
 	{
 
-	    public List<EditListener> mlistenerVS;
+	    public EditListenerList mlistenerVS;
 		
 		public EditLineListenerInfo(){
-			mlistenerVS = new ArrayList<>();
+			mlistenerVS = new EditListenerList();
 		}
 		
 		@Override
 		public boolean addAListener(EditListener li)
 		{
 			if(li instanceof EditCanvaserListener){
-				mlistenerVS.add(li);
+				mlistenerVS.getList().add(li);
 				return true;
 			}
 			return false;
@@ -222,7 +222,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		@Override
 		public boolean delAListener(EditListener li)
 		{
-			if(mlistenerVS.remove(li))
+			if(mlistenerVS.getList().remove(li))
 				return true;
 			return false;
 		}
@@ -230,8 +230,30 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		@Override
 		public EditListener findAListener(String name)
 		{
-			return FindHelper.checkName(mlistenerVS,name);
+			return Helper.checkName(mlistenerVS,name);
 		}
+		
+		@Override
+		public boolean addListenerTo(EditListener li, int toIndex)
+		{
+			// TODO: Implement this method
+			return false;
+		}
+
+		@Override
+		public boolean delListenerFrom(int fromIndex)
+		{
+			// TODO: Implement this method
+			return false;
+		}
+
+		@Override
+		public EditListener findAListener(int fromIndex)
+		{
+			// TODO: Implement this method
+			return null;
+		}
+		
 	}
 
 }

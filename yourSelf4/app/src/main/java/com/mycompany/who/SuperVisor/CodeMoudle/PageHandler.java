@@ -13,8 +13,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 
-public class PageHandler extends PageList implements CodeEdit.IlovePool
+public class PageHandler extends PageList implements EditGroup.requestWithEditGroup
 {
+	
 	private ThreadPoolExecutor pool;
 	private ViewBuiler ViewBuilder;
 	private List<Object> PageState;
@@ -69,6 +70,12 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 	{
 		return pool;
 	}
+	@Override
+	public EditGroup.EditFactory getEditFactory()
+	{
+		// TODO: Implement this method
+		return null;
+	}
 	public ViewBuiler getViewBuilder()
 	{
 		return ViewBuilder;
@@ -79,7 +86,11 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 	public void setViewBuilder(ViewBuiler b){
 		ViewBuilder = b;
 	}
-	
+	@Override
+	public void setEditFactory(EditGroup.EditFactory factory)
+	{
+		// TODO: Implement this method
+	}
 
 	//已经到达了最后吗？
 	@Override
@@ -147,7 +158,7 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 	
 	
 	/*  在View被加入页面时，可以进行额外配置  */
-	public static interface ViewBuiler{
+	public static interface ViewBuiler extends OnTouchListener,OnKeyListener{
 		
 		public void eatView(View v, String name, PageHandler self)
 		
@@ -156,7 +167,7 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 		public boolean onPageKey(int keyCode,KeyEvent p2, PageHandler self)
 		
 	}
-	final static class Domean implements ViewBuiler,OnTouchListener,OnKeyListener
+	final static class Domean implements ViewBuiler
 	{
 
 		@Override
@@ -186,15 +197,13 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 		@Override
 		public void eatView(View v, String name,PageHandler self)
 		{
-			if(!(v instanceof OnTouchListener)) //View已经实现OnTouchListener，不用我啦
-			    v. setOnTouchListener(this);
 			Config_Size2 config = (HasAll.Config_Size2)(self. getConfig());
 			
 			if(v instanceof ImageView)
 				eatImageView((ImageView)v,name);
 			if(v instanceof EditGroup){
-				eatEditGroup((EditGroup)v,name);
 				((EditGroup)v).loadSize(config.width,config.height,config.flag);
+				eatEditGroup((EditGroup)v,name);	
 			}
 		}
 		
@@ -214,14 +223,14 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 			root.set(false,false,false,false,false);
 			builder.compareChroot(root);
 			
-			Group.getLines().reLines(builder.calaEditLines());
+			Group.getEditLine().reLines(builder.calaEditLines());
 			Group.trimToFather();
 			
 			for(CodeEdit E:Group.getEditList()){
 				int end = E.getText().length();
 				E.Format(0,end);
 				end = E.getText().length();
-				E.reDraw(0,end);
+				E.getPool().execute( E.ReDraw(0,end));
 			}
 			
 		}
@@ -237,7 +246,7 @@ public class PageHandler extends PageList implements CodeEdit.IlovePool
 		public void setViewBuilder(ViewBuiler b)
 	}
 	
-	public static interface requestWithPageHandler{
+	public static interface requestWithPageHandler extends CodeEdit.IlovePool{
 		
 		public void addEdit(String name)
 		

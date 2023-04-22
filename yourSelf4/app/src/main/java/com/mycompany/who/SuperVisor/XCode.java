@@ -25,7 +25,7 @@ import java.util.concurrent.*;
   麻烦啊，XCode要计算它们的大小并把它们放到合适位置
 
 */
-public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.requestWithPageHandler
+public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 {
 
 	private Title mTitle;
@@ -200,7 +200,7 @@ public class XCode extends HasAll implements CodeEdit.IlovePool, PageHandler.req
 			{
 				List<Icon> list = new LinkedList<>();
 				pages.toList(list);
-				spinner.setAdapter(new WordAdpter(target.getContext(),list,R.layout.FileIcon));
+				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
 			}
 
 			@Override

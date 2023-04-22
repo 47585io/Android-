@@ -25,13 +25,15 @@ public class EditMoudle
 	{
 		public void Format(int start, int end)
 
-		public int Insert( int index)
+		public int Insert(int index)
 	}
 
 
 	public static interface Completor
 	{
-		public void openWindow( int index)
+		public void openWindow()
+		
+		public void closeWindow()
 	}
 
 

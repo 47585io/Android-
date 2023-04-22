@@ -15,8 +15,11 @@ import java.util.*;
 
 /*
  不要求任何编辑器必须实现模块全部功能，这里先实现Creat
+ 
+ 后续编辑器继承后，改变这个类可以方便地改变所有继承的类
 
  一个bug:计算字符大小很麻烦，这里只管了纯英文字符
+ 
  */
 public class Edit extends EditText implements EditMoudle.Creat<Edit>
 {
@@ -46,7 +49,7 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 		target.config();
 	}
 
-	protected static KeyListener listener;
+	private static KeyListener listener;
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
 	public static int Text_Color=0xffabb2bf;

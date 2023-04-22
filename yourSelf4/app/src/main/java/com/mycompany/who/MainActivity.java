@@ -89,17 +89,22 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		
 		Code.loadSize(width,height,is);
 		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
-		//Code.addEdit("/storage/emulated/0/Linux/1.java");
+		//Code.addEdit("/storage/emulated/0/Linux/1.java");	
 		
-		/*
 		Group = (EditGroup) Code.getPages().getView(0);
-		EditGroup.EditBuilder b = Group.getEditBuilder();
-		List<Future> r = b.prepare(0,b.calaEditLen());
-		FuturePool.FuturePop(r);
-		StringBuilder bu = new StringBuilder();
-		b.GetString(bu,null);
-		log.e(bu.toString(),true);
-		*/
+		final EditGroup.EditBuilder b = Group.getEditBuilder();
+		final List<Future> r = b.prepare(0,b.calaEditLen());
+		pool.execute(new Runnable(){
+
+				@Override
+				public void run()
+				{
+					FuturePool.FuturePop(r);
+					StringBuilder bu = new StringBuilder();
+					b.GetString(bu,null);
+					log.e(bu.toString(),true);
+				}
+			});
 	}
 
 	@Override

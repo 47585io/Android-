@@ -2,14 +2,23 @@ package com.mycompany.who.Edit.Base.Share.Share4;
 import java.util.*;
 import java.util.concurrent.*;
 
+
+/*
+  便捷地添加任务，完成任务
+*/
 public class FuturePool
 {
-	public static<T> List<T> FutureGet(Collection<Future<T>> results){
+	public static<T> List<T> FutureGet(Collection<Future<T>> results)
+	{
 		List<T> date = new ArrayList<>();
 		try
 		{
-			for (Future<T> result:results)
-				date.add(result.get());
+			for (Future<T> result:results){
+			    if(result!=null)
+				    date.add(result.get());
+				else
+					date.add(null);
+			}
 		}
 		catch (ExecutionException e)
 		{}
@@ -18,12 +27,14 @@ public class FuturePool
 		return date;
 	}
 	
-	public static<T> List<T> FutureGetAll(Collection<Future<List< T>>> results){
+	public static<T> List<T> FutureGetAll(Collection<Future<List< T>>> results)
+	{
 		List<T> date = new ArrayList<>();
 		try
 		{
 			for (Future<List< T>> result:results)
-				date.addAll(result.get());
+			    if(date!=null)
+				    date.addAll(result.get());
 		}
 		catch (ExecutionException e)
 		{}
@@ -32,7 +43,8 @@ public class FuturePool
 		return date;
 	}
 	
-	public static void FuturePop(Collection<Future> results){
+	public static void FuturePop(Collection<Future> results)
+	{
 		try
 		{
 			for (Future result:results)
@@ -44,17 +56,28 @@ public class FuturePool
 		{}
 	}
 	
+	/* 
+	   函数重载时，要保证主类型不同，而不是元素类型
 	
-	public static List<Future> addTotals(Collection<Runnable> totals,ThreadPoolExecutor pool){
+	   虽然Collection<Runnable>和Collection<Callable> totals可以编译通过，但运行时会产生异常 
+	*/
+	public static List<Future> addTotals(Collection<Runnable> totals,ThreadPoolExecutor pool)
+	{
 		List<Future> results= new ArrayList<>();
 		for(Runnable total:totals)
-		    results.add(pool.submit(total));
+		    if(total!=null)
+		        results.add(pool.submit(total));
 		return results;
 	}
-	public static List<Future> addTotalS(Collection<Callable> totals,ThreadPoolExecutor pool){
+	public static List<Future> addTotalS(Collection<Callable> totals,ThreadPoolExecutor pool)
+	{
 		List<Future> results= new ArrayList<>();
 		for(Callable total:totals)
-		    results.add(pool.submit(total));
+		    if(total!=null)
+		        results.add(pool.submit(total));
+			else
+				results.add(null);
 		return results;
 	}
+	
 }

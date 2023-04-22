@@ -10,7 +10,9 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.DoAnyThing;
 import java.util.*;
+import android.util.*;
 
 
 /*
@@ -25,101 +27,106 @@ public class EditListenerFactory2 implements EditListenerFactory
 	@Override
 	public void clearListener(EditText Edit)
 	{
-		CodeEdit E = (CodeEdit) Edit;
-		E.getFinderList().clear();
-		E.setDrawer(null);
-		E.setFormator(null);
-		E.getInsertorList().clear();
-		E.getCompletorList().clear();
-		E.getCanvaserList().clear();
+		if(Edit instanceof CodeEdit){
+		    CodeEdit E = (CodeEdit) Edit;
+		    E.setFinderList(null);
+		    E.setDrawer(null);
+		    E.setFormator(null);
+		    E.setInsertorList(null);
+		    E.setCompletorList(null);
+		    E.setCanvaserList(null);
+		}
 	}
-
 
 	@Override
 	public void trimListener(EditText Edit)
 	{
-		CodeEdit E = (CodeEdit) Edit;
-		E. setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
-		E.getCanvaserList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
-		E.setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
-		E.getInsertorList().add((EditListenerFactory2.InsertorFactory.getDefultInsertor()));
-		//E.getFinderList().add((EditListenerFactory2.FinderFactory.getTextFinder()));
-		List<EditListener> cs=E.getCompletorList();
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getVillBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getObjectBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getFuncBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getTypeBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getDefaultBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getKeyBox());
-		cs.add(EditListenerFactory2.EditCompletorBoxes.getTagBox());
+		if(Edit instanceof CodeEdit){
+		    CodeEdit E = (CodeEdit) Edit;
+		    E.setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
+		    E.getCanvaserList().getList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
+		    E.setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
+		    E.getInsertorList().getList().add((EditListenerFactory2.InsertorFactory.getDefultInsertor()));
+		}
 	}
 	
-
 	@Override
 	public void SwitchLuagua(EditText self, String Lua)
 	{
-		getFinderFactory().SwitchListener(self,Lua);
-		getDrawerDactory().SwitchListener(self,Lua);
-		getFormatorFactory().SwitchListener(self,Lua);
-		getInsertorFactory().SwitchListener(self,Lua);
-		getCompletorBox().SwitchListener(self,Lua);
-		getCanvaserFactory().SwitchListener(self,Lua);
+		if(self instanceof CodeEdit){
+			getFinderFactory().SwitchListener(self,Lua);
+			getDrawerDactory().SwitchListener(self,Lua);
+			getFormatorFactory().SwitchListener(self,Lua);
+			getInsertorFactory().SwitchListener(self,Lua);
+			getCompletorBox().SwitchListener(self,Lua);
+			getCanvaserFactory().SwitchListener(self,Lua);
+		}
 	}
 
+	
 /*
-    ___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
     
-	DrawerFactory
+DrawerFactory
 	
 	->  DefaultDrawer
 
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 	
 */
 	public static class DrawerFactory implements Factory
 	{
-
-		@Override
+		
+		public static EditListener getDefaultDrawer()
+		{
+			return new DefaultDrawerListener();
+		}
+		
 		public EditListener ToLisrener(String Lua)
 		{
 			return getDefaultDrawer();
 		}
 
-		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
+			((CodeEdit)Edit).setDrawer(getDefaultDrawer());
 		}
-
-		public static EditListener getDefaultDrawer()
-		{
-			return new DefaultDrawerListener();
-		}
-
+		
 
 		public static class DefaultDrawerListener extends EditDrawerListener
-		{
-				
+		{	
 			@Override
-			public void onDrawNodes(final int start, final int end,String src, List<wordIndex> nodes,  EditText self)
-			{
-				Editable editor = self.getText();
+			protected void onDrawNodes(int start, int end,String src, List<wordIndex> nodes, Editable editor){
 				clearSpan(start,end,editor);
 				setSpan(start,end,editor,nodes);
 				//清理旧的Span，设置新的Span
 			}
+			
+			public Colors.ByteToColor2 BToC = null;
 
+			public Colors.ByteToColor2 getByteToColor(){
+				return BToC;
+			}
+			public void setSpan(int start,int end,Editable b,List<wordIndex> nodes){
+				Colors.ForeColorText(b,nodes,start,getByteToColor());
+			}
+			public void clearSpan(int start,int end,Editable b){
+				Colors.clearSpan(start,end,b,Colors.ForeSpanType);
+			}	
 		}
-
+		
 	}
 
 
-/*	___________________________________________________________________________________________________________________________
+/*	
+___________________________________________________________________________________________________________________________
 
-    CanvaserFactory
+CanvaserFactory
 	
 	->  DefaultCanvaser
 	
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
+
 */
 	
 	public static class CanvaserFactory implements Factory
@@ -134,7 +141,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			// TODO: Implement this method
+			CodeEdit E = (CodeEdit)Edit;
+		    EditListenerList lis = new EditListenerList();
+			lis.getList().add(ToLisrener(Lua));
+			E.setCanvaserList(lis);
 		}
 
 		public static EditListener getDefultCanvaser()
@@ -145,15 +155,11 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 		public static class DefaultCanvaser extends EditCanvaserListener
 		{
-
 			@Override
-			public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
-			{
-				// TODO: Implement this method
-			}
-
+			protected void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
+		
 			@Override
-			public void onDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
+			protected void onDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
 			{
 				//设置画笔的描边宽度值
 				paint.setStrokeWidth(0.2f);
@@ -171,18 +177,20 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-/*	___________________________________________________________________________________________________________________________
+/*	
+___________________________________________________________________________________________________________________________
 
-	FormatorFactory
+FormatorFactory
 	
-	->  DefaultFormator
+   ->  DefaultFormator
 	 
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
+
 */
 
 	public static class FormatorFactory implements Factory
 	{
-
+		
 		@Override
 		public EditListener ToLisrener(String Lua)
 		{
@@ -194,8 +202,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			EditListener li = ToLisrener(Lua);
-			((CodeEdit)Edit).setFormator(li);
+			((CodeEdit)Edit).setFormator(ToLisrener(Lua));
 		}
 
 		public static EditListener getJavaFormator()
@@ -206,16 +213,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 		public static class DefaultFormatorListener extends EditFormatorListener
 		{
-
+			
 			public String START="{";
 			public String END="}";
 			public String SPILT="\n";
 			public String INSERT=" ";
 			public int CaCa=4;
 
-			public  int dothing_Run(EditText self, int nowIndex)
+			protected  int dothing_Run(Editable editor, int nowIndex)
 			{
-				Editable editor = self.getText();
 				String src=editor.toString();
 				int nextIndex= src.indexOf(SPILT, nowIndex + 1);
 				//从上次的\n接着往后找一个\n
@@ -271,9 +277,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			@Override
-			public int dothing_Start(EditText editor, int nowIndex, int start, int end)
+			protected int dothing_Start(Editable editor, int nowIndex, int start, int end)
 			{
-				((CodeEdit)editor). reSAll(start,end,"\t", "    ");
+				reSAll(start,end,"\t", "    ",editor);
 				String src= editor.toString();
 				nowIndex = src.lastIndexOf(SPILT, nowIndex - 1);
 				if (nowIndex == -1)
@@ -283,7 +289,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			@Override
-			public int dothing_End(EditText editor, int beforeIndex, int start, int end)
+			protected int dothing_End(Editable editor, int beforeIndex, int start, int end)
 			{
 				return -1;
 			}
@@ -293,15 +299,16 @@ public class EditListenerFactory2 implements EditListenerFactory
 	}
 
 
-/*	___________________________________________________________________________________________________________________________
+/*	
+___________________________________________________________________________________________________________________________
 
-	//InsertorFactory
+//InsertorFactory
 	
-	  ->  DefaultInsertor
+   ->  DefaultInsertor
 	
-	  ->  XMLInsertor
+   ->  XMLInsertor
 	  
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 	
 */
 
@@ -319,9 +326,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			EditListener li = ToLisrener(Lua);
-			((CodeEdit)Edit).getInsertorList().clear();
-			((CodeEdit)Edit).getInsertorList().add(li);
+			CodeEdit E = (CodeEdit)Edit;
+		    EditListenerList lis = new EditListenerList();
+			lis.getList().add(ToLisrener(Lua));
+			E.setInsertorList(lis);
 		}
 
 		public static EditListener getDefultInsertor()
@@ -335,10 +343,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 		public static class DefaultInsertorListener extends EditInsertorListener
 		{
-	
-			public int dothing_insert(EditText self, int nowIndex)
+			@Override
+			protected int dothing_insert(Editable editor, int nowIndex)
 			{
-				Editable editor = self.getText();
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
 				char nc = src.charAt(nowIndex+1);
@@ -380,9 +387,8 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 
 			@Override
-			public int dothing_insert(EditText self, int nowIndex)
+			protected int dothing_insert(Editable editor, int nowIndex)
 			{
-				Editable editor = self.getText();
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
 				
@@ -393,7 +399,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 					editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 					return j.end + 1;
 				}
-				return super.dothing_insert(self, nowIndex);
+				return super.dothing_insert(editor, nowIndex);
 			}
 			
 		}
@@ -401,9 +407,17 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 
 /*	
-    ___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 
-	//EditCompletorBoxes
+EditCompletorBoxes
+	
+	-> JavaCompletor
+	 
+	-> XMLCompletor
+	 
+	-> CSSCompletor
+	 
+	-> HTMLCompletor
 	
 	  ->  keyBox
 	
@@ -419,89 +433,133 @@ public class EditListenerFactory2 implements EditListenerFactory
 	
 	  ->  TagBox
 	
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 
 */
 	public static class EditCompletorBoxes implements Factory
 	{
 
 		@Override
-		public EditListener ToLisrener(String Lua)
+		public EditListenerList ToLisrener(String Lua)
 		{
-			return null;
+			switch(Lua){
+				case "text":
+					return null;
+				case "xml":
+					return getXMLCompletorList();
+				case "java":
+					return getJavaCompletorList();
+				case "css":
+					return getCSSCompletorList();
+				case "html":
+					return getHTMLCompletorList();
+				default:
+				    return null;
+			}
 		}
 
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
 			CodeEdit E = (CodeEdit) Edit;
-			int Search_Bit = 0xefffffff;
-			switch (Lua)
-			{
-				case "text":
-					Search_Bit = 0;
-					break;
-				case "xml":
-					Search_Bit = 0;
-					Search_Bit = Share.setbitTo_1S(Search_Bit, Colors.color_tag, Colors.color_attr);
-					break;
-				case "java":
-					Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_tag, Colors.color_attr);
-					break;
-				case "css":
-					Search_Bit = Share.setbitTo_0S(Search_Bit, Colors.color_key, Colors.color_const, Colors.color_obj);
-					break;
-				case "html":
-					Search_Bit=0xffffffff;
-					break;
-				default:
-					Search_Bit = 0;
-			}
-			E.setSearchBit(Search_Bit);
+		   	E.setCompletorList(ToLisrener(Lua));
 		}
 
-
+		public static class JavaCompletor extends EditListenerList
+		{		
+			public JavaCompletor(){
+				List<EditListener> lis = getList();
+				lis.add(getKeyBox());
+				lis.add(getConstBox());
+				lis.add(getVillBox());
+				lis.add(getFuncBox());
+				lis.add(getObjectBox());
+				lis.add(getTypeBox());
+			}
+		}
+		
+		public static class XMLCompletor extends EditListenerList
+		{
+			public XMLCompletor(){
+				lis.add(getTagBox());
+				lis.add(getAttributeBox());
+			}
+		}
+		
+		public static class CSSCompletor extends EditListenerList
+		{
+			public CSSCompletor(){
+				lis.add(getVillBox());
+				lis.add(getFuncBox());
+				lis.add(getTypeBox());
+				lis.add(getTagBox());
+				lis.add(getAttributeBox());
+			}
+		}
+		
+		public static class HTMLCompletor extends EditListenerList
+		{
+			public HTMLCompletor(){
+				lis.add(getKeyBox());
+				lis.add(getConstBox());
+				lis.add(getVillBox());
+				lis.add(getFuncBox());
+				lis.add(getObjectBox());
+				lis.add(getTypeBox());
+				lis.add(getTagBox());
+				lis.add(getAttributeBox());
+			}
+		}
+		
+		public static EditListenerList getJavaCompletorList()
+		{
+			return new JavaCompletor();
+		}
+		public static EditListenerList getXMLCompletorList()
+		{
+			return new XMLCompletor();
+		}
+		public static EditListenerList getCSSCompletorList()
+		{
+			return new CSSCompletor();
+		}
+		public static EditListenerList getHTMLCompletorList()
+		{
+			return new HTMLCompletor();
+		}
+		
+		
 	    public static EditListener getKeyBox()
 		{
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_key))
-					    return Wordlib. getKeyword();
-					return null;
+					return Wordlib. getKeyword();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_key,Share.getWordIcon(Share.icon_key));
+					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_key));
 				}
 			};
 		}
-		public static EditListener getDefaultBox()
+		public static EditListener getConstBox()
 		{
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					List<CharSequence> words=new ArrayList<>();
-					if (Share.getbit(Search_Bit, Colors.color_attr))
-						words.addAll(Wordlib. getAttribute());
-					if (Share.getbit(Search_Bit, Colors.color_const))
-					    words.addAll(Wordlib. getConstword());
-
-					return words;
+					return Wordlib. getConstword();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_default,Share.getWordIcon(Share.icon_default));
+					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_default));
 				}
 			};
 		}
@@ -511,18 +569,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_villber))
-					    return Wordlib. getHistoryVillber();
-					return null;
+					return Wordlib. getHistoryVillber();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_villber,Share.getWordIcon(Share.icon_villber));
+					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_villber));
 				}
 			};
 		}
@@ -531,21 +586,24 @@ public class EditListenerFactory2 implements EditListenerFactory
 		public static EditListener getFuncBox()
 		{
 			return new EditCompletorListener(){
-
+				
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_func))
-					    return Wordlib. getLastfunc();
-					return null;
+					return Wordlib. getLastfunc();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit. addSomeWord(word, adpter, Share.icon_func,Share.getWordIcon(Share.icon_func));
+					CodeEdit. addSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
 				}
+				
+				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
+					int selection = super.onInsertWord(editor,index,range,word);
+					editor.insert(selection++,"(");
+					return selection;
+				}	
 			};
 		}
 
@@ -555,18 +613,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_obj))
-						return Wordlib. getThoseObject();
-					return null;
+					return Wordlib. getThoseObject();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_obj,Share.getWordIcon(Share.icon_obj));
+					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_obj));
 				}
 			};
 		}
@@ -576,18 +631,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_type))
-					    return Wordlib. getBeforetype();
-					return null;
+					return Wordlib. getBeforetype();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_type,Share.getWordIcon(Share.icon_type));
+					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_type));
 				}
 			};
 		}
@@ -597,42 +649,65 @@ public class EditListenerFactory2 implements EditListenerFactory
 			return new EditCompletorListener(){
 
 				@Override
-				public Collection<CharSequence> onBeforeSearchWord(Words Wordlib, EditText self)
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					int Search_Bit = ((CodeEdit)self).getSearchBit();
-					if (Share.getbit(Search_Bit, Colors.color_tag))
-					{
-						return Wordlib. getTag();
-					}
-					return null;
+					return Wordlib. getTag();
 				}
 
 				@Override
-				public void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter, EditText self)
+				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.icon_tag,Share.getWordIcon(Share.icon_tag));
+					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_tag));
+				}
+				
+				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
+					int selection = super.onInsertWord(editor,index,range,word);
+					if (editor.toString().charAt(range.start - 1) != '<'){
+						editor.insert(range.start, "<");
+						++selection;
+					}
+					return selection;
 				}
 			};
 		}
+		
+		public static EditListener getAttributeBox()
+		{
+			return new EditCompletorListener(){
+
+				@Override
+				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
+				{
+					return Wordlib.getAttribute();
+				}
+
+				@Override
+				protected void onFinishSearchWord(List<CharSequence> words, List<Icon> adapter)
+				{
+					CodeEdit.addSomeWord(words, adapter,Share.getWordIcon(Share.icon_default));
+				}
+			};
+		}
+		
 	}
 
 	
 /*	
-    ___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 
-	//FinderFactory
+FinderFactory
 	
-	  -> FinderText
-
-	  -> FinderJava
+	-> FinderText
+	 
+    -> FinderJava
  
-	  -> FinderXML
-
-	  -> FinderCSS
+    -> FinderXML
+  
+    -> FinderCSS
 	 
-	  -> FinderHTML
+    -> FinderHTML
 	 
-	___________________________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________
 	
 */
 	
@@ -662,10 +737,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			CodeEdit E = (CodeEdit) Edit;
-			EditListener li = ToLisrener(Lua);	
-			E.getFinderList().clear();
-			E.getFinderList().add(li);
+			CodeEdit E = (CodeEdit)Edit;
+		    EditListenerList lis = new EditListenerList();
+			lis.getList().add(ToLisrener(Lua));
+			E.setFinderList(lis);
 		}
 
 
@@ -694,15 +769,15 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 
 			@Override
-			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
-			{
-
-			}
-
+			protected void OnFindWord(List<DoAnyThing> totalList, Words WordLib ){}
+			
 			@Override
-			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
+			protected void OnClearFindWord(Words WordLib){}
+			
+			@Override
+			protected void OnFindNodes(List<DoAnyThing> totalList, Words WordLib )
 			{
-				// TODO: Implement this method
+				//AnyThingFactory使用后立即销毁
 				AnyThingFactory. AnyThingForText AllThings = AnyThingFactory.getAnyThingText(WordLib);
 				totalList.add(AllThings.getGoTo_zhuShi());
 				totalList.add(AllThings.getGoTo_Str());
@@ -710,16 +785,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			@Override
-			public void OnClearFindWord(Words WordLib, EditText self)
+			protected void OnClearFindNodes(int start, int end, String text, Words WordLib , List<wordIndex> nodes)
 			{
-
-			}
-
-			@Override
-			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
-			{
-				CodeEdit.clearRepeatNode(nodes);
-				/* List<CodeEdit.DoAnyThing> total = new ArrayList<>();
+				clearRepeatNode(nodes);
+				/* List<DoAnyThing> total = new ArrayList<>();
 				List<wordIndex> no = new ArrayList<>();
 			    Words lib = ((CodeEdit)self).getWordLib();
 				total.add(AnyThingFactory.getAnyThingText(lib).getGoTo_Str());
@@ -734,39 +803,29 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 
 			@Override
-			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
+			protected void OnClearFindNodes(int start, int end, String text,Words WordLib , List<wordIndex> nodes)
 			{
-				CodeEdit.clearRepeatNode(nodes);
-				
+				clearRepeatNode(nodes);		
 			}
 
 
 			@Override
-			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
-			{
-
-			}
+			protected void OnFindWord(List<DoAnyThing> totalList, Words WordLib ){}
 
 			@Override
-			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
+			protected void OnFindNodes(List<DoAnyThing> totalList, Words WordLib )
 			{
 				AnyThingFactory. AnyThingForXML AllThings = AnyThingFactory.getAnyThingXML(WordLib);
-
 				totalList.clear();
 				totalList.add(AllThings.getGoTo_zhuShi());	
 				totalList.add(AllThings.getGoTo_Str());
 				totalList.add(AllThings.getDraw_Tag());
-
 				totalList.add(AllThings.getDraw_Attribute());	
-
 				totalList.add(AllThings.getNoSans_Char());
 			}
 
 			@Override
-			public void OnClearFindWord(Words WordLib, EditText self)
-			{
-				
-			}
+			protected void OnClearFindWord(Words WordLib ){}
 		}
 
 
@@ -774,10 +833,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 
 			@Override
-			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
+			protected void OnFindWord(List<DoAnyThing> totalList, Words WordLib )
 			{
 				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
-
 				totalList.add(AllThings.getSans_TryFunc());	
 				totalList.add(AllThings.getSans_TryVillber());
 				totalList.add(AllThings.getSans_TryType());
@@ -788,25 +846,24 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			@Override
-			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
+			protected void OnFindNodes(List<DoAnyThing> totalList, Words WordLib)
 			{
 				AnyThingFactory. AnyThingForJava AllThings = AnyThingFactory.getAnyThingJava(WordLib);
-
 				totalList.add(AllThings.getGoTo_zhuShi());
 				totalList.add(AllThings.getGoTo_Str());
 				totalList.add(AllThings.getNoSans_Keyword());
+				totalList.add(AllThings.getNoSans_ConstWord());
 				totalList.add(AllThings.getNoSans_Func());
 				totalList.add(AllThings.getNoSans_Villber());
 				totalList.add(AllThings.getNoSans_Object());
 				totalList.add(AllThings.getNoSans_Type());
-
 				totalList.add(AllThings.getNoSans_Char());
 				//请您在任何时候都加入getChar，因为它可以适时切割单词
 
 			}
 
 			@Override
-			public void OnClearFindWord(Words WordLib, EditText self)
+			protected void OnClearFindWord(Words WordLib )
 			{
 				Array_Splitor. delSame(WordLib.getLastfunc(), WordLib.getKeyword());
 				//函数名不可是关键字，但可以和变量或类型重名	
@@ -830,55 +887,42 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			@Override
-			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
+			protected void OnClearFindNodes(int start, int end, String text,Words WordLib , List<wordIndex> nodes)
 			{
-				CodeEdit.clearRepeatNode(nodes);	
-				//((FinderText)getTextFinder()).OnClearFindNodes(start,end,text,self,nodes);
+				clearRepeatNode(nodes);	
 			}
 		}
 
-
-
+		
 		public static class FinderCSS extends EditFinderListener
 		{
 
 			@Override
-			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
-			{
-
-			}
+			protected void OnFindWord(List<DoAnyThing> totalList, Words WordLib){}
 
 			@Override
-			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
+			protected void OnFindNodes(List<DoAnyThing> totalList, Words WordLib )
 			{
 				AnyThingFactory. AnyThingForCSS CSSThings = AnyThingFactory.getAnyThingCSS(WordLib);
-
 				totalList.add(CSSThings.getGoTo_zhuShi());	
 				totalList.add(CSSThings.getGoTo_Str());
 				totalList.add(CSSThings.getNoSans_Func());
 				totalList.add(CSSThings.getCSSDrawer());
 				totalList.add(CSSThings.getCSSChecker());
-
-
 				totalList.add(CSSThings.getDraw_Attribute());	
-
 				totalList.add(CSSThings.getNoSans_Tag());
-
 				totalList.add(CSSThings.getNoSans_Char());
 				//请您在任何时候都加入getChar，因为它可以适时切割单词
 
 			}
 
 			@Override
-			public void OnClearFindWord(Words WordLib, EditText self)
-			{
-
-			}
+			protected void OnClearFindWord(Words WordLib ){}
 
 			@Override
-			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
+			protected void OnClearFindNodes(int start, int end, String text,Words WordLib , List<wordIndex> nodes)
 			{
-				CodeEdit.clearRepeatNode(nodes);
+				clearRepeatNode(nodes);
 				clearRepeatNodeForCSS(text, nodes);
 			}
 
@@ -903,43 +947,32 @@ public class EditListenerFactory2 implements EditListenerFactory
 		{
 
 			@Override
-			public void OnFindNodes(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
-			{
-				// TODO: Implement this method
-			}
-
+			protected void OnFindNodes(List<DoAnyThing> totalList, Words WordLib ){}
 
 			@Override
-			public void OnFindWord(List<CodeEdit.DoAnyThing> totalList, Words WordLib, EditText self)
-			{
-
-			}
+			protected void OnFindWord(List<DoAnyThing> totalList, Words WordLib ){}
 
 			@Override
-			public void OnClearFindWord(Words WordLib, EditText self)
-			{
-
-			}
+			protected void OnClearFindWord(Words WordLib ){}
 
 			@Override
-			public void OnClearFindNodes(int start, int end, String text, EditText self, List<wordIndex> nodes)
+			protected void OnClearFindNodes(int start, int end, String text, Words WordLib , List<wordIndex> nodes)
 			{
-				reDrawHTML(start, end, text.substring(start,end), nodes, self);
+				reDrawHTML(start, end, text, nodes, WordLib);
 			}
 
-
-			final protected List<wordIndex> getNodes(String text, String Lua, int now, EditText self)
+			final protected List<wordIndex> getNodes(String text, String Lua, int now, Words WordLib)
 			{
-				CodeEdit E = (CodeEdit) self;
 				EditFinderListener L = (EditFinderListener) getFinderFactory().ToLisrener(Lua);
-				List<wordIndex> tmp = L.LetMeFind(0,text.length(),text,E.getWordLib(),E);
-				CodeEdit. offsetNode(tmp, now);
+				List<wordIndex> tmp = L.LetMeFind(0,text.length(),text,WordLib);
+				offsetNode(tmp, now);
 				return tmp;
 			}
 
-			final protected List<wordIndex> reDrawHTML(int start, int end, String text, List<wordIndex>nodes, EditText self)
+			final protected List<wordIndex> reDrawHTML(int start, int end, String src, List<wordIndex>nodes,Words WordLib)
 			{
 				List<wordIndex> tmp=new ArrayList<>();
+				String text = src.substring(start,end); //目标文本
 				int now=0,css=-1,js=-1,css_end=-1,js_end=-1;
 				try
 				{
@@ -960,7 +993,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 						else if (css == min)
 						{
 							css += 7;
-							tmp = getNodes(text.substring(now, css), "xml", now, self);
+							tmp = getNodes(text.substring(now, css), "xml", now, WordLib);
 							nodes.addAll(tmp);
 							now = css;
 							//如果是css起始tag，将之前的html染色
@@ -968,7 +1001,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 						else if (js == min)
 						{
 							js += 8;
-							tmp =  getNodes(text.substring(now, js), "xml", now, self);
+							tmp =  getNodes(text.substring(now, js), "xml", now, WordLib);
 							nodes.addAll(tmp);
 							now = js;
 							//如果是js起始tag，将之前的html染色
@@ -976,7 +1009,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 						else if (css_end == min)
 						{
 							css_end += 8;
-							tmp =	getNodes(text.substring(now, css_end), "css", now, self);
+							tmp =	getNodes(text.substring(now, css_end), "css", now, WordLib);
 							nodes.addAll(tmp);
 							now = css_end;
 							//如果是css结束tag，将之间的CSS染色
@@ -984,7 +1017,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 						else if (js_end == min)
 						{
 							js_end += 9;
-							tmp =	getNodes(text.substring(now, js_end), "java", now, self);
+							tmp =	getNodes(text.substring(now, js_end), "java", now, WordLib);
 							nodes.addAll(tmp);
 							now = js_end;
 							//如果是js结束tag，将之间的js染色
@@ -994,44 +1027,45 @@ public class EditListenerFactory2 implements EditListenerFactory
 				}
 				catch (Exception e)
 				{}
+				
 				//那最后一段在哪个tag内呢？
-				//只要看下个tag
-				String s=self.getText().toString();
-				css = s.indexOf("<style", now + start);
-				js = s.indexOf("<script", now + start);
-				css_end = s.indexOf("</style", now + start);
-				js_end = s.indexOf("</script", now + start);
-
-				int min = Array_Splitor.getmin(0, s.length(), css, js, css_end, js_end);
+				//只要看原文本中的下个tag
+				css = src.indexOf("<style", now + start);
+				js = src.indexOf("<script", now + start);
+				css_end = src.indexOf("</style", now + start);
+				js_end = src.indexOf("</script", now + start);
+				int min = Array_Splitor.getmin(0, src.length(), css, js, css_end, js_end);
+				
+				//让我们接着在目标文本中的now之后继续找完
 				try
 				{
 					if (min == -1)
 					{
-						tmp = getNodes(text.substring(now, text.length()), "xml", now, self);
+						tmp = getNodes(text.substring(now, text.length()), "xml", now, WordLib);
 						nodes.addAll(tmp);
 						//范围内没有tag了
 					}	
 					else if (css == min)
 					{
-						tmp = getNodes(text.substring(now, text.length()), "xml", now, self);
+						tmp = getNodes(text.substring(now, text.length()), "xml", now, WordLib);
 						nodes.addAll(tmp);
 						//如果是css起始tag，将之前的xml染色
 					}
 					else if (js == min)
 					{
-						tmp = getNodes(text.substring(now, text.length()), "xml", now, self);
+						tmp = getNodes(text.substring(now, text.length()), "xml", now, WordLib);
 						nodes.addAll(tmp);
 						//如果是js起始tag，将之前的xml染色
 					}
 					else if (css_end == min)
 					{
-						tmp = getNodes(text.substring(now, text.length()), "css", now, self);
+						tmp = getNodes(text.substring(now, text.length()), "css", now, WordLib);
 						nodes.addAll(tmp);
 						//如果是css结束tag，将之前的css染色
 					}
 					else if (js_end == min)
 					{
-						tmp = getNodes(text.substring(now, text.length()), "java", now, self);
+						tmp = getNodes(text.substring(now, text.length()), "java", now, WordLib);
 						nodes.addAll(tmp);
 						//如果是js结束tag，将之前的js染色
 					}
@@ -1071,32 +1105,33 @@ public class EditListenerFactory2 implements EditListenerFactory
 		return new CanvaserFactory();
 	}
 
-	
+
 /*
-     _________________________________________
+_________________________________________
 
-	 AnyThingFactory
+AnyThingFactory
 
-	   AnyThingForText ->
+   AnyThingForText ->
 
-	   -> AnyThingForXML
- 
-	   -> AnyThingForJava
+	 -> AnyThingForXML
 
-	   -> AnyThingForCSS
+	 -> AnyThingForJava
 
-	 _________________________________________
-	 
+	 -> AnyThingForCSS
+
+_________________________________________
+
 */
 
     /*  Text工厂  */
 	public static class AnyThingFactory
 	{
-		
+
 		public static class AnyThingForText
 		{
 
 			Words WordLib;
+			//设置一个WordLib，之后获取的DoAnyThing任务都是使用它的单词
 
 			AnyThingForText(Words lib)
 			{
@@ -1104,10 +1139,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			//勇往直前的GoTo块，会突进一大段并阻拦其它块
-			public CodeEdit. DoAnyThing getGoTo_zhuShi()
+			public DoAnyThing getGoTo_zhuShi()
 			{
 				//获取注释
-				return new CodeEdit. DoAnyThing(){		
+				return new DoAnyThing(){		
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1136,11 +1171,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}	
-			public CodeEdit. DoAnyThing getGoTo_Str()
+			public DoAnyThing getGoTo_Str()
 			{
 				//获取字符串
-
-				return new CodeEdit. DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1185,10 +1219,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit. DoAnyThing getNoSans_Char()
+			public DoAnyThing getNoSans_Char()
 			{
 				//获取字符
-				return new CodeEdit. DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1222,10 +1256,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 				};
 			}
 
-			public CodeEdit. DoAnyThing getCanTo()
+			public DoAnyThing getCanTo()
 			{
-
-				return new CodeEdit. DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1257,7 +1290,11 @@ public class EditListenerFactory2 implements EditListenerFactory
 				nodes.add(node);
 
 			}
-
+			
+			public Words getWordLib()
+			{
+				return WordLib;
+			}
 			public Collection<CharSequence> getKeyword()
 			{
 				return WordLib.getKeyword();
@@ -1294,7 +1331,6 @@ public class EditListenerFactory2 implements EditListenerFactory
 			{
 				return  WordLib.getBeforetype();
 			}
-
 			public Collection<CharSequence> getTag()
 			{
 				return  WordLib.getTag();
@@ -1307,7 +1343,7 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 
 
-       /*	XML工厂  */			
+		/*	XML工厂  */			
 		public static class AnyThingForXML extends AnyThingForText
 		{
 
@@ -1316,9 +1352,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 				super(lib);
 			}
 
-			public CodeEdit.DoAnyThing getDraw_Tag()
+			public DoAnyThing getDraw_Tag()
 			{
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1338,9 +1374,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getDraw_Attribute()
+			public DoAnyThing getDraw_Attribute()
 			{
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1367,12 +1403,12 @@ public class EditListenerFactory2 implements EditListenerFactory
 		/*  Java工厂  */
 		public static class AnyThingForJava extends AnyThingForText
 		{
-
+			
 			//不回溯的NoSans块，用已有信息完成判断
-			public CodeEdit.DoAnyThing getNoSans_Keyword()
+			public DoAnyThing getNoSans_Keyword()
 			{
 				//获取关键字和保留字
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1387,7 +1423,17 @@ public class EditListenerFactory2 implements EditListenerFactory
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
 						}
-						else if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getConstword().contains(nowWord.toString()))
+						return -1;
+					}	
+				};
+			}	
+			public DoAnyThing getNoSans_ConstWord()
+			{
+				return new DoAnyThing(){
+					@Override
+					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					{
+						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getConstword().contains(nowWord.toString()))
 						{
 							//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
 							wordIndex node= CodeEdit.getANode();
@@ -1395,21 +1441,18 @@ public class EditListenerFactory2 implements EditListenerFactory
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
-						}		
-
+						}	
 						//关键字和保留字和变量不重复，所以只要中了其中一个，则就是那个
 						//如果能进关键字和保留字和变量的if块，则说明当前字符一定不是特殊字符
-
 						return -1;
 					}	
+					
 				};
 			}
-
-
-			public CodeEdit.DoAnyThing getNoSans_Func()
+			public DoAnyThing getNoSans_Func()
 			{
 				//获取函数
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1430,10 +1473,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getNoSans_Villber()
+			public DoAnyThing getNoSans_Villber()
 			{
 				//获得变量
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1454,10 +1497,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getNoSans_Object()
+			public DoAnyThing getNoSans_Object()
 			{
 				//获取对象
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1479,10 +1522,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 				};
 			}
 
-			public CodeEdit. DoAnyThing getNoSans_Type()
+			public DoAnyThing getNoSans_Type()
 			{
 				//获取类型
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1507,10 +1550,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 
 
 			//会回溯的Sans块，试探并记录单词
-			public CodeEdit.DoAnyThing getSans_TryFunc()
+			public DoAnyThing getSans_TryFunc()
 			{
 				//试探函数
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1527,10 +1570,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}	
 				};
 			}
-			public CodeEdit.DoAnyThing getSans_TryVillber()
+			public DoAnyThing getSans_TryVillber()
 			{
 				//试探变量和类型
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{					 
@@ -1560,10 +1603,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getSans_TryObject()
+			public DoAnyThing getSans_TryObject()
 			{
 				//试探对象
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1578,10 +1621,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getSans_TryType()
+			public DoAnyThing getSans_TryType()
 			{
 				//试探类型
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{	
@@ -1625,10 +1668,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 			//如果所有东西不需进行二次查找，就用这个吧
-			public CodeEdit.DoAnyThing getNoSans_Func()
+			public DoAnyThing getNoSans_Func()
 			{
 				//获取函数
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1650,10 +1693,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getNoSans_Object()
+			public DoAnyThing getNoSans_Object()
 			{
 				//获取对象
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1676,10 +1719,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 				};
 			}
 
-			public CodeEdit.DoAnyThing getCSSDrawer()
+			public DoAnyThing getCSSDrawer()
 			{
-				return new CodeEdit.DoAnyThing(){
-
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1712,10 +1754,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 				};
 			}
 
-			public CodeEdit.DoAnyThing getCSSChecker()
+			public DoAnyThing getCSSChecker()
 			{
-				return new CodeEdit.DoAnyThing(){
-
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1746,14 +1787,13 @@ public class EditListenerFactory2 implements EditListenerFactory
 			}
 
 
-			public CodeEdit.DoAnyThing getNoSans_Tag()
+			public DoAnyThing getNoSans_Tag()
 			{
 				//获取Tag
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1))
 							&& src.charAt(CodeEdit.tryLine_End(src, nowIndex) - 1) == '{'
 							&& (getTag().contains(nowWord.toString())))
@@ -1769,10 +1809,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}
-			public CodeEdit.DoAnyThing getNoSans_Attribute()
+			public DoAnyThing getNoSans_Attribute()
 			{
 				//获取属性
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1791,9 +1831,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 					}
 				};
 			}	
-			public CodeEdit.DoAnyThing getDraw_Attribute()
+			public DoAnyThing getDraw_Attribute()
 			{
-				return new CodeEdit.DoAnyThing(){
+				return new DoAnyThing(){
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
@@ -1883,4 +1923,5 @@ public class EditListenerFactory2 implements EditListenerFactory
 		}
 
 	}
+	
 }

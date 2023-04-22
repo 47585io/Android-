@@ -88,7 +88,6 @@ public class Getter
 
 	public static boolean Args(Class...dst,Class...src) throws NoSuchMethodException, SecurityException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException{
 		//类型列表dst中的类型是否src中的类型，或父类，接口的类型
-
 		int i=0;
 		if(dst.length!=src.length)
 			return false;
@@ -104,7 +103,6 @@ public class Getter
 	}
 	public static boolean Arg(Class d,Class s){
 		//类型src的类型是否为dst的类型，或父类，接口的类型
-
 		if(d.getTypeName().equals(s.getTypeName()))
 			return true;
 		else if(ArgUP(d,s))

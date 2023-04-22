@@ -64,7 +64,15 @@ public abstract class EPool<T>
 	}
 	
 	protected abstract T creat()
+	
 	protected abstract void resetE(T E)
+	
+	public int isStart(){
+		return isStart;
+	}
+	public int size(){
+		return p;
+	}
 	
 	@Override
 	public String toString()

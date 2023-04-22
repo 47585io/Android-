@@ -6,22 +6,56 @@ import android.widget.*;
 import java.util.*;
 import com.mycompany.who.R;
 import android.graphics.*;
+import com.mycompany.who.Edit.Base.Share.Share1.*;
 
-public class WordAdpter<T extends Icon> extends BaseAdapter
+
+/*
+  WordAdpter，智障的Adapter
+  
+  * 支持任意的xml文件，只要它拥有TextView和ImageView并设置了id
+  
+  * 支持让Icon来控制如何加载TextView和ImageView
+ 
+  * 支持区间列表，可以给每一个区间的元素加上一个id
+  
+*/
+public class WordAdpter extends BaseAdapter
 {
 
-    protected List<T> mfile;
+	protected Map<size,Integer> Range;
+    protected List<Icon> mfile;
 	protected int rid;
-	protected Context cont;
 
-	public WordAdpter(Context context, List<T> file,int id) {
-        mfile = file;
-		rid=id;
-		cont=context;
+	public WordAdpter(int id) 
+	{
+        mfile = new ArrayList<>();
+		Range = new HashMap<>();
+		rid=id;	
     }
+	public WordAdpter(List<Icon> file,int id,int flag)
+	{
+		mfile = new ArrayList<>();
+		Range = new HashMap<>();
+		rid=id;	
+		addAll(file,flag);
+	}
 	
-	public List<T> getList(){
-		return mfile;
+	synchronized public void addAll(List<Icon> file,int flag)
+	{
+		if(file!=null){
+			size range = new size(mfile.size(),mfile.size()+file.size());
+		    Range.put(range,flag);
+		    mfile.addAll(file);
+		}
+	}
+	
+	public int posFlag(int position)
+	{
+		for(size pos:Range.keySet()){
+			if(pos.start<=position && pos.end>position)
+				return Range.get(pos);
+		}
+		return 0;
 	}
 
     @Override
@@ -30,7 +64,7 @@ public class WordAdpter<T extends Icon> extends BaseAdapter
     }
 
     @Override
-    public T getItem(int position) {
+    public Icon getItem(int position) {
         return mfile.get(position);
     }
 
@@ -40,33 +74,30 @@ public class WordAdpter<T extends Icon> extends BaseAdapter
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, ViewGroup parent) 
+	{
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
 
         ViewHolder viewHolder = null;
         if (convertView == null) {
-			//如果要创建一个新的convertView项，创建并配置tag
+			//如果要创建一个新的列表项，创建并配置tag，之后在返回后ListView将tag拿出并添加到自己上
             convertView = layoutInflater.inflate(rid, null);
             viewHolder = new ViewHolder(convertView);
             convertView.setTag(viewHolder);
         }else {
-			//否则，用Adpter中postion的值更新convertView项tag
+			//否则，用Adpter中postion的值更新列表项tag，之后在返回后ListView将tag拿出刷新这个列表项
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
 		Icon icon = mfile.get(position);	
-        viewHolder.tvName.setText(icon.getName());
-        if(icon.getPath()==null)
-		    viewHolder.tvIcon.setImageResource(icon.getIcon());
-		else
-		    viewHolder.tvIcon.setImageBitmap(BitmapFactory.decodeFile(icon.getPath()));
-	
+        icon.loadImage(viewHolder.tvIcon);
+		icon.loadText(viewHolder.tvName);
         return convertView;
     }
 
 
-
-    static class ViewHolder {
+    static class ViewHolder 
+	{
         protected TextView tvName;
         protected ImageView tvIcon;
 

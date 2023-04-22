@@ -25,10 +25,10 @@ public class FileList
 	public List<Icon> refresh(Context cont)
 	{	  
 		List<Icon> tmp  = new ArrayList<Icon>();
-		tmp.add(new Icon(Share.getFileIcon("打开夹"), ".."));
+		tmp.add(new Icon3(Share.getFileIcon("打开夹"), ".."));
 		for (File c:sortFilelist)
 		{
-			tmp.add(new Icon(Share.getFileIcon(c), c.getName()));
+			tmp.add(new Icon3(Share.getFileIcon(c), c.getName()));
 		}
 		return tmp;
 	}
