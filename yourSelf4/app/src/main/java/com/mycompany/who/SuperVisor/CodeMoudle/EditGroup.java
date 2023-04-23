@@ -210,10 +210,10 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			//剩下的编辑器会复制第一个的Clip，因此不再添加，至于名字嘛...
 			CodeEdit E = EditList.get(0);
 			Edit = new RCodeEdit(getContext(),E );
-			EditListenerInfo Info= E.getInfo();
-			E.setInfo(null);  //不允许重复添加Listener
+			EditListenerInfo Info= Edit.getInfo();
+			Edit.setInfo(null);  //不允许重复添加Listener
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
-			E.setInfo(Info);
+			Edit.setInfo(Info);
 		}
 		
 		Edit.setOnClickListener(this);//组内的每个编辑器都设置Click

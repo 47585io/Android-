@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import static com.mycompany.who.Edit.Base.Colors.*;
+import android.os.*;
 
 /*
    整理是一切的开始
@@ -271,7 +272,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 	public void setInfo(EditListenerInfo i){
 		//必须传递CodeEditListenerInfo及其子类。否则无法保证安全
-	    if(i instanceof CodeEditListenerInfo)
+	    if(i instanceof CodeEditListenerInfo||i==null)
 		    Info = (CodeEdit.CodeEditListenerInfo) i;
 	}
 
@@ -378,35 +379,36 @@ Dreawr
 			Log.e("FindNodes Error", e.toString());
 		}	
 		
+		nodes = tmp;
 		now = System.currentTimeMillis();
 		Log.w("After FindNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
-		nodes = tmp; 
 		//经过一次寻找，tmp里装满了单词，让我们用tmp初始化nodes
 		
-		Runnable run = new Runnable(){
-			
+		Runnable run =new Runnable(){
+
 			@Override
-			public void run(){
-				
+			public void run()
+			{
 				IsModify++;
 				isDraw = true; //此时会修改文本，isModify
-				long last = 0,now = 0;
+				long last=0,now=0;
 				last = System.currentTimeMillis();
 
 				try{
-					onDrawNodes(start, end, text, nodes,getDrawer()); //染色
-				}catch (Exception e)	{
+					onDrawNodes(start, end, text, nodes,getDrawer()); 
+				}catch (Exception e){
 					Log.e("DrawNodes Error", e.toString());
 				}
 
 				isDraw = false;
 				IsModify--;
 				Ep.stop(); //Draw完后申请回收nodes
+
 				now = System.currentTimeMillis();	
-				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
+				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
-		};			
-		post(run);
+		};
+		post(run);//将UI任务交给主线程
 	}
 	
 	/* FindNodes不会修改文本和启动Ep，所以可以直接调用
@@ -1407,7 +1409,7 @@ _________________________________________
 		    super.setSelection(start, stop);
 	}
 
-	/* 防止post失败 */
+	/* 防止post失败，导致Ep无法停止 */
 	@Override
 	public boolean post(Runnable action)
 	{

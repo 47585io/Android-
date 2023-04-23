@@ -69,18 +69,22 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		}
 	}
 
-	public List<EditListener> getCanvaserList()
+	public EditListenerList getCanvaserList()
 	{
 		if(Info!=null)
-			return Info.mlistenerVS.getList();
+			return Info.mlistenerVS;
 		return null;
 	}
 	
 	@Override
-	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, size pos, int flag, List<EditListener> lis)
+	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, size pos, int flag, EditListenerList listener)
 	{
-		for(EditListener li:lis){
-			((EditCanvaserListener)li).LetMeCanvaser(self,canvas,paint,pos,flag);
+		if(listener!=null){
+			List<EditListener> lis = listener.getList();
+			if(lis!=null){
+		        for(EditListener li:lis)
+			    ((EditCanvaserListener)li).LetMeCanvaser(self,canvas,paint,pos,flag);
+		    }
 		}
 	}
 	

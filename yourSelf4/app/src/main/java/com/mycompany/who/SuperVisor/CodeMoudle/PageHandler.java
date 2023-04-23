@@ -230,7 +230,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				int end = E.getText().length();
 				E.Format(0,end);
 				end = E.getText().length();
-				E.getPool().execute( E.ReDraw(0,end));
+				E.getPool().execute(E.ReDraw(0,end));
 			}
 			
 		}

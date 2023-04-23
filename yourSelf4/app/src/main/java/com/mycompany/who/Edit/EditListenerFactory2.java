@@ -107,10 +107,10 @@ ________________________________________________________________________________
 			public Colors.ByteToColor2 getByteToColor(){
 				return BToC;
 			}
-			public void setSpan(int start,int end,Editable b,List<wordIndex> nodes){
+			public void setSpan(int start,int end,Spannable b,List<wordIndex> nodes){
 				Colors.ForeColorText(b,nodes,start,getByteToColor());
 			}
-			public void clearSpan(int start,int end,Editable b){
+			public void clearSpan(int start,int end,Spannable b){
 				Colors.clearSpan(start,end,b,Colors.ForeSpanType);
 			}	
 		}
