@@ -16,8 +16,9 @@ public abstract class EPool<T>
 	public EPool(){
 		Es=new ArrayList<>();
 		p=0;
-		put(onceCount);
+		init();
 	}
+	
 	synchronized public T get(){
 		//从池子中获取一个元素，如果池子元素不足，创建一些
 		//如果超出最大的数量，直接创建
@@ -58,14 +59,22 @@ public abstract class EPool<T>
 	synchronized public void recyle(int size){
 		//指针向前偏size，并将之间的元素重置
 		p-=size;
-		int i;
-		for(i=p;i<p+size;++i)
-		    resetE(Es.get(i));
+		if(IsReSet()){
+		    int i;
+		    for(i=p;i<p+size;++i)
+		        resetE(Es.get(i));
+		}
 	}
 	
 	protected abstract T creat()
 	
 	protected abstract void resetE(T E)
+	
+	protected abstract void init()
+	
+	protected boolean IsReSet(){
+		return true;
+	}
 	
 	public int isStart(){
 		return isStart;
@@ -73,6 +82,7 @@ public abstract class EPool<T>
 	public int size(){
 		return p;
 	}
+	
 	
 	@Override
 	public String toString()

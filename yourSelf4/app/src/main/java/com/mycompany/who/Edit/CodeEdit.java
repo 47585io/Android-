@@ -563,13 +563,14 @@ _________________________________________
 	{
 		EditListenerList list = getInsertorList();
 		if(list != null){
+			int selection = 0;
 		    List<EditListener> lis = list.getList();
 			for(EditListener li:lis){
 		        if(li instanceof EditInsertorListener){
-				    int p = ((EditInsertorListener)li).LetMeInsert(editor, index);
-					setSelection(p);
+				    selection = ((EditInsertorListener)li).LetMeInsert(editor, index);
 				}
 		    } 
+			setSelection(selection);
 		}
 	}
 	
@@ -668,15 +669,18 @@ _________________________________________
 	{
 		EditListenerList list = getCompletorList();
 		if(list != null){
+			
 			Words WordLib = getWordLib();
 			List<EditListener> lis = list.getList();
 			final CharSequence wantBefore= getWord(src,index);
 			final CharSequence wantAfter = getAfterWord(src,index);
+			final int before = 0;
+			final int after = wantBefore.length();
 			//获得光标前后的单词，并开始查找
 	    	
 			for(EditListener li:lis){
 			    if(li instanceof EditCompletorListener){
-			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,0,wantBefore.length(),WordLib);
+			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
 	        }
@@ -812,9 +816,11 @@ _________________________________________
 		EditListenerList list = getCanvaserList();
 		if(list != null){
 		    List<EditListener> lis = list.getList();
-			for (EditListener li:lis)
-			    if(li instanceof EditCanvaserListener)
+			for (EditListener li:lis){
+			    if(li instanceof EditCanvaserListener){
 			        ((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, pos, flag);
+				}
+			}
 		}
 	}
 	
@@ -1641,21 +1647,37 @@ ________________________________________________________________________________
 	{
 
 		@Override
+		protected void init()
+		{
+			put(onceCount);
+		}
+		
+		@Override
 		protected wordIndex creat()
 		{
 			return new wordIndex();
 		}
 
 		@Override
-		protected void resetE(wordIndex E)
+		protected boolean IsReSet()
 		{
+			return false;
 		}
-
+		
+		@Override
+		protected void resetE(wordIndex E){}
+		
 	}
 	
 	public static class EPool3 extends EPool<Icon>
 	{
 
+		@Override
+		protected void init()
+		{
+			put(250);
+		}
+		
 		@Override
 		protected Icon creat()
 		{
@@ -1663,10 +1685,14 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		protected void resetE(Icon E)
+		protected boolean IsReSet()
 		{
+			return false;
 		}
-
+		
+		@Override
+		protected void resetE(Icon E){}
+		
 	}
 	
 	public static wordIndex getANode()
