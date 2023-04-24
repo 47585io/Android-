@@ -59,9 +59,9 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		TextPaint paint = getPaint();
 		try
 		{		
-		    DrawAndDraw(this,canvas,paint,pos,EditCanvaserListener.OnDraw,getCanvaserList());
+		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
 			super.onDraw(canvas);
-			DrawAndDraw(this,canvas,paint,pos,EditCanvaserListener.AfterDraw,getCanvaserList());	
+			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
 		}
 		catch (Exception e)
 		{
@@ -77,14 +77,14 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	}
 	
 	@Override
-	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, size pos, int flag, EditListenerList listener)
+	public void DrawAndDraw( Canvas canvas, TextPaint paint, size pos, int flag)
 	{
+		EditListenerList listener = getCanvaserList();
 		if(listener!=null){
 			List<EditListener> lis = listener.getList();
-			if(lis!=null){
-		        for(EditListener li:lis)
-			    ((EditCanvaserListener)li).LetMeCanvaser(self,canvas,paint,pos,flag);
-		    }
+			for(EditListener li:lis)
+			    if(li instanceof EditCanvaserListener)
+			        ((EditCanvaserListener)li).LetMeCanvaser(this,canvas,paint,pos,flag);
 		}
 	}
 	

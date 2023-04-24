@@ -18,6 +18,16 @@ public class EditListenerItrator
 			}catch(Exception e){}
 		}
 	}
+	public static void foreach(RunLi Callback,EditListener... lis)
+	{
+		if(lis==null)
+			return;
+		for(EditListener li:lis){
+			try{
+			    Callback.runSelf(li);
+			}catch(Exception e){}
+		}
+	}
 	public static void foreach(final RunLi Callback,Collection<EditListener> lis,ThreadPoolExecutor pool)
 	{
 		if(lis==null)
@@ -44,6 +54,18 @@ public class EditListenerItrator
 	}
 	
 	public static<T> List<T> foreach(Collection<EditListener> lis,final RunLi<List<T>> Callback)
+	{
+		if(lis==null)
+			return null;
+		List<T> r=new ArrayList<>();
+		for(EditListener li:lis){
+			try{
+				r.addAll( Callback.runSelf(li));
+			}catch(Exception e){}
+		}
+		return r;
+	}
+	public static<T> List<T> foreach(EditListener... lis,final RunLi<List<T>> Callback)
 	{
 		if(lis==null)
 			return null;

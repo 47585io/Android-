@@ -12,6 +12,8 @@ import android.widget.*;
   
   三个抽象方法顺次调用，dothing_Start和dothing_End只在起始和末尾调一次，而dothing_Run只要没到end就一直调
   
+  有一段时间，为了完成我的线程大计，居然妄想着把Formator也加入线程，即先找要修改的token，最后一并修改，但我发现其实有问题: 每replace一个token，后面的token就要偏移，太麻烦了
+  
 */
 public abstract class EditFormatorListener extends EditListener
 {

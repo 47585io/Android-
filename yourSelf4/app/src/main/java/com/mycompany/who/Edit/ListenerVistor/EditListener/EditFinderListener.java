@@ -75,9 +75,7 @@ public abstract class EditFinderListener extends EditListener
 	
 	   * 查找时，为了保留换行空格等，只replace单词本身，而不是src文本
 	   
-	   * Spanned本质是用html样式替换原字符串
-	   
-	   * html中，多个连续空格会压缩成一个，换行会替换成空格
+	   * 要查找的文本只能是普通文本，不可以是Span文本，因为Span文本的比较与Span也有关系
 	  
 	   * 防止重复（覆盖），只遍历一次
 	*/
@@ -107,7 +105,7 @@ public abstract class EditFinderListener extends EditListener
 	}
 	
 	/* 清除优先级低且位置重复的node */
-	public static void clearRepeatNode(List<wordIndex> nodes)
+	final public static void clearRepeatNode(List<wordIndex> nodes)
 	{		
 		if(nodes==null)
 			return;

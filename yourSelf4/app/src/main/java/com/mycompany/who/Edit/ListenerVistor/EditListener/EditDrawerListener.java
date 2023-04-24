@@ -22,22 +22,22 @@ import android.text.style.*;
 public abstract class EditDrawerListener extends EditListener
 {
 	
-	abstract protected void onDrawNodes(int start, int end, String text, List<wordIndex> nodes, Editable editor)
+	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
 	//在这里为Editable染色
 	
-	final public void LetMeDraw(int start, int end,String text, List<wordIndex> nodes,Editable editor)
+	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Editable editor)
 	{
 		try{
 			if (Enabled())
-				Draw(start,end,text,nodes,editor);
+				Draw(start,end,nodes,editor);
 		}
 		catch (Exception e){
 			Log.e("Drawing Error", toString()+" "+e.toString());
 		}
 	}
 
-	protected void Draw(int start, int end, String text, List<wordIndex> nodes,Editable editor){
-		onDrawNodes(start, end,text, nodes, editor);
+	protected void Draw(int start, int end, List<wordIndex> nodes,Editable editor){
+		onDrawNodes(start, end, nodes, editor);
 	}
 	
 	

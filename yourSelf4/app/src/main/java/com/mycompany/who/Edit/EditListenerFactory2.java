@@ -43,9 +43,9 @@ public class EditListenerFactory2 implements EditListenerFactory
 	{
 		if(Edit instanceof CodeEdit){
 		    CodeEdit E = (CodeEdit) Edit;
-		    E.setDrawer(EditListenerFactory2.DrawerFactory.getDefaultDrawer());
+		    E.setDrawer((EditDrawerListener)EditListenerFactory2.DrawerFactory.getDefaultDrawer());
 		    E.getCanvaserList().getList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
-		    E.setFormator(EditListenerFactory2.FormatorFactory.getJavaFormator());
+		    E.setFormator((EditFormatorListener)EditListenerFactory2.FormatorFactory.getJavaFormator());
 		    E.getInsertorList().getList().add((EditListenerFactory2.InsertorFactory.getDefultInsertor()));
 		}
 	}
@@ -89,14 +89,14 @@ ________________________________________________________________________________
 
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			((CodeEdit)Edit).setDrawer(getDefaultDrawer());
+			((CodeEdit)Edit).setDrawer((EditDrawerListener)getDefaultDrawer());
 		}
 		
 
 		public static class DefaultDrawerListener extends EditDrawerListener
 		{	
 			@Override
-			protected void onDrawNodes(int start, int end,String src, List<wordIndex> nodes, Editable editor){
+			protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor){
 				clearSpan(start,end,editor);
 				setSpan(start,end,editor,nodes);
 				//清理旧的Span，设置新的Span
@@ -202,7 +202,7 @@ ________________________________________________________________________________
 		@Override
 		public void SwitchListener(EditText Edit, String Lua)
 		{
-			((CodeEdit)Edit).setFormator(ToLisrener(Lua));
+			((CodeEdit)Edit).setFormator((EditFormatorListener)ToLisrener(Lua));
 		}
 
 		public static EditListener getJavaFormator()
@@ -468,7 +468,6 @@ ________________________________________________________________________________
 		public static class JavaCompletor extends EditListenerList
 		{		
 			public JavaCompletor(){
-				List<EditListener> lis = getList();
 				lis.add(getKeyBox());
 				lis.add(getConstBox());
 				lis.add(getVillBox());

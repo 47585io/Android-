@@ -68,7 +68,6 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 			}
 		};
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		// 初始化线程池
 		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 	}
 	

@@ -1,6 +1,12 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import java.util.*;
 
+
+/* 
+  EditListenerList，EditListener的子类，可向上转型
+
+  内部使用synchronizedList存储EditListener，这个lis一定不为null
+*/
 public class EditListenerList extends EditListener
 {
 	

@@ -26,7 +26,9 @@ import android.os.*;
    
      若一个东西可以有很多功能，例如编辑器可以有Format，Draw，Complete，不妨分别写几个接口，然后让其它类根据自己的需要来实现，这叫接口
 
-     工厂是创建一组不同配置的产品的类，通过工厂可以方便地创建某个类的实例，例如上面的编辑器，我们知道，接口只声明方法，不定义实现。也就是说，所有实现它们的编辑器都要重写一遍方法，不管实现逻辑是否相同，这时就可以用工厂，定义一组实现了接口的类，然后根据需要创建对象并返回
+     工厂是创建一组不同配置的产品的类，通过工厂可以方便地创建某个类的实例，
+	 
+	 例如上面的编辑器，我们知道，接口只声明方法，不定义实现。也就是说，所有实现它们的编辑器都要重写一遍方法，不管实现逻辑是否相同，这时可以使用继承，定义一个实现了接口的类，之后直接继承
 
      若一些东西属于同一类，例如onTouchListener，onKeyListener，它们都是Listener，不妨写一个ListenerInfo，将它们装到一起，这叫封装
   
@@ -51,6 +53,7 @@ import android.os.*;
  */
  
  /*
+ 
  主要功能：
  
     reDraw
@@ -147,6 +150,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		super(cont,Edit);
 	}
 
+    /* 将target的数据拷贝到自己身上  */
 	@Override
 	public void CopyFrom(Edit target)
 	{
@@ -163,6 +167,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		addTextChangedListener(new DefaultText());
 	}
 
+	/* 将自己的数据拷贝到target身上  */
 	@Override
 	public void CopyTo(Edit target)
 	{
@@ -180,6 +185,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.setText(this.getText()); 
 	}
 
+	/* 初始化数据 */
 	@Override
 	public void Creat()
 	{
@@ -193,18 +199,30 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		trimListener();
 	}
 	
-	synchronized public void trimListener()
+/*
+__________________________________________________________________________________
+
+对Listener进行操作
+
+  为了方便，这里的set和get方法限制参数类型
+  
+  trimListener，clearListener，及setLuagua都依赖Factory，所以可以设置Factory
+  
+__________________________________________________________________________________
+
+*/
+	public void trimListener()
 	{
 		if(mfactory!=null)
 			mfactory.trimListener(this);
 	}
-	synchronized public void clearListener()
+	public void clearListener()
 	{
 		if(mfactory!=null)
 			mfactory.clearListener(this);
 	}
 	
-	synchronized public void setFinderList(EditListenerList lis)
+	public void setFinderList(EditListenerList lis)
 	{
 		if(Info!=null)
 			Info.mlistenerFS = lis;
@@ -214,29 +232,29 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 			return Info.mlistenerFS;
 		return null;
 	}
-	synchronized public void setDrawer(EditListener li)
+    public void setDrawer(EditDrawerListener li)
 	{
 		if(Info!=null)
 		    Info.mlistenerD = li;
 	}
-	public EditListener getDrawer()
+	public EditDrawerListener getDrawer()
 	{
 		if(Info!=null)
-		    return Info.mlistenerD;
+		    return (EditDrawerListener)Info.mlistenerD;
 		return null;
 	}
-	synchronized public void setFormator(EditListener li)
+	public void setFormator(EditFormatorListener li)
 	{
 		if(Info!=null)
 	        Info.mlistenerM = li;
 	}
-	public EditListener getFormator()
+	public EditFormatorListener getFormator()
 	{
 		if(Info!=null)
-		    return Info.mlistenerM;
+		    return (EditFormatorListener)Info.mlistenerM;
 		return null;
 	}
-	synchronized public void setInsertorList(EditListenerList lis){
+	public void setInsertorList(EditListenerList lis){
 		if(Info!=null)
 		    Info.mlistenerIS = lis;
 	}
@@ -246,7 +264,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		    return Info.mlistenerIS;
 		return null;
 	}
-	synchronized public void setCompletorList(EditListenerList lis){
+	public void setCompletorList(EditListenerList lis){
 		if(Info!=null)
 			Info.mlistenerCS = lis;
 	}
@@ -256,7 +274,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		    return Info.mlistenerCS;
 		return null;
 	}
-	synchronized public void setCanvaserList(EditListenerList lis){
+	public void setCanvaserList(EditListenerList lis){
 		if(Info!=null)
 			Info.mlistenerVS = lis;
 	}
@@ -276,7 +294,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		    Info = (CodeEdit.CodeEditListenerInfo) i;
 	}
 
-	synchronized public void setLuagua(String Lua)
+	public void setLuagua(String Lua)
 	{
 		if(mfactory!=null){
 		    laugua.replace(0,laugua.length(),Lua);
@@ -288,12 +306,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 	
 	
-	/*
-	  我真服了，在super()中会调用setText("")，然后会调用onTextChanged，这时候自己的成员全是null，
+/*
+  我真服了，在super()中会调用setText("")，然后会调用onTextChanged，这时候自己的成员全是null，
 	  
-	  而是最坑的是: 居然也没有与外部类绑定，那么就不能直接在任何函数中返回外部类的成员，因为外部类对象为null
+  而是最坑的是: 居然也没有与外部类绑定，那么就不能直接在任何函数中返回外部类的成员，因为外部类对象为null
 	  
-	*/
+*/
 	
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
@@ -333,9 +351,9 @@ _________________________________________
 	 
  染色
  
- reDraw：复杂的染色，其调用onFindNodes与onDrawNodes，加入了线程
+ reDraw：复杂的染色，其调用onFindNodes与onDrawNodes
  
- prepare：准备文本，然后等待之后get
+ prepare：准备文本，然后等待之后get，其调用onFindNodes与onDrawNodes
  
  onFindNodes: 真正的找操作写在这里，可以给很多Listener查找
  
@@ -347,15 +365,11 @@ Dreawr
 	 
 	reDraw ->1
 	
-	
-	  1-> FindFor ->2
+	prepare ->1
 	  
-	  1-> Drawing ->2
-
-	  
-	    2-> onFindNodes
+	    1-> onFindNodes
 		
-	    2-> onDrawNodes
+	    1-> onDrawNodes
 
  _________________________________________
 
@@ -365,24 +379,22 @@ Dreawr
 	final public void reDraw(final int start,final int end)
 	{	
 	    final String text = getText().toString();
-		List<wordIndex> tmp = null;
-		final List<wordIndex> nodes;
-			
+		final List<wordIndex> nodes = new ArrayList<>();
+		
 		Ep.start(); //开始记录
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
 		
 		try{
-			tmp = onFindNodes(start, end, text,getFinderList()); 
+			onFindNodes(start, end, text, nodes); 
 			//找nodes，即使getFinderList为null，因为我认为onFindNodes也可以不用listener
 		}catch (Exception e){
 			Log.e("FindNodes Error", e.toString());
 		}	
 		
-		nodes = tmp;
 		now = System.currentTimeMillis();
 		Log.w("After FindNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
-		//经过一次寻找，tmp里装满了单词，让我们用tmp初始化nodes
+		//经过一次寻找，nodes里装满了单词，让我们开始染色
 		
 		Runnable run =new Runnable(){
 
@@ -390,20 +402,19 @@ Dreawr
 			public void run()
 			{
 				IsModify++;
-				isDraw = true; //此时会修改文本，isModify
+				isDraw = true; //此时会修改文本，isModify			
 				long last=0,now=0;
 				last = System.currentTimeMillis();
 
 				try{
-					onDrawNodes(start, end, text, nodes,getDrawer()); 
+					onDrawNodes(start, end, nodes, getText()); 
 				}catch (Exception e){
 					Log.e("DrawNodes Error", e.toString());
 				}
 
 				isDraw = false;
 				IsModify--;
-				Ep.stop(); //Draw完后申请回收nodes
-
+				Ep.stop(); //Draw完后申请回收nodes		
 				now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
@@ -411,57 +422,52 @@ Dreawr
 		post(run);//将UI任务交给主线程
 	}
 	
-	/* FindNodes不会修改文本和启动Ep，所以可以直接调用
-	   且其支持任意EditFinderListener查找 */
-	public List<wordIndex> onFindNodes(int start, int end, String text, EditListenerList listener)throws Exception
-	{	
-		if(listener != null){
-		    List<EditListener> lis = listener.getList();
-		    if(lis!=null){
-				List<wordIndex> nodes = new ArrayList<>();
-			    for(EditListener li:lis){
-		            List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end,text,getWordLib());
+	/* FindNodes不会修改文本和启动Ep，所以可以直接调用 */
+	public void onFindNodes(int start, int end, String text, List<wordIndex> nodes)
+	{
+		EditListenerList list = getFinderList();
+		if(list != null){
+			Words WordLib = getWordLib();
+		    List<EditListener> lis = list.getList();
+		    for(EditListener li:lis){
+		        if(li instanceof EditFinderListener){
+				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
 				    nodes.addAll(tmp);
-			    }
-		        return nodes;
-		    }
+				}
+		    }      
 		}
-		return null;
 	}
 
 	/* 会修改文本，不允许直接调用 */
-	protected void onDrawNodes(int start, int end,String src, List<wordIndex> nodes,EditListener listener)throws Exception
+	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
 	{
-		//应该重写这个
-		EditDrawerListener li = (EditDrawerListener)listener;
-		if(li!=null)
-		    li.LetMeDraw(start, end, src, nodes, getText());
+		EditDrawerListener li = getDrawer();
+		if(li != null)
+			li.LetMeDraw(start, end, nodes, editor);
 	}
 	
 	/* 准备指定文本的颜料 */
-	final public void prepare(final int start,final int end,final String text)
+	final public void prepare(int start, int end, String text)
 	{
-		if(getFinderList()==null||getDrawer()==null)
-			return;
-
-		List<wordIndex> nodes = null;
+		List<wordIndex> nodes = new ArrayList<>();
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		EditDrawerListener li = (EditDrawerListener) getDrawer();
+		
 		Ep.start();
 		try
 		{	
-			nodes = onFindNodes(start, end, text,getFinderList());
-			li.LetMeDraw(start,end,text,nodes,b);
+			onFindNodes(start, end, text, nodes);
+			onDrawNodes(start, end, nodes, b);
 			this.buider = b;
-			this.HTML = li.getHTML(b);	
+			this.HTML = EditDrawerListener.getHTML(b);	
 		}
 		catch (Exception e){
 			Log.e("prepare Error",e.toString());
 		}
 		Ep.stop();
 	}
+	
 	/* 获取准备好了的文本 */
-	public void GetString(StringBuilder HTML,SpannableStringBuilder builder)
+	public void GetString(StringBuilder HTML, SpannableStringBuilder builder)
 	{	
 		if(this.HTML!=null&&HTML!=null){
 		    HTML.append(this.HTML);
@@ -474,7 +480,8 @@ Dreawr
 	}
 	
 	
-/*_________________________________________
+/*
+_________________________________________
 	
 格式化
 
@@ -514,7 +521,7 @@ _________________________________________
 		last = System.currentTimeMillis();
 		
 		try{
-			onFormat(start, end, getFormator());
+			onFormat(start, end, getText());
 		}
 		catch (Exception e){
 			Log.e("Format Error", e.toString());
@@ -526,11 +533,11 @@ _________________________________________
 		Log.w("After Format Replacer","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms," +"The time maybe too Loog！");
 	}
 
-	protected void onFormat(int start,int end,EditListener listener)
+	protected void onFormat(int start, int end, Editable editor)
 	{	
-		EditFormatorListener li = ((EditFormatorListener)listener);
-		if(li!=null)
-			li.LetMeFormat(start, end, getText());
+		EditFormatorListener li = getFormator();
+		if(li != null)
+			li.LetMeFormat(start, end, editor);
 	}
 	
     /* 在指定位置插入后续字符 */
@@ -541,7 +548,7 @@ _________________________________________
 		isFormat = true;
 		
 		try{
-		    onInsert(index,getInsertorList());
+		    onInsert(index,getText());
 		}
 		catch (Exception e){
 			Log.e("Insert Error", e.toString());
@@ -552,16 +559,17 @@ _________________________________________
 		return count;
 	}	
 
-	protected void onInsert(int index,EditListenerList listener)throws Exception
+	protected void onInsert(int index, Editable editor)
 	{
-		if(listener != null){
-		    List<EditListener> lis = listener.getList();
-			if(lis!=null){
-			   for(EditListener li:lis){
-		           int p = ((EditInsertorListener)li).LetMeInsert(getText(), index);
-			       setSelection(p);
-			   }  
-		    }
+		EditListenerList list = getInsertorList();
+		if(list != null){
+		    List<EditListener> lis = list.getList();
+			for(EditListener li:lis){
+		        if(li instanceof EditInsertorListener){
+				    int p = ((EditInsertorListener)li).LetMeInsert(editor, index);
+					setSelection(p);
+				}
+		    } 
 		}
 	}
 	
@@ -622,7 +630,7 @@ _________________________________________
 		final WordAdpter adapter = new WordAdpter(R.layout.WordIcon);
 		
 		try{
-		    SearchInGroup(getSelectionEnd(),adapter,getCompletorList());
+		    SearchInGroup(getText().toString(),getSelectionEnd(),adapter);
 		}catch(Exception e){
 			Log.e("SearchWord Error", e.toString());
 		}
@@ -656,22 +664,22 @@ _________________________________________
 	}
 	
 	/* 在不同集合中找单词 */
-	public void SearchInGroup(int index, WordAdpter Adapter,EditListenerList listener)
+	public void SearchInGroup(String src,int index,WordAdpter Adapter)
 	{
-		if(listener==null)
-			return;
-			
-		final String src = getText().toString();
-		final CharSequence wantBefore= getWord(src,index);
-		final CharSequence wantAfter = getAfterWord(src,index);
-		//获得光标前后的单词，并开始查找
-		
-		List<EditListener> lis = listener.getList();
-		if(lis!=null){
-		    for(EditListener li:lis){
-			    List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(getText().toString(),index,wantBefore,wantAfter,0,wantBefore.length(),WordLib);
-			    Adapter.addAll(Icons,li.hashCode());
-		    }
+		EditListenerList list = getCompletorList();
+		if(list != null){
+			Words WordLib = getWordLib();
+			List<EditListener> lis = list.getList();
+			final CharSequence wantBefore= getWord(src,index);
+			final CharSequence wantAfter = getAfterWord(src,index);
+			//获得光标前后的单词，并开始查找
+	    	
+			for(EditListener li:lis){
+			    if(li instanceof EditCompletorListener){
+			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,0,wantBefore.length(),WordLib);
+			        Adapter.addAll(Icons,li.hashCode());
+			    }
+	        }
 		}
 	}
 	
@@ -730,32 +738,30 @@ _________________________________________
 	{
 		IsModify++;
 		try{
-			onInsertword(word,index,id,getCompletorList());
+			onInsertword(getText(),word,index,id);
 		}
 		catch (Exception e){
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
 		IsModify--;
 	}
-	protected void onInsertword(CharSequence word, int index, int id, EditListenerList listener)
+	protected void onInsertword(Editable editor,CharSequence word, int index, int id)
 	{
-		Editable editor = getText();	
+		EditListenerList list = getCompletorList();
 		wordIndex tmp = tryWordSplit(editor.toString(), index);
 		wordIndex tmp2 = tryWordSplitAfter(editor.toString(), index);
 		size range = new size(tmp.start,tmp2.end);
 		
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
-		if(listener!=null){
-			List<EditListener> lis = listener.getList();
-			if(lis!=null){
-		        for(EditListener li: lis){
-			        if(li.hashCode() == id){
-				        int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
-				        setSelection(selection);
-				        return;
-		 	        }
-		        }
-			}
+		if(list != null){
+			List<EditListener> lis = list.getList();
+			for(EditListener li: lis){
+			    if(li.hashCode() == id && li instanceof EditCompletorListener){
+				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
+				    setSelection(selection);
+				    return;
+		 	    }
+		    }
 		}
 		
 		//没有找到listener，就执行默认操作
@@ -773,6 +779,9 @@ _________________________________________
    你可以进行任意的绘制操作
    
    DrawAndDraw: 为所有Listener绘制
+   
+   
+   onDraw -> DrawAndDraw
 
 _________________________________________
 
@@ -786,9 +795,9 @@ _________________________________________
 		try
 		{
 			++IsModify;
-		    DrawAndDraw(this,canvas,paint,pos,EditCanvaserListener.OnDraw,getCanvaserList());
+		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
 			super.onDraw(canvas);
-			DrawAndDraw(this,canvas,paint,pos,EditCanvaserListener.AfterDraw,getCanvaserList());	
+			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
 			--IsModify;
 		}
 		catch (Exception e)
@@ -798,14 +807,14 @@ _________________________________________
 		
     }
 	
-	public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, size pos,int flag,EditListenerList listener)
+	protected void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
 	{
-		if(listener!=null){
-			List<EditListener> lis = listener.getList();
-			if(lis!=null){
-		        for (EditListener li:lis)
-			        ((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, pos,flag);
-			}
+		EditListenerList list = getCanvaserList();
+		if(list != null){
+		    List<EditListener> lis = list.getList();
+			for (EditListener li:lis)
+			    if(li instanceof EditCanvaserListener)
+			        ((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, pos, flag);
 		}
 	}
 	
@@ -973,7 +982,7 @@ _________________________________________
 */
 	public class DefaultText implements TextWatcher
 	{
-
+		
 		/**
 		 * 输入框改变前的内容
 		 *  charSequence 输入前字符串
@@ -981,21 +990,20 @@ _________________________________________
 		 *  count 删除字符串的数量（这里的count是用str.length()计算的，因为删除一个emoji表情，count打印结果是 2）
 		 *  after 输入框中改变后的字符串与起始位置的偏移量（也就是输入字符串的length）
 		 */
-		/*
-		 输入4个字符，删除一个字符，它们的值变化：
-		 0, 0, 1  从0开始插入1个字符
-		 1, 0, 1  从1开始插入1个字符
-		 2, 0, 1  从2开始插入1个字符
-		 3, 0, 1  从3开始插入1个字符
-		 3, 1, 0  从4开始删除1个字符，达到3 
+		/**
+		 * 输入4个字符，删除一个字符，它们的值变化：
+		 * 0, 0, 1  从0开始插入1个字符
+		 * 1, 0, 1  从1开始插入1个字符
+		 * 2, 0, 1  从2开始插入1个字符
+		 * 3, 0, 1  从3开始插入1个字符
+		 * 3, 1, 0  从4开始删除1个字符，达到3 
 		 */
-
-		/*
-		 这里需要注意的是，任何replace,insert,append,delete函数中都会调ontextChange
-		 另外的，replace并不分两次调用ontextChange，而是直接把删除count与插入after一并传过来，所以都得判断
-		 因此，start光标总是以在最前面的位置为准
-		 text就是EditText内部SpannableStringBuilder，它们是同步的，SpannableStringBuilder实现了CharSequence， Editable接口，则getText得到的也是这个
-		 另外的，getText().subSequence得到的也是SpannableStringBuilder
+		/**
+		 * 这里需要注意的是，任何replace,insert,append,delete函数中都会调ontextChange
+		 * 另外的，replace并不分两次调用ontextChange，而是直接把删除count与插入after一并传过来，所以都得判断
+		 * 因此，start光标总是以在最前面的位置为准
+		 * text就是EditText内部SpannableStringBuilder，它们是同步的，SpannableStringBuilder实现了CharSequence， Editable接口，则getText得到的也是这个
+		 * 另外的，getText().subSequence得到的也是SpannableStringBuilder
 		 */
 		@Override
 		public void beforeTextChanged(CharSequence str, int start, int count, int after)
@@ -1025,7 +1033,7 @@ _________________________________________
 		}
 
 		/**
-		 *  editable 输入结束呈现在输入框中的信息
+		 * editable 输入结束呈现在输入框中的信息
 		 */
 		@Override
 		public void afterTextChanged(Editable p1)
@@ -1318,14 +1326,16 @@ ________________________________________________________________________________
 		public EditChroot(EditChroot o){
 			compare(o);
 		}
-		public void set(boolean m,boolean d,boolean f,boolean c,boolean u){
+		public void set(boolean m,boolean d,boolean f,boolean c,boolean u)
+		{
 			IsModify = m;
 			isDraw = d;
 			isFormat = f;
 			isComplete = c;
 			isUR = u;
 		}
-		public void compare(EditChroot f){
+		public void compare(EditChroot f)
+		{
 			IsModify = f.IsModify;
 			isDraw = f.isDraw;
 			isFormat = f.isFormat;
@@ -1344,7 +1354,8 @@ ________________________________________________________________________________
 		
 	}
 	
-	public void compareChroot(EditChroot f){
+	public void compareChroot(EditChroot f)
+	{
 		IsModify2 = f.IsModify;
 		isDraw = f.isDraw;
 		isFormat = f.isFormat;
@@ -1448,7 +1459,8 @@ ________________________________________________________________________________
 __________________________________________________________________________________
 	 
 */
-	public final Runnable ReDraw(final int start,final int end){
+	public final Runnable ReDraw(final int start,final int end)
+	{
 		return new Runnable(){
 
 			@Override
@@ -1458,7 +1470,8 @@ ________________________________________________________________________________
 			}
 		};
 	}
-	public final Runnable Prepare(final int start,final int end,final String text){
+	public final Runnable Prepare(final int start,final int end,final String text)
+	{
 		return new Runnable(){
 
 			@Override
@@ -1468,7 +1481,8 @@ ________________________________________________________________________________
 			}
 		};
 	}
-	public final Runnable OpenWindow(){
+	public final Runnable OpenWindow()
+	{
 		return new Runnable(){
 
 			@Override
@@ -1609,12 +1623,15 @@ ________________________________________________________________________________
   为你省下更多开辟和释放空间的时间，但可能占很多内存  
 	
     Ep应该比较安全，任意时间内，只有一个线程中的一个Edit能获取一个
+	
 	获取到的这个元素只属于这个Edit，之后获取的元素是之后的事
 
 	若池子正启用，一时半会这个元素不会重置，也不用担心了
+	
 	如果马上stop了，虽然会清除本次拿走的元素，但也只是把下标偏移，但不重置元素
 
     如果池子正关闭，您硬要从中拿，那么池子会宽容地将下标向后移
+	
 	之后再启动，之后获取的元素是之后的事
 	
 __________________________________________________________________________________
@@ -1652,10 +1669,13 @@ ________________________________________________________________________________
 
 	}
 	
-	public static wordIndex getANode(){
+	public static wordIndex getANode()
+	{
 		return Ep.get();	
 	}
-	public static Icon getAIcon(){
+	
+	public static Icon getAIcon()
+	{
 		return Epp.get();
 	}
 	
@@ -1673,7 +1693,7 @@ ________________________________________________________________________________
 	 
  可以有多个Finder，但只有一个Drawer，这就是我把Finder与Drawer分开的原因，不用每个Finder都各自Draw
 
- 反之，为了统一Draw，node存储的就是范围和颜色，Drawer只要把它们设置
+ 反之，为了统一Draw，node存储的就是范围和颜色标志，Drawer只要把它们统一设置
 
  Format和Insert分开也是这个原因，即不用每个Insertor都绑定一个Formator
  
@@ -1850,17 +1870,17 @@ ________________________________________________________________________________
  */
 	public static interface myDrawer extends Drawer{
 			
-		public List<wordIndex> onFindNodes(int start, int end, String text,EditListenerList lis)throws Exception
+		public void onFindNodes(int start, int end, String text, List<wordIndex> nodes)
 		
-		public void onDrawNodes(int start, int end, List<wordIndex> nodes, EditListener li)throws Exception
+		public void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
 		
 	}
 	
 	public static interface myFormator extends Formator{
 
-		public void onFormat(int start,int end,EditListener li)
+		public void onFormat(int start, int end, Editable editor)
 		
-		public int onInsert(int index,EditListenerList lis)throws Exception
+		public int onInsert(int index, Editable editor)
 	
 	}
 	
@@ -1868,19 +1888,19 @@ ________________________________________________________________________________
 
 		public ListView getWindow()
 		
-		public List<Icon> SearchInGroup(int index, WordAdpter Adapter,EditListenerList lis)
+		public void SearchInGroup(String src, int index, WordAdpter Adapter)
 		
 		public void callOnopenWindow(ListView Window)
 		
 		public void insertWord(CharSequence word, int index, int flag)
 		
-		public void onInsertword(CharSequence word, int index, int flag, EditListenerList lis)
+		public void onInsertword(Editable editor, CharSequence word, int index, int flag)
 	
 	}
 	
 	public static interface myCanvaser extends Canvaser {
 		
-		public void DrawAndDraw(EditText self, Canvas canvas, TextPaint paint, size pos,int flag,EditListenerList lis)
+		public void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
 		
 	}
 	

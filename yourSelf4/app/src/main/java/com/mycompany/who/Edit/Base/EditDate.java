@@ -6,6 +6,7 @@ public class EditDate
 {
 	private Stack<Token> UedoList;
 	private Stack<Token> RedoList;
+	
 	public EditDate()
 	{
 		UedoList=new Stack<>();
@@ -19,6 +20,12 @@ public class EditDate
 	public void Reput(int start, int end, CharSequence src)
 	{
 		RedoList.push(new Token(start, end, src));
+	}
+	public void put(Token token){
+		UedoList.push(token);
+	}
+	public void Reput(Token token){
+		RedoList.push(token);
 	}
 
 	public Token getLast()
@@ -54,7 +61,7 @@ public class EditDate
 	
 	public static class Token
 	{
-		Token(int start, int end, CharSequence src)
+		public Token(int start, int end, CharSequence src)
 		{
 			this.start=start;
 			this.end=end;
