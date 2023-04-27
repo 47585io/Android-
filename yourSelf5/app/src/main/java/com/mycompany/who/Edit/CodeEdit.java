@@ -93,7 +93,7 @@ import android.os.*;
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
  */
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,EditListenerInfoUser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditListenerInfoUser
 {
 	
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
@@ -285,6 +285,17 @@ ________________________________________________________________________________
 		    return Info.mlistenerVS;
 		return null;
 	}
+	public void setRunnar(EditRunnarListener li)
+	{
+		if(Info!=null)
+		    Info.mlistenerR = li;
+	}
+	public EditRunnarListener getRunnar()
+	{
+		if(Info!=null)
+		    return (EditRunnarListener)Info.mlistenerR;
+		return null;
+	}
 	
 	public CodeEditListenerInfo getInfo(){
 		return Info;
@@ -350,7 +361,7 @@ ________________________________________________________________________________
 /*
 _________________________________________
 	 
- 染色
+染色者
  
  reDraw：复杂的染色，其调用onFindNodes与onDrawNodes
  
@@ -484,7 +495,7 @@ Dreawr
 /*
 _________________________________________
 	
-格式化
+整理者
 
 Format：负责大量文本的格式化，为了避免多个Formator把文本改的乱七八糟，只能有一个Formator修改文本
 
@@ -579,7 +590,7 @@ _________________________________________
 /*
 _________________________________________
 
- 自动补全
+提示器
  
  getWindow: 获取窗口
  
@@ -779,7 +790,7 @@ _________________________________________
 /*
 _________________________________________
 
-   Canvaser
+绘画者
    
    你可以进行任意的绘制操作
    
@@ -809,7 +820,6 @@ _________________________________________
 		{
 			Log.e("OnDraw Error", e.toString());
 		}
-		
     }
 	
 	protected void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
@@ -823,6 +833,80 @@ _________________________________________
 				}
 			}
 		}
+	}
+	
+	
+/*
+_________________________________________
+
+运行器
+
+ MakeCommand: 在不同状态下制作不同命令
+ 
+ RunCommand: 执行命令
+ 
+ onMakeCommand: 如何制作命令
+ 
+ onRunCommand: 如何运行命令
+
+_________________________________________
+
+Runnar
+
+	 MakeCommand ->1
+
+	 RunCommand ->2 
+
+
+	 1-> onMakeCommand
+
+	 2-> onRunCommand
+	 
+_________________________________________
+
+*/
+
+	@Override
+	final public void MakeCommand(String state,List<String> commands)
+	{
+		++IsModify;
+		try{
+			onMakeCommand(state,commands);
+		}catch(Exception e){
+			Log.e("onMakeCommand Error",e.toString());
+		}
+		--IsModify;
+	}
+
+	protected void onMakeCommand(String state, List<String> commands)
+	{
+		EditRunnarListener li = getRunnar();
+		if(li!=null){
+			String com = li.LetMeMake(this,state);
+			String[] arr = li.spiltCommand(com);
+			for(String s:arr){
+				commands.add(s);
+			}
+		}
+	}
+	
+	@Override
+	final public void RunCommand(String command)
+	{
+		++IsModify;
+		try{
+			onRunCommand(command);
+		}catch(Exception e){
+			Log.e("onRunCommand Error",e.toString());
+		}
+		--IsModify;
+	}
+
+	protected void onRunCommand(String command)
+	{
+		EditRunnarListener li = getRunnar();
+		if(li!=null)
+			li.LetMeRun(this,command);
 	}
 	
 	
@@ -1745,6 +1829,7 @@ ________________________________________________________________________________
 		public EditListenerList mlistenerIS;
 		public EditListenerList mlistenerCS;
 		public EditListenerList mlistenerVS;
+		public EditListener mlistenerR;
 
 		public static final int FinderIndex = 0;
 		public static final int DrawerIndex = 1;
@@ -1752,6 +1837,7 @@ ________________________________________________________________________________
 		public static final int InsertorIndex = 3;
 		public static final int CompletorIndex = 4;
 		public static final int CanvaserIndex = 5;
+		public static final int RunnarIndex = 6;
 		
 		public CodeEditListenerInfo()
 		{
@@ -1790,6 +1876,10 @@ ________________________________________________________________________________
 				mlistenerVS.getList().add(li);
 				return true;
 			}
+			else if(li instanceof EditRunnarListener){
+				mlistenerR = li;
+				return true;
+			}
 			return false;
 		}
 
@@ -1818,6 +1908,10 @@ ________________________________________________________________________________
 			else if(mlistenerVS.getList().remove(li)){
 				return true;
 			}
+			else if(li.equals(mlistenerR)){
+				mlistenerR = null;
+				return true;
+			}
 			return false;
 		}
 
@@ -1829,6 +1923,8 @@ ________________________________________________________________________________
 				return mlistenerD;
 			else if(mlistenerM.getName().equals(name))
 				return mlistenerM;
+			else if(mlistenerR.getName().equals(name))
+				return mlistenerR;
 				
 			li = Helper.checkName(mlistenerIS,name);
 			if(li!=null)
@@ -1934,6 +2030,14 @@ ________________________________________________________________________________
 	public static interface myCanvaser extends Canvaser {
 		
 		public void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
+		
+	}
+	
+	public static interface myRunnar extends Runnar{
+		
+		public void onMakeCommand(String state,List<String> commands)
+		
+		public void onRunCommand(String command)
 		
 	}
 	

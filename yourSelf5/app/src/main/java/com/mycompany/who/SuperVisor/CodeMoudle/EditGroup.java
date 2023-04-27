@@ -45,9 +45,9 @@ import android.view.View.OnClickListener;
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  实现了EditListenerInfoUser接口，可直接将我给Extension
 */
-public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnItemClickListener
+public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
-
+	
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1000,ExpandHeight=2000;
 	
@@ -217,6 +217,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		
 		Edit.setOnClickListener(this);//组内的每个编辑器都设置Click
+		Edit.setOnLongClickListener(this);//组内的每个编辑器都设置LongClick
 		Edit.compareChroot(root); //设置root
 		//Edit.setTarget(this);//设置target，将事件冒泡给EditGroup
 		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
@@ -520,6 +521,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		if (getWindow() != null)
 			getWindow().setX(-9999);
 	}
+	
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
@@ -532,7 +534,16 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		getWindow().setX(-9999);
 	}
-
+	
+	@Override
+	public boolean onLongClick(View p1)
+	{
+		CodeEdit Edit = (CodeEdit)p1;
+		List<String> s = new ArrayList<>();
+		Edit.MakeCommand("longClick",s);
+		return false;
+	}
+	
 	
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
@@ -540,20 +551,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		if(ev.getPointerCount()==2){
 		    requestDisallowInterceptTouchEvent(false);
 			getParent().requestDisallowInterceptTouchEvent(true);
-			//缩放手势，防止子元素禁止拦截，防止父元素拦截
+			//缩放手势，父元素一定不能拦截我，我一定要拦截子元素，
 		}
-		else{
-		    int pos = hScro.isScrollToEdge();
-		    float x = OnTouchToMove.MoveX(ev);
-			if((pos==hScro.Left&&x>10) ||(pos==hScro.Right&&x<-10)){
-		        getParent().requestDisallowInterceptTouchEvent(false);
-			    return false;
-		    }
-		    else{
-			    getParent().requestDisallowInterceptTouchEvent(true);
-			}
-			//滚动条滚动到边缘后仍向外划动，请求父元素拦截滚动，自己return false，否则自己滚动
-		}   
 		return super.dispatchTouchEvent(ev);
 	}
 	
@@ -1183,6 +1182,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			target. mWindow.setBackgroundColor(Colors.Bg2);
 			target. mWindow.setDivider(null);
 			target. mWindow.setOnItemClickListener(target);
+			target. Scro.inter=false;
 		}
 		
 	}

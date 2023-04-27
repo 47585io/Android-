@@ -8,6 +8,12 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
 import java.util.*;
 
+/*
+  支持页面的切换以及滚动切换
+  
+  若要setScroll，必须保证没有滚动冲突，但可以使用ScrollBar，HScrollBar和QuickListView，它们优化了一些冲突
+  
+*/
 public class PageList extends HasAll
 {
 	private int nowIndex;

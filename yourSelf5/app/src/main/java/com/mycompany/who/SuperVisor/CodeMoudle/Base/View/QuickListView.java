@@ -8,6 +8,8 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.R;
 import java.util.*;
 
+
+/* 顶级窗口 */
 public class QuickListView extends ListView
 {
 	
@@ -22,6 +24,21 @@ public class QuickListView extends ListView
 	protected void onScrollChanged(int l, int t, int oldl, int oldt)
 	{
 		notifyDataSetChanged(this,getAdapter());
+	}
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev)
+	{
+		//只要我出现，父元素一定不能拦截我，我一定要拦截子元素，我便是顶级窗口
+		requestDisallowInterceptTouchEvent(false);
+		getParent(). requestDisallowInterceptTouchEvent(true);
+		return super.dispatchTouchEvent(ev);
+	}
+	
+	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev)
+	{
+		return true;
 	}
 	
 	public static void notifyDataSetChanged(ListView listView,ListAdapter adpter) {

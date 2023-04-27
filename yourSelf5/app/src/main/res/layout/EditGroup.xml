@@ -37,7 +37,7 @@
 
 	</com.mycompany.who.SuperVisor.CodeMoudle.Base.View.HScrollBar>
 	
-    <ListView
+    <com.mycompany.who.SuperVisor.CodeMoudle.Base.View.QuickListView
 		android:id="@+id/mWindow"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>

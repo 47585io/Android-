@@ -97,6 +97,7 @@ public class HasAll extends LinearLayout implements Configer<ViewGroup>,BubbleEv
 	@Override
 	public void setTarget(BubbleEvent target)
 	{
+		//默认不支持冒泡，因为这会增加事件分发的复杂度
 		//Target=target;
 	}
 	@Override

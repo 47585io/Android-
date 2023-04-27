@@ -1,5 +1,7 @@
 package com.mycompany.who.Edit.Base;
 
+import java.util.*;
+
 public class EditMoudle
 {
 
@@ -39,7 +41,15 @@ public class EditMoudle
 
 	public static interface Canvaser{}
 
-
+	
+	public static interface Runnar
+	{
+		public void MakeCommand(String state,List<String> commands)
+		
+		public void RunCommand(String command)
+	}
+	
+	
 	public static interface UedoWithRedo
 	{
 		public void Uedo()

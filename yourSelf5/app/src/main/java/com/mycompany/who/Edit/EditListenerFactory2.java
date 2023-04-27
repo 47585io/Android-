@@ -155,6 +155,9 @@ ________________________________________________________________________________
 
 		public static class DefaultCanvaser extends EditCanvaserListener
 		{
+			
+			private Rect bounds = new Rect();
+			
 			@Override
 			protected void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
 		
@@ -167,7 +170,6 @@ ________________________________________________________________________________
 
 				//任何修改都会触发重绘，这里在光标位置画矩形
 				int lines= self.getLayout().getLineForOffset(self.getSelectionStart());
-				Rect bounds = new Rect();
 				self.getLineBounds(lines, bounds);
 				paint.setColor(CodeEdit.CursorRect_Color);
 				canvas.drawRect(bounds, paint);
