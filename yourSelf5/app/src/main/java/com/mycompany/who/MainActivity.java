@@ -4,15 +4,16 @@ import android.content.res.*;
 import android.os.*;
 import android.view.*;
 import com.mycompany.who.Activity.*;
+import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.SuperVisor.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.concurrent.*;
-import com.mycompany.who.Edit.*;
-import java.util.*;
-import com.mycompany.who.Edit.Base.Share.Share4.*;
+import java.util.logging.*;
+
+import android.os.Handler;
 
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {

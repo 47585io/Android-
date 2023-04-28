@@ -673,7 +673,6 @@ _________________________________________
 	
 	public void closeWindow(){
 		getWindow().setX(-9999);
-		getWindow().setY(-9999);
 	}
 	
 	/* 在不同集合中找单词 */

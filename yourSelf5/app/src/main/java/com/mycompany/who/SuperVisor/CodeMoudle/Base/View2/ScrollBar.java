@@ -1,31 +1,32 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base.View;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2;
 import android.content.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import java.util.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 
 
 /*
-  如之前，我的父元素为HScrollBar，若我能接受到事件，则HScrollBar一定没有达到边界并继续外滑，或滑动距离未达到
-  
-  那如果纵向滑动距离达到了，请求父元素不要拦截我并返回true，这样父元素之后一定会调用我
-  
-  否则父元素可以继续拦截
-  
-*/
+ 如之前，我的父元素为HScrollBar，若我能接受到事件，则HScrollBar一定没有达到边界且没有继续外滑，或滑动距离未达到
+
+ 那如果纵向滑动距离达到了，请求父元素不要拦截我并返回true，这样父元素之后一定会调用我
+
+ 否则父元素可以继续拦截
+
+ */
 public class ScrollBar extends ScrollView implements Scroll
 {
-
-	Stack<Integer> historyL;
-	Stack<Integer> historyN;
-	public boolean canSave=true;
-	public boolean canScroll=true;
-	public boolean inter = true;
-	private boolean m = false;
 	
+	private Stack<Integer> historyL;
+	private Stack<Integer> historyN;
+	private OnTouchToMove mtouch;
+
+	private boolean canSave = true;
+	private boolean canScroll = true;
+	private boolean inter = false;
+
 	public static final int Top = 0;
 	public static final int Bottom = 1;
 	public static final int DontKonw = -1;
@@ -44,46 +45,39 @@ public class ScrollBar extends ScrollView implements Scroll
 	{
 		historyL = new Stack<>();
 		historyN = new Stack<>();
+		mtouch = new NoThingScroll();
 	}
 
+	/*  只保证dispatchTouchEvent必然被调用，而其它的可能不会调用 */
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
 	{
 		if (inter)
 		{
-			if(ev.getPointerCount()>1)
-				m = true;
-			//手指太多无法滚动，交给子元素
-			
 			int pos = isScrollToEdge();
-			float y = OnTouchToMove.MoveY(ev);
-			if ((pos == Top && y > 10) || (pos == Bottom && y < -10)){
-				getParent().requestDisallowInterceptTouchEvent(false);
-				return false;
+			mtouch.calc(ev);
+			float x = mtouch.MoveX(ev);
+			float y = mtouch.MoveY(ev);
+			mtouch.save(ev);
+			if (Math.abs(x) < Math.abs(y) 
+				&& ((pos == Top && y > 15) || (pos == Bottom && y < -15))){
+				getParent().requestDisallowInterceptTouchEvent(false);    
 			}
 			else{
 				getParent().requestDisallowInterceptTouchEvent(true);
 			}
-			//滚动条滚动到边缘后仍向外划动，请求父元素拦截滚动，自己return false，否则自己滚动
+			//手指倾向于y轴滑动，且滚动条滚动到边缘后仍向外划动，且速度超出15，请求父元素拦截滚动，否则自己滚动
 		}
 		return super.dispatchTouchEvent(ev);
 	}
-	
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev)
-	{
-		if(m)
-			return false;
-		return super.onInterceptTouchEvent(ev);
-	}
-	
+
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if (ev.getAction() == MotionEvent.ACTION_UP && canSave)
+		if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
 			historyL.push(getScrollY());
-		if (canScroll)
-		{
+		}
+		if (canScroll){
 		    return super.onTouchEvent(ev);
 		}
 		return false;
@@ -99,14 +93,17 @@ public class ScrollBar extends ScrollView implements Scroll
 		super.setScrollY(value);
 	}
 
-	public void setCanScroll(boolean can)
-	{
+	public void setCanScroll(boolean can){
 		canScroll = can;
 	}
-	public void setCanSave(boolean can)
-	{
+	public void setCanSave(boolean can){
 		canSave = can;
 	}
+	@Override
+	public void setTouchInter(boolean can){
+		inter = can;
+	}
+	
 	public void goback()
 	{
 		if (!canScroll || historyL.size() == 0)
@@ -116,6 +113,7 @@ public class ScrollBar extends ScrollView implements Scroll
 		setScrollY(historyL.pop());
 		canSave = true;
 	}
+	
 	public void gonext()
 	{
 		if (!canScroll || historyN.size() == 0)
@@ -127,8 +125,7 @@ public class ScrollBar extends ScrollView implements Scroll
 	}
 
 	@Override
-	public int size()
-	{
+	public int size(){
 		return historyL.size();
 	}
 
@@ -138,14 +135,16 @@ public class ScrollBar extends ScrollView implements Scroll
 	@Override
 	public int isScrollToEdge()
 	{
-		int height,bottom,y;
-		y = getScrollY();
+		int y = getScrollY();
 		if (y == 0)
 			return Top;
+		
+		int height,bottom;
 		height = getHeight();
 		bottom = getChildAt(0).getBottom();
 		if (y + height >= bottom)
 			return Bottom;
+			
 		return DontKonw;
 	}
 

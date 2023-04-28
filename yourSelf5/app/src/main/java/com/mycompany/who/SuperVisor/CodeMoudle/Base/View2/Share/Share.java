@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share;
 import android.widget.*;
 import android.net.*;
 import android.webkit.*;

@@ -3,12 +3,12 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	attachToroot="true">
 
-	<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.HScrollBar
+	<com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.HScrollBar
 		android:id="@+id/hScro"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content">
 
-		<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ScrollBar
+		<com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.ScrollBar
 			android:id="@+id/Scro"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content">
@@ -33,11 +33,11 @@
 				
 			</LinearLayout>
 			
-		</com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ScrollBar>
+		</com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.ScrollBar>
 
-	</com.mycompany.who.SuperVisor.CodeMoudle.Base.View.HScrollBar>
+	</com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.HScrollBar>
 	
-    <com.mycompany.who.SuperVisor.CodeMoudle.Base.View.QuickListView
+    <com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.QuickListView
 		android:id="@+id/mWindow"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>

@@ -5,7 +5,7 @@ import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import java.io.*;
 import java.util.*;
 

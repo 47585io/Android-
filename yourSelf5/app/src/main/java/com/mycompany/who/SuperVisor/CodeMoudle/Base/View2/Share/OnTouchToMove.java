@@ -1,10 +1,11 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share;
 import android.view.View.*;
 import android.view.*;
 
 public abstract class OnTouchToMove implements OnTouchListener
 {
 
+	public int id;
 	public float lastX,lastY,nowX,nowY;
 
 	abstract public void onMoveToLeft(View p1,MotionEvent p2,float dx);
@@ -16,14 +17,9 @@ public abstract class OnTouchToMove implements OnTouchListener
 	@Override
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
-		if(p2.getActionMasked()==MotionEvent.ACTION_DOWN){
-			lastX=p2.getRawX();
-			lastY=p2.getRawY();
-		}
-		else if(p2.getHistorySize()>0){
-			nowX=p2.getRawX();
-			nowY=p2.getRawY();
-
+		calc(p2);
+		if(p2.getHistorySize()>0)
+		{		
 			if(lastX>nowX)
 				onMoveToLeft(p1,p2,lastX-nowX);
 			else if(lastX<nowX)
@@ -32,15 +28,43 @@ public abstract class OnTouchToMove implements OnTouchListener
 			if(lastY>nowY)
 				onMoveToTop(p1,p2,lastY-nowY);
 			else if(lastY<nowY)
-				onMoveToDown(p1,p2,nowY-lastY);
-
-			lastX=nowX;
-			lastY=nowY;
+				onMoveToDown(p1,p2,nowY-lastY);	
 		}
-
+		save(p2);
 		return onMoveEnd(p1,p2);
 	}
 	
+	public void calc(MotionEvent p2)
+	{
+		if(p2.getActionMasked()==MotionEvent.ACTION_DOWN){
+			id = p2.getPointerId(0);
+			lastX=p2.getX(0);
+			lastY=p2.getY(0);
+		}
+		else if(p2.getHistorySize()>0){
+			int index = p2.findPointerIndex(id);
+			if(index!=-1){
+			    nowX=p2.getX(index);
+			    nowY=p2.getY(index);
+			}
+		}
+	}
+	public void save(MotionEvent p2)
+	{
+		if(p2.getHistorySize()>0){	
+		    lastX=nowX;
+		    lastY=nowY;
+		}
+	}
+	
+	public float MoveX(){
+		return nowX-lastX;
+	}
+	public float MoveY(){
+		return nowY-lastY;
+	}
+	
+	/* 未预料的滑动，在多个手指时下标会出现异常 */
 	public static float MoveX(MotionEvent p2){
 		float lastX = 0,nowX = 0;
 		if(p2.getHistorySize()>0){
@@ -58,7 +82,7 @@ public abstract class OnTouchToMove implements OnTouchListener
 		return nowY-lastY;
 	}
 	
-	public static interface OnTouchToMove{
+	public static interface OnTouchToMove extends OnTouchListener{
 		
 		abstract public void onMoveToLeft(View p1,MotionEvent p2,float dx);
 		
@@ -70,8 +94,6 @@ public abstract class OnTouchToMove implements OnTouchListener
 		
 		abstract public boolean onMoveEnd(View p1,MotionEvent p2)
 
-		abstract public boolean onTouch(View p1, MotionEvent p2)
-		
 	}
 
 }

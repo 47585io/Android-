@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share;
 import android.view.View.*;
 import android.view.*;
 
@@ -66,6 +66,12 @@ public abstract class onTouchToZoom implements OnTouchListener
 		return onMoveEnd(p1,p2,bili);
 	}
 	
+	public float Iszoom(){
+		float len = (float) (Math.pow(p1x-p2x,2)+Math.pow(p1y-p2y,2));
+		float hlen = (float)( Math.pow(hp1x-hp2x,2)+Math.pow(hp1y-hp2y,2));
+		return len/hlen;
+	}
+	
 	public static float Iszoom(MotionEvent p2)
 	{
 		float hp1x,hp1y,hp2x,hp2y;
@@ -94,16 +100,14 @@ public abstract class onTouchToZoom implements OnTouchListener
 	}
 	
 	
-	public static interface onTouchToZoom{
+	public static interface onTouchToZoom extends OnTouchListener{
 		
 		abstract public void onNarrow(View p1, MotionEvent p2,float bili);
 		
 		abstract public void onAmplification(View p1, MotionEvent p2,float bili);
 		
 		abstract public boolean onMoveEnd(View p1,MotionEvent p2,float bili);
-		
-		abstract public boolean onTouch(View p1, MotionEvent p2)
-		
+	
 	}
 	
 }

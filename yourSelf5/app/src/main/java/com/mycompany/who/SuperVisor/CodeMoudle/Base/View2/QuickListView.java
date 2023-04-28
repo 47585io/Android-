@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base.View;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2;
 import android.content.*;
 import android.graphics.*;
 import android.util.*;
@@ -9,7 +9,12 @@ import com.mycompany.who.R;
 import java.util.*;
 
 
-/* 顶级窗口 */
+/*
+   顶级窗口 
+
+   只要我出现，父元素一定不能拦截我，我必然返回true，则之后的子元素没有机会了，我便是顶级窗口
+   
+*/
 public class QuickListView extends ListView
 {
 	
@@ -29,16 +34,9 @@ public class QuickListView extends ListView
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
 	{
-		//只要我出现，父元素一定不能拦截我，我一定要拦截子元素，我便是顶级窗口
-		requestDisallowInterceptTouchEvent(false);
+		//只要我出现，父元素一定不能拦截我，我必然返回true，则之后的子元素没有机会了，我便是顶级窗口
 		getParent(). requestDisallowInterceptTouchEvent(true);
 		return super.dispatchTouchEvent(ev);
-	}
-	
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev)
-	{
-		return true;
 	}
 	
 	public static void notifyDataSetChanged(ListView listView,ListAdapter adpter) {

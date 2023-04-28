@@ -3,18 +3,22 @@ import android.content.*;
 import android.content.res.*;
 import android.util.*;
 import android.view.*;
+import android.view.View.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
 import com.mycompany.who.*;
-import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Share.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.*;
+
+import android.view.View.OnClickListener;
 
 
 /*
@@ -157,7 +161,7 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 			public void onClick(View p1)
 			{
 				PageHandler h = target.getPages();
-				EditGroup Group = (EditGroup) h.getView(h.getNowIndex());
+				EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
 				Group.getEditBuilder().Uedo();
 			}
 		}

@@ -16,15 +16,18 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
+import com.mycompany.who.Edit.CodeEdit.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
-import com.mycompany.who.Edit.CodeEdit.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.*;
+
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 
 
 /*
@@ -521,7 +524,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		if (getWindow() != null)
 			getWindow().setX(-9999);
 	}
-	
+
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
@@ -551,7 +554,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		if(ev.getPointerCount()==2){
 		    requestDisallowInterceptTouchEvent(false);
 			getParent().requestDisallowInterceptTouchEvent(true);
-			//缩放手势，父元素一定不能拦截我，我一定要拦截子元素，
+			//缩放手势，父元素一定不能拦截我，我一定要拦截子元素
 		}
 		return super.dispatchTouchEvent(ev);
 	}
@@ -570,7 +573,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	public boolean onTouchEvent(MotionEvent p2)
 	{	
 	    super.onTouchEvent(p2);
-		//是否缩放
+		//事件拦截到自己手里，开始缩放，并消耗事件
 		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){	
 		    Edit E = EditList.get(0);
 		    float is = onTouchToZoom.Iszoom(p2);
@@ -1019,7 +1022,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 
 	}
-	private void creatEditBuilder()
+	/* 给予创建EditBuilder子类的机会 */
+	protected void creatEditBuilder()
 	{
 		if (builder == null)
 			builder = new EditBuilder();
@@ -1053,7 +1057,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 
 	}
-	private void creatEditFactory()
+	/* 给予创建EditFactory子类的机会 */
+	protected void creatEditFactory()
 	{
 		if (mfactory == null)
 			mfactory = new Factory();
@@ -1116,6 +1121,11 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		
 	}
+	/* 给予创建EditInfo子类的机会 */
+	protected void creatInfo(){
+		if(Info!=null)
+			Info = new EditGroupListenerInfo();
+	}
 
 
 	//一顿操作后，EditGroup所有成员都分配好了空间
@@ -1134,8 +1144,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			Group.Last = new Stack<>();
 			Group.Next = new Stack<>();
 			Group.root = new CodeEdit.EditChroot();
-			Group.Info = new EditGroup.EditGroupListenerInfo();
-		    Group.creatEditBuilder();
+			Group.creatInfo();
+			Group.creatEditBuilder();
 			Group.creatEditFactory();
 			init2(Group,root);
 		}
@@ -1182,7 +1192,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			target. mWindow.setBackgroundColor(Colors.Bg2);
 			target. mWindow.setDivider(null);
 			target. mWindow.setOnItemClickListener(target);
-			target. Scro.inter=false;
+			target. hScro.setTouchInter(true);
+			//启用横向翻页
 		}
 		
 	}

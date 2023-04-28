@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Base;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base.View3;
 import java.util.*;
 
 public interface Configer<T>

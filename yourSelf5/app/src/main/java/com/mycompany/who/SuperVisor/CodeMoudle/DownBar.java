@@ -7,8 +7,9 @@ import android.util.*;
 import android.view.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
+import java.util.logging.*;
 
 public class DownBar extends HasAll
 {
@@ -47,7 +48,7 @@ public class DownBar extends HasAll
 		//获取按钮在父视图中的位置（区域，相对于父视图坐标）
 		delegateArea.top = 0;
 		delegateArea.left = 0;
-		delegateArea.right = hander.getRight()+100;
+		delegateArea.right = hander.getRight();
 		//扩大区域范围，这里向下扩展200像素
 		delegateArea.bottom = hander.getBottom()+ 200;
 		//新建委托
@@ -60,7 +61,7 @@ public class DownBar extends HasAll
 
 	class HanderTouch extends OnTouchToMove
 	{
-
+		
 		@Override
 		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
 		{
@@ -89,7 +90,6 @@ public class DownBar extends HasAll
 		{
 			if(getOrientation()==VERTICAL){
 				Config_Size2 config = (CodeBlock.Config_Size2) getConfig();
-
 				if(getHeight()<config.height)
 				    setTop(getTop()-(int)dy);
 				else
@@ -139,8 +139,14 @@ public class DownBar extends HasAll
 		}
 
 	}
-	
 
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev)
+	{
+		return super.dispatchTouchEvent(ev);
+	}
+	
+	
 	public void open(){
 		Config_hesSize config= (DownBar.Config_hesSize) getConfig();
 		config.isOpen=true;
@@ -157,14 +163,6 @@ public class DownBar extends HasAll
 		else if(getOrientation()==VERTICAL)
 			AnimatorColletion.getOpenAnimator(getTop(),getBottom()-hander.getHeight(),this,AnimatorColletion.Top).start();
 	}
-
-	@Override
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		super.onTouchEvent(event);
-		return false;
-	}
-
 
 	static class DownBarCreator extends Creator<DownBar>
 	{
