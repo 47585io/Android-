@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle;
+package com.mycompany.who.SuperVisor.CodeMoudle.Base;
 
 import android.content.*;
 import android.content.res.*;
@@ -32,6 +32,7 @@ import android.view.View.OnLongClickListener;
 
 /*
  为提升编辑器效率，增加EditGroup
+ 
  编辑器卡顿主要原因是单个编辑器文本过多造成的计算刷新卡顿
  解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
 
@@ -46,7 +47,7 @@ import android.view.View.OnLongClickListener;
 /*
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
- 实现了EditListenerInfoUser接口，可直接将我给Extension
+ 实现了EditListenerInfoUser接口，可直接将我给别人
 */
 public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
@@ -542,8 +543,6 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	public boolean onLongClick(View p1)
 	{
 		CodeEdit Edit = (CodeEdit)p1;
-		List<String> s = new ArrayList<>();
-		Edit.MakeCommand("longClick",s);
 		return false;
 	}
 	

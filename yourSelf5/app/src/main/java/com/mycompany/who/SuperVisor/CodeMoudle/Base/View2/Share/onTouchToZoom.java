@@ -67,8 +67,6 @@ public abstract class onTouchToZoom implements OnTouchListener
 	}
 	
 	public float Iszoom(){
-		float len = (float) (Math.pow(p1x-p2x,2)+Math.pow(p1y-p2y,2));
-		float hlen = (float)( Math.pow(hp1x-hp2x,2)+Math.pow(hp1y-hp2y,2));
 		return len/hlen;
 	}
 	

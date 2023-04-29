@@ -6,6 +6,7 @@ import android.widget.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import java.util.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
+import android.graphics.*;
 
 
 /*
@@ -18,7 +19,6 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
  */
 public class ScrollBar extends ScrollView implements Scroll
 {
-	
 	private Stack<Integer> historyL;
 	private Stack<Integer> historyN;
 	private OnTouchToMove mtouch;
@@ -129,9 +129,6 @@ public class ScrollBar extends ScrollView implements Scroll
 		return historyL.size();
 	}
 
-	/*
-	 getWidth()和getHeight()获取的是自己在父View中的可见大小，但自己内部的画布可以无限延伸和滚动
-	 */
 	@Override
 	public int isScrollToEdge()
 	{

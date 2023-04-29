@@ -17,6 +17,15 @@ import java.util.*;
   当Orientation==VERTICAL，应该设置ScrollBar.inter=true，反之设置HScrollBar.inter=true
   
 */
+
+/*
+ PageList默认会拦截事件供自己滑动，但ACTION_DOWN时或滚动方向冲突时会给子元素一次机会
+
+ 假设子元素是HScrollBar，它检查自己是否滑动到边缘，如果是，返回false，事件就落到了PageList手里
+
+ 如果子元素需要滑动，可以请求父元素不要拦截并返回true，这样父元素不会拦截并且不调用自己之后的子元素
+
+ */
 public class PageList extends HasAll
 {
 	private int nowIndex;
@@ -30,6 +39,13 @@ public class PageList extends HasAll
 		super(context, attrs);
 	}
 
+	@Override
+	public void init()
+	{
+		mtouchListener = new PageTouch();
+		super.init();
+	}
+	
 	public boolean addView(View EditPage,String name)
 	{
 		//添加一个命名的编辑器
@@ -92,7 +108,8 @@ public class PageList extends HasAll
 	}
 
 
-	protected void gotoChild(int index){
+	protected void gotoChild(int index)
+	{
 		if(index>=getChildCount())
 			return;
 		View v = getChildAt(index);
@@ -102,7 +119,8 @@ public class PageList extends HasAll
 		//scrollTo(left,top);
 	}
 	
-	protected int fromPosGetChild(int x,int y){
+	protected int fromPosGetChild(int x,int y)
+	{
 		for(int i=0;i<getChildCount();++i){
 			View v = getChildAt(i);
 		    int vl=v.getLeft(),vr=v.getRight(),vt=v.getTop(),vb=v.getBottom();
@@ -153,10 +171,10 @@ public class PageList extends HasAll
 			if(p2.getActionMasked()==MotionEvent.ACTION_UP)
 			{
 				int x,y,tx,ty;
-				PageList p = (PageList) p1;
-				int w=p.getWidth(),h=p.getHeight();	
 				x = p1.getScrollX();
 				y = p1.getScrollY();
+				PageList p = (PageList) p1;
+				int w=p.getWidth(),h=p.getHeight();	
 				int index= p.fromPosGetChild(x,y);
 				
 				if(index<0)
@@ -177,7 +195,6 @@ public class PageList extends HasAll
 	}
 	
 	public void setScroll(){
-		mtouchListener=new PageTouch();
 		setOnTouchListener(mtouchListener);
 	}
 
@@ -217,16 +234,6 @@ public class PageList extends HasAll
 
 		public void onDelPage(int index);
 
-	}
-
-	public void toList(List<Icon> list){
-		list.clear();
-		for(int i=0;i<getChildCount();++i){
-			View v = getChildAt(i);
-			String name = (String) v.getTag();
-			Icon icon = new Icon3(Share.getFileIcon(name),name);
-			list.add(icon);
-		}
 	}
 
 }

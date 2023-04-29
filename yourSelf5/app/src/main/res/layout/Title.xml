@@ -18,30 +18,30 @@
 		android:gravity="right|center_vertical">
 
 		<ImageButton
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_width="100px"
+			android:layout_height="100px"
 			android:background="@drawable/Uedo"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 
 		<ImageButton
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_width="100px"
+			android:layout_height="100px"
 			android:background="@drawable/Redo"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 
 		<ImageButton
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:background="@drawable/write"
+			android:layout_width="100px"
+			android:layout_height="100px"
+			android:background="@drawable/Write"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 
 		<com.mycompany.who.SuperVisor.CodeMoudle.Base.View.ReSpinner
 			android:id="@+id/More"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_width="100px"
+			android:layout_height="100px"
 			android:src="?android:attr/selectableItemBackgroundBorderless"
 			android:clickable="true"/>
 

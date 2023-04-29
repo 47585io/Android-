@@ -7,10 +7,11 @@ import android.util.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
+import android.graphics.*;
 
 
 /*
- 如之前，在PageHandler中，我作为它的子元素，检测是否滑动到边界，并作出相应判断，一个更有趣的问题是，我的子元素是ScrollBar
+ 如之前，在PageList中，我作为它的子元素，检测是否滑动到边界，并作出相应判断，一个更有趣的问题是，我的子元素是ScrollBar
 
  因此在滑动时，判断一下横向滑动距离是否达到要求，达到要求了就拦截事件并请求父元素不拦截，否则先给子元素判断，而super.dispatchTouchEvent中就做了这个事
 
@@ -18,16 +19,15 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 
  */
 public class HScrollBar extends HorizontalScrollView implements Scroll
-{
-	
+{	
 	private Stack<Integer> historyL;
 	private Stack<Integer> historyN;
 	private OnTouchToMove mtouch;
-
+	
 	private boolean canSave=true;
 	private boolean canScroll=true;
 	private boolean inter = false;
-
+	
 	public static final int Left = 0;
 	public static final int Right = 1;
 	public static final int DontKonw = -1;

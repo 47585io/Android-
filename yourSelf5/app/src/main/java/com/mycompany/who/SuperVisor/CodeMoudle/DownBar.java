@@ -30,16 +30,16 @@ public class DownBar extends HasAll
 		super.init();
 	}
 
-
-	public void setHander(View v){
+	public void setHander(View v)
+	{
 		hander = v;
 		v.setOnTouchListener(new HanderTouch());
 		if(hander!=null)
 		    removeView(hander);
-		addView(v,0);
-		
+		addView(v,0);	
 	}
-	public void setVector(View v){
+	public void setVector(View v)
+	{
 		vector = v;
 		if(vector!=null)
 		    removeView(vector);
@@ -56,7 +56,6 @@ public class DownBar extends HasAll
 		vector.setTouchDelegate(touchDelegate);
 		//在父View的onTouchEvent中，如果触摸在指定的区域，都先调用hander的onTouchEvent
 		//在hander的onTouchEvent中，会先调用自己的onTouchListener的方法
-		
 	}
 
 	class HanderTouch extends OnTouchToMove
@@ -138,15 +137,22 @@ public class DownBar extends HasAll
 			return true;
 		}
 
+		@Override
+		public void calc(MotionEvent p2)
+		{
+			Log.i("DownBar","Touch");
+			if(p2.getActionMasked()==MotionEvent.ACTION_DOWN){
+				lastX=p2.getRawX();
+				lastY=p2.getRawY();
+			}
+			else if(p2.getHistorySize()>0){
+				nowX=p2.getRawX();
+				nowY=p2.getRawY();
+			}
+		}
+
 	}
 
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent ev)
-	{
-		return super.dispatchTouchEvent(ev);
-	}
-	
-	
 	public void open(){
 		Config_hesSize config= (DownBar.Config_hesSize) getConfig();
 		config.isOpen=true;
@@ -189,7 +195,7 @@ public class DownBar extends HasAll
 		{
 			target.hander.setBackgroundColor(0);
 			target.setBackgroundColor(0);
-			target.vector.setBackgroundColor(0xffffffff);
+			target.vector.setBackgroundColor(0xff333333);
 		}
 
 		@Override
@@ -226,7 +232,8 @@ public class DownBar extends HasAll
 		{
 			// TODO: Implement this method
 			super.onPort(target, src);
-			target.setY(-getHanderSize().end);
+			target.setTranslationX(0);
+			target.setTranslationY(-getHanderSize().end);
 		}
 
 		@Override
@@ -234,7 +241,8 @@ public class DownBar extends HasAll
 		{
 			// TODO: Implement this method
 			super.onLand(target, src);
-			target.setX(-getHanderSize().start);
+			target.setTranslationY(0);
+			target.setTranslationX(-getHanderSize().start);
 		}
 		
 		

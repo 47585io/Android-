@@ -13,14 +13,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 
-/*
-  PageHandler默认会拦截事件供自己滑动，但ACTION_DOWN时会给子元素一次机会
-  
-  假设子元素是HScrollBar，它检查自己是否滑动到边缘，如果是，返回false，事件就落到了PageHandler手里
-  
-  如果子元素需要滑动，可以请求父元素不要拦截并返回true，这样父元素不会拦截并且不调用自己之后的子元素
-  
-*/
 public class PageHandler extends PageList implements EditGroup.requestWithEditGroup
 {
 	

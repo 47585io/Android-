@@ -19,6 +19,7 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 
 import android.view.View.OnClickListener;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 
 
 /*
@@ -37,7 +38,6 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 	private DownBar mDownBar;
 	
 	private ThreadPoolExecutor pool;
-	private ExtensionChooser Extension;
 	private KeyPool KeyPool;
 	private Map<Integer,Runnable> KeysRunner;
 	
@@ -141,10 +141,17 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 		@Override
 		public void config(XCode target)
 		{
-			spinner.setOnItemSelectedListener(new onitemSeletion());
-			spinner.setonSelectionListener(new onSeletion());
-			ButtonBar.getChildAt(0).setOnClickListener(new Click());
-			pages.setonTabListener(new onTabPage());
+			onReSpinnerSelectionChange ReSpinnerListener = new onReSpinnerSelectionChange();
+			spinner.setOnItemSelectedListener(ReSpinnerListener);
+			spinner.setonSelectionListener(ReSpinnerListener);
+			
+			onButtonBarChildClick ButtonBarListener = new onButtonBarChildClick();
+			ButtonBar.getChildAt(0).setOnClickListener(ButtonBarListener.Uedo());
+			ButtonBar.getChildAt(1).setOnClickListener(ButtonBarListener.Redo());
+			
+			onPageHandlerTabPage PageHandlerListener = new onPageHandlerTabPage();
+			pages.setonTabListener(PageHandlerListener);
+		
 			target.setBackgroundColor(Colors.Bg);
 		}
 		
@@ -154,64 +161,81 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 			// TODO: Implement this method
 		}
 
-		class Click implements OnClickListener
-		{
-
-			@Override
-			public void onClick(View p1)
-			{
-				PageHandler h = target.getPages();
-				EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
-				Group.getEditBuilder().Uedo();
-			}
-		}
 		
-		class onSeletion implements ReSpinner.onSelectionListener
-		{
-
+		class onReSpinnerSelectionChange implements OnItemSelectedListener,ReSpinner.onSelectionListener
+		{	
 			@Override
-			public void onRepeatSelected(int postion)
-			{
-				
-			}
-		}
-		class onitemSeletion implements OnItemSelectedListener
-		{
-
-			@Override
-			public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4)
-			{
+			public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4){
 				pages.tabView(p3);
 			}
+			
+			@Override
+			public void onRepeatSelected(int postion){}
 
 			@Override
-			public void onNothingSelected(AdapterView<?> p1)
-			{
-				// TODO: Implement this method
-			}
+			public void onNothingSelected(AdapterView<?> p1){}
 		}
-		class onTabPage implements PageList.onTabPage
+		
+		class onButtonBarChildClick
+		{
+			public OnClickListener Uedo(){
+				return new Uedo();
+			}
+			public OnClickListener Redo(){
+				return new Redo();
+			}
+			
+			public class Uedo implements OnClickListener
+			{
+				@Override
+				public void onClick(View p1)
+				{
+					PageHandler h = target.getPages();
+					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
+					Group.getEditBuilder().Uedo();
+				}
+			}
+			
+			public class Redo implements OnClickListener
+			{
+				@Override
+				public void onClick(View p1)
+				{
+					PageHandler h = target.getPages();
+					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
+					Group.getEditBuilder().Redo();
+				}
+			}
+			
+		}
+		
+		class onPageHandlerTabPage implements PageList.onTabPage
 		{
 
 			@Override
-			public void onTabPage(int index)
-			{
-				
-			}
+			public void onTabPage(int index){}
 
 			@Override
 			public void onAddPage(View v,String name)
 			{
 				List<Icon> list = new LinkedList<>();
-				pages.toList(list);
+				toList(list);
 				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
 			}
 
 			@Override
-			public void onDelPage(int index)
-			{
-				
+			public void onDelPage(int index){}
+			
+			public void toList(List<Icon> list){
+				list.clear();
+				for(int i=0;i<pages. getChildCount();++i){
+					View v = pages.getChildAt(i);
+					String name = (String) v.getTag();
+					Icon icon = new Icon3(Share.getFileIcon(name),name);
+					list.add(icon);
+				}
 			}
+			
 		}
 		
 	}

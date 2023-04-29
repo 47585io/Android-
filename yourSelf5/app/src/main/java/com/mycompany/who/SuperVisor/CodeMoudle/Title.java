@@ -81,7 +81,7 @@ public class Title extends HasAll
 			
 			RotateViewFromPortToLand(target.Spinner);
 			RotateViewFromPortToLand(target.ButtonBar);
-			target.setPadding(0,0,0,30);
+			target.setPadding(0,0,0,45);
 		}
 
 		@Override
@@ -100,7 +100,7 @@ public class Title extends HasAll
 			
 			src = CastFlag(src);
 			target.setOrientation(src);
-			target.setPadding(0,0,30,0);
+			target.setPadding(0,0,45,0);
 			//设置排列方向为LinearLayout.VERTICAL
 		}
 		public void RotateViewFromLandToPort(View v,float width,float height,float y){
@@ -170,7 +170,7 @@ public class Title extends HasAll
 		{
 			//target.setBackgroundColor(0xff222222);
 			target.Spinner.setBackground(null);
-			target.More.setBackgroundResource(R.drawable.menu);
+			target.More.setBackgroundResource(R.drawable.More);
 		}
 		
 	}

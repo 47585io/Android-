@@ -10,23 +10,24 @@ public abstract class EPool<T>
 	protected int p;
 	private int size;
 	private int isStart;
-	public int MaxSize=50000;
-	public int onceCount=1000;
+	private int isDisbled;
+	protected int MaxSize=50000;
+	protected int onceCount=1000;
 	
 	public EPool(){
 		Es=new ArrayList<>();
-		p=0;
 		init();
 	}
 	
 	synchronized public T get(){
 		//从池子中获取一个元素，如果池子元素不足，创建一些
-		//如果超出最大的数量，直接创建
+		//如果超出最大的数量，直接创建一个返回
 		if(p>MaxSize-1)
 			return creat();
 		if(p>Es.size()-1)
 			put(onceCount);
 		T E= Es.get(p++);
+		resetE(E); //重置元素
 		
 		++size;
 		//记录本次使用的size
@@ -36,16 +37,14 @@ public abstract class EPool<T>
 	
 	synchronized public void start(){		
 	    //开始记录
-		isStart++;
+		++isStart;
 	}
 	synchronized public void stop(){
-		isStart--;
+		--isStart;
 		if(isStart==0){
 			//必须保证所有的任务都完成了，才收回nodes
-		    recyle(size);
-		    size=0;
+		    recyle(size);    
 		}
-		//stop后，指针向前移size，size清0
 	}
 	
 	synchronized public void put(int size){
@@ -57,14 +56,11 @@ public abstract class EPool<T>
 	}
 	
 	synchronized public void recyle(int size){
-		//指针向前偏size，并将之间的元素重置
+		//指针向前偏移size
 		p-=size;
-		if(IsReSet()){
-		    int i;
-		    for(i=p;i<p+size;++i)
-		        resetE(Es.get(i));
-		}
+		this.size-=size;
 	}
+	
 	
 	protected abstract T creat()
 	
@@ -72,9 +68,6 @@ public abstract class EPool<T>
 	
 	protected abstract void init()
 	
-	protected boolean IsReSet(){
-		return true;
-	}
 	
 	public int isStart(){
 		return isStart;
@@ -82,12 +75,24 @@ public abstract class EPool<T>
 	public int size(){
 		return p;
 	}
+	public int MaxSize(){
+		return 50000;
+	}
+	public int onceCount(){
+		return 1000;
+	}
 	synchronized public void isDisbled(boolean is){
-		if(is)
+		if(is){
 			MaxSize = 0;
-		else
-			MaxSize = 50000;
-		//MaxSize调整为0，以禁用get，其它的值暂时保存以下次启用或回收
+			++isDisbled;
+			//MaxSize调整为0，以禁用get，使池子中元素不变，其它的值暂时保存以下次启用或回收
+		}
+		else{
+			--isDisbled;
+			if(isDisbled==0)
+			    MaxSize = MaxSize();
+			//所有人都不用了，则将MaxSize恢复
+		}
 	}
 	
 	@Override

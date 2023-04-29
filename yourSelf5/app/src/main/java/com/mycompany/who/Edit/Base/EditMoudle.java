@@ -44,7 +44,7 @@ public class EditMoudle
 	
 	public static interface Runnar
 	{
-		public void MakeCommand(String state,List<String> commands)
+		public String MakeCommand(String state)
 		
 		public void RunCommand(String command)
 	}

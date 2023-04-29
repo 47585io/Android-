@@ -866,27 +866,27 @@ _________________________________________
 */
 
 	@Override
-	final public void MakeCommand(String state,List<String> commands)
+	final public String MakeCommand(String state)
 	{
+		String com = "";
 		++IsModify;
 		try{
-			onMakeCommand(state,commands);
+			com = onMakeCommand(state);
 		}catch(Exception e){
 			Log.e("onMakeCommand Error",e.toString());
 		}
 		--IsModify;
+		return com;
 	}
 
-	protected void onMakeCommand(String state, List<String> commands)
+	protected String onMakeCommand(String state)
 	{
 		EditRunnarListener li = getRunnar();
 		if(li!=null){
 			String com = li.LetMeMake(this,state);
-			String[] arr = li.spiltCommand(com);
-			for(String s:arr){
-				commands.add(s);
-			}
+			return com;
 		}
+		return "";
 	}
 	
 	@Override
@@ -1743,12 +1743,6 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		protected boolean IsReSet()
-		{
-			return false;
-		}
-		
-		@Override
 		protected void resetE(wordIndex E){}
 		
 	}
@@ -1767,12 +1761,6 @@ ________________________________________________________________________________
 		{
 			return new IconX();
 		}
-
-		@Override
-		protected boolean IsReSet()
-		{
-			return false;
-		}
 		
 		@Override
 		protected void resetE(Icon E){}
@@ -1789,7 +1777,7 @@ ________________________________________________________________________________
 		return Epp.get();
 	}
 	
-	public void requestDisbledEpool(boolean is,boolean is2)
+	public static void requestDisbledEpool(boolean is,boolean is2)
 	{
 		Ep.isDisbled(is);
 		Epp.isDisbled(is2);

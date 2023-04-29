@@ -13,6 +13,7 @@ import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.DoAnyThing;
 import java.util.*;
 import android.util.*;
+import android.os.*;
 
 
 /*
@@ -96,10 +97,23 @@ ________________________________________________________________________________
 		public static class DefaultDrawerListener extends EditDrawerListener
 		{	
 			@Override
-			protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor){
-				clearSpan(start,end,editor);
-				setSpan(start,end,editor,nodes);
-				//清理旧的Span，设置新的Span
+			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
+			{
+				//protected的成员在本包或子类可以访问
+				CodeEdit.Ep.isDisbled(true);
+				//设置Disbled以禁止使用池子，使元素值保存
+				new Handler().postDelayed(new Runnable(){
+
+						@Override
+						public void run()
+						{
+							clearSpan(start,end,editor);
+							setSpan(start,end,editor,nodes);
+							//清理旧的Span，设置新的Span
+							CodeEdit.Ep.isDisbled(false);
+							//设置Disbled以启用池子，让后续编辑器获取
+						}
+					},50);
 			}
 			
 			public Colors.ByteToColor2 BToC = null;
@@ -1200,7 +1214,7 @@ _________________________________________
 							//如果它是'字符，将之后的字符加进来
 							if (src.charAt(nowIndex + 1) == '\\')
 							{
-								wordIndex node= CodeEdit.getANode();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex, nowIndex + 4, Colors.color_str);
 								nodes.add(node);
 								nowIndex += 3;	
@@ -1231,7 +1245,7 @@ _________________________________________
 						{
 							//否则如果当前的字符是一个数字，就把它加进nodes
 							//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
-							wordIndex node= CodeEdit.getANode();
+							wordIndex node= CodeEdit.Ep.get();
 							node.set(nowIndex, nowIndex + 1, Colors.color_number);
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
@@ -1244,7 +1258,7 @@ _________________________________________
 							{
 								//如果它不是会被html文本压缩的字符，将它自己加进nodes
 								//这是为了保留换行空格等
-								wordIndex node=CodeEdit.getANode();
+								wordIndex node=CodeEdit.Ep.get();
 								node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
 								nodes.add(node);
 							}
@@ -1280,13 +1294,13 @@ _________________________________________
 					//保留特殊字符
 					if (Array_Splitor.indexOf(src.charAt(nowIndex), getSpilt()) != -1)
 					{
-						wordIndex node= CodeEdit.getANode();
+						wordIndex node= CodeEdit.Ep.get();
 						node.set(startindex, nowIndex, wantColor);
 						nodes.add(node);
 						startindex = nowIndex + 1;
 					}
 				}
-				wordIndex node= CodeEdit.getANode();
+				wordIndex node= CodeEdit.Ep.get();
 				node.set(startindex, nextindex, wantColor);
 				nodes.add(node);
 
@@ -1418,7 +1432,7 @@ _________________________________________
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && src.charAt(nowIndex + 1) != '_' && getKeyword().contains(nowWord.toString()))
 						{
 							//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node= CodeEdit.getANode();
+							wordIndex node= CodeEdit.Ep.get();
 							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_key);
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
@@ -1437,7 +1451,7 @@ _________________________________________
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getConstword().contains(nowWord.toString()))
 						{
 							//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node= CodeEdit.getANode();
+							wordIndex node= CodeEdit.Ep.get();
 							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_const);
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
@@ -1463,7 +1477,7 @@ _________________________________________
 							if (getLastfunc().contains(nowWord.toString()))
 							{
 								//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
-								wordIndex node= CodeEdit.getANode();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_func);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1487,7 +1501,7 @@ _________________________________________
 							if (src.charAt(afterIndex) != '(')
 							{
 								//否则如果当前累计的字符串是一个变量并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= CodeEdit.getANode();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_villber);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1511,7 +1525,7 @@ _________________________________________
 							if (src.charAt(afterIndex) != '(')
 							{
 								//否则如果当前累计的字符串是一个对象并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= CodeEdit.getANode();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_obj);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1536,7 +1550,7 @@ _________________________________________
 							if (src.charAt(afterIndex) != '(')
 							{
 								//否则如果当前累计的字符串是一个类型并且后面没有a～z和（ 这些字符，就把它加进nodes
-								wordIndex node= CodeEdit.getANode();
+								wordIndex node= CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_type);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1683,7 +1697,7 @@ _________________________________________
 							wordIndex node = CodeEdit.tryWord(src, nowIndex);
 							node.b = Colors.color_func;
 							nodes.add(node);
-							wordIndex node2=CodeEdit.getANode();
+							wordIndex node2=CodeEdit.Ep.get();
 							node2.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
 							nodes.add(node2);
 							getLastfunc().add(src.substring(node.start, node.end));
@@ -1708,7 +1722,7 @@ _________________________________________
 							wordIndex node =CodeEdit. tryWord(src, nowIndex);
 							node.b = Colors.color_obj;
 							nodes.add(node);
-							wordIndex node2=CodeEdit.getANode();
+							wordIndex node2=CodeEdit.Ep.get();
 							node2.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
 							nodes.add(node2);
 							getThoseObject().add(src.substring(node.start, node.end));
@@ -1729,7 +1743,7 @@ _________________________________________
 						wordIndex node,node2;
 						if (src.charAt(nowIndex) == '#')
 						{
-							node = CodeEdit.getANode();
+							node = CodeEdit.Ep.get();
 							node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
 							nodes.add(node);
 							node2 = tryWordAfterCSS(src, nowIndex + 1);
@@ -1741,7 +1755,7 @@ _________________________________________
 						}
 						else if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex - 1)) && !String_Splitor.IsNumber(src.charAt(nowIndex + 1)))
 						{
-							node = CodeEdit.getANode();
+							node = CodeEdit.Ep.get();
 							node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
 							nodes.add(node);
 							node2 = tryWordAfterCSS(src, nowIndex + 1);
@@ -1766,7 +1780,7 @@ _________________________________________
 						{
 							if (getHistoryVillber().contains(nowWord.toString()))
 							{
-								wordIndex node=CodeEdit.getANode();
+								wordIndex node=CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_cssid);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1774,7 +1788,7 @@ _________________________________________
 							}
 							else if (getBeforetype().contains(nowWord.toString()))
 							{
-								wordIndex node=CodeEdit.getANode();
+								wordIndex node=CodeEdit.Ep.get();
 								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_csscla);
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
@@ -1800,7 +1814,7 @@ _________________________________________
 							&& (getTag().contains(nowWord.toString())))
 						{
 							//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
-							wordIndex node=CodeEdit.getANode();
+							wordIndex node=CodeEdit.Ep.get();
 							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_tag);
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
@@ -1822,7 +1836,7 @@ _________________________________________
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && src.charAt(afterIndex) != '(' && getAttribute().contains(nowWord))
 						{
 							//如果当前累计的字符串是一个属性并且后面没有a～z这些字符，就把它加进nodes
-							wordIndex node=CodeEdit.getANode();
+							wordIndex node=CodeEdit.Ep.get();
 							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_attr);
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
@@ -1868,7 +1882,7 @@ _________________________________________
 			public wordIndex tryWordForCSS(CharSequence src, int index)
 			{
 				//试探前面的单词
-				wordIndex tmp = CodeEdit.getANode();
+				wordIndex tmp = CodeEdit.Ep.get();
 				try
 				{
 					while (Array_Splitor. indexOf(src.charAt(index), getFuhao()) != -1)
@@ -1888,7 +1902,7 @@ _________________________________________
 			public wordIndex tryWordAfterCSS(CharSequence src, int index)
 			{
 				//试探后面的单词
-				wordIndex tmp =CodeEdit. getANode();
+				wordIndex tmp =CodeEdit. Ep.get();
 				try
 				{
 					while (Array_Splitor.indexOf(src.charAt(index), getFuhao()) != -1)
