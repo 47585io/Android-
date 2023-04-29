@@ -151,7 +151,6 @@ public class Words
 	public static final int words_type = 3;
 	public static final int words_tag = 4;
 	public static final int words_attr = 5;
-
 	public static final int words_key=6;
 	public static final int words_const=7;
 
@@ -177,13 +176,13 @@ public class Words
 		Arrays.sort(IknowTag);
 		mdates=new ArrayList<>();
 		add(size);
-		init(size);
+		init();
 	}
 
-	public void init(int size){
-		add( Array_Splitor.toColletion( keyword));
-		add( Array_Splitor.toColletion(constword));
-		mdates.get(words_tag).addAll(Array_Splitor.toColletion(IknowTag));
+	public void init(){
+		add(Array_Splitor.toList(keyword));
+		add(Array_Splitor.toList(constword));
+		mdates.get(words_tag).addAll(Array_Splitor.toList(IknowTag));
 		IknowTag=null;
 		keyword=null;
 		constword=null;

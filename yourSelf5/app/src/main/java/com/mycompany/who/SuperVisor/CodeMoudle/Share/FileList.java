@@ -33,11 +33,10 @@ public class FileList
 		return tmp;
 	}
 	public void refreshDate(){
-		List<File> l=  Arrays.asList( nowDir.listFiles());
+		ArrayList<File> l= Array_Splitor.toList(nowDir.listFiles());
 		sortFilelist.clear();
 		sortFilelist.addAll(l);
-		Array_Splitor.quick(sortFilelist,new FileSort());
-		sortFile(sortFilelist);
+		sortFilelist = sortFile(sortFilelist);
 	}
 
 	public File getFile(int index)
@@ -87,18 +86,22 @@ public class FileList
 		sortFilelist.set(index-1,f);
 	}
 
-	public void sortFile(List<File> list){
-		List<File> tmp = new ArrayList<>();
-		for(int i=0;i<list.size();i++){
-			//目录排列在前面
-			if(!list.get(i).isDirectory()){
-				tmp.add(list.get(i));
-				list.remove(i--);
-			}
-		}
+	public List<File> sortFile(List<File> list)
+	{
+		FileSort sorter = new FileSort();
+		Array_Splitor.quick(list,sorter);
 		//按首字母排列
-		Array_Splitor.quick(tmp,new FileSort());
-		list.addAll(tmp);
+		
+		List<File> tmp = new ArrayList<>();
+		for(File f : list){
+			if(f.isDirectory())
+				tmp.add(f);
+		}
+		for(File f : list){
+			if(f.isFile())
+				tmp.add(f);
+		}
+		return tmp;
 	}
 
 	class FileSort implements Comparator<File>

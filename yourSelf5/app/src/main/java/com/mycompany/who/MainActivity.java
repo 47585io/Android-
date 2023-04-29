@@ -12,9 +12,9 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
-
 import android.os.Handler;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
+
 
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {

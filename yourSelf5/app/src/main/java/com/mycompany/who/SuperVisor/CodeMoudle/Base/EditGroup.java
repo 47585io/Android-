@@ -860,7 +860,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		
 		public List<Future> prepare(int start,int end)
 		{
-			final List<Future> results = new ArrayList<>();
+			final List<Future> results = new LinkedList<>();
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override

@@ -9,8 +9,8 @@ public class Array_Splitor
 		if(coll!=null)
 		    coll.toArray(arr);
 	}
-	public static<T> Collection<T> toColletion(T[] arr){
-		List<T> coll = new ArrayList<>();
+	public static<T> ArrayList<T> toList(T[] arr){
+		ArrayList<T> coll = new ArrayList<>();
 		if(arr!=null)
 		    for(T s:arr)
 		        coll.add(s);
@@ -210,9 +210,7 @@ public class Array_Splitor
 			//那么row和high相遇，
 			//row说：我左边都比tmp小
 			//high：我右边都比tmp大
-			//所以可以把tmp插入这里,这样tmp就移动到中间了
-
-		    
+			//所以可以把tmp插入这里,这样tmp就移动到中间了 
 		}
 		list.set(low, tmp); // 中点位置
 		return low; // 返回中点的位置
@@ -231,8 +229,8 @@ public class Array_Splitor
 		//所以每个小数组排好序，则大数组也排好了
 	}
 
-
-	public static<T>  void quick(List<T> str,Comparator<T> com) {
+	/* 推荐使用ArrayList，它是最快的，因为我们不需要add或remove，只要get和set */
+	public static<T> void quick(List<T> str,Comparator<T> com) {
 		if(str.size() > 0) {
 			// 查看数组是否为空
 			//开始分裂排序

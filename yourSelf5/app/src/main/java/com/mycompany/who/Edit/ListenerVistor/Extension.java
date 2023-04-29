@@ -18,8 +18,8 @@ public abstract class Extension
 	String name;
 	
 	public Extension(){
-		Lis=new ArrayList<>();
-		Infos=new ArrayList<>();
+		Lis=new LinkedList<>();
+		Infos=new LinkedList<>();
 	}
 	
 	public List<EditListenerInfo> getInfos(){
@@ -38,7 +38,7 @@ public abstract class Extension
 		
 		onInit(user);
 		EditListenerInfo self = user.getInfo();
-		List<EditListener> lis= new ArrayList<>();
+		List<EditListener> lis= new LinkedList<>();
 		onGetListeners(lis);
 		if(lis.size()!=0){
 			if(onAddInfo(self))
@@ -58,7 +58,7 @@ public abstract class Extension
 		if(self==null)
 			return;
 		
-		List<EditListener> lis= new ArrayList<>();
+		List<EditListener> lis= new LinkedList<>();
 		onGetListeners(lis);
 		if(lis.size()!=0){
 			if(onAddInfo(self))
