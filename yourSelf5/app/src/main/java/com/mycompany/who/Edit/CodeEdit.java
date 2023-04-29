@@ -1582,7 +1582,7 @@ ________________________________________________________________________________
 			}
 		};
 	}
-	
+
 	
 /* 
 _________________________________________
@@ -1810,6 +1810,7 @@ ________________________________________________________________________________
 */
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
+		
 		public EditListenerList mlistenerFS;
 		public EditListener mlistenerD;
 		public EditListener mlistenerM;
@@ -1970,11 +1971,10 @@ ________________________________________________________________________________
 		
 		public static class CodeHelper extends Helper{
 			
-			
 		}
 
 	}
- 
+	
 	
  /*
  _________________________________________

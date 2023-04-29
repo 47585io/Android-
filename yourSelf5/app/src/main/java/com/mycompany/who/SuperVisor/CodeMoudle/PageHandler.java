@@ -11,6 +11,7 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.*;
 import java.util.concurrent.*;
+import android.text.*;
 
 
 public class PageHandler extends PageList implements EditGroup.requestWithEditGroup
@@ -197,28 +198,56 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 			Bitmap map = BitmapFactory.decodeFile(name);
 			v.setImageBitmap(map);
 		}
-		public void eatEditGroup(EditGroup Group,String name){
+		public void eatEditGroup(final EditGroup Group,final String name)
+		{
+			final EditGroup.EditBuilder builder = Group.getEditBuilder();	
+			final Runnable run1 = new Runnable(){
+
+				@Override
+				public void run()
+				{
+					myRet ret = new myRet(name);
+					final String text = ret.r("UTF-8");
+					CodeEdit.EditChroot root = new CodeEdit.EditChroot(true,true,true,true,true);
+					builder.compareChroot(root);
+					builder.setText(text);
+					root.set(false,false,false,false,false);
+					builder.compareChroot(root);
+				}
+			};
+			final Runnable run2 = new Runnable(){
+
+				@Override
+				public void run()
+				{
+					for(CodeEdit E:Group.getEditList()){
+						Editable editor = E.getText();
+						E.Format(0,editor.length());
+						E.getPool().execute(E.ReDraw(0,editor.length()));
+					}
+				}
+			};
+			final Runnable run3 = new Runnable(){
+
+				@Override
+				public void run()
+				{
+					Group.trimToFather();
+					Group.getEditLine().reLines(builder.calaEditLines());
+				}
+			};
+			final Runnable run4 = new Runnable(){
+
+				@Override
+				public void run()
+				{
+					Group.post(run1);
+					Group.postDelayed(run2,50);
+					Group.postDelayed(run3,100);
+				}
+			};
 			
-			myRet ret = new myRet(name);
-			String text = ret.r("UTF-8");
-			EditGroup.EditBuilder builder = Group.getEditBuilder();
-			
-			CodeEdit.EditChroot root = new CodeEdit.EditChroot(true,true,true,true,true);
-			builder.compareChroot(root);
-			builder.setText(text);
-			root.set(false,false,false,false,false);
-			builder.compareChroot(root);
-			
-			Group.getEditLine().reLines(builder.calaEditLines());
-			Group.trimToFather();
-			
-			for(CodeEdit E:Group.getEditList()){
-				int end = E.getText().length();
-				E.Format(0,end);
-				end = E.getText().length();
-				E.getPool().execute(E.ReDraw(0,end));
-			}
-			
+			Group.post(run4);
 		}
 	}
 

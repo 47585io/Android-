@@ -53,7 +53,7 @@ public class PageList extends HasAll
 		if (index != -1)
 			return false;
 		//如果是同一个文件，不重复加入
-		EditPage.setId(EditPage.hashCode());	
+		//EditPage.setId(EditPage.hashCode());	
 		EditPage.setTag(name);
 	    addView(EditPage);
 

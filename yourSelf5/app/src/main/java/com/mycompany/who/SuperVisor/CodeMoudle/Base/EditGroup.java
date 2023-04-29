@@ -51,7 +51,6 @@ import android.view.View.OnLongClickListener;
 */
 public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
-	
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1000,ExpandHeight=2000;
 	
@@ -224,7 +223,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		Edit.setOnLongClickListener(this);//组内的每个编辑器都设置LongClick
 		Edit.compareChroot(root); //设置root
 		//Edit.setTarget(this);//设置target，将事件冒泡给EditGroup
-		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
+		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
 
@@ -338,7 +337,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			if (EditFlag.get() == 0)
 			{
 				int line = getEditBuilder().calaEditLines();
-				EditLines. reLines(line);	//最后一个编辑器单独计算行
+				//EditLines. reLines(line);	//最后一个编辑器单独计算行
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
 			
@@ -538,11 +537,11 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		getWindow().setX(-9999);
 	}
-	
+
 	@Override
 	public boolean onLongClick(View p1)
 	{
-		CodeEdit Edit = (CodeEdit)p1;
+		// TODO: Implement this method
 		return false;
 	}
 	
@@ -1158,13 +1157,13 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			Group. mWindow = root.findViewById(R.id.mWindow);
 			
 			//重新设置一个不同的id，防止xml文件被多次加载，内存中有多个相同id的View
-			Group.setId(Group.hashCode());
-			Group.mWindow.setId(Group.mWindow.hashCode());
-			Group.Scro.setId(Group.Scro.hashCode());
-			Group.hScro.setId(Group.hScro.hashCode());
-			Group.ForEdit.setId(Group.ForEdit.hashCode());
-			Group.ForEditSon.setId(Group.ForEditSon.hashCode());
-			Group.EditLines.setId(Group.EditLines.hashCode());
+			//Group.setId(Group.hashCode());
+			//Group.mWindow.setId(Group.mWindow.hashCode());
+			//Group.Scro.setId(Group.Scro.hashCode());
+			//Group.hScro.setId(Group.hScro.hashCode());
+			//Group.ForEdit.setId(Group.ForEdit.hashCode());
+			//Group.ForEditSon.setId(Group.ForEditSon.hashCode());
+			//Group.EditLines.setId(Group.EditLines.hashCode());
 		}	
 		
 	}

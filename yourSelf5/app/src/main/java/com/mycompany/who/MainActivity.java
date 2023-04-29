@@ -18,7 +18,6 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
-
 	private XCode Code;
 	private PageHandler handler;
 	private EditGroup Group;
@@ -87,14 +86,15 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 	public void loadSize(int width, int height, int is)
 	{
 		setContentView(Code);	
-		
 		Code.loadSize(width,height,is);
-		
+		Code.addEdit("/storage/emulated/0/Linux/1.java");
+		/*
 		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/src/com/mycompany/mygame/MainActivity.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/res/layout/main.xml");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game/src/com/mycompany/mygame/MyGdxGame.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/AndroidManifest.xml");
+		*/
 		/*
 		Group = (EditGroup) Code.getPages().getView(0);
 		final EditGroup.EditBuilder b = Group.getEditBuilder();
