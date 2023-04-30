@@ -15,9 +15,9 @@ import java.util.*;
 public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser
 {
 
-	public int LineCount=0;
-	protected EditLineListenerInfo Info;
-	protected size pos=new size();
+	private int LineCount=0;
+	private EditLineListenerInfo Info;
+	private size pos=new size();
 	
 	public EditLine(Context cont){
 		super(cont);
@@ -257,6 +257,22 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			// TODO: Implement this method
 			return null;
 		}
+		
+	}
+	
+	public static interface LineSpiltor{
+		
+		public void reLines(int line)
+		
+		public void addLines(int count)
+		
+		public void delLines(int count)
+	  
+		public void addALine()
+		
+		public void delALine()
+		
+		public int getLineCount()
 		
 	}
 

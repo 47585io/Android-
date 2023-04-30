@@ -25,7 +25,6 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
-
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
@@ -220,7 +219,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		
 		Edit.setOnClickListener(this);//组内的每个编辑器都设置Click
-		Edit.setOnLongClickListener(this);//组内的每个编辑器都设置LongClick
+		//Edit.setOnLongClickListener(this);//组内的每个编辑器都设置LongClick
 		Edit.compareChroot(root); //设置root
 		//Edit.setTarget(this);//设置target，将事件冒泡给EditGroup
 		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
@@ -327,7 +326,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			*/
 			
 			EditFlag.add();		
-			if (text.toString().indexOf('\n', start) != -1 && lengthAfter != 0)
+			if (lengthAfter != 0 && text.toString().indexOf('\n', start) != -1 )
 				sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
 			//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
 			else
@@ -337,45 +336,50 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			if (EditFlag.get() == 0)
 			{
 				int line = getEditBuilder().calaEditLines();
-				//EditLines. reLines(line);	//最后一个编辑器单独计算行
+				//EditLines. reLines(line);	
+				//最后一个编辑器单独计算行，这个太卡了，得优化一下
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
 			
 		}
 
-		/* 在本次输入后，将自己内部超出的行分发到下个编辑器开头 */
+		/* 在本次输入后，将自己内部超出的行截取到下个编辑器开头 */
 		protected void sendOutLineToNext(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
 			/*关键代码*/
-			boolean need = true;
-			Editable editor = getText();
-			int selfIndex = index.get();
 			int lineCount= getLineCount();
 			
 			if (lineCount > MaxLine)
 			{
+				boolean need = true;
+				Editable editor = getText();
+				int selfIndex = index.get();
+				
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
-				size j = subLines(MaxLine + 1 - OnceSubLine); //MaxLine+1是指从MaxLine之后的一行的起始开始截
-				j.start--; //连带着把MaxLine行的\n也截取
+				size j = subLines(MaxLine + 1 - OnceSubLine); 
+				//MaxLine+1是指从MaxLine之后的一行的起始开始截
+				j.start--;
+				//连带着把MaxLine行的\n也截取
 				CharSequence src = editor.subSequence(j.start, j.end); 
-				++IsModify;
-				editor. delete(j.start, j.end);	
+				++IsModify; 
+				editor.delete(j.start, j.end);	
 				--IsModify;
 
 				if (start + lengthAfter < j.start){
 					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
 					need = false; //下个编辑器插入的内容不用染色了
 				}
-				else
+				else{
 				    super.onTextChanged(text, start, lengthBefore, j.start - start);	
+				}
 				//截取后，只把本次未被截取的前半部分染色，
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
 				if(CodeEdit.getLineCount(src.toString())>MaxLine){
 					//大段文本需要插入，必须使用dispatchTextBlock
-					size s = new size(selfIndex,editor.length());
-					getEditBuilder().dispatchTextBlock(s,src);
+					j.set(selfIndex,editor.length());
+					getEditBuilder().dispatchTextBlock(j,src);
 					return;
 				}
 				
@@ -392,6 +396,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 				Edit.getText().insert(0, src);
 				Edit.IsDraw(false);
 				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
+				//下个编辑器也可以将自己超出的行截取到下下个编辑器
 				//不难看出，这样递归回调，最后会回到第一个编辑器
 
 			}
