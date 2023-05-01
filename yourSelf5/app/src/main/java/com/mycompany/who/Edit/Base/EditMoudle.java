@@ -1,6 +1,7 @@
 package com.mycompany.who.Edit.Base;
 
 import java.util.*;
+import com.mycompany.who.Edit.Base.Share.Share1.*;
 
 public class EditMoudle
 {
@@ -16,7 +17,17 @@ public class EditMoudle
 		public void CopyTo(T target)
 	}
 
+	
+	public static interface Sizer
+	{
+		public int maxWidth()
+		
+		public int maxHeight()
+		
+		public size WAndH()
+	}
 
+	
 	public static interface Drawer
 	{	
 		public void reDraw(int start,int end)
@@ -40,7 +51,7 @@ public class EditMoudle
 
 
 	public static interface Canvaser{}
-
+	
 	
 	public static interface Runnar
 	{
@@ -56,4 +67,5 @@ public class EditMoudle
 
 		public void Redo()
 	}
+	
 }

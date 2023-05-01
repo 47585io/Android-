@@ -17,7 +17,15 @@ public class IconX implements Icon
 	}
 	public IconX(String path,CharSequence name){
 		this.path=path;
-		setName(name);
+		this.name=name;
+	}
+	public IconX(Icon3 I){
+		this.icon=I.getIcon();
+		this.name=I.getName();
+	}
+	public IconX(Icon2 I){
+		this.path=I.getPath();
+		this.name=I.getName();
 	}
 
 	public CharSequence getName() {

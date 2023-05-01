@@ -9,10 +9,7 @@ public class size
 		this.start=start;
 		this.end=end;
 	}
-	public size(){
-		this.start=0;
-		this.end=0;
-	}
+	public size(){}
 	
 	@Override
 	public boolean equals(Object other)

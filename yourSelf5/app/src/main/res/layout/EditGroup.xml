@@ -19,12 +19,6 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content">
 				
-				<com.mycompany.who.Edit.EditLine
-					android:focusable="false"
-					android:id="@+id/EditLine"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"/>
-				
 				<LinearLayout
 					android:id="@+id/ForEditSon"
 				    android:orientation="vertical"

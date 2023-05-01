@@ -4,6 +4,7 @@ import android.content.res.*;
 import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
+import android.util.*;
 
 public interface CodeBlock
 {
@@ -30,8 +31,13 @@ public interface CodeBlock
 		public void ConfigSelf(T target)
 		{
 			View tmp = null;
-			if(id!=0)
-				tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
+			if(id!=0){
+				try{
+				    tmp =  LayoutInflater.from(target.getContext()).inflate(id,target);
+				}catch(Exception e){
+					Log.e("CodeBlock Inflater Error",e.toString());
+				}
+			}
 			init(target,tmp);
 		}
 

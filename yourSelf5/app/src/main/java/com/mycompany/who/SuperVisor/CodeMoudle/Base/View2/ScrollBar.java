@@ -66,21 +66,33 @@ public class ScrollBar extends ScrollView implements Scroll
 			else{
 				getParent().requestDisallowInterceptTouchEvent(true);
 			}
-			//手指倾向于y轴滑动，且滚动条滚动到边缘后仍向外划动，且速度超出15，请求父元素拦截滚动，否则自己滚动
+			//手指倾向于y轴滑动，且滚动条滚动到边缘后仍向外划动，且速度超出15，请求父元素拦截滚动，否则自己滚动或给子元素
 		}
 		return super.dispatchTouchEvent(ev);
 	}
 
 	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev)
+	{
+		if(!canScroll){
+			return false;
+			//如果不可滚动，则不拦截事件，给子元素
+		}
+		return super.onInterceptTouchEvent(ev);
+	}
+	
+	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
-			historyL.push(getScrollY());
-		}
 		if (canScroll){
+			if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
+				historyL.push(getScrollY());
+				//记录起始时的位置
+			}
 		    return super.onTouchEvent(ev);
 		}
 		return false;
+		//不可滚动，则不消耗事件
 	}
 
 	@Override

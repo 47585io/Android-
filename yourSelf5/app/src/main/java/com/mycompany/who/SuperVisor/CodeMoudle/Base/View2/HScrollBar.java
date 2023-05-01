@@ -73,16 +73,27 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	}
 
 	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev)
+	{
+		if(!canScroll){
+			return false;
+			//如果不可滚动，则不拦截事件，给子元素
+		}
+		return super.onInterceptTouchEvent(ev);
+	}
+	
+	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
-			historyL.push(getScrollX());
-			//记录起始时的位置
-		}
 		if (canScroll){
+			if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
+				historyL.push(getScrollX());
+				//记录起始时的位置
+			}
 		    return super.onTouchEvent(ev);
 		}
 		return false;
+		//不可滚动，则不消耗事件
 	}
 
 	@Override

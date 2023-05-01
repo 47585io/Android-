@@ -9,7 +9,6 @@ public class wordIndex extends size{
 	}
 	public wordIndex(){
 		super();
-		this.b=0;
 	}
 
 	public boolean equals2(Object other){

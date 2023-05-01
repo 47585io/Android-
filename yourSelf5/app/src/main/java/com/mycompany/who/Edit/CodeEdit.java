@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import static com.mycompany.who.Edit.Base.Colors.*;
 import android.os.*;
+import android.view.*;
 
 /*
    整理是一切的开始
@@ -43,6 +44,7 @@ import android.os.*;
      写代码时，例如函数参数，能写成基类就尽量写成基类，毕竟我们有多态（向上转型），这样之后改动时也方便
      如果某个函数或类可以使用模板就尽量用模板
      若方法或类可以设为static，一定设置，这样外部可以直接通过类访问
+	 不要直接使用某个成员，能写get和set最好，这样便于以后修改
 
      在类上开一些接口是指故意某些东西不写，而是托付给另一个类的成员实现，并且这个成员可以替换，因此更改内部的成员就可以直接更改效果
 
@@ -110,10 +112,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  呜呜呜，对不起真的没办法了
 	*/
 	
-	protected boolean isDraw=false;
-	protected boolean isFormat=false;
-	protected boolean isComplete=false;
-	protected boolean isUR=false;
+	protected boolean isDraw;
+	protected boolean isFormat;
+	protected boolean isComplete;
+	protected boolean isUR;
 	protected int IsModify;
 	protected boolean IsModify2;
 	/*
@@ -123,7 +125,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
     */
 	
-    protected Edit lines;
+	protected EditLine Line;
 	protected ListView mWindow;
 	protected StringBuffer laugua;
 	protected String HTML;
@@ -162,7 +164,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		this.Info = Edit.Info;	
 		this.pool = Edit.pool;
 		this.mWindow = Edit.mWindow;
-		this.lines = Edit.lines;
+		this.Line = Edit.Line;
 		this.laugua = Edit.laugua;
 		this.mfactory = Edit.mfactory;
 		addTextChangedListener(new DefaultText());
@@ -179,7 +181,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.Info = this.Info;	
 		Edit.pool = this.pool;
 		Edit.mWindow = this.mWindow;
-		Edit.lines = this.lines;
+		Edit.Line = this.Line;
 		Edit.laugua = this.laugua;
 		Edit.mfactory = this.mfactory;
 		Edit.addTextChangedListener(new DefaultText());
@@ -331,8 +333,8 @@ ________________________________________________________________________________
 	public void setWindow(ListView Window){
 		mWindow = Window;
 	}
-	public void setEditLine(Edit Line){
-		lines = Line;
+	public void setEditLine(EditLine l){
+		Line = l;
 	}
 	public void setWordLib(Words WordLib){
 		this.WordLib = WordLib;
@@ -347,8 +349,8 @@ ________________________________________________________________________________
 	public ListView getWindow(){
 		return mWindow;
 	}
-	public Edit getEditLine(){
-		return lines;
+	public EditLine getEditLine(){
+		return Line;
 	}
 	public Words getWordLib(){
 		return WordLib;
@@ -365,11 +367,15 @@ _________________________________________
  
  reDraw：复杂的染色，其调用onFindNodes与onDrawNodes
  
- prepare：准备文本，然后等待之后get，其调用onFindNodes与onDrawNodes
+ prepare：准备文本，然后等待之后get，其调用onFindNodes，onDrawNodes，onPrePare
  
  onFindNodes: 真正的找操作写在这里，可以给很多Listener查找
  
  onDrawNodes: 真正的染色操作写在这里，同时只能有一个Listener修改
+ 
+ onPrePare: 真正的存储操作写在这里，一定要存储
+ 
+ GetString: 如何获取存储的文本
 	 
  _________________________________________
 
@@ -377,11 +383,13 @@ Dreawr
 	 
 	reDraw ->1
 	
-	prepare ->1
+	prepare ->1 & 2
 	  
 	    1-> onFindNodes
 		
 	    1-> onDrawNodes
+		
+		2-> onPrePare
 
  _________________________________________
 
@@ -469,13 +477,18 @@ Dreawr
 		{	
 			onFindNodes(start, end, text, nodes);
 			onDrawNodes(start, end, nodes, b);
-			this.buider = b;
-			this.HTML = EditDrawerListener.getHTML(b);	
+			onPrePare(start,end,text,nodes,b);
 		}
 		catch (Exception e){
 			Log.e("prepare Error",e.toString());
 		}
 		Ep.stop();
+	}
+	
+	/* 存储文本 */
+	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,SpannableStringBuilder b){
+		this.buider = b;
+		this.HTML = EditDrawerListener.getHTML(b);	
 	}
 	
 	/* 获取准备好了的文本 */
@@ -801,6 +814,7 @@ _________________________________________
 _________________________________________
 
 */
+
     @Override
 	protected void onDraw(Canvas canvas)
 	{
@@ -1632,9 +1646,6 @@ _________________________________________
 	public void zoomBy(float size)
 	{
 		super.zoomBy(size);
-		if(lines!=null){
-		    lines.zoomBy(size);
-		}
 	}
 	
 	final public size getCursorPos(int offset)
@@ -1811,13 +1822,13 @@ ________________________________________________________________________________
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
 		
-		public EditListenerList mlistenerFS;
-		public EditListener mlistenerD;
-		public EditListener mlistenerM;
-		public EditListenerList mlistenerIS;
-		public EditListenerList mlistenerCS;
-		public EditListenerList mlistenerVS;
-		public EditListener mlistenerR;
+		protected EditListenerList mlistenerFS;
+		protected EditListener mlistenerD;
+		protected EditListener mlistenerM;
+		protected EditListenerList mlistenerIS;
+		protected EditListenerList mlistenerCS;
+		protected EditListenerList mlistenerVS;
+		protected EditListener mlistenerR;
 
 		public static final int FinderIndex = 0;
 		public static final int DrawerIndex = 1;
@@ -1826,6 +1837,7 @@ ________________________________________________________________________________
 		public static final int CompletorIndex = 4;
 		public static final int CanvaserIndex = 5;
 		public static final int RunnarIndex = 6;
+		
 		
 		public CodeEditListenerInfo()
 		{
@@ -1950,29 +1962,24 @@ ________________________________________________________________________________
 					return true;
 				case CanvaserIndex:
 					return true;
+				case RunnarIndex:
+					return true;
 			}
 			return false;
 		}
 
 		@Override
-		public boolean delListenerFrom(int fromIndex)
-		{
-			// TODO: Implement this method
+		public boolean delListenerFrom(int fromIndex){		
 			return false;
 		}
 
 		@Override
-		public EditListener findAListener(int fromIndex)
-		{
-			// TODO: Implement this method
+		public EditListener findAListener(int fromIndex){
 			return null;
 		}
-		
-		
-		public static class CodeHelper extends Helper{
 			
-		}
-
+		public static class CodeHelper extends Helper{}
+	
 	}
 	
 	
@@ -2002,11 +2009,9 @@ ________________________________________________________________________________
 	
 	public static interface myCompletor extends Completor{
 
-		public ListView getWindow()
-		
 		public void SearchInGroup(String src, int index, WordAdpter Adapter)
 		
-		public void callOnopenWindow(ListView Window)
+		public void callOnopenWindow(View Window)
 		
 		public void insertWord(CharSequence word, int index, int flag)
 		
@@ -2038,8 +2043,6 @@ ________________________________________________________________________________
 		
 		public void onPutUR(EditDate.Token token)
 	
-		public void onBeforeTextChanged(CharSequence str, int start, int count, int after)
-		
 	}
 	
 	public static interface myChroot{

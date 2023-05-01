@@ -21,12 +21,13 @@ import java.util.*;
  一个bug:计算字符大小很麻烦，这里只管了纯英文字符
  
  */
-public class Edit extends EditText implements EditMoudle.Creat<Edit>
+public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.Sizer
 {
 
 	@Override
 	public void Creat()
 	{
+		TextSize = 14;
 		config();
 		listener = new EditText(getContext()).getKeyListener();
 	}
@@ -40,12 +41,14 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 	@Override
 	public void CopyFrom(Edit target)
 	{
+		TextSize = target.TextSize;
 		config();
 	}
 
 	@Override
 	public void CopyTo(Edit target)
 	{
+		target.TextSize = TextSize;
 		target.config();
 	}
 
@@ -55,7 +58,7 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 	public static int Text_Color=0xffabb2bf;
 	public static int CursorRect_Color=0x25616263;
 	public static Typeface type=Typeface.MONOSPACE;
-	public float TextSize=14;
+	public float TextSize;
 
 
 	public Edit(Context cont){
@@ -97,7 +100,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 	public int maxHeight(){
 		return getLineHeight()*(String_Splitor.Count('\n',getText().toString())+1);
 	}
-	public int maxWidth(){
+	public int maxWidth()
+	{
 		Editable editor = getText();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',editor.toString());
 		if(indexs==null||indexs.size()==0){
@@ -114,14 +118,16 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 		width=(width>editor.length()-last)?width:editor.length()-last;
 		return (int)(width*getTextSize());
 	}
-    public size WAndH(){
+    public size WAndH()
+	{
 		size s = LAndC(getText().toString());
 		s.start=(int)(s.start*getTextSize());
 		s.end=s.end*getLineHeight();
 		return s;
 	}
 
-	public static final size LAndC(String text){
+	public static final size LAndC(String text)
+	{
 		//为外部文本测量行数与最宽的那行字符数
 		size size=new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',text);
@@ -152,7 +158,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 		return subLines(startLine,endLine,getText().toString());
 	}
 
-	final public static size subLines(int startLine,int endLine,String src){
+	final public static size subLines(int startLine,int endLine,String src)
+	{
 		size j = new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
 
@@ -172,7 +179,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 
 		return j;
 	}
-	final public static size subLines(int startLine,String src){
+	final public static size subLines(int startLine,String src)
+	{
 		size j = new size();
 		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
 		if(startLine<2)
@@ -186,7 +194,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 	}
 
 
-	final public void lockSelf(boolean is){
+	final public void lockSelf(boolean is)
+	{
 		if(is)
 			setKeyListener(null);
 		else
@@ -207,7 +216,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>
 		inputMethodManager.showSoftInput(editText, 0);
 	}
 
-	public void zoomBy(float size){
+	public void zoomBy(float size)
+	{
 		setTextSize(size);
 		TextSize=size;
 	}

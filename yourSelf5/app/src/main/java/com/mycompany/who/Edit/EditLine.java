@@ -15,15 +15,16 @@ import java.util.*;
 public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser
 {
 
-	private int LineCount=0;
-	private EditLineListenerInfo Info;
+	//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
+	public int LineCount;
+	protected EditLineListenerInfo Info;
 	private size pos=new size();
 	
 	public EditLine(Context cont){
 		super(cont);
 	}
 	public EditLine(Context cont,EditLine Edit){
-		super(cont);
+		super(cont,Edit);
 	}
 	public EditLine(Context cont,AttributeSet attrs){
 		super(cont,attrs);
@@ -32,41 +33,25 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	@Override
 	public void Creat()
 	{
-		LineCount=0;
 		super.Creat();
+		LineCount=0;
 		Info = new EditLineListenerInfo();
 	}
 
 	@Override
 	public void CopyFrom(Edit target)
 	{
-		LineCount = ((EditLine)target).LineCount;
 		super.CopyFrom(target);
+		this.LineCount = ((EditLine)target).LineCount;
 		this.Info = ((EditLine)target).Info;
 	}
 
 	@Override
 	public void CopyTo(Edit target)
 	{
-		((EditLine)target). LineCount = LineCount;
 		super.CopyTo(target);
+		((EditLine)target). LineCount = LineCount;
 		((EditLine)target).Info = Info;
-	}
-
-	@Override
-	protected void onDraw(Canvas canvas)
-	{
-		TextPaint paint = getPaint();
-		try
-		{		
-		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
-			super.onDraw(canvas);
-			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
-		}
-		catch (Exception e)
-		{
-			Log.e("OnDraw Error", e.toString());
-		}
 	}
 
 	public EditListenerList getCanvaserList()
@@ -75,18 +60,23 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			return Info.mlistenerVS;
 		return null;
 	}
-	
-	@Override
-	public void DrawAndDraw( Canvas canvas, TextPaint paint, size pos, int flag)
-	{
-		EditListenerList listener = getCanvaserList();
-		if(listener!=null){
-			List<EditListener> lis = listener.getList();
-			for(EditListener li:lis)
-			    if(li instanceof EditCanvaserListener)
-			        ((EditCanvaserListener)li).LetMeCanvaser(this,canvas,paint,pos,flag);
+	public void setCanvaserList(EditListenerList l){
+		if(Info!=null){
+			Info.mlistenerVS = l;
 		}
 	}
+	public EditLineChangeListener getLineChecker()
+	{
+		if(Info!=null)
+			return (EditLineChangeListener)Info.mlistenerL;
+		return null;
+	}
+	public void setCanvaserList(EditLineChangeListener l){
+		if(Info!=null){
+			Info.mlistenerL = l;
+		}
+	}
+	
 	
 	@Override
 	public EditListenerInfo getInfo()
@@ -114,6 +104,36 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		    Info.mlistenerVS.getList().clear();
 	}
 
+	
+	@Override
+	protected void onDraw(Canvas canvas)
+	{
+		TextPaint paint = getPaint();
+		try
+		{		
+		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
+			super.onDraw(canvas);
+			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
+		}
+		catch (Exception e)
+		{
+			Log.e("OnDraw Error", e.toString());
+		}
+	}
+
+	@Override
+	public void DrawAndDraw( Canvas canvas, TextPaint paint, size pos, int flag)
+	{
+		EditListenerList listener = getCanvaserList();
+		if(listener!=null){
+			List<EditListener> lis = listener.getList();
+			for(EditListener li:lis)
+			    if(li instanceof EditCanvaserListener)
+			        ((EditCanvaserListener)li).LetMeCanvaser(this,canvas,paint,pos,flag);
+		}
+	}
+	
+	
 	public void reLines(int line){
 		int caline= line-LineCount;
 		if(caline<0){
@@ -125,11 +145,16 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	}
 	//如果需处理大量行，都应该调用addLines和delLines，因为它们更快
 	final public void addLines(int count){
+		EditLineChangeListener li = getLineChecker();
+		if(li!=null){
+			
+		}
 		StringBuilder b = new StringBuilder();
 		while (count-->0)
 		{
 			++LineCount;
-			b.append(LineCount+"\n");
+			b.append(LineCount);
+			b.append('\n');
 		} 	 	 
 		append(b);
 	}
@@ -161,14 +186,23 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
-		setWidth((String.valueOf(LineCount).length() * (int)getTextSize())+30);
+		setWidth(maxWidth());
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 	}
-
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		pos.start=(int) event.getX();
+		pos.end=(int) event.getY();
+		return super.onTouchEvent(event);
+	}
+	
+	
 	@Override
 	public int maxWidth()
 	{
-		return (int)(String.valueOf (LineCount).length()*getTextSize())+30;
+		return (int)((String.valueOf(LineCount).length()+1)*getTextSize());
 	}
 
 	@Override
@@ -196,18 +230,12 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		setWidth(maxWidth());
 	}
 	
-	@Override
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		pos.start=(int) event.getX();
-		pos.end=(int) event.getY();
-		return super.onTouchEvent(event);
-	}
 	
 	public static class EditLineListenerInfo implements EditListenerInfo
 	{
 
-	    public EditListenerList mlistenerVS;
+	    protected EditListenerList mlistenerVS;
+		protected EditListener mlistenerL;
 		
 		public EditLineListenerInfo(){
 			mlistenerVS = new EditListenerList();
@@ -220,6 +248,10 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 				mlistenerVS.getList().add(li);
 				return true;
 			}
+			else if(li instanceof EditLineChangeListener){
+				mlistenerL = li;
+				return true;
+			}
 			return false;
 		}
 
@@ -228,12 +260,18 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		{
 			if(mlistenerVS.getList().remove(li))
 				return true;
+			if(li.equals(mlistenerL)){
+				mlistenerL = null;
+				return true;
+			}
 			return false;
 		}
 
 		@Override
 		public EditListener findAListener(String name)
 		{
+			if(mlistenerL.getName().equals(name))
+				return mlistenerL;
 			return Helper.checkName(mlistenerVS,name);
 		}
 		
@@ -260,6 +298,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		
 	}
 	
+	
 	public static interface LineSpiltor{
 		
 		public void reLines(int line)
@@ -268,10 +307,6 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		
 		public void delLines(int count)
 	  
-		public void addALine()
-		
-		public void delALine()
-		
 		public int getLineCount()
 		
 	}

@@ -41,15 +41,18 @@ import android.view.View.OnLongClickListener;
 
  编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
  解决办法：根据当前位置，计算出编辑器能展示的范围，然后onDraw时用clipRect明确绘制范围，将超出的部分放弃绘制
+ 
 */
 
 /*
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  实现了EditListenerInfoUser接口，可直接将我给别人
+ 
 */
-public class EditGroup extends HasAll implements requestWithCodeEdit,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
+public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
+	
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1000,ExpandHeight=2000;
 	
@@ -63,14 +66,14 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	protected HScrollBar hScro;
 	protected LinearLayout ForEdit;
 	protected LinearLayout ForEditSon;
-	protected EditLine EditLines;
+	protected LineGroup EditLines;
 	protected ListView mWindow;
 
 	private EditBuilder builder;
 	private List<CodeEdit> EditList;
 	private Stack<Stack<Int>> Last;
 	private Stack<Stack<Int>> Next;
-	private ThreadPoolExecutor pool=null;
+	private ThreadPoolExecutor pool;
 	private EditFactory mfactory;
 	
 	
@@ -108,7 +111,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	public ViewGroup getForEditSon(){
 		return ForEditSon;
 	}
-	public EditLine getEditLine(){
+	public LineGroup getEditLine(){
 		return EditLines;
 	}
 	public ListView getWindow(){
@@ -211,7 +214,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		{
 			//剩下的编辑器会复制第一个的Clip，因此不再添加，至于名字嘛...
 			CodeEdit E = EditList.get(0);
-			Edit = new RCodeEdit(getContext(),E );
+			Edit = new RCodeEdit(getContext(),E);
 			EditListenerInfo Info= Edit.getInfo();
 			Edit.setInfo(null);  //不允许重复添加Listener
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
@@ -247,6 +250,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		int width=size.start + ExpandWidth;
 		Config_Size2. trim(getForEditSon(), width - EditLines.maxWidth(), height);
 		Config_Size2. trim(getForEdit(), width, height);
+		Config_Size2. trim(getEditLine(), EditLines.maxWidth(),height);
 		//为两个Edit的父元素扩展空间，一个ForEdit，一个ForEditSon
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 		
@@ -261,9 +265,8 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	{
 
 		public Int index;	
-		private BubbleEvent Target;
 		private boolean can;
-		//别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数中赋值
+		//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
 
 		public RCodeEdit(Context cont)
 		{
@@ -336,7 +339,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 			if (EditFlag.get() == 0)
 			{
 				int line = getEditBuilder().calaEditLines();
-				//EditLines. reLines(line);	
+				EditLines. reLines(line);	
 				//最后一个编辑器单独计算行，这个太卡了，得优化一下
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
 			}
@@ -355,11 +358,12 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 				Editable editor = getText();
 				int selfIndex = index.get();
 				
-				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				size j = subLines(MaxLine + 1 - OnceSubLine); 
+				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				//MaxLine+1是指从MaxLine之后的一行的起始开始截
 				j.start--;
 				//连带着把MaxLine行的\n也截取
+				
 				CharSequence src = editor.subSequence(j.start, j.end); 
 				++IsModify; 
 				editor.delete(j.start, j.end);	
@@ -383,27 +387,30 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 					return;
 				}
 				
-				if (EditList.size() - 1 == selfIndex)
+				if (EditList.size() - 1 == selfIndex){
 					AddEdit("");
-				else if (EditList.get(selfIndex + 1).getLineCount() + (lineCount - MaxLine) > MaxLine)
+				}
+				else if (EditList.get(selfIndex + 1).getLineCount() + (lineCount - MaxLine) > MaxLine){
 					AddEditAt(selfIndex + 1);
+				}
 				//若无下个编辑器，则添加一个
 				//若有下个编辑器，但它的行也不足，那么在我之后添加一个
 				
 				CodeEdit Edit = EditList.get(selfIndex + 1);
-				if(!need)
+				if(!need){
 					Edit.IsDraw(true);//不用染色了
+				}
 				Edit.getText().insert(0, src);
 				Edit.IsDraw(false);
 				//之后将截取的字符添加到编辑器列表中的下个编辑器开头，即MAX行之后的
 				//下个编辑器也可以将自己超出的行截取到下下个编辑器
 				//不难看出，这样递归回调，最后会回到第一个编辑器
-
 			}
 			else{
 			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				//否则正常调用
 			}
+			
 		}
 
 		@Override
@@ -417,10 +424,9 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 
 	protected size Calc(RCodeEdit Edit, EditGroup self)
 	{
-	
 		//测量并修改Window大小
-		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
-		config.ConfigSelf(this);
+		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize)self. getConfig();
+		config.ConfigSelf(self);
 
 		//请求测量
 		self.historyId = Edit.index;
@@ -429,7 +435,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		int xlen = self.getEditBuilder().calaEditHeight(Edit.index.get());
 		size pos = Edit.getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
 
-		pos.start += EditLines.getWidth();
+		pos.start += self.EditLines.maxWidth();
 		int WindowWidth=config.WindowWidth;
 		int WindowHeight=config.WindowHeight;
 		int selfWidth=config.width;
@@ -451,7 +457,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	
 	protected final class ClipCanvaser extends EditCanvaserListener
 	{
-
+		
 		@Override
 		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
 
@@ -461,7 +467,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		{	
 			/*关键代码*/
 			Rect rect =selfRect(self);
-			AddRect(rect,1f);  //扩大范围，以便下次滚动时可见
+			addRect(rect,1f);  //扩大范围，以便下次滚动时可见
 			canvas.clipRect(rect);
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 
@@ -502,7 +508,7 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		}
 		
 		/* 扩大Rect的范围 */
-		public void AddRect(Rect rect,float x){
+		public void addRect(Rect rect,float x){
 			float width = rect.width()*x/2;
 			float height = rect.height()*x/2;
 			rect.left -= width;
@@ -600,6 +606,161 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		    return true;
 		}
 		return super.dispatchKeyEvent(event);
+	}
+	
+	
+	final public static class LineGroup extends LinearLayout implements EditLine.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
+	{
+
+		public static int MaxLine = 5000;
+		private int lineCount;
+		private List<EditLine> LineList;
+
+		public LineGroup(Context cont){
+			super(cont);
+			init();
+		}
+		public LineGroup(Context cont,AttributeSet attrs){
+			super(cont,attrs);
+			init();
+		}
+		protected void init(){
+			LineList = new ArrayList<>();
+			addEditLine();
+			setOrientation(VERTICAL);
+		}
+
+		public List<EditLine> getLineList(){
+			return LineList;
+		}
+
+		public void addEditLine()
+		{
+			EditLine Line = creatEditLine();
+			LineList.add(Line);
+			addView(Line);
+		}
+		protected EditLine creatEditLine()
+		{
+			EditLine Line;
+			int size = LineList.size();
+			if(size>0){
+				Line = LineList.get(size-1);
+				Editable editor = Line.getText();
+				Line.getText().delete(editor.length()-1,editor.length());
+				Line = new EditLine(getContext(),Line);	
+			}
+			else{
+				Line = new EditLine(getContext());
+			}
+			Line.setKeyListener(null);
+			return Line;
+		}
+
+		@Override
+		public void reLines(int line)
+		{
+			int caline= line-lineCount;
+			if(caline<0){
+				delLines(-caline);
+			}
+			else if(caline>0){
+				addLines(caline);
+			}
+		}
+
+		@Override
+		public void addLines(int count)
+		{
+			lineCount+=count;
+			while(count>0)
+			{
+				EditLine Line = LineList.get(LineList.size()-1);
+				int hasLine = Edit.getLineCount(Line.getText().toString());
+				int freeLine = MaxLine - hasLine;
+				if(freeLine>count){
+					Line.addLines(count);
+					count -= count;
+				}
+				else{
+					Line.addLines(freeLine);
+					count -= freeLine;
+					addEditLine();
+				}
+			}
+		}
+
+		@Override
+		public void delLines(int count)
+		{
+			lineCount-=count;
+			while(count>0){
+				int index = LineList.size()-1;
+				EditLine Line = LineList.get(index);
+				int hasLine = Edit.getLineCount(Line.getText().toString());
+				int delLine = hasLine>count ? count:hasLine;
+				if(hasLine==delLine){
+					LineList.remove(index);
+					removeViewAt(index);
+				}
+				else{
+					Line.delLines(delLine);
+				}
+				count-=delLine;
+			}
+		}
+
+		@Override
+		public int getLineCount(){
+			return lineCount;
+		}
+
+		@Override
+		public int maxWidth(){	
+			float TextSize = LineList.get(0).getTextSize();
+			int count = String.valueOf(lineCount).length()+1;
+			return (int)(count*TextSize);
+		}
+
+		@Override
+		public int maxHeight()
+		{
+			float TextSize = LineList.get(0).getTextSize();
+			return (int)(lineCount*TextSize)+1;
+		}
+
+		@Override
+		public size WAndH(){
+			return new size(maxWidth(),maxHeight());
+		}
+
+		@Override
+		public EditListenerInfo getInfo(){
+			return LineList.get(0).getInfo();
+		}
+
+		@Override
+		public void setInfo(EditListenerInfo Info)
+		{
+			for(EditLine Line:LineList){
+				Line.setInfo(Info);
+			}
+		}
+
+		@Override
+		public void trimListener(){
+			LineList.get(0).trimListener();
+		}
+
+		@Override
+		public void clearListener(){
+			LineList.get(0).clearListener();
+		}
+
+		public void zoomBy(){
+
+		}
+
 	}
 	
 	
@@ -1055,7 +1216,6 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		{
 			Edit.setPool(self. pool);
 			Edit.setWindow(self. getWindow());
-			Edit.setEditLine(self.getEditLine());
 			Share.setEdit(Edit, name);
 		}
 
@@ -1157,9 +1317,11 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		    Group. Scro = root.findViewById(R.id.Scro);
 			Group. hScro = root.findViewById(R.id.hScro);
 		   	Group. ForEdit = root.findViewById(R.id.ForEdit);
-			Group. EditLines = root.findViewById(R.id.EditLine);
+			//Group. EditLines = root.findViewById(R.id.EditLine);
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
+			
+			Group.EditLines = new LineGroup(Group.getContext());
 			
 			//重新设置一个不同的id，防止xml文件被多次加载，内存中有多个相同id的View
 			//Group.setId(Group.hashCode());
@@ -1184,12 +1346,12 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
+			target.ForEdit.addView(target.EditLines,0);
 			config(target);
 		}
 		
 		public void config(EditGroup target)
 		{
-			target. EditLines.setKeyListener(null);
 			target. ForEdit.setOrientation(LinearLayout.HORIZONTAL);
 			target. ForEditSon.setOrientation(LinearLayout.VERTICAL);
 			target. mWindow.setBackgroundColor(Colors.Bg2);
@@ -1282,4 +1444,5 @@ public class EditGroup extends HasAll implements requestWithCodeEdit,EditListene
 	
 	public static interface requestWithEditGroup extends IneedFactory,IlovePool{}
 
+	
 }
