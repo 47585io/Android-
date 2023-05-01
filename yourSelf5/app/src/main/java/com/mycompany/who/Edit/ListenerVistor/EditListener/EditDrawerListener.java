@@ -41,8 +41,15 @@ public abstract class EditDrawerListener extends EditListener
 	}
 	
 	
+	public String getHTML(List<wordIndex> nodes,String text){
+		return getHTML(nodes,text,null);
+	}
+	public String getHTML(Spanned b){
+		return getHTML(b,null);
+	}
+	
 	/* 中间函数，通过nodes制作对应的HTML文本 */
-    public String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color)
+    final public static String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color)
 	{
 		if(nodes==null||text==null)
 			return "";
@@ -82,22 +89,25 @@ public abstract class EditDrawerListener extends EditListener
 	   * SpannableStringBuilder实现了Editable，以区间树的形式存储Span文本
 	   
 	*/
-	public String getHTML(Spanned b)
+	final public static String getHTML(Spanned b,Colors.ByteToColor2 Color)
 	{
+		if(Color==null)
+			Color = new Colors.myColor2();
+		
 		//用Spanned容器中的Span，获取范围和颜色，然后制作成HTML文本
 		size[] nodes = Colors. subSpanPos(0,b.length(),b,Colors.ForeSpanType);
 		Object[] spans = b.getSpans(0,b.length(),Colors.SpanType);
 		int index = 0;
 		String text = b.toString();
 		StringBuilder arr = new StringBuilder();
-		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Colors.Default_+";background-color: "+Colors.Bg_+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
+		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Color.getDefultS()+";background-color: "+Color.getDefultBgS()+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
 
 		for(int i=0;i<spans.length;++i){
 			size node = nodes[i];
 			ForegroundColorSpan span = (ForegroundColorSpan) spans[i];
 			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
 			if(node.start>index)
-				arr.append(Colors.textForeColor(text.substring(index,node.start),Colors.Default_));
+				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
 			arr.append(Colors.textForeColor(text.substring(node.start,node.end),Colors.toString(span.getForegroundColor())));
 			index=node.end;
 		}

@@ -477,7 +477,7 @@ Dreawr
 		{	
 			onFindNodes(start, end, text, nodes);
 			onDrawNodes(start, end, nodes, b);
-			onPrePare(start,end,text,nodes,b);
+			onPrePare(start, end, text, nodes, b);
 		}
 		catch (Exception e){
 			Log.e("prepare Error",e.toString());
@@ -486,11 +486,14 @@ Dreawr
 	}
 	
 	/* 存储文本 */
-	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,SpannableStringBuilder b){
+	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,SpannableStringBuilder b)
+	{
 		this.buider = b;
 		EditDrawerListener li = getDrawer();
 		if(li != null)
 		    this.HTML = li.getHTML(b);	
+		else
+			this.HTML = EditDrawerListener.getHTML(b,null);
 	}
 	
 	/* 获取准备好了的文本 */
@@ -1330,6 +1333,7 @@ _________________________________________
 		}
 		return tmp;
 	}
+	
 	final public static int tryAfterIndex(CharSequence src,int index){
 		//试探后面的下一个非分隔符
 		while(index<src.length()
@@ -1340,6 +1344,7 @@ _________________________________________
 		}
 		return index;
 	}
+	
 	final public static int tryLine_Start(String src,int index){
 		//试探当前下标所在行的起始
 		int start= src.lastIndexOf('\n',index-1);	
@@ -1349,6 +1354,7 @@ _________________________________________
 			start+=1;
 		return start;
 	}
+	
 	final public static int tryLine_End(String src,int index){
 		//试探当前下标所在行的末尾
 		int end=src.indexOf('\n',index);
@@ -1373,6 +1379,7 @@ _________________________________________
 		}
 		return tmp;
 	}
+	
 	final public static wordIndex tryWordSplitAfter(CharSequence src,int index){
 		//试探纯单词
 	    wordIndex tmp = Ep.get();
@@ -1388,6 +1395,7 @@ _________________________________________
 		}
 		return tmp;
 	}
+	
 	final public static String getWord(String src,int offset)
 	{
 		//获得光标前的纯单词
@@ -1397,6 +1405,7 @@ _________________________________________
 		String want= src.substring(node.start, node.end);
 		return want;
 	}
+	
 	final public static String getAfterWord(String src,int offset)
 	{
 		//获得光标后面的纯单词
@@ -2040,7 +2049,7 @@ ________________________________________________________________________________
 
 		public int Redo_(EditDate.Token token)
 		
-		public void ongetUR(EditDate.Token token)	
+		public void onGetUR(EditDate.Token token)	
 		
 		public void onPutUR(EditDate.Token token)
 	
