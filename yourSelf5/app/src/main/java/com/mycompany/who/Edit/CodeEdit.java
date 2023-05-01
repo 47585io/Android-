@@ -163,8 +163,8 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		    this.stack = new EditDate();
 		this.Info = Edit.Info;	
 		this.pool = Edit.pool;
-		this.mWindow = Edit.mWindow;
 		this.Line = Edit.Line;
+		this.mWindow = Edit.mWindow;
 		this.laugua = Edit.laugua;
 		this.mfactory = Edit.mfactory;
 		addTextChangedListener(new DefaultText());
@@ -180,8 +180,8 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.stack = this.stack;
 		Edit.Info = this.Info;	
 		Edit.pool = this.pool;
-		Edit.mWindow = this.mWindow;
 		Edit.Line = this.Line;
+		Edit.mWindow = this.mWindow;
 		Edit.laugua = this.laugua;
 		Edit.mfactory = this.mfactory;
 		Edit.addTextChangedListener(new DefaultText());
@@ -488,7 +488,9 @@ Dreawr
 	/* 存储文本 */
 	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,SpannableStringBuilder b){
 		this.buider = b;
-		this.HTML = EditDrawerListener.getHTML(b);	
+		EditDrawerListener li = getDrawer();
+		if(li != null)
+		    this.HTML = li.getHTML(b);	
 	}
 	
 	/* 获取准备好了的文本 */
@@ -566,14 +568,13 @@ _________________________________________
 	}
 	
     /* 在指定位置插入后续字符 */
-	public final int Insert(final int index)
+	public final int Insert(final int index,int count)
 	{
-		int count = 0;
 		IsModify++;
 		isFormat = true;
 		
 		try{
-		    onInsert(index,getText());
+		    onInsert(index,count,getText());
 		}
 		catch (Exception e){
 			Log.e("Insert Error", e.toString());
@@ -581,10 +582,10 @@ _________________________________________
 		
 		isFormat = false;
 		IsModify--;
-		return count;
+		return 0;
 	}	
 
-	protected void onInsert(int index, Editable editor)
+	protected void onInsert(int index,int count, Editable editor)
 	{
 		EditListenerList list = getInsertorList();
 		if(list != null){
@@ -592,7 +593,7 @@ _________________________________________
 		    List<EditListener> lis = list.getList();
 			for(EditListener li:lis){
 		        if(li instanceof EditInsertorListener){
-				    selection = ((EditInsertorListener)li).LetMeInsert(editor, index);
+				    selection = ((EditInsertorListener)li).LetMeInsert(editor,count, index);
 				}
 		    } 
 			setSelection(selection);
@@ -1237,7 +1238,7 @@ _________________________________________
 			if (Enabled_Format&&!IsFormat())
 			{		
 				//是否启用自动format
-				Insert(start);
+				Insert(start,lengthAfter);
 				//Format(start,start+lengthAfter);
 				//为了安全，不调用Format
 			}

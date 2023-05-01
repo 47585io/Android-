@@ -42,7 +42,7 @@ public abstract class EditDrawerListener extends EditListener
 	
 	
 	/* 中间函数，通过nodes制作对应的HTML文本 */
-	final public static String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color)
+    public String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color)
 	{
 		if(nodes==null||text==null)
 			return "";
@@ -82,7 +82,7 @@ public abstract class EditDrawerListener extends EditListener
 	   * SpannableStringBuilder实现了Editable，以区间树的形式存储Span文本
 	   
 	*/
-	final public static String getHTML(Spanned b)
+	public String getHTML(Spanned b)
 	{
 		//用Spanned容器中的Span，获取范围和颜色，然后制作成HTML文本
 		size[] nodes = Colors. subSpanPos(0,b.length(),b,Colors.ForeSpanType);

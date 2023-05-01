@@ -360,7 +360,7 @@ ________________________________________________________________________________
 		public static class DefaultInsertorListener extends EditInsertorListener
 		{
 			@Override
-			protected int dothing_insert(Editable editor, int nowIndex)
+			protected int dothing_insert(Editable editor, int nowIndex, int len)
 			{
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
@@ -403,7 +403,7 @@ ________________________________________________________________________________
 		{
 
 			@Override
-			protected int dothing_insert(Editable editor, int nowIndex)
+			protected int dothing_insert(Editable editor, int nowIndex,int count)
 			{
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
@@ -415,7 +415,7 @@ ________________________________________________________________________________
 					editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 					return j.end + 1;
 				}
-				return super.dothing_insert(editor, nowIndex);
+				return super.dothing_insert(editor, nowIndex,count);
 			}
 			
 		}

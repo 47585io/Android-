@@ -65,15 +65,15 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			Info.mlistenerVS = l;
 		}
 	}
-	public EditLineChangeListener getLineChecker()
+	public EditListenerList getLineCheckerList()
 	{
 		if(Info!=null)
-			return (EditLineChangeListener)Info.mlistenerL;
+			return Info.mlistenerLS;
 		return null;
 	}
-	public void setCanvaserList(EditLineChangeListener l){
+	public void setLineCheckerList(EditListenerList l){
 		if(Info!=null){
-			Info.mlistenerL = l;
+			Info.mlistenerLS = l;
 		}
 	}
 	
@@ -144,11 +144,9 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		}
 	}
 	//如果需处理大量行，都应该调用addLines和delLines，因为它们更快
-	final public void addLines(int count){
-		EditLineChangeListener li = getLineChecker();
-		if(li!=null){
-			
-		}
+	final public void addLines(int count)
+	{
+		onLineChange(LineCount,0,count);
 		StringBuilder b = new StringBuilder();
 		while (count-->0)
 		{
@@ -158,7 +156,10 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		} 	 	 
 		append(b);
 	}
-	final public void delLines(int count){
+	
+	final public void delLines(int count)
+	{
+		onLineChange(LineCount,count,0);
 		Editable e = getText();
 		int end = e.length()-1;
 		String src = e.toString();
@@ -169,13 +170,17 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		} 	 	 
 		e.delete(end+1,e.length());
 	}
+	
 	final public void addALine()
 	{
+		onLineChange(LineCount,0,1);
 		++LineCount;
 		append( LineCount+"\n");
 	}
+	
 	final public void delALine()
 	{
+		onLineChange(LineCount,1,0);
 		--LineCount;
 		String src = getText().toString();
 		int end = src.lastIndexOf('\n', src.length() - 2);
@@ -183,6 +188,19 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			getText().delete(end+1, src.length());
 	}
 
+	
+	protected void onLineChange(int start,int before,int after){
+		EditListenerList l = getLineCheckerList();
+		if(l!=null){
+			List<EditListener> lis = l.getList();
+			for(EditListener li:lis){
+				if(li instanceof EditLineChangeListener){
+					((EditLineChangeListener)li).Change(LineCount,1,0);
+				}
+			}
+		}
+	}
+	
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
@@ -200,32 +218,27 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	
 	@Override
-	public int maxWidth()
-	{
+	public int maxWidth(){
 		return (int)((String.valueOf(LineCount).length()+1)*getTextSize());
 	}
-
+	
 	@Override
-	public int maxHeight()
-	{
+	public int maxHeight(){
 		return LineCount*getLineHeight();
 	}
-
+	
 	@Override
-	public int getLineCount()
-	{
+	public int getLineCount(){
 		return LineCount;
 	}
 
 	@Override
-	public size WAndH()
-	{
+	public size WAndH(){
 		return new size(maxWidth(),maxHeight());
 	}
 
 	@Override
-	public void zoomBy(float size)
-	{
+	public void zoomBy(float size){
 		super.zoomBy(size);
 		setWidth(maxWidth());
 	}
@@ -235,10 +248,11 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	{
 
 	    protected EditListenerList mlistenerVS;
-		protected EditListener mlistenerL;
+		protected EditListenerList mlistenerLS;
 		
 		public EditLineListenerInfo(){
 			mlistenerVS = new EditListenerList();
+			mlistenerLS = new EditListenerList();
 		}
 		
 		@Override
@@ -249,7 +263,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 				return true;
 			}
 			else if(li instanceof EditLineChangeListener){
-				mlistenerL = li;
+				mlistenerLS.getList().add(li);
 				return true;
 			}
 			return false;
@@ -260,19 +274,19 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		{
 			if(mlistenerVS.getList().remove(li))
 				return true;
-			if(li.equals(mlistenerL)){
-				mlistenerL = null;
+			if(mlistenerLS.getList().remove(li))
 				return true;
-			}
 			return false;
 		}
 
 		@Override
 		public EditListener findAListener(String name)
 		{
-			if(mlistenerL.getName().equals(name))
-				return mlistenerL;
-			return Helper.checkName(mlistenerVS,name);
+			EditListener li = null;
+			li = Helper.checkName(mlistenerVS,name);
+			if(li!=null)
+				Helper.checkName(mlistenerLS,name);
+			return li;
 		}
 		
 		@Override
@@ -308,6 +322,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		public void delLines(int count)
 	  
 		public int getLineCount()
+		
+		public void onLineChange(int start,int before,int after)
 		
 	}
 

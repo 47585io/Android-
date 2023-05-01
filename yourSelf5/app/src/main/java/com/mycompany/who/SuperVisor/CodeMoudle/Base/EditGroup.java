@@ -248,9 +248,8 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		size size = getEditBuilder().WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
-		Config_Size2. trim(getForEditSon(), width - EditLines.maxWidth(), height);
-		Config_Size2. trim(getForEdit(), width, height);
-		Config_Size2. trim(getEditLine(), EditLines.maxWidth(),height);
+		Config_Size2. trim(getForEditSon(), width, height);
+		Config_Size2. trim(getForEdit(), width + EditLines.maxWidth(), height);
 		//为两个Edit的父元素扩展空间，一个ForEdit，一个ForEditSon
 		//无需为Scrollview扩展空间，因为它本身就是用于滚动子元素超出自己范围的部分的，若扩展了就不能滚动了
 		
@@ -688,6 +687,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 					addEditLine();
 				}
 			}
+			onLineChange(lineCount-count,0,count);
 		}
 
 		@Override
@@ -708,6 +708,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				}
 				count-=delLine;
 			}
+			onLineChange(lineCount+count,count,0);
 		}
 
 		@Override
@@ -716,8 +717,13 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 
 		@Override
+		public void onLineChange(int start, int before, int after){
+			CodeBlock.Config_Size2.trim(this,maxWidth(),maxHeight());
+		}
+
+		@Override
 		public int maxWidth(){	
-			float TextSize = LineList.get(0).getTextSize();
+			float TextSize = getTextSize();
 			int count = String.valueOf(lineCount).length()+1;
 			return (int)(count*TextSize);
 		}
@@ -725,8 +731,8 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		@Override
 		public int maxHeight()
 		{
-			float TextSize = LineList.get(0).getTextSize();
-			return (int)(lineCount*TextSize)+1;
+			int lineHeight = getLineHeight();
+			return (lineCount*lineHeight);
 		}
 
 		@Override
@@ -760,7 +766,14 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		public void zoomBy(){
 
 		}
-
+		
+		public float getTextSize(){
+			return LineList.get(0).getTextSize();
+		}
+		public int getLineHeight(){
+			return LineList.get(0).getLineHeight()+1;
+		}
+		
 	}
 	
 	

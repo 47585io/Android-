@@ -9,6 +9,10 @@ public class size
 		this.start=start;
 		this.end=end;
 	}
+	public size(size o){
+		start = o.start;
+		end = o.end;
+	}
 	public size(){}
 	
 	@Override

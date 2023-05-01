@@ -52,18 +52,19 @@ public abstract class EditFinderListener extends EditListener
 	/*  Find函数返回原生nodes，即在start~end之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的  */
 	protected List<wordIndex> Find(int start, int end, String text,Words WordLib)
 	{	
-		List<DoAnyThing> totalList =new ArrayList<>();
+	    String subStr = text.substring(start,end);
 		List<wordIndex> nodes=new ArrayList<>();
+		List<DoAnyThing> totalList =new ArrayList<>();
 		//为每一个listener分配一个nodes和totalList
 		
 		OnFindWord(totalList, WordLib); 
-		startFind(text.substring(start,end), totalList,nodes);
+		startFind(subStr,totalList,nodes);
 		totalList.clear();
 		nodes.clear();
 		OnClearFindWord(WordLib);
 		
 		OnFindNodes(totalList,WordLib);
-		startFind(text.substring(start,end), totalList,nodes);
+		startFind(subStr,totalList,nodes);
 		OnClearFindNodes(start, end, text, WordLib, nodes);	
 		return nodes;
 	}
