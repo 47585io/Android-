@@ -39,18 +39,32 @@ public abstract class EditListener extends Object
 		return name;
 	}
 	
+	
 	/* 
-	   解析参数比较麻烦，传参也很难，已废弃
-	public final void LetMeDo(EditText self,Object... args){
-		if(!Enabled())
-		return;
-		Do(self,args);
+	   解析参数比较麻烦，传参也很难，已废弃   
+	*/
+	/*
+	public final void LetMeDo(int flag,Object... args)
+	{
+		if(Enabled()){
+		    dispatchArgs(flag,args);
+		}
 	}
-	protected void Do(EditText self,Object... args){
-		int a = (int)args[0];
-		DoDraw(self,a)
+	protected void dispatchArgs(int flag,Object... args)
+	{
+		switch(flag){
+			default:
+			    decodeArgsWithDraw(args);
+		}
 	}
-	protected void DoDraw(EditText self,int a){
+	protected void decodeArgsWithDraw(Object... args)
+	{
+		int start = args[0];
+		int end = args[1];
+		String src = args[2];
+		DoDraw(start,end,src);
+	}
+	protected void DoDraw(int start,int end,String src){
 		...
 	}
 	*/

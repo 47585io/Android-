@@ -6,6 +6,8 @@ import java.util.*;
   EditListenerList，EditListener的子类，可向上转型
 
   内部使用synchronizedList存储EditListener，这个lis一定不为null
+  
+  管理一组的EditListener
 */
 public class EditListenerList extends EditListener
 {
@@ -52,5 +54,15 @@ public class EditListenerList extends EditListener
 		}
 		super.setName(name);
 	}
+	
+	/*
+	 protected void dispatchArgs(int flag,Object... args)
+	 {
+		 for(EditListener li:lis){
+			 li.LetMeDo(flag,args);
+		 }
+	 }
+	 
+	*/
 	
 }
