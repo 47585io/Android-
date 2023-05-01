@@ -467,7 +467,7 @@ Dreawr
 	}
 	
 	/* 准备指定文本的颜料 */
-	final public void prepare(int start, int end, String text)
+	final public void prepare(final int start,final int end,final String text)
 	{
 		List<wordIndex> nodes = new ArrayList<>();
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
@@ -515,9 +515,9 @@ _________________________________________
 	
 整理者
 
-Format：负责大量文本的格式化，为了避免多个Formator把文本改的乱七八糟，只能有一个Formator修改文本
+Format：负责大量文本的格式化，最后返回格式化期间增加的字符数，为了避免多个Formator把文本改的乱七八糟，只能有一个Formator修改文本
 
-onFormat: 修改文本，只能有一个Listener修改文本
+onFormat: 修改文本，最后返回插入期间增加的字符数，只能有一个Listener修改文本
 
 
 Insert：即时插词，可以有多个Insertor插词
@@ -542,16 +542,18 @@ _________________________________________
 */
 
     /* 对齐范围内的文本 */
-	public final void Format(final int start, final int end)
+	public final int Format(final int start, final int end)
 	{
 		//为了安全，禁止重写
+		Editable editor = getText();
+		int before = editor.length();
 		IsModify++;
-		isFormat = true; //在此时才会修改文本	
+		isFormat = true; 	
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
 		
 		try{
-			onFormat(start, end, getText());
+			onFormat(start, end, editor);
 		}
 		catch (Exception e){
 			Log.e("Format Error", e.toString());
@@ -561,6 +563,7 @@ _________________________________________
 		IsModify--;
 		now = System.currentTimeMillis();
 		Log.w("After Format Replacer","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms," +"The time maybe too Loog！");
+	    return editor.length()-before;
 	}
 
 	protected void onFormat(int start, int end, Editable editor)
@@ -571,8 +574,10 @@ _________________________________________
 	}
 	
     /* 在指定位置插入后续字符 */
-	public final int Insert(final int index,int count)
+	public final int Insert(final int index,final int count)
 	{
+		Editable editor = getText();
+		int before = editor.length();
 		IsModify++;
 		isFormat = true;
 		
@@ -585,7 +590,7 @@ _________________________________________
 		
 		isFormat = false;
 		IsModify--;
-		return 0;
+		return editor.length()-before;
 	}	
 
 	protected void onInsert(int index,int count, Editable editor)
@@ -596,7 +601,7 @@ _________________________________________
 		    List<EditListener> lis = list.getList();
 			for(EditListener li:lis){
 		        if(li instanceof EditInsertorListener){
-				    selection = ((EditInsertorListener)li).LetMeInsert(editor,count, index);
+				    selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
 				}
 		    } 
 			setSelection(selection);
@@ -884,7 +889,7 @@ _________________________________________
 */
 
 	@Override
-	final public String MakeCommand(String state)
+	final public String MakeCommand(final String state)
 	{
 		String com = "";
 		++IsModify;
@@ -897,7 +902,7 @@ _________________________________________
 		return com;
 	}
 
-	protected String onMakeCommand(String state)
+	protected String onMakeCommand( String state)
 	{
 		EditRunnarListener li = getRunnar();
 		if(li!=null){
@@ -908,7 +913,7 @@ _________________________________________
 	}
 	
 	@Override
-	final public void RunCommand(String command)
+	final public void RunCommand( String command)
 	{
 		++IsModify;
 		try{
@@ -919,7 +924,7 @@ _________________________________________
 		--IsModify;
 	}
 
-	protected void onRunCommand(String command)
+	protected void onRunCommand(final String command)
 	{
 		EditRunnarListener li = getRunnar();
 		if(li!=null)

@@ -71,7 +71,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			return Info.mlistenerLS;
 		return null;
 	}
-	public void setLineCheckerList(EditListenerList l){
+	public void setLineCheckerList(EditListenerList l)
+	{
 		if(Info!=null){
 			Info.mlistenerLS = l;
 		}
@@ -79,8 +80,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	
 	@Override
-	public EditListenerInfo getInfo()
-	{
+	public EditListenerInfo getInfo(){
 		return Info;
 	}
 
@@ -93,13 +93,10 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	}
 
 	@Override
-	public void trimListener()
-	{
-	}
+	public void trimListener(){}
 
 	@Override
-	public void clearListener()
-	{
+	public void clearListener(){
 		if(Info!=null)
 		    Info.mlistenerVS.getList().clear();
 	}
@@ -134,7 +131,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	}
 	
 	
-	public void reLines(int line){
+	public void reLines(int line)
+	{
 		int caline= line-LineCount;
 		if(caline<0){
 			delLines(-caline);
@@ -187,9 +185,14 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		if (end != -1)
 			getText().delete(end+1, src.length());
 	}
-
 	
-	protected void onLineChange(int start,int before,int after){
+	@Override
+	public int getLineCount(){
+		return LineCount;
+	}
+	
+	protected void onLineChange(int start,int before,int after)
+	{
 		EditListenerList l = getLineCheckerList();
 		if(l!=null){
 			List<EditListener> lis = l.getList();
@@ -224,14 +227,9 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	@Override
 	public int maxHeight(){
-		return LineCount*getLineHeight();
+		return LineCount*(getLineHeight()+1);
 	}
 	
-	@Override
-	public int getLineCount(){
-		return LineCount;
-	}
-
 	@Override
 	public size WAndH(){
 		return new size(maxWidth(),maxHeight());

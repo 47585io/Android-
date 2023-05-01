@@ -36,7 +36,7 @@ public class EditMoudle
 
 	public static interface Formator
 	{
-		public void Format(int start, int end)
+		public int Format(int start, int end)
 
 		public int Insert(int index, int count)
 	}

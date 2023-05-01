@@ -220,9 +220,11 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				@Override
 				public void run()
 				{
-					for(CodeEdit E:Group.getEditList()){
+					List<CodeEdit> List = Group.getEditList();
+					for(CodeEdit E:List){
 						Editable editor = E.getText();
-						//E.Format(0,editor.length());
+					    //if(List.size()<10)
+						    //E.Format(0,editor.length());
 						E.getPool().execute(E.ReDraw(0,editor.length()));
 					}
 				}
@@ -232,8 +234,8 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				@Override
 				public void run()
 				{
-					Group.getEditLine().reLines(builder.calaEditLines());
 					Group.trimToFather();			
+					Group.getEditLine().reLines(builder.calaEditLines());
 				}
 			};
 			final Runnable run4 = new Runnable(){
