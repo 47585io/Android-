@@ -22,7 +22,7 @@ import android.os.*;
   若没有特殊情况，Extension关我什么事
   
 */
-public class EditListenerFactory2 implements EditListenerFactory
+public class CodeEditBuilder implements EditBuilder
 {
 
 	@Override
@@ -44,10 +44,10 @@ public class EditListenerFactory2 implements EditListenerFactory
 	{
 		if(Edit instanceof CodeEdit){
 		    CodeEdit E = (CodeEdit) Edit;
-		    E.setDrawer((EditDrawerListener)EditListenerFactory2.DrawerFactory.getDefaultDrawer());
-		    E.getCanvaserList().getList().add(EditListenerFactory2.CanvaserFactory.getDefultCanvaser());
-		    E.setFormator((EditFormatorListener)EditListenerFactory2.FormatorFactory.getJavaFormator());
-		    E.getInsertorList().getList().add((EditListenerFactory2.InsertorFactory.getDefultInsertor()));
+		    E.setDrawer((EditDrawerListener)CodeEditBuilder.DrawerFactory.getDefaultDrawer());
+		    E.getCanvaserList().getList().add(CodeEditBuilder.CanvaserFactory.getDefultCanvaser());
+		    E.setFormator((EditFormatorListener)CodeEditBuilder.FormatorFactory.getJavaFormator());
+		    E.getInsertorList().getList().add((CodeEditBuilder.InsertorFactory.getDefultInsertor()));
 		}
 	}
 	

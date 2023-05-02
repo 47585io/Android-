@@ -897,9 +897,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			for(CodeEdit E:EditList)
 			    E.setInfo(Info);
 		}
-		public void setFactory(EditListenerFactory f){
+		public void setEditBuilder(EditBuilder f){
 			for(CodeEdit E:EditList)
-			    E.setFactory(f);
+			    E.setEditBuilder(f);
 		}
 		public void setWindow(ListView Window){
 			for(CodeEdit E:EditList)
@@ -920,8 +920,8 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		public EditListenerInfo getInfo(){
 			return EditList.get(0).getInfo();
 		}
-		public EditListenerFactory getFactory(){
-			return EditList.get(0).getFactory();
+		public EditBuilder getEditBuilder(){
+			return EditList.get(0).getEditBuilder();
 		}
 		public Words getWordLib(){
 			return EditList.get(0).getWordLib();

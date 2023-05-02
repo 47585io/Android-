@@ -103,9 +103,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	protected EditDate stack;
 	protected static EPool2 Ep;
 	protected static EPool3 Epp;
+	protected EditBuilder builder;
 	protected ThreadPoolExecutor pool;
 	protected CodeEditListenerInfo Info;
-	protected EditListenerFactory mfactory;
 	/*
 	  不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
 	  但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
@@ -129,7 +129,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	protected ListView mWindow;
 	protected StringBuffer laugua;
 	protected String HTML;
-	protected Spanned buider;
+	protected Spanned spanStr;
 	
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
@@ -166,7 +166,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		this.Line = Edit.Line;
 		this.mWindow = Edit.mWindow;
 		this.laugua = Edit.laugua;
-		this.mfactory = Edit.mfactory;
+		this.builder = Edit.builder;
 		addTextChangedListener(new DefaultText());
 	}
 
@@ -183,7 +183,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.Line = this.Line;
 		Edit.mWindow = this.mWindow;
 		Edit.laugua = this.laugua;
-		Edit.mfactory = this.mfactory;
+		Edit.builder = this.builder;
 		Edit.addTextChangedListener(new DefaultText());
 		Edit.setText(this.getText()); 
 	}
@@ -198,7 +198,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		stack = new EditDate();
 		Info = new CodeEditListenerInfo();
 		addTextChangedListener(new DefaultText());
-		mfactory = new EditListenerFactory2();
+		builder = new CodeEditBuilder();
 		trimListener();
 	}
 	
@@ -209,20 +209,20 @@ ________________________________________________________________________________
 
   为了方便，这里的set和get方法限制参数类型
   
-  trimListener，clearListener，及setLuagua都依赖Factory，所以可以设置Factory
+  trimListener，clearListener，及setLuagua都依赖EditBuilder，所以可以设置EditBuilder
   
 __________________________________________________________________________________
 
 */
 	public void trimListener()
 	{
-		if(mfactory!=null)
-			mfactory.trimListener(this);
+		if(builder!=null)
+			builder.trimListener(this);
 	}
 	public void clearListener()
 	{
-		if(mfactory!=null)
-			mfactory.clearListener(this);
+		if(builder!=null)
+			builder.clearListener(this);
 	}
 	
 	public void setFinderList(EditListenerList lis)
@@ -310,9 +310,9 @@ ________________________________________________________________________________
 
 	public void setLuagua(String Lua)
 	{
-		if(mfactory!=null){
+		if(builder!=null){
 		    laugua.replace(0,laugua.length(),Lua);
-			mfactory.SwitchLuagua(this,Lua);
+			builder.SwitchLuagua(this,Lua);
 	    }
 	}
 	public String getLuagua(){
@@ -339,8 +339,8 @@ ________________________________________________________________________________
 	public void setWordLib(Words WordLib){
 		this.WordLib = WordLib;
 	}
-	public void setFactory(EditListenerFactory f){
-		mfactory = f;
+	public void setEditBuilder(EditBuilder b){
+		builder = b;
 	}
 	
     public ThreadPoolExecutor getPool(){
@@ -355,8 +355,8 @@ ________________________________________________________________________________
 	public Words getWordLib(){
 		return WordLib;
 	}
-	public EditListenerFactory getFactory(){
-		return mfactory;
+	public EditBuilder getEditBuilder(){
+		return builder;
 	}
 	
 	
@@ -488,7 +488,7 @@ Dreawr
 	/* 存储文本 */
 	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,SpannableStringBuilder b)
 	{
-		this.buider = b;
+		this.spanStr = b;
 		EditDrawerListener li = getDrawer();
 		if(li != null)
 		    this.HTML = li.getHTML(b);	
@@ -503,9 +503,9 @@ Dreawr
 		    HTML.append(this.HTML);
 			this.HTML=null;
 		}
-		if(this.buider!=null&&builder!=null){
-		    builder.append(this.buider);
-			this.buider=null;
+		if(this.spanStr!=null&&builder!=null){
+		    builder.append(this.spanStr);
+			this.spanStr=null;
 		}
 	}
 	
