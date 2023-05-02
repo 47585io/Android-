@@ -1161,33 +1161,35 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 					//index已经递归到了末尾
 				}
 					
-				final int start,end;
-				if(index==s.start){
-					start = s.start;
-					end = EditList.get(index).getText().length();
-					//第一个编辑器的开头是s.end，结尾是它的长度
-				}
-				else if(index==e.start){
-					start = 0;
-					end = e.end;
-					//最后一个编辑器的开头是0，结尾是e.end
-				}
-				else{
-					start = 0;
-					end = EditList.get(index).getText().length();
-					//中间编辑器的开头是0,结尾是它的长度
-				}
 				Runnable run = new Runnable(){
 
 					@Override
 					public void run()
 					{
+						int start,end;
+						if(index==s.start){
+							start = s.start;
+							end = EditList.get(index).getText().length();
+							//第一个编辑器的开头是s.end，结尾是它的长度
+						}
+						else if(index==e.start){
+							start = 0;
+							end = e.end;
+							//最后一个编辑器的开头是0，结尾是e.end
+						}
+						else{
+							start = 0;
+							end = EditList.get(index).getText().length();
+							//中间编辑器的开头是0,结尾是它的长度
+						}
+						
 						doOnce(start,end,EditList.get(index));
 						Recursion(s,e,index+1);
 						//执行完doOnce后再调用Recursion去post下个index的任务
 						//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
 					}
 				};
+				
 				post(run);
 				//递归地抛并执行任务
 			}
