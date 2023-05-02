@@ -6,8 +6,8 @@ public abstract class EPool<T>
 	//简单的元素常量池
 	//申明一下，这样做的原因是：
 	//元素可以重复用，而不是创建之后马上销毁，太浪费了
-	protected List<T> Es;
-	protected int p;
+	private List<T> Es;
+	private int p;
 	private int size;
 	private int isStart;
 	private int isDisbled;

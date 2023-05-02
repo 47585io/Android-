@@ -16,8 +16,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 {
 
 	//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
-	public int LineCount;
-	protected EditLineListenerInfo Info;
+	private int LineCount;
+	private EditLineListenerInfo Info;
 	private size pos=new size();
 	
 	public EditLine(Context cont){

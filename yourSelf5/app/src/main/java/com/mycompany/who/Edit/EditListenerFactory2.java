@@ -75,7 +75,7 @@ DrawerFactory
 ___________________________________________________________________________________________________________________________
 	
 */
-	public static class DrawerFactory implements Factory
+	public static class DrawerFactory implements ListenerFactory
 	{
 		
 		public static EditListener getDefaultDrawer()
@@ -143,7 +143,7 @@ ________________________________________________________________________________
 
 */
 	
-	public static class CanvaserFactory implements Factory
+	public static class CanvaserFactory implements ListenerFactory
 	{
 
 		@Override
@@ -204,7 +204,7 @@ ________________________________________________________________________________
 
 */
 
-	public static class FormatorFactory implements Factory
+	public static class FormatorFactory implements ListenerFactory
 	{
 		
 		@Override
@@ -328,7 +328,7 @@ ________________________________________________________________________________
 	
 */
 
-	public static class InsertorFactory implements Factory
+	public static class InsertorFactory implements ListenerFactory
 	{
 
 		@Override
@@ -452,7 +452,7 @@ EditCompletorBoxes
 ___________________________________________________________________________________________________________________________
 
 */
-	public static class EditCompletorBoxes implements Factory
+	public static class EditCompletorBoxes implements ListenerFactory
 	{
 
 		@Override
@@ -483,7 +483,9 @@ ________________________________________________________________________________
 
 		public static class JavaCompletor extends EditListenerList
 		{		
-			public JavaCompletor(){
+			public JavaCompletor()
+			{
+				List<EditListener> lis = getList();
 				lis.add(getKeyBox());
 				lis.add(getConstBox());
 				lis.add(getVillBox());
@@ -495,7 +497,9 @@ ________________________________________________________________________________
 		
 		public static class XMLCompletor extends EditListenerList
 		{
-			public XMLCompletor(){
+			public XMLCompletor()
+			{
+				List<EditListener> lis = getList();
 				lis.add(getTagBox());
 				lis.add(getAttributeBox());
 			}
@@ -503,7 +507,9 @@ ________________________________________________________________________________
 		
 		public static class CSSCompletor extends EditListenerList
 		{
-			public CSSCompletor(){
+			public CSSCompletor()
+			{
+				List<EditListener> lis = getList();
 				lis.add(getVillBox());
 				lis.add(getFuncBox());
 				lis.add(getTypeBox());
@@ -514,7 +520,9 @@ ________________________________________________________________________________
 		
 		public static class HTMLCompletor extends EditListenerList
 		{
-			public HTMLCompletor(){
+			public HTMLCompletor()
+			{
+				List<EditListener> lis = getList();
 				lis.add(getKeyBox());
 				lis.add(getConstBox());
 				lis.add(getVillBox());
@@ -726,7 +734,7 @@ ________________________________________________________________________________
 	
 */
 	
-	public static class FinderFactory implements Factory
+	public static class FinderFactory implements ListenerFactory
 	{
 
 		@Override

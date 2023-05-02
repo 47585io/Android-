@@ -86,6 +86,13 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		setPadding(0,0,0,0);
 	}
 
+	@Override
+	public void setTextSize(float size)
+	{
+		TextSize = size;
+		super.setTextSize(size);
+	}
+	
 	public float getTextSize(){
 		return super.getTextSize()/1.65f;
 	}

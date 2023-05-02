@@ -194,7 +194,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 		super.Creat();
 		laugua = new StringBuffer();
-		WordLib=new Words(6);
+		WordLib=new Words();
 		stack = new EditDate();
 		Info = new CodeEditListenerInfo();
 		addTextChangedListener(new DefaultText());

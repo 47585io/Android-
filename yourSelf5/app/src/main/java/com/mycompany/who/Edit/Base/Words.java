@@ -6,7 +6,7 @@ import com.mycompany.who.Edit.Base.Share.Share3.*;
 public class Words
 {
 	//所有单词
-	protected CharSequence[] keyword = new String[]{
+	private CharSequence[] keyword = new String[]{
 		"goto","const",
 		"enum","assert",
 		"package","import",
@@ -26,112 +26,15 @@ public class Words
 		"register","explicit","extern",
 	};
 
-	protected CharSequence[] IknowTag= new String[]{	"*",
-		"html",
-		"body",
-		"head",
-		"title",
-		"a",
-		"img",
-		"audio",
-		"input",
-		"b",
-		"sup",
-		"i",
-		"small",
-		"font",
-		"em",
-		"strong",
-		"sub",
-		"ins",
-		"del",
-		"code",
-		"kbd",
-		"samp",
-		"var",
-		"pre",
-		"abbr",
-		"address",
-		"bdo",
-		"blockquote",
-		"cite",
-		"q",
-		"dfn",
-		"p",
-		"div",
-		"ul",
-		"li",
-		"ol",
-		"dl",
-		"dt",
-		"dd",
-		"hr",
-		"br",
-		"h1",
-		"h2",
-		"h3",
-		"h4",
-		"h5",
-		"h6",
-		"main",
-		"xmp",
-		"style",
-		"script",
-		"link",
-		"textarea",
-		"button",
-		"select",
-		"option",
-		"optgroup",
-		"picture",
-		"source",
-		"map",
-		"area",
-		"table",
-		"tr",
-		"th",
-		"td",
-		"caption",
-		"from",
-		"label",
-		"fieldset",
-		"legend",
-		"datalist",
-		"keygen",
-		"output",
-		"span",
-		"frame",
-		"iframe",
-		"object",
-		"embed",
-		"marguee",
-		"canvas",
-		"video",
-		"base",
-		"meta",
-		"details",
-		"summary",
-		"mark",
-		"noscript",
-		"figure",
-		"svg",
-		"circle",
-		"line",
-		"polyline",
-		"rect",
-		"ellipse",
-		"polygon",
-		"path",
-		"text",
-		"use",
-		"g",
-		"defs",
-		"pattern",
-		"animate",
-		"image",
-		"animateTransform",};
+	private CharSequence[] IknowTag= new String[]{	"*",
+		"html","body","head","title","a","img","audio","input","b","sup","i","small","font","em","strong","sub",
+		"ins","del","code","kbd","samp","var","pre","abbr","address","bdo","blockquote","cite","q","dfn","p","div","ul","li","ol","dl","dt","dd",
+		"hr","br","h1","h2","h3","h4","h5","h6","main","xmp","style","script","link","textarea",
+		"button","select","option","optgroup","picture","source","map","area","table","tr","th","td","caption","from","label","fieldset","legend",
+		"datalist","keygen","output","span","frame","iframe","object","embed","marguee","canvas","video","base","meta","details","summary",
+		"mark","noscript","figure","svg","circle","line","polyline","rect","ellipse","polygon","path","text","use","g","defs","pattern","animate","image","animateTransform",};
 
-	protected CharSequence[] constword = new String[]{"null","true","false","NaN","NULL"};
+	private CharSequence[] constword = new String[]{"null","true","false","NaN","NULL"};
 	public static char[] fuhao= new char[]{
 		'(',')','{','}','[',']',
 		'=',';',',','.',':',
@@ -170,12 +73,12 @@ public class Words
 		Arrays.sort(spilt);
 	}
 
-	public Words(int size){
+	public Words(){
 		Arrays.sort(keyword);
 		Arrays.sort(constword);
 		Arrays.sort(IknowTag);
-		mdates=new ArrayList<>();
-		add(size);
+		mdates=Collections.synchronizedList(new ArrayList<>());
+		add(6);
 		init();
 	}
 
@@ -201,25 +104,33 @@ public class Words
 		mdates.add(col);
 	}
 
+	public Collection<CharSequence> get(int index){
+		return mdates.get(index);
+	}
+	public void set(int index,Collection<CharSequence> words){
+		mdates.set(index,words);
+	}
 	public void clear(){
 		for(Collection t:mdates)
 		    t.clear();
 	}
-
-
+	public int size(){
+		return mdates.size();
+	}
+	
 	public Collection<CharSequence> getKeyword(){
 		return mdates.get(words_key);
 	}
 	public Collection<CharSequence> getConstword(){
 		return mdates.get(words_const);
 	}
-	public char[] getFuhao(){
+	public static char[] getFuhao(){
 		return fuhao;
 	}
-	public char[] getSpilt(){
+	public static char[] getSpilt(){
 		return spilt;
 	}
-	public Map<CharSequence,CharSequence> get_zhu(){
+	public static Map<CharSequence,CharSequence> get_zhu(){
 		return zhu_key_value;
 	}
 	public Collection<CharSequence> getLastfunc(){

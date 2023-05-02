@@ -56,20 +56,20 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1000,ExpandHeight=2000;
 	
-	protected Int EditFlag=new Int();
-    protected Int EditDrawFlag=new Int();
-	protected Int historyId;
-	protected CodeEdit.EditChroot root;
-	protected EditGroupListenerInfo Info;
+	private Int EditFlag=new Int();
+    private Int EditDrawFlag=new Int();
+	private Int historyId;
+	private CodeEdit.EditChroot root;
+	private EditGroupListenerInfo Info;
 
-	protected ScrollBar Scro;
-	protected HScrollBar hScro;
-	protected LinearLayout ForEdit;
-	protected LinearLayout ForEditSon;
-	protected LineGroup EditLines;
-	protected ListView mWindow;
+	private ScrollBar Scro;
+	private HScrollBar hScro;
+	private LinearLayout ForEdit;
+	private LinearLayout ForEditSon;
+	private LineGroup EditLines;
+	private ListView mWindow;
 
-	private EditBuilder builder;
+	private EditManipulator manipulator;
 	private List<CodeEdit> EditList;
 	private Stack<Stack<Int>> Last;
 	private Stack<Stack<Int>> Next;
@@ -118,9 +118,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		return mWindow;
 	}
 
-	public EditBuilder getEditBuilder()
+	public EditManipulator getEditManipulator()
 	{
-		return builder;
+		return manipulator;
 	}
 	public List<CodeEdit> getEditList()
 	{
@@ -140,7 +140,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	public void setPool(ThreadPoolExecutor pool)
 	{
 		this.pool = pool;
-		getEditBuilder().setPool(pool);
+		getEditManipulator().setPool(pool);
 	}
 	public void setEditFactory(EditFactory factory)
 	{
@@ -152,7 +152,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	public EditListenerInfo getInfo()
 	{
 		if(Info!=null){
-		    Info.CodeInfo=(CodeEdit.CodeEditListenerInfo) builder.getInfo();
+		    Info.CodeInfo=(CodeEdit.CodeEditListenerInfo) getEditManipulator().getInfo();
 		    Info.LineInfo=(EditLine.EditLineListenerInfo) EditLines.getInfo();
 		}
 		return Info;
@@ -163,11 +163,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		if(i instanceof EditGroupListenerInfo){
 			Info=(EditGroup.EditGroupListenerInfo) i;
 			if(Info==null){
-				builder.setInfo(null);
+				getEditManipulator().setInfo(null);
 				EditLines.setInfo(null);
 			}
 			else{
-			    builder.setInfo(Info.CodeInfo);
+			    getEditManipulator().setInfo(Info.CodeInfo);
 			    EditLines.setInfo(Info.LineInfo);
 			}
 		}
@@ -245,7 +245,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	public void trimToFather()
 	{
 		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-		size size = getEditBuilder().WAndH();
+		size size = getEditManipulator().WAndH();
 		int height=size.end + ExpandHeight;
 		int width=size.start + ExpandWidth;
 		Config_Size2. trim(getForEditSon(), width, height);
@@ -337,7 +337,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 
 			if (EditFlag.get() == 0)
 			{
-				int line = getEditBuilder().calaEditLines();
+				int line = getEditManipulator().calaEditLines();
 				EditLines. reLines(line);	
 				//最后一个编辑器单独计算行，这个太卡了，得优化一下
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
@@ -382,7 +382,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				if(CodeEdit.getLineCount(src.toString())>MaxLine){
 					//大段文本需要插入，必须使用dispatchTextBlock
 					j.set(selfIndex,editor.length());
-					getEditBuilder().dispatchTextBlock(j,src);
+					getEditManipulator().dispatchTextBlock(j,src);
 					return;
 				}
 				
@@ -431,7 +431,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		self.historyId = Edit.index;
 		//本次窗口谁请求，单词给谁
 		int offset=Edit.getSelectionStart();
-		int xlen = self.getEditBuilder().calaEditHeight(Edit.index.get());
+		int xlen = self.getEditManipulator().calaEditHeight(Edit.index.get());
 		size pos = Edit.getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
 
 		pos.start += self.EditLines.maxWidth();
@@ -491,7 +491,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		{
 			int index = ((RCodeEdit)self).index.get();
 			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
-			int EditTop=getEditBuilder().calaEditHeight(index); //编辑器较ForEdit的顶部位置
+			int EditTop=getEditManipulator().calaEditHeight(index); //编辑器较ForEdit的顶部位置
 			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
 			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
 
@@ -586,9 +586,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		    Edit E = EditList.get(0);
 		    float is = onTouchToZoom.Iszoom(p2);
 		    if(is>1)
-			    getEditBuilder().zoomBy(E.TextSize+0.25f);	
+			    getEditManipulator().zoomBy(E.TextSize+0.25f);	
 		    else if(is<1)
-			    getEditBuilder().zoomBy(E.TextSize-0.25f); 
+			    getEditManipulator().zoomBy(E.TextSize-0.25f); 
 		}
 		return true;
 	}
@@ -778,7 +778,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	
 	
 	//通过EditBuilder直接操作Edit
-	final public class EditBuilder
+	final public class EditManipulator
 	{
 		private void calaIndex(int index,size start)
 		{
@@ -1256,11 +1256,10 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 
 	}
-	/* 给予创建EditBuilder子类的机会 */
-	protected void creatEditBuilder()
+	private void creatEditManipulator()
 	{
-		if (builder == null)
-			builder = new EditBuilder();
+		if (manipulator == null)
+			manipulator = new EditManipulator();
 	}
 	
     //创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
@@ -1289,8 +1288,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 
 	}
-	/* 给予创建EditFactory子类的机会 */
-	protected void creatEditFactory()
+	private void creatEditFactory()
 	{
 		if (mfactory == null)
 			mfactory = new Factory();
@@ -1353,8 +1351,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 		
 	}
-	/* 给予创建EditInfo子类的机会 */
-	protected void creatInfo(){
+	private void creatInfo(){
 		if(Info!=null)
 			Info = new EditGroupListenerInfo();
 	}
@@ -1377,7 +1374,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			Group.Next = new Stack<>();
 			Group.root = new CodeEdit.EditChroot();
 			Group.creatInfo();
-			Group.creatEditBuilder();
+			Group.creatEditManipulator();
 			Group.creatEditFactory();
 			init2(Group,root);
 		}

@@ -12,11 +12,18 @@ import com.mycompany.who.Edit.*;
 public interface EditListenerFactory
 {
 	
-	public static interface Factory{
-		
+	public static interface ListenerFactory
+	{
 		abstract public void SwitchListener(EditText Edit,String Lua)
 		
 		abstract public EditListener ToLisrener(String Lua)
+	}
+	
+	public static interface WordsPacket
+	{
+		abstract public void SwitchWords(EditText Edit,String Lua)
+		
+		abstract public void UnPackWords(String Lua)
 	}
 	
 	abstract public void SwitchLuagua(EditText Edit,String Lua)

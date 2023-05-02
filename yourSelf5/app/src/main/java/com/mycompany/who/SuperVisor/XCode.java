@@ -192,7 +192,7 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 				{
 					PageHandler h = target.getPages();
 					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
-					Group.getEditBuilder().Uedo();
+					Group.getEditManipulator().Uedo();
 				}
 			}
 			
@@ -203,7 +203,7 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 				{
 					PageHandler h = target.getPages();
 					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
-					Group.getEditBuilder().Redo();
+					Group.getEditManipulator().Redo();
 				}
 			}
 			

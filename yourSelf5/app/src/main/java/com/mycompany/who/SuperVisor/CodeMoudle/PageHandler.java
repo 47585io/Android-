@@ -200,7 +200,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 		}
 		public void eatEditGroup(final EditGroup Group,final String name)
 		{
-			final EditGroup.EditBuilder builder = Group.getEditBuilder();	
+			final EditGroup.EditManipulator builder = Group.getEditManipulator();	
 			final Runnable run1 = new Runnable(){
 
 				@Override

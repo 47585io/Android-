@@ -12,7 +12,7 @@ import java.util.*;
 public class EditListenerList extends EditListener
 {
 	
-	protected List<EditListener> lis;
+	private List<EditListener> lis;
 
 	public EditListenerList(){
 		lis = Collections.synchronizedList(new ArrayList<>());
