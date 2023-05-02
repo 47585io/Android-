@@ -1135,14 +1135,61 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				
 				//多个编辑器的情况下
 				doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++));
-				//第一个编辑器的开头是start.end，结尾是它的长度
+				//第一个编辑器的开头是s.end，结尾是它的长度
 				for (;s.start < e.start;s.start++)
 				{
 					doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start));
 					//中间编辑器的开头是0,结尾是它的长度
 				}
 			    doOnce(0, e.end, EditList.get(e.start));
-				//最后一个编辑器的开头是0，结尾是end.end
+				//最后一个编辑器的开头是0，结尾是e.end
+			}
+			
+			public void doRecursion(int start,int end)
+			{
+				size s = new size();
+				size e = new size();
+				calaRange(start, end,s,e);
+				Recursion(s,e,s.start);
+			}
+			
+			/* 递归进行post，如果单个任务需要进行长时间前台操作必须使用 */
+			private void Recursion(final size s,final size e, final int index)
+			{
+				if(index<s.start||index>e.start){
+					return;
+					//index已经递归到了末尾
+				}
+					
+				final int start,end;
+				if(index==s.start){
+					start = s.start;
+					end = EditList.get(index).getText().length();
+					//第一个编辑器的开头是s.end，结尾是它的长度
+				}
+				else if(index==e.start){
+					start = 0;
+					end = e.end;
+					//最后一个编辑器的开头是0，结尾是e.end
+				}
+				else{
+					start = 0;
+					end = EditList.get(index).getText().length();
+					//中间编辑器的开头是0,结尾是它的长度
+				}
+				Runnable run = new Runnable(){
+
+					@Override
+					public void run()
+					{
+						doOnce(start,end,EditList.get(index));
+						Recursion(s,e,index+1);
+						//执行完doOnce后再调用Recursion去post下个index的任务
+						//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
+					}
+				};
+				post(run);
+				//递归地抛并执行任务
 			}
 			
 			public abstract void doOnce(int start, int end, CodeEdit Edit)
