@@ -497,14 +497,14 @@ Dreawr
 	}
 	
 	/* 获取准备好了的文本 */
-	public void GetString(StringBuilder HTML, SpannableStringBuilder builder)
+	public void GetString(StringBuilder HTML, SpannableStringBuilder str)
 	{	
 		if(this.HTML!=null&&HTML!=null){
 		    HTML.append(this.HTML);
 			this.HTML=null;
 		}
-		if(this.spanStr!=null&&builder!=null){
-		    builder.append(this.spanStr);
+		if(this.spanStr!=null&&str!=null){
+		    str.append(this.spanStr);
 			this.spanStr=null;
 		}
 	}
