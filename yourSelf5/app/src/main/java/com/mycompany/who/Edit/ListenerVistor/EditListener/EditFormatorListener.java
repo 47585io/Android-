@@ -37,7 +37,7 @@ public abstract class EditFormatorListener extends EditListener
 	
 	protected void Format(int start, int end, Editable editor)
 	{
-		int beforeIndex = 0;
+		int beforeIndex = start;
 		int nowIndex=start;
 		
 		nowIndex = dothing_Start(editor, nowIndex, start, end);

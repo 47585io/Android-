@@ -780,7 +780,6 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	//通过EditBuilder直接操作Edit
 	final public class EditBuilder
 	{
-		
 		private void calaIndex(int index,size start)
 		{
 			//将start转换为 起始编辑器下标+起始位置
@@ -866,7 +865,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.getText().delete(start,end);
 				}
@@ -973,7 +972,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.reSAll(start,end,want,to);
 				}
@@ -998,7 +997,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				DoForAnyOnce d= new DoForAnyOnce(){
 					
 					@Override
-					void doOnce(int start, int end, CodeEdit Edit)
+					public void doOnce(int start, int end, CodeEdit Edit)
 					{
 						Edit.getText().setSpan(start,end,span,Colors.SpanFlag);
 					}
@@ -1011,7 +1010,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 				    Edit.clearSpan(start,end,type);
 				}
@@ -1024,7 +1023,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 					Runnable run = Edit.ReDraw(start, end);
 					if(pool!=null)
@@ -1042,7 +1041,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 					Runnable run = Edit.Prepare(start,end,Edit.getText().toString());
 					if(pool!=null){
@@ -1068,7 +1067,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 				   CharSequence tmp = Edit.getText().subSequence(start,end);
 				   text.append(tmp);
@@ -1084,7 +1083,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
-				void doOnce(int start, int end, CodeEdit Edit)
+				public void doOnce(int start, int end, CodeEdit Edit)
 				{
 					 Edit.Format(start, end);
 				}
@@ -1120,7 +1119,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			return next;
 		}
 
-		abstract class DoForAnyOnce
+		public abstract class DoForAnyOnce
 		{
 			public void dofor(int start,int end)
 			{
@@ -1131,6 +1130,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				//单个编辑器的情况下
 				if(s.start==e.start){
 					doOnce(s.end,e.end,EditList.get(s.start));
+					return;
 				}
 				
 				//多个编辑器的情况下
@@ -1145,8 +1145,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				//最后一个编辑器的开头是0，结尾是end.end
 			}
 			
-			abstract void doOnce(int start, int end, CodeEdit Edit)
-		}
+			public abstract void doOnce(int start, int end, CodeEdit Edit)
+			
+		}	
 
 		public int calaEditLen()
 		{
@@ -1205,7 +1206,6 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		if (builder == null)
 			builder = new EditBuilder();
 	}
-
 	
     //创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
 	public static interface EditFactory

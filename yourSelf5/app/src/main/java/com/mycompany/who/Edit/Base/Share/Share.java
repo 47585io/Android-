@@ -25,7 +25,7 @@ public class Share
 	public static int setbitTo_0(int x,byte y){
 		return x&=~(1<<y);
 	}
-	public static boolean getbit(int x,int y){
+	public static boolean getbit(int x,byte y){
 		int tmp= ((x) >> (y)&1);
 		if(tmp==0)
 			return false;
@@ -33,6 +33,7 @@ public class Share
 			return true;
 	}
 
+	
 	public final static byte icon_key=1;
 	public final static byte icon_villber=2;
 	public final static byte icon_func=3;
