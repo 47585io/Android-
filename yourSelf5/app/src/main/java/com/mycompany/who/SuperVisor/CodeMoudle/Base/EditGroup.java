@@ -1150,6 +1150,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				size s = new size();
 				size e = new size();
 				calaRange(start, end,s,e);
+				//单个编辑器的情况下
+				if(s.start==e.start){
+					doOnce(s.end,e.end,EditList.get(s.start));
+					return;
+				}
 				Recursion(s,e,s.start);
 			}
 			
@@ -1167,9 +1172,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 					public void run()
 					{
 						int start,end;
+						CodeEdit Edit = EditList.get(index);
+						
 						if(index==s.start){
 							start = s.start;
-							end = EditList.get(index).getText().length();
+							end = Edit.getText().length();
 							//第一个编辑器的开头是s.end，结尾是它的长度
 						}
 						else if(index==e.start){
@@ -1179,11 +1186,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 						}
 						else{
 							start = 0;
-							end = EditList.get(index).getText().length();
+							end = Edit.getText().length();
 							//中间编辑器的开头是0,结尾是它的长度
 						}
 						
-						doOnce(start,end,EditList.get(index));
+						doOnce(start,end,Edit);
 						Recursion(s,e,index+1);
 						//执行完doOnce后再调用Recursion去post下个index的任务
 						//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
