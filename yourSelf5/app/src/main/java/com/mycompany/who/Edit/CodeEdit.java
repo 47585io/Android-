@@ -627,7 +627,7 @@ _________________________________________
  calc: 如何摆放窗口
  
  
- insertWord：用户选择单词后插入
+ insertWord：用户选择单词后插入，最后返回插入期间增加的字符数
 
  onInsertword：用户选择单词后插入时调度
  
@@ -701,8 +701,8 @@ _________________________________________
 	public void SearchInGroup(String src,int index,WordAdpter Adapter)
 	{
 		EditListenerList list = getCompletorList();
-		if(list != null){
-			
+		if(list != null)
+		{
 			Words WordLib = getWordLib();
 			List<EditListener> lis = list.getList();
 			final CharSequence wantBefore= getWord(src,index);

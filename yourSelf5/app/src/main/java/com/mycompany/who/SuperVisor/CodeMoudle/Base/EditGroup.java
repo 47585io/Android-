@@ -46,15 +46,15 @@ import android.view.View.OnLongClickListener;
 
 /*
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
+ 使用装饰者模式，实现了EditListenerInfoUser接口，但返回的Info其实是内部实现了EditListenerInfoUser成员的Info
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
- 实现了EditListenerInfoUser接口，可直接将我给别人
  
 */
 public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
 	
 	public static int MaxLine=2000,OnceSubLine=0;
-	public static int ExpandWidth=1000,ExpandHeight=2000;
+	public static int ExpandWidth=1500,ExpandHeight=2000;
 	
 	private Int EditFlag=new Int();
     private Int EditDrawFlag=new Int();
@@ -199,7 +199,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	}
 
 	/* 创建一个Edit */
-	final protected RCodeEdit creatAEdit(String name)
+	final private RCodeEdit creatAEdit(String name)
 	{
 		RCodeEdit Edit;
 		//每个Edit都要配置，但只能内部使用的Clip和Click让我配置给它们吧
@@ -263,7 +263,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	final class RCodeEdit extends CodeEdit
 	{
 
-		public Int index;	
+		private Int index;	
 		private boolean can;
 		//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
 
@@ -295,7 +295,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				Last.push(new Stack<Int>());  
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
-
+			
 			super.onBeforeTextChanged(str, start, count, after);
 		}
 
@@ -355,8 +355,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			{
 				boolean need = true;
 				Editable editor = getText();
-				int selfIndex = index.get();
-				
+				int selfIndex = index.get();		
 				size j = subLines(MaxLine + 1 - OnceSubLine); 
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				//MaxLine+1是指从MaxLine之后的一行的起始开始截
