@@ -26,6 +26,19 @@ public class CodeEditBuilder implements EditBuilder
 {
 
 	@Override
+	public void loadWords(EditText self)
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public void clearWords(EditText self)
+	{
+		// TODO: Implement this method
+	}
+
+
+	@Override
 	public void clearListener(EditText Edit)
 	{
 		if(Edit instanceof CodeEdit){

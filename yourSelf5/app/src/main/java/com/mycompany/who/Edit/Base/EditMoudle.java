@@ -57,7 +57,7 @@ public class EditMoudle
 	{
 		public String MakeCommand(String state)
 		
-		public void RunCommand(String command)
+		public int RunCommand(String command)
 	}
 	
 	

@@ -771,8 +771,10 @@ _________________________________________
 	}
 	
 	/* 插入单词，支持Span文本 */
-	final public void insertWord(CharSequence word, int index, int id)
+	final public int insertWord(CharSequence word, int index, int id)
 	{
+		Editable editor = getText();
+		int before = editor.length();
 		IsModify++;
 		try{
 			onInsertword(getText(),word,index,id);
@@ -781,6 +783,7 @@ _________________________________________
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
 		IsModify--;
+		return editor.length()-before;
 	}
 	protected void onInsertword(Editable editor,CharSequence word, int index, int id)
 	{
@@ -913,15 +916,17 @@ _________________________________________
 	}
 	
 	@Override
-	final public void RunCommand( String command)
+	final public int RunCommand( String command)
 	{
 		++IsModify;
 		try{
 			onRunCommand(command);
 		}catch(Exception e){
 			Log.e("onRunCommand Error",e.toString());
+			return -1;
 		}
 		--IsModify;
+		return 0;
 	}
 
 	protected void onRunCommand(final String command)
@@ -2016,7 +2021,7 @@ ________________________________________________________________________________
 	
 	public static interface myFormator extends Formator{
 
-		public void onFormat(int start, int end, Editable editor)
+		public int onFormat(int start, int end, Editable editor)
 		
 		public int onInsert(int index, Editable editor)
 	
@@ -2028,7 +2033,7 @@ ________________________________________________________________________________
 		
 		public void callOnopenWindow(View Window)
 		
-		public void insertWord(CharSequence word, int index, int flag)
+		public int insertWord(CharSequence word, int index, int flag)
 		
 		public void onInsertword(Editable editor, CharSequence word, int index, int flag)
 	
@@ -2042,9 +2047,9 @@ ________________________________________________________________________________
 	
 	public static interface myRunnar extends Runnar{
 		
-		public void onMakeCommand(String state,List<String> commands)
+		public String onMakeCommand(String state)
 		
-		public void onRunCommand(String command)
+		public int onRunCommand(String command)
 		
 	}
 	

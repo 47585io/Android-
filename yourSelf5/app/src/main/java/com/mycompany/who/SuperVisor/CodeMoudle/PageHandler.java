@@ -213,6 +213,12 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 					builder.setText(text);
 					root.set(false,false,false,false,false);
 					builder.compareChroot(root);
+					List<CodeEdit> List = Group.getEditList();
+					for(CodeEdit E:List){
+						Editable editor = E.getText();
+						E.Format(0,editor.length());
+						E.getPool().execute(E.ReDraw(0,editor.length()));
+					}
 				}
 			};
 			final Runnable run2 = new Runnable(){
@@ -220,13 +226,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				@Override
 				public void run()
 				{
-					List<CodeEdit> List = Group.getEditList();
-					for(CodeEdit E:List){
-						Editable editor = E.getText();
-					    //if(List.size()<10)
-						    //E.Format(0,editor.length());
-						E.getPool().execute(E.ReDraw(0,editor.length()));
-					}
+					
 				}
 			};
 			final Runnable run3 = new Runnable(){

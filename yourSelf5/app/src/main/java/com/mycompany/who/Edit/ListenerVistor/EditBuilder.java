@@ -33,4 +33,8 @@ public interface EditBuilder
 	
 	abstract public void clearListener(EditText Edit)
 	
+	abstract public void loadWords(EditText self)
+	
+	public void clearWords(EditText self)
+	
 }
