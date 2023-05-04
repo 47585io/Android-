@@ -937,7 +937,6 @@ _________________________________________
 			flag = onRunCommand(command);
 		}catch(Exception e){
 			Log.e("onRunCommand Error",e.toString());
-			flag = -1;
 		}
 		--IsModify;
 		return flag;
@@ -1320,6 +1319,7 @@ _________________________________________
 _________________________________________
 
 */
+
 	final public static wordIndex tryWord(CharSequence src,int index){
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
@@ -1595,6 +1595,7 @@ ________________________________________________________________________________
 __________________________________________________________________________________
 	 
 */
+
 	public final Runnable ReDraw(final int start,final int end)
 	{
 		return new Runnable(){
@@ -1658,6 +1659,7 @@ _________________________________________
 _________________________________________
 
 */
+
 	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
 		IsModify++;

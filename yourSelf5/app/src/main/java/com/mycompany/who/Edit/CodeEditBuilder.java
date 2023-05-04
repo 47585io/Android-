@@ -810,7 +810,7 @@ ________________________________________________________________________________
 			}
 
 			@Override
-			protected void onRunCommand(EditText self, String command)
+			protected int onRunCommand(EditText self, String command)
 			{
 				switch(command){
 					case "make FuncTemplete":
@@ -819,6 +819,7 @@ ________________________________________________________________________________
 					case "Run reDraw":
 						((CodeEdit)self).reDraw(0,self.getText().length());
 				}
+				return 0;
 			}
 			
 		}

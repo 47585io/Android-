@@ -37,13 +37,16 @@ public abstract class EditRunnarListener extends EditListener
 	
 	public final int LetMeRun(EditText self,String command)
 	{
+		int flag = 0;
 		try{
 			if(Enabled())
-			    Run(self,command) ;
+			    flag = Run(self,command) ;
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("RunCommand Error", toString()+" "+e.toString());
+			flag = -1;
 		}
+		return flag;
 	}
 	
 	protected int Run(EditText self,String command){
