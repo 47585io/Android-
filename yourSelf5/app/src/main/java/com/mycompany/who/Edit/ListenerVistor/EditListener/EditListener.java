@@ -9,6 +9,8 @@ public abstract class EditListener extends Object
 {
 	private boolean Enabled;
 	private String name;
+	private EditText self;
+	//可以不以参数传递，而是设置self，但有可能为null
 	
 	public EditListener(){
 		name="@default";
@@ -38,7 +40,12 @@ public abstract class EditListener extends Object
 	public String getName(){
 		return name;
 	}
-	
+	public void setEdit(EditText t){
+		self = t;
+	}
+	public EditText getEdit(){
+		return self;
+	}
 	
 	/* 
 	   解析参数比较麻烦，传参也很难，已废弃   

@@ -1,6 +1,7 @@
 package com.mycompany.who.Edit;
 
 import android.graphics.*;
+import android.os.*;
 import android.text.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.*;
@@ -10,10 +11,10 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.DoAnyThing;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.*;
+import java.lang.reflect.*;
 import java.util.*;
-import android.util.*;
-import android.os.*;
+import com.mycompany.who.Edit.Base.Share.Share4.*;
 
 
 /*
@@ -795,8 +796,10 @@ ________________________________________________________________________________
 		public static class JavaRunnar extends EditRunnarListener
 		{
 			
-			public static String FuncTemplete = "public void func(){}";
-
+			private Shell.Runnar run = new myRunnar();
+			private Shell.Getter get = new myGet();
+			private Shell sh = new Shell(run,get);
+			
 			@Override
 			protected String onMakeCommand(EditText self, String state)
 			{
@@ -812,18 +815,218 @@ ________________________________________________________________________________
 			@Override
 			protected int onRunCommand(EditText self, String command)
 			{
-				switch(command){
-					case "make FuncTemplete":
-						self.getText().insert(self.getSelectionEnd(),FuncTemplete);
-						break;
-					case "Run reDraw":
-						((CodeEdit)self).reDraw(0,self.getText().length());
+				setEdit(self);
+				int flag = 0;
+				try
+				{
+					flag = sh.Run(command);
 				}
-				return 0;
+				catch (IllegalAccessException e)
+				{}
+				catch (InvocationTargetException e)
+				{}
+				catch (SecurityException e)
+				{}
+				catch (IllegalArgumentException e)
+				{}
+				catch (NoSuchMethodException e)
+				{}
+				return flag;
+			}
+
+			class myRunnar implements Shell.Runnar
+			{
+				public int make(Object[] args)
+				{
+					int flag = 0;
+				    String tmp = (String) args[1];
+					switch(tmp){
+						case "FuncTemplete":
+							flag = makeFuncTemplete();
+					}
+					return flag;
+				}
+				public int run(Object[] args) throws IllegalAccessException, InvocationTargetException, IllegalArgumentException
+				{
+					String tmp = (String) args[1];
+					Object[] args2 = new Object[args.length-2];
+					for(int i=0;i<args2.length;++i){
+						args2[i]=args[i+2];
+					}
+					Method func = Getter.getFunc(tmp,getEdit(),args2);
+					return func.invoke(getEdit(),args2);
+				}
+				
+				public int makeFuncTemplete(){
+					String FuncTemplete = "";
+					EditText self = getEdit();
+					self.getText().insert(self.getSelectionEnd(),FuncTemplete);
+					return 0;
+				}
+				
+			}
+			
+			class myGet implements Shell.Getter
+			{
+
+				@Override
+				public String[] spiltArgs(String com)
+				{
+					return com.split(" ");
+				}
+
+				@Override
+				public Object[] decodeArags(String[] args)
+				{
+					Object[] objs = new Object[args.length];
+					for(int i=0;i<args.length;++i){
+						Object tmp = args[i];
+						if(String_Splitor.IsNumber(tmp)){
+							tmp = Integer.valueOf(tmp);
+						}
+						objs[i]=tmp;
+					}
+					return objs;
+				}
 			}
 			
 		}
 		
+		public static class Shell
+		{
+			private Runnar block;
+			private Getter getter;
+			private ShellListener listener;
+
+			public Shell(Runnar block,Getter getter){
+				this.block=block;
+				this.getter=getter;
+			}
+
+			public int Run(String com) throws SecurityException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, IllegalArgumentException
+			{
+				//解析字符串，并把参数交给函数
+				int flag=0;
+				String[] args=getter.spiltArgs(com);
+				if(listener!=null)	
+					listener.onShellSpiltAfter(args,com);
+				if(args.length==0)
+					return 0;
+
+				Method func;
+				Object[] objs;
+				func = block.getClass().getMethod(args[0],Object[].class);
+				args[0]="";
+				objs = getter.decodeArags( args);
+				if(listener!=null)	
+					listener.onShellDecodeAfter(args,com);
+
+				if(listener!=null)	
+					listener.onShellBeforeRunning(func,objs);
+				flag = func.invoke(block, objs);
+				return flag;
+			}
+
+			public void setshellListener(ShellListener li){
+				listener=li;
+			}
+
+
+			public static interface Getter
+			{
+				public abstract String[] spiltArgs(String com)
+
+				public abstract Object[] decodeArags(String[] args)
+			}
+
+			public static interface Runnar{}
+			
+
+			public static interface ShellListener
+			{
+				public abstract void onShellBeforeRunning(Method func,Object[] args);
+
+				public abstract void onShellSpiltAfter(String[] args,String src);
+
+				public abstract void onShellDecodeAfter(Object[] args,String src);
+			}
+
+		}
+
+		public static class ShellStack
+		{
+			private Shell bash;
+			private HashMap<String,String> Common;
+			private Stack<String> Uedo;
+			private Stack<String> Redo;
+			private boolean isUedo=false;
+
+			public ShellStack(Shell ba){
+				bash=ba;
+				bash.setshellListener(new sl());
+				Common=new HashMap<>();
+				Uedo=new Stack<>();
+				Redo=new Stack<>();
+			}
+
+			public Shell getShell(){
+				return bash;
+			}
+			public void putFunc(String key,String value){
+				Common.put(key,value);
+			}
+			public int Run(String com) throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+				return bash.Run(com);
+			}
+
+			public void Uedo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+				isUedo=true;
+				String com = Uedo.pop();
+
+				String src = com.substring(0,com.indexOf(' '));
+				String other= getOther(src);
+				if(other==null)
+					return;
+				Redo.push(com);
+
+				com= com.replace(src,other);
+				bash.Run(com);
+				isUedo=false;
+			}
+			public void Redo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+				bash.Run(Redo.pop());
+			}
+
+			public String getOther(String name){
+				for(String key:Common.keySet()){
+					String value=Common.get(key);
+					if(name.equals(key))
+						return value;
+					else if(name.equals(value))
+						return key;
+				}
+				return null;
+			}
+
+			class sl implements Shell. ShellListener
+			{
+
+				@Override
+				public void onShellDecodeAfter(Object[] args, String src){}
+
+				@Override
+				public void onShellBeforeRunning(Method func, Object[] args){}
+
+				@Override
+				public void onShellSpiltAfter(String[] args,String src)
+				{
+					if(isUedo)
+						return;
+					Uedo.push(src);
+				}
+
+			}
+		}
 	}
 
 	

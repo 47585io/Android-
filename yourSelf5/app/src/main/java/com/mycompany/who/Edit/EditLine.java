@@ -195,6 +195,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	{
 		EditListenerList l = getLineCheckerList();
 		if(l!=null){
+			l.setEdit(this);
 			List<EditListener> lis = l.getList();
 			for(EditListener li:lis){
 				if(li instanceof EditLineChangeListener){

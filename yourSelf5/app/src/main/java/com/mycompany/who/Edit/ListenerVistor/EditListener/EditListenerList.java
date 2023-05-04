@@ -1,5 +1,6 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import java.util.*;
+import android.widget.*;
 
 
 /* 
@@ -53,6 +54,15 @@ public class EditListenerList extends EditListener
 			li.setName(name);
 		}
 		super.setName(name);
+	}
+
+	@Override
+	public void setEdit(EditText t)
+	{
+		for(EditListener li:lis){
+			li.setEdit(t);
+		}
+		super.setEdit(t);
 	}
 	
 	/*

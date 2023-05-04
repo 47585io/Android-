@@ -1,7 +1,7 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
-import android.widget.*;
+
 import android.util.*;
-import java.util.*;
+import android.widget.*;
 
 
 /* 
@@ -51,18 +51,6 @@ public abstract class EditRunnarListener extends EditListener
 	
 	protected int Run(EditText self,String command){
 		return onRunCommand(self,command);
-	}
-	
-	
-	public String[] spiltCommand(String command){
-		return command.split(":");
-	}
-	
-	protected String[] spiltArgs(String com){
-		return com.split(" ");
-	}
-	protected List<Object> decodeArags(EditText self,String[] args){
-		return null;
 	}
 	
 }

@@ -463,8 +463,10 @@ Dreawr
 	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
 	{
 		EditDrawerListener li = getDrawer();
-		if(li != null)
+		if(li != null){
+			//无法保证线程安全，就不设置Edit了
 			li.LetMeDraw(start, end, nodes, editor);
+		}
 	}
 	
 	/* 准备指定文本的颜料 */
@@ -583,8 +585,9 @@ _________________________________________
 	protected void onFormat(int start, int end, Editable editor)
 	{	
 		EditFormatorListener li = getFormator();
-		if(li != null)
+		if(li != null){
 			li.LetMeFormat(start, end, editor);
+		}
 	}
 	
     /* 在指定位置插入后续字符 */
@@ -612,7 +615,7 @@ _________________________________________
 		EditListenerList list = getInsertorList();
 		if(list != null){
 			int selection = 0;
-		    List<EditListener> lis = list.getList();
+			List<EditListener> lis = list.getList();
 			for(EditListener li:lis){
 		        if(li instanceof EditInsertorListener){
 				    selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
