@@ -70,6 +70,7 @@ public abstract class onTouchToZoom implements OnTouchListener
 		return len/hlen;
 	}
 	
+	/* 未预料的缩放，在多个手指时下标会出现异常 */
 	public static float Iszoom(MotionEvent p2)
 	{
 		float hp1x,hp1y,hp2x,hp2y;

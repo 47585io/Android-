@@ -28,6 +28,7 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	private boolean canSave=true;
 	private boolean canScroll=true;
 	private boolean inter = false;
+	private boolean iszoom = false;
 	
 	public static final int Left = 0;
 	public static final int Right = 1;
@@ -97,7 +98,13 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if(ev.getPointerCount()==2){
+		if(ev.getPointerCount()==2||(ev.getActionMasked()==ev.ACTION_UP&&iszoom))
+		{
+			//是否缩放过
+			iszoom=true;
+			if(ev.getActionMasked()==ev.ACTION_UP)
+				iszoom=false;
+				//手指抬起来了，下次没有缩放
 			if(mzoom!=null)
 				return mzoom.onTouch(this,ev);
 			return true;
@@ -135,6 +142,10 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	@Override
 	public void setTouchInter(boolean can){
 		inter = can;
+	}
+	@Override
+	public void setzoomListener(onTouchToZoom zoom){
+		mzoom = zoom;
 	}
 	
 	public void goback()

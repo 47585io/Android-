@@ -24,6 +24,8 @@ public interface Scroll{
 
 	public void setTouchInter(boolean can)
 	
+	public void setzoomListener(onTouchToZoom zoom)
+	
 	public void goback()
 
 	public void gonext()

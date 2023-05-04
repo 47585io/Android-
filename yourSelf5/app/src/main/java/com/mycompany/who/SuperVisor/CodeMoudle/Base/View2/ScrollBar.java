@@ -27,7 +27,8 @@ public class ScrollBar extends ScrollView implements Scroll
 	private boolean canSave = true;
 	private boolean canScroll = true;
 	private boolean inter = false;
-
+	private boolean iszoom = false;
+	
 	public static final int Top = 0;
 	public static final int Bottom = 1;
 	public static final int DontKonw = -1;
@@ -96,7 +97,11 @@ public class ScrollBar extends ScrollView implements Scroll
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
-		if(ev.getPointerCount()==2){
+		if(ev.getPointerCount()==2||(ev.getActionMasked()==ev.ACTION_UP&&iszoom))
+		{
+			iszoom=true;
+			if(ev.getActionMasked()==ev.ACTION_UP)
+				iszoom=false;
 			if(mzoom!=null)
 				return mzoom.onTouch(this,ev);
 			return true;
@@ -132,6 +137,10 @@ public class ScrollBar extends ScrollView implements Scroll
 	@Override
 	public void setTouchInter(boolean can){
 		inter = can;
+	}
+	@Override
+	public void setzoomListener(onTouchToZoom zoom){
+		mzoom = zoom;
 	}
 	
 	public void goback()

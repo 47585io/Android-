@@ -58,6 +58,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	
 	private Int EditFlag=new Int();
     private Int EditDrawFlag=new Int();
+	private Int ShareFlag=new Int();
 	private Int historyId;
 	private CodeEdit.EditChroot root;
 	private EditGroupListenerInfo Info;
@@ -280,6 +281,46 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			index = new Int();
 		}
 
+		@Override
+		public void setInfo(EditListenerInfo i)
+		{
+			//为任意一个Edit设置Info，都会为整组的Edit设置
+			if(ShareFlag.get()==0){
+				ShareFlag.add();
+				for(CodeEdit E:EditList){
+					E.setInfo(i);
+				}
+				ShareFlag.less();
+			}
+			super.setInfo(i);
+		}
+
+		@Override
+		public void setWordLib(Words WordLib)
+		{
+			if(ShareFlag.get()==0){
+				ShareFlag.add();
+				for(CodeEdit E:EditList){
+					E.setWordLib(WordLib);
+				}
+				ShareFlag.less();
+			}
+			super.setWordLib(WordLib);
+		}
+
+		@Override
+		public void setEditBuilder(EditBuilder b)
+		{
+			if(ShareFlag.get()==0){
+				ShareFlag.add();
+				for(CodeEdit E:EditList){
+					E.setEditBuilder(b);
+				}
+				ShareFlag.less();
+			}
+			super.setEditBuilder(b);
+		}
+		
 		@Override
 		protected void onPutUR(EditDate.Token token)
 		{
@@ -816,7 +857,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 		
 		/*  只管分发文本块，不管怎样，大段文本块都可给我  */
-		void dispatchTextBlock(size s,CharSequence str)
+		private void dispatchTextBlock(size s,CharSequence str)
 		{
 			SpannableStringBuilder text = new SpannableStringBuilder(str);
 			int index = s.start;
@@ -907,12 +948,10 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		  一组的Edit的Info成员却是指针
 		*/
 		public void setInfo(EditListenerInfo Info){
-			for(CodeEdit E:EditList)
-			    E.setInfo(Info);
+			EditList.get(0).setInfo(Info);
 		}
 		public void setEditBuilder(EditBuilder f){
-			for(CodeEdit E:EditList)
-			    E.setEditBuilder(f);
+			EditList.get(0).setEditBuilder(f);
 		}
 		public void setWindow(ListView Window){
 			for(CodeEdit E:EditList)
@@ -923,8 +962,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			    E.setPool(pool);
 		}
 		public void setWordLib(Words Lib){
-			for(CodeEdit E:EditList)  
-			    E.setWordLib(Lib);
+			EditList.get(0).setWordLib(Lib);
 		}
 		
 		public String getLuagua(){
@@ -954,10 +992,6 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		public void zoomByScro(float x){
 			getScro().setScaleY(x);
 			getHscro().setScaleX(x);
-		}
-		public void zoomBy3(){
-			getScro().setScaleY(1);
-			getHscro().setScaleX(1);
 		}
 		
 		public void IsModify(boolean is){

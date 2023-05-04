@@ -47,6 +47,7 @@ public abstract class OnTouchToMove implements OnTouchListener
 			    nowX=p2.getX(index);
 			    nowY=p2.getY(index);
 			}
+			//手指上升了，就不能移动了
 		}
 	}
 	public void save(MotionEvent p2)
