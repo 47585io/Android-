@@ -32,7 +32,6 @@ public interface Scroll{
 	
 	public int isScrollToEdge()
 	
-	
 	public static class NoThingScroll extends OnTouchToMove
 	{
 

@@ -23,6 +23,7 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	private Stack<Integer> historyL;
 	private Stack<Integer> historyN;
 	private OnTouchToMove mtouch;
+	private onTouchToZoom mzoom;
 	
 	private boolean canSave=true;
 	private boolean canScroll=true;
@@ -55,6 +56,13 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	{
 		if (inter)
 		{
+			if(ev.getPointerCount()==2){
+				requestDisallowInterceptTouchEvent(false);
+				getParent().requestDisallowInterceptTouchEvent(true);
+				return super.dispatchTouchEvent(ev);
+				//缩放手势，父元素一定不能拦截我，我一定拦截子元素
+			}
+			
 			int pos = isScrollToEdge();
 			mtouch.calc(ev);
 			float x = mtouch.MoveX(ev);
@@ -75,6 +83,10 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev)
 	{
+		if(ev.getPointerCount()==2){
+			return true;
+			//缩放手势，拦截事件进行缩放
+		}
 		if(!canScroll){
 			return false;
 			//如果不可滚动，则不拦截事件，给子元素
@@ -85,6 +97,12 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 	@Override
 	public boolean onTouchEvent(MotionEvent ev)
 	{
+		if(ev.getPointerCount()==2){
+			if(mzoom!=null)
+				return mzoom.onTouch(this,ev);
+			return true;
+			//缩放手势，消耗事件缩放
+		}
 		if (canScroll){
 			if (ev.getAction() == MotionEvent.ACTION_DOWN && canSave){
 				historyL.push(getScrollX());

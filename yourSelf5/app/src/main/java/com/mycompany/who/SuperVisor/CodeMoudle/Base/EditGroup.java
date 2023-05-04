@@ -581,13 +581,22 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	{	
 	    super.onTouchEvent(p2);
 		//事件拦截到自己手里，开始缩放，并消耗事件
-		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0){	
-		    Edit E = EditList.get(0);
+		if(p2.getPointerCount()==2&&p2.getHistorySize()!=0)
+		{	
+		    //先演示缩放效果，速度更快更流畅
 		    float is = onTouchToZoom.Iszoom(p2);
+			float scale = hScro.getScaleX();
 		    if(is>1)
-			    getEditManipulator().zoomBy(E.TextSize+0.25f);	
+			    getEditManipulator().zoomByScro(scale+0.1f);	
 		    else if(is<1)
-			    getEditManipulator().zoomBy(E.TextSize-0.25f); 
+			    getEditManipulator().zoomByScro(scale-0.1f); 
+		}
+		else if(p2.getActionMasked()==MotionEvent.ACTION_UP)
+		{
+			//最后手指抬起来，把scale还原以避免坐标系缩放，并将TextSize设置为真实放大倍数
+			float scale = getHscro().getScaleX();
+			getEditManipulator().zoomByEdit(scale);
+			getEditManipulator().zoomByScro(1);
 		}
 		return true;
 	}
@@ -716,7 +725,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 
 		@Override
-		public void onLineChange(int start, int before, int after){
+		public void onLineChange(int start, int before, int after)
+		{
+			//行变化时，调整大小
 			CodeBlock.Config_Size2.trim(this,maxWidth(),maxHeight());
 		}
 
@@ -762,8 +773,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			LineList.get(0).clearListener();
 		}
 
-		public void zoomBy(){
-
+		public void zoomBy(float x){
+			for(EditLine line:LineList){
+				line.zoomBy(x);
+			}
+			onLineChange(lineCount,0,0);
 		}
 		
 		public float getTextSize(){
@@ -930,11 +944,20 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			for(CodeEdit E:EditList)
 			    E.lockSelf(is);
 		}
-		public void zoomBy(float x){
+		public void zoomByEdit(float x){
 			for(CodeEdit E: EditList){
 				E.zoomBy(x);
 			}
+			EditLines.zoomBy(x);
 			trimToFather();
+		}
+		public void zoomByScro(float x){
+			getScro().setScaleY(x);
+			getHscro().setScaleX(x);
+		}
+		public void zoomBy3(){
+			getScro().setScaleY(1);
+			getHscro().setScaleX(1);
 		}
 		
 		public void IsModify(boolean is){

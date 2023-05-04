@@ -89,11 +89,13 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 	@Override
 	public void setTextSize(float size)
 	{
+		//记录文本原始大小
 		TextSize = size;
 		super.setTextSize(size);
 	}
 	
 	public float getTextSize(){
+		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里/1.65f后就是等宽字符大小
 		return super.getTextSize()/1.65f;
 	}
 
@@ -124,6 +126,7 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		}
 		width=(width>editor.length()-last)?width:editor.length()-last;
 		return (int)(width*getTextSize());
+		//仍应乘以getTextSize()，以适配显示器
 	}
     public size WAndH()
 	{
@@ -225,8 +228,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 
 	public void zoomBy(float size)
 	{
-		setTextSize(size);
-		TextSize=size;
+		TextSize*=size;
+		setTextSize(TextSize);
 	}
 
 }
