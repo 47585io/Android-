@@ -101,8 +101,6 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	private Words WordLib;
 	private EditDate stack;
-	protected static EPool2 Ep;
-	protected static EPool3 Epp;
 	private EditBuilder builder;
 	private ThreadPoolExecutor pool;
 	private CodeEditListenerInfo Info;
@@ -131,6 +129,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	private String HTML;
 	private Spanned spanStr;
 
+	static EPool2 Ep;
+	static EPool3 Epp;
+	
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
@@ -421,7 +422,7 @@ Dreawr
 			@Override
 			public void run()
 			{
-				IsModify++;
+				++IsModify;
 				isDraw = true; //此时会修改文本，isModify			
 				long last=0,now=0;
 				last = System.currentTimeMillis();
@@ -433,7 +434,7 @@ Dreawr
 				}
 
 				isDraw = false;
-				IsModify--;
+				--IsModify;
 				Ep.stop(); //Draw完后申请回收nodes		
 				now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
@@ -509,6 +510,19 @@ Dreawr
 		}
 	}
 	
+	public void setHTML(String HTML){
+		this. HTML=HTML;
+	}
+	public void setSpanStr(Spanned str){
+		this. spanStr=str;
+	}
+	public String getHTML(){
+		return HTML;
+	}
+	public Spanned getsSpanStr(){
+		return spanStr;
+	}
+	
 	
 /*
 _________________________________________
@@ -547,7 +561,7 @@ _________________________________________
 		//为了安全，禁止重写
 		Editable editor = getText();
 		int before = editor.length();
-		IsModify++;
+		++IsModify;
 		isFormat = true; 	
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
@@ -560,7 +574,7 @@ _________________________________________
 		}
 		
 		isFormat = false;
-		IsModify--;
+		--IsModify;
 		now = System.currentTimeMillis();
 		Log.w("After Format Replacer","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms," +"The time maybe too Loog！");
 	    return editor.length()-before;
@@ -578,7 +592,7 @@ _________________________________________
 	{
 		Editable editor = getText();
 		int before = editor.length();
-		IsModify++;
+		++IsModify;
 		isFormat = true;
 		
 		try{
@@ -589,7 +603,7 @@ _________________________________________
 		}
 		
 		isFormat = false;
-		IsModify--;
+		--IsModify;
 		return editor.length()-before;
 	}	
 
@@ -775,14 +789,14 @@ _________________________________________
 	{
 		Editable editor = getText();
 		int before = editor.length();
-		IsModify++;
+		++IsModify;
 		try{
 			onInsertword(getText(),word,index,id);
 		}
 		catch (Exception e){
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
-		IsModify--;
+		--IsModify;
 		return editor.length()-before;
 	}
 	protected void onInsertword(Editable editor,CharSequence word, int index, int id)
@@ -833,18 +847,17 @@ _________________________________________
 		//获取当前控件的画笔
         TextPaint paint = getPaint();
 		size pos = getCursorPos(getSelectionEnd());
+		++IsModify;
 		try
 		{
-			++IsModify;
 		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
 			super.onDraw(canvas);
 			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
-			--IsModify;
 		}
-		catch (Exception e)
-		{
+		catch (Exception e){
 			Log.e("OnDraw Error", e.toString());
 		}
+		--IsModify;
     }
 	
 	protected void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
@@ -918,22 +931,25 @@ _________________________________________
 	@Override
 	final public int RunCommand( String command)
 	{
+		int flag = 0;
 		++IsModify;
 		try{
-			onRunCommand(command);
+			flag = onRunCommand(command);
 		}catch(Exception e){
 			Log.e("onRunCommand Error",e.toString());
-			return -1;
+			flag = -1;
 		}
 		--IsModify;
-		return 0;
+		return flag;
 	}
 
-	protected void onRunCommand(final String command)
+	protected int onRunCommand(final String command)
 	{
+		int flag = 0;
 		EditRunnarListener li = getRunnar();
 		if(li!=null)
-			li.LetMeRun(this,command);
+			flag = li.LetMeRun(this,command);
+		return flag;
 	}
 	
 	
@@ -960,8 +976,6 @@ _________________________________________
 
     final protected int Uedo_(EditDate.Token token)
 	{
-		IsModify++;
-		isUR = true;
 		int endSelection=0;
 		if (token != null)
 		{
@@ -994,15 +1008,11 @@ _________________________________________
 				endSelection = token.start + token.src.length();
 			}
 		}
-		isUR = false;
-		IsModify--;
 		return endSelection;
 	}
 
 	final protected int Redo_(EditDate.Token token)
 	{
-		IsModify++;
-		isUR = true;
 		int endSelection=0;
 		if (token != null)
 		{
@@ -1034,17 +1044,16 @@ _________________________________________
 				endSelection = token.start + token.src.length();
 		    }
 		}
-		isUR = false;
-		IsModify--;
 		return endSelection;
 	}
 
 	public void Uedo()
 	{
-		//批量Uedo
 		if (stack == null||stack.Usize()==0)
 			return;
 
+		++IsModify;
+		isUR = true;
 		EditDate.Token token = null;	
 		int endSelection;
 		try
@@ -1054,17 +1063,19 @@ _________________________________________
 			setSelection(endSelection);
 			//设置光标位置
 		}
-		catch (Exception e)
-		{
+		catch (Exception e){
 			Log.e("Uedo Error",token.toString()+" "+e.toString());
 		}
+		isUR = false;
+		--IsModify;
 	}
 	public void Redo()
 	{
-		//批量Redo
 		if (stack == null||stack.Rsize()==0)
 			return;
 
+		++IsModify;
+		isUR = true;
 		EditDate.Token token = null;
 		int endSelection;
 		try
@@ -1073,10 +1084,11 @@ _________________________________________
 			endSelection = Redo_(token);
 			setSelection(endSelection);	
 		}
-		catch (Exception e)
-		{
+		catch (Exception e){
 			Log.e("Redo Error",token.toString()+" "+e.toString());
 		}
+		isUR = false;
+		--IsModify;
 	}
 	
 	protected void onGetUR(EditDate.Token token){}
@@ -1231,7 +1243,7 @@ _________________________________________
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
 		
-		if(IsModify!=0||IsModify2)
+		if(IsModify())
 			return;
 		//如果正被修改，不允许再次修改	
 		
@@ -1259,7 +1271,7 @@ _________________________________________
 			if(Enabled_Drawer&&!IsDraw()){
 				//是否启用自动染色		
 				String src = text.toString();
-			    wordIndex tmp=new wordIndex(0,0,(byte)0);
+			    wordIndex tmp=new wordIndex();
 			    tmp.start=tryLine_Start(src,start);
 			    tmp.end=tryLine_End(src,start+lengthAfter);
 			  	

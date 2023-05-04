@@ -15,7 +15,7 @@ public abstract class EditRunnarListener extends EditListener
 	
 	abstract protected String onMakeCommand(EditText self,String state)
 	//制作命令
-	abstract protected void onRunCommand(EditText self,String command)
+	abstract protected int onRunCommand(EditText self,String command)
 	//执行命令
 	
 	public final String LetMeMake(EditText self,String state)
@@ -35,7 +35,7 @@ public abstract class EditRunnarListener extends EditListener
 		return onMakeCommand(self,state);
 	}
 	
-	public final void LetMeRun(EditText self,String command)
+	public final int LetMeRun(EditText self,String command)
 	{
 		try{
 			if(Enabled())
@@ -46,8 +46,8 @@ public abstract class EditRunnarListener extends EditListener
 		}
 	}
 	
-	protected void Run(EditText self,String command){
-		onRunCommand(self,command);
+	protected int Run(EditText self,String command){
+		return onRunCommand(self,command);
 	}
 	
 	

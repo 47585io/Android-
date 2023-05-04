@@ -49,6 +49,7 @@ public class CodeEditBuilder implements EditBuilder
 		    E.setInsertorList(null);
 		    E.setCompletorList(null);
 		    E.setCanvaserList(null);
+			E.setRunnar(null);
 		}
 	}
 
@@ -74,6 +75,7 @@ public class CodeEditBuilder implements EditBuilder
 			getInsertorFactory().SwitchListener(self,Lua);
 			getCompletorBox().SwitchListener(self,Lua);
 			getCanvaserFactory().SwitchListener(self,Lua);
+			getRunnarFactory().SwitchListener(self,Lua);
 		}
 	}
 
@@ -93,7 +95,7 @@ ________________________________________________________________________________
 		
 		public static EditListener getDefaultDrawer()
 		{
-			return new DefaultDrawerListener();
+			return new DefaultDrawer();
 		}
 		
 		public EditListener ToLisrener(String Lua)
@@ -107,7 +109,7 @@ ________________________________________________________________________________
 		}
 		
 
-		public static class DefaultDrawerListener extends EditDrawerListener
+		public static class DefaultDrawer extends EditDrawerListener
 		{	
 			@Override
 			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
@@ -225,7 +227,7 @@ ________________________________________________________________________________
 		{
 			if(Lua.equals("java")||Lua.equals("css")||Lua.equals("html"))
 				return getJavaFormator();
-			return null;
+			return getDefultFormator();
 		}
 
 		@Override
@@ -236,11 +238,38 @@ ________________________________________________________________________________
 
 		public static EditListener getJavaFormator()
 		{
-			return new DefaultFormatorListener();
+			return new JavaFormator();
+		}
+		public static EditListener getDefultFormator()
+		{
+			return new DefultFormator();
+		}
+		
+		public static class DefultFormator extends EditFormatorListener
+		{
+
+			@Override
+			protected int dothing_Run(Editable editor, int nowIndex)
+			{
+				return 0;
+			}
+
+			@Override
+			protected int dothing_Start(Editable editor, int nowIndex, int start, int end)
+			{
+				reSAll(start,end,"\t", "    ",editor);
+				return -1;
+			}
+
+			@Override
+			protected int dothing_End(Editable editor, int beforeIndex, int start, int end)
+			{
+				// TODO: Implement this method
+				return 0;
+			}
 		}
 
-
-		public static class DefaultFormatorListener extends EditFormatorListener
+		public static class JavaFormator extends EditFormatorListener
 		{
 			
 			public String START="{";
@@ -363,14 +392,14 @@ ________________________________________________________________________________
 
 		public static EditListener getDefultInsertor()
 		{
-			return new DefaultInsertorListener();
+			return new DefaultInsertor();
 		}
 		public static EditListener getXMLInsertor()
 		{
-			return new XMLInsertorListener();
+			return new XMLInsertor();
 		}
 
-		public static class DefaultInsertorListener extends EditInsertorListener
+		public static class DefaultInsertor extends EditInsertorListener
 		{
 			@Override
 			protected int dothing_insert(Editable editor, int nowIndex, int len)
@@ -412,7 +441,7 @@ ________________________________________________________________________________
 			}
 		}
 		
-		public static class XMLInsertorListener extends DefaultInsertorListener
+		public static class XMLInsertor extends DefaultInsertor
 		{
 
 			@Override
@@ -723,6 +752,75 @@ ________________________________________________________________________________
 					CodeEdit.addSomeWord(words, adapter,Share.getWordIcon(Share.icon_default));
 				}
 			};
+		}
+		
+	}
+	
+	
+/*
+___________________________________________________________________________________________________________________________
+
+RunnarFactory
+
+    -> JavaRunnar
+
+___________________________________________________________________________________________________________________________
+
+*/
+
+    public static class RunnarFactory implements ListenerFactory
+	{
+
+		@Override
+		public void SwitchListener(EditText Edit, String Lua)
+		{
+			CodeEdit E = (CodeEdit) Edit;
+			E.setRunnar((EditRunnarListener)ToLisrener(Lua));
+		}
+
+		@Override
+		public EditListener ToLisrener(String Lua)
+		{
+			switch(Lua){
+				case "java":
+					return new JavaRunnar();
+			}
+			return null;
+		}
+		
+		public static EditListener getJavaRunnar(){
+			return new JavaRunnar();
+		}
+		
+		public static class JavaRunnar extends EditRunnarListener
+		{
+			
+			public static String FuncTemplete = "public void func(){}";
+
+			@Override
+			protected String onMakeCommand(EditText self, String state)
+			{
+				StringBuilder command = new StringBuilder();
+				switch(state){
+					case "longClick":
+						
+					case "click":
+				}
+				return command.toString();
+			}
+
+			@Override
+			protected void onRunCommand(EditText self, String command)
+			{
+				switch(command){
+					case "make FuncTemplete":
+						self.getText().insert(self.getSelectionEnd(),FuncTemplete);
+						break;
+					case "Run reDraw":
+						((CodeEdit)self).reDraw(0,self.getText().length());
+				}
+			}
+			
 		}
 		
 	}
@@ -1139,6 +1237,10 @@ ________________________________________________________________________________
 	public static CanvaserFactory getCanvaserFactory()
 	{
 		return new CanvaserFactory();
+	}
+	public static RunnarFactory getRunnarFactory()
+	{
+		return new RunnarFactory();
 	}
 
 

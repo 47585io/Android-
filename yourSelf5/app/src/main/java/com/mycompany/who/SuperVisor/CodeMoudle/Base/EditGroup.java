@@ -17,6 +17,7 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.CodeEdit.*;
+import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.*;
@@ -493,7 +494,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		self.historyId = Edit.index;
 		//本次窗口谁请求，单词给谁
 		int offset=Edit.getSelectionStart();
-		int xlen = self.getEditManipulator().calaEditHeight(Edit.index.get());
+		int xlen = self.getEditManipulator().calaEditTop(Edit.index.get());
 		size pos = Edit.getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
 
 		pos.start += self.EditLines.maxWidth();
@@ -553,7 +554,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			int index = ((RCodeEdit)self).index.get();
 			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
-			int EditTop=getEditManipulator().calaEditHeight(index); //编辑器较ForEdit的顶部位置
+			int EditTop=getEditManipulator().calaEditTop(index); //编辑器较ForEdit的顶部位置
 			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
 			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
 
@@ -1167,6 +1168,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			};
 			d.dofor(start,end);
 		}
+		
+		public String MakeCommand(String state){
+			return getFocusEdit().MakeCommand(state);
+		}
+		public void RunCommand(String command){
+			getFocusEdit().RunCommand(command);
+		}
 
 		public Stack<Int> Uedo()
 		{
@@ -1296,14 +1304,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				line += e.getLineCount();
 			return line;
 		}
-		public int calaEditHeight(int index)
+		public int calaEditTop(int index)
 		{
 			int height=0;
 			for (int i=0;i < index;++i)
 				height += EditList.get(i).maxHeight();
 			return height;
 		}
-		public int calaEditWidth()
+		public int maxWidth()
 		{
 			int width=0;
 			for (Edit e:EditList)
@@ -1313,6 +1321,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 					width = w;
 			}
 			return width;
+		}
+		public int maxHeight()
+		{
+			int height=0;
+			for (Edit e:EditList){
+				height+=e.maxHeight();
+			}
+			return height;
 		}
 		public size WAndH()
 		{
