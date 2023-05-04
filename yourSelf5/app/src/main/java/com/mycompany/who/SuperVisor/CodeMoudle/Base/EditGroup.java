@@ -50,7 +50,7 @@ import android.view.View.OnLongClickListener;
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  
 */
-public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
+public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
 {
 	
 	public static int MaxLine=2000,OnceSubLine=0;
@@ -200,10 +200,10 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 	}
 
 	/* 创建一个Edit */
-	final private RCodeEdit creatAEdit(String name)
+	final protected RCodeEdit creatAEdit(String name)
 	{
 		RCodeEdit Edit;
-		//每个Edit都要配置，但只能内部使用的Clip和Click让我配置给它们吧
+		//每个Edit都要配置，但只能内部使用的Clip让我配置给它们吧
 		if (EditList.size() == 0)
 		{
 			//第一个编辑器是get的，然后添加Clip
@@ -222,11 +222,10 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			Edit.setInfo(Info);
 		}
 		
-		Edit.setOnClickListener(this);//组内的每个编辑器都设置Click
-		//Edit.setOnLongClickListener(this);//组内的每个编辑器都设置LongClick
+		Edit.setWindow(getWindow());
+		Edit.setPool(getPool());
 		Edit.compareChroot(root); //设置root
-		//Edit.setTarget(this);//设置target，将事件冒泡给EditGroup
-		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
+		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
 
@@ -320,6 +319,15 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 			}
 			super.setEditBuilder(b);
 		}
+
+		@Override
+		public void setWindow(ListView Window)
+		{
+			//不允许设置其它Window
+			if(getWindow()==null)
+			    super.setWindow(Window);
+		}
+		
 		
 		@Override
 		protected void onPutUR(EditDate.Token token)
@@ -332,7 +340,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			if (!isDraw && !isUR && !isFormat && EditFlag.get() == 0 && (Last.size() == 0 || Last.peek().size() != 0))
+			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (Last.size() == 0 || Last.peek().size() != 0))
 				Last.push(new Stack<Int>());  
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
@@ -348,7 +356,7 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				return;
 			//在构造对象前，会调用一次onTextChanged
 
-			if (IsModify != 0 || IsModify2)
+			if (IsModify())
 				return ;
 			//已经被修改，不允许再修改
 
@@ -404,9 +412,9 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				//连带着把MaxLine行的\n也截取
 				
 				CharSequence src = editor.subSequence(j.start, j.end); 
-				++IsModify; 
+				IsModify(true); 
 				editor.delete(j.start, j.end);	
-				--IsModify;
+				IsModify(false);
 
 				if (start + lengthAfter < j.start){
 					super.onTextChanged(text, start, lengthBefore, lengthAfter);		
@@ -450,6 +458,20 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 				//否则正常调用
 			}
 			
+		}
+
+		@Override
+		public boolean performClick()
+		{
+			EditGroup.this.onClick(this);
+			return super.performClick();
+		}
+
+		@Override
+		public boolean performLongClick()
+		{
+			EditGroup.this.onLongClick(this);
+			return super.performLongClick();
 		}
 
 		@Override
@@ -641,7 +663,6 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		}
 		return true;
 	}
-
 	
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event)
@@ -1338,13 +1359,11 @@ public class EditGroup extends HasAll implements IlovePool,EditListenerInfoUser,
 		@Override
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 		{
-			Edit.setPool(self. pool);
-			Edit.setWindow(self. getWindow());
 			Share.setEdit(Edit, name);
 		}
 
 	}
-	private void creatEditFactory()
+	protected void creatEditFactory()
 	{
 		if (mfactory == null)
 			mfactory = new Factory();

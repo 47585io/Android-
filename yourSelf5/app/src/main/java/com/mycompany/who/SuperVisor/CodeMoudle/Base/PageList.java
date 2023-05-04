@@ -42,7 +42,6 @@ public class PageList extends HasAll
 	@Override
 	public void init()
 	{
-		mtouchListener = new PageTouch();
 		super.init();
 	}
 	
@@ -194,7 +193,13 @@ public class PageList extends HasAll
 		}
 	}
 	
-	public void setScroll(){
+	public void setScroll(boolean is){
+		if(is){
+		    mtouchListener = new PageTouch();
+		}
+		else{
+			mtouchListener = null;
+		}
 		setOnTouchListener(mtouchListener);
 	}
 
@@ -208,6 +213,9 @@ public class PageList extends HasAll
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev)
 	{
+		if(mtouchListener==null)
+			return super.onInterceptTouchEvent(ev);
+			
 		if(ev.getActionMasked()==MotionEvent.ACTION_DOWN){
 		    mtouchListener.calc(ev); //仍应该记录坐标
 			return false;

@@ -33,7 +33,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 		super.init();
 		Creator = new HandlerCreator(0);
 		Creator.ConfigSelf(this);
-		setScroll();
+		setScroll(true);
 	}
 
 	public void addEdit(String name){

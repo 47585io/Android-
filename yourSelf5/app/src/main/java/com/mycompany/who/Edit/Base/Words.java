@@ -94,7 +94,7 @@ public class Words
 
 	public void add(int size){
 		while(size-->0){
-			Collection<CharSequence> col=Collections.synchronizedSet(new TreeSet<>());
+			Collection<CharSequence> col=Collections.synchronizedSet(new HashSet<>());
 			mdates.add(col);
 			//每个集合都是安全的
 		}

@@ -77,6 +77,7 @@ public class ScrollBar extends ScrollView implements Scroll
 			}
 			//手指倾向于y轴滑动，且滚动条滚动到边缘后仍向外划动，且速度超出15，请求父元素拦截滚动，否则自己滚动或给子元素
 		}
+		
 		return super.dispatchTouchEvent(ev);
 	}
 

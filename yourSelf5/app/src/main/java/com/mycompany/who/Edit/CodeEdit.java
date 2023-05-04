@@ -99,25 +99,25 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 {
 	
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
-	protected Words WordLib;
-	protected EditDate stack;
+	private Words WordLib;
+	private EditDate stack;
 	protected static EPool2 Ep;
 	protected static EPool3 Epp;
-	protected EditBuilder builder;
-	protected ThreadPoolExecutor pool;
-	protected CodeEditListenerInfo Info;
+	private EditBuilder builder;
+	private ThreadPoolExecutor pool;
+	private CodeEditListenerInfo Info;
 	/*
 	  不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
 	  但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
 	  呜呜呜，对不起真的没办法了
 	*/
 	
-	protected boolean isDraw;
-	protected boolean isFormat;
-	protected boolean isComplete;
-	protected boolean isUR;
-	protected int IsModify;
-	protected boolean IsModify2;
+	private boolean isDraw;
+	private boolean isFormat;
+	private boolean isComplete;
+	private boolean isUR;
+	private int IsModify;
+	private boolean IsModify2;
 	/*
 	  你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
 	  IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
@@ -125,12 +125,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
     */
 	
-	protected EditLine Line;
-	protected ListView mWindow;
-	protected StringBuffer laugua;
-	protected String HTML;
-	protected Spanned spanStr;
-	
+	private EditLine Line;
+	private ListView mWindow;
+	private StringBuffer laugua;
+	private String HTML;
+	private Spanned spanStr;
+
 	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
@@ -1487,7 +1487,7 @@ ________________________________________________________________________________
 		isUR = f.isUR;
 	}
 	public EditChroot getChroot(){
-		return new EditChroot(IsModify2,isDraw,isFormat,isComplete,isUR);
+		return new EditChroot(IsModify2||IsModify!=0,isDraw,isFormat,isComplete,isUR);
 	}
 	public void IsModify(boolean is){
 		IsModify2 = is;
@@ -1505,7 +1505,7 @@ ________________________________________________________________________________
 		isUR = is;
 	}
 	public boolean IsModify(){
-		return IsModify2;
+		return IsModify2||IsModify!=0;
 	}
 	public boolean IsDraw(){
 		return isDraw;

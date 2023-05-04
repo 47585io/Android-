@@ -78,6 +78,7 @@ public class HScrollBar extends HorizontalScrollView implements Scroll
 			}
 			//手指倾向于x轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动或给子元素滚动
 		}
+		
 		return super.dispatchTouchEvent(ev);
 	}
 
