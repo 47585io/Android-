@@ -920,12 +920,12 @@ _________________________________________
 
 	protected String onMakeCommand( String state)
 	{
+		String com = "";
 		EditRunnarListener li = getRunnar();
 		if(li!=null){
-			String com = li.LetMeMake(this,state);
-			return com;
+			com = li.LetMeMake(this,state);
 		}
-		return "";
+		return com;
 	}
 	
 	@Override
@@ -1662,7 +1662,7 @@ _________________________________________
 
 	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
-		IsModify++;
+		++IsModify;
 		isFormat = true;
 		Editable editor = getText();
 		String src=getText().toString().substring(start, end);
@@ -1674,7 +1674,7 @@ _________________________________________
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
 		isFormat = false;
-		IsModify--;
+		--IsModify;
 	}
 	
 	public void zoomBy(float size)
