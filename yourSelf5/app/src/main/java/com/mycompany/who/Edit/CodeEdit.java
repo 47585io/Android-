@@ -1242,11 +1242,11 @@ _________________________________________
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
 		
-		if(IsModify())
+		if(IsModify!=0||IsModify2)
 			return;
 		//如果正被修改，不允许再次修改	
 		
-		if(Enabled_Complete&&!IsComplete()){
+		if(Enabled_Complete&&!isComplete){
 			//是否启用自动补全
 			if(getPool()!=null)
 				getPool().execute(OpenWindow());
@@ -1259,7 +1259,7 @@ _________________________________________
 			//如果没有输入，则不用做什么
 		    IsModify2=true;	
 			
-			if (Enabled_Format&&!IsFormat())
+			if (Enabled_Format&&!isFormat)
 			{		
 				//是否启用自动format
 				Insert(start,lengthAfter);
@@ -1267,7 +1267,7 @@ _________________________________________
 				//为了安全，不调用Format
 			}
 			
-			if(Enabled_Drawer&&!IsDraw()){
+			if(Enabled_Drawer&&!isDraw){
 				//是否启用自动染色		
 				String src = text.toString();
 			    wordIndex tmp=new wordIndex();
