@@ -423,7 +423,7 @@ Dreawr
 			public void run()
 			{
 				++IsModify;
-				isDraw = true; //此时会修改文本，isModify			
+				isDraw = true; //为保证isxxx能成功配对，它们必须写在try和catch外			
 				long last=0,now=0;
 				last = System.currentTimeMillis();
 
@@ -701,7 +701,7 @@ _________________________________________
 				    Log.e("OpenWindow Error", e.toString());
 				}
 				Log.w("After OpenWindow","I'm "+hashCode()+", "+ Epp.toString());
-			 	isComplete=false;
+			 	isComplete=false;//为保证isxxx安全，不要在子线程中使用它们
 		    }
 		};
 		post(run2);//将UI任务交给主线程
@@ -915,7 +915,7 @@ _________________________________________
 			Log.e("onMakeCommand Error",e.toString());
 		}
 		--IsModify;
-		return com;
+		return com;//为保证isxxx能成功配对，请不要提前返回
 	}
 
 	protected String onMakeCommand( String state)
