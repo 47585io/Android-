@@ -27,18 +27,23 @@ public class CodeEditBuilder implements EditBuilder
 {
 
 	@Override
-	public void loadWords(EditText self)
+	public void loadWords(EditText Edit)
 	{
-		// TODO: Implement this method
+		if(Edit instanceof CodeEdit){
+			CodeEdit E = (CodeEdit) Edit;
+		    WordsPackets.getBaseWordsPacket().loadWords(E.getWordLib());
+		}
 	}
 
 	@Override
-	public void clearWords(EditText self)
+	public void clearWords(EditText Edit)
 	{
-		// TODO: Implement this method
+		if(Edit instanceof CodeEdit){
+		    CodeEdit E = (CodeEdit) Edit;
+			E.setWordLib(null);
+		}
 	}
-
-
+	
 	@Override
 	public void clearListener(EditText Edit)
 	{
@@ -77,6 +82,8 @@ public class CodeEditBuilder implements EditBuilder
 			getCompletorBox().SwitchListener(self,Lua);
 			getCanvaserFactory().SwitchListener(self,Lua);
 			getRunnarFactory().SwitchListener(self,Lua);
+			CodeEdit E = (CodeEdit) self;
+			getWordsPacket().SwitchWords(E.getWordLib(),Lua);
 		}
 	}
 
@@ -158,7 +165,6 @@ CanvaserFactory
 ___________________________________________________________________________________________________________________________
 
 */
-	
 	public static class CanvaserFactory implements ListenerFactory
 	{
 
@@ -219,7 +225,6 @@ FormatorFactory
 ___________________________________________________________________________________________________________________________
 
 */
-
 	public static class FormatorFactory implements ListenerFactory
 	{
 		
@@ -370,7 +375,6 @@ ________________________________________________________________________________
 ___________________________________________________________________________________________________________________________
 	
 */
-
 	public static class InsertorFactory implements ListenerFactory
 	{
 
@@ -768,7 +772,6 @@ RunnarFactory
 ___________________________________________________________________________________________________________________________
 
 */
-
     public static class RunnarFactory implements ListenerFactory
 	{
 
@@ -805,9 +808,8 @@ ________________________________________________________________________________
 			{
 				StringBuilder command = new StringBuilder();
 				switch(state){
-					case "longClick":
-						
-					case "click":
+					default:
+					command.append("make FuncTemplete");
 				}
 				return command.toString();
 			}
@@ -1048,7 +1050,6 @@ FinderFactory
 ___________________________________________________________________________________________________________________________
 	
 */
-	
 	public static class FinderFactory implements ListenerFactory
 	{
 
@@ -1464,11 +1465,9 @@ AnyThingFactory
 _________________________________________
 
 */
-
-    /*  Text工厂  */
 	public static class AnyThingFactory
 	{
-
+		/*  Text工厂  */
 		public static class AnyThingForText
 		{
 
@@ -2264,6 +2263,152 @@ _________________________________________
 			return new AnyThingForCSS(lib);
 		}
 
+	}
+	
+	
+/*
+_________________________________________
+
+WordsPackets
+
+    -> BaseWordsPacket
+
+        -> JavaWordsPacket
+
+	    -> XMLWordsPackets
+	
+	    -> ...
+_________________________________________
+	 
+*/
+    public static class WordsPackets implements WordsPacket
+	{
+
+		@Override
+		public void SwitchWords(Words Lib, String Lua)
+		{
+			UnPackWords(Lua).loadWords(Lib);
+		}
+
+		@Override
+		public AWordsPacket UnPackWords(String Lua)
+		{
+			switch (Lua)
+			{
+				case "text":
+				    return getBaseWordsPacket();
+				case "xml":
+					return getXMLWordsPacket();
+				case "java":
+				    return getJavaWordsPacket();
+			}
+			return null;
+		}
+		
+		public static AWordsPacket getJavaWordsPacket(){
+			return new JavaWordsPacket();
+		}
+		public static AWordsPacket getXMLWordsPacket(){
+			return new XMLWordsPackets();
+		}
+		public static AWordsPacket getBaseWordsPacket(){
+			return new BaseWordsPacket();
+		}
+		
+		
+		public static class BaseWordsPacket implements AWordsPacket
+		{
+			public static char[] fuhao= new char[]{
+				'(',')','{','}','[',']',
+				'=',';',',','.',':',
+				'+','-','*','/','%',
+				'^','|','&','<','>','?','@',
+				'!','~','\'','\n',' ','\t','#','"','\''
+			};
+			public static char[] spilt= new char[]{
+				'\n',' ','\t','<','>',
+			};
+			
+			static{
+				Arrays.sort(fuhao);
+				Arrays.sort(spilt);
+			}
+			
+			@Override
+			public void loadWords(Words Lib)
+			{
+				
+			}
+			
+		}
+		
+		public static class JavaWordsPacket implements AWordsPacket
+		{
+			//所有单词
+			public static CharSequence[] keyword = new String[]{
+				"goto","const",
+				"enum","assert",
+				"package","import",
+				"final","static","this","super",
+				"try","catch","finally","throw","throws",
+				"public","protected","private","friendly",
+				"native","strictfp","synchronized","transient","volatile",
+				"class","interface","abstract","implements","extends","new",
+				"byte","char","boolean","short","int","float","long","double","void",
+				"if","else","while","do","for","switch","case","default","break","continue","return","instanceof",
+				"Override","Deprecated","SuppressWarnings","SafeVarargs","FunctionalInterface","param"
+			};
+			
+			public static CharSequence[] constword = new String[]{"null","true","false"};
+			public static CharSequence[] IknowFunc=new String[]{};
+			public static CharSequence[] IknowType=new String[]{};
+			public static Map<CharSequence,CharSequence> zhu_key_value=new HashMap<>();
+			
+			static{
+				zhu_key_value.put("//","\n");
+				zhu_key_value.put("/*","*/");
+			}
+			
+			@Override
+			public void loadWords(Words Lib)
+			{
+			
+			}
+			
+		}
+		
+		public static class XMLWordsPackets implements AWordsPacket
+		{
+			public static CharSequence[] IknowTag= new String[]{	"*",
+				"html","body","head","title","a","img","audio","input","b","sup","i","small","font","em","strong","sub",
+				"ins","del","code","kbd","samp","var","pre","abbr","address","bdo","blockquote","cite","q","dfn","p","div","ul","li","ol","dl","dt","dd",
+				"hr","br","h1","h2","h3","h4","h5","h6","main","xmp","style","script","link","textarea",
+				"button","select","option","optgroup","picture","source","map","area","table","tr","th","td","caption","from","label","fieldset","legend",
+				"datalist","keygen","output","span","frame","iframe","object","embed","marguee","canvas","video","base","meta","details","summary",
+				"mark","noscript","figure","svg","circle","line","polyline","rect","ellipse","polygon","path","text","use","g","defs","pattern","animate","image","animateTransform",
+			};
+			public static CharSequence[] Attribute=new String[]{
+				
+			};
+			public static Map<CharSequence,CharSequence> zhu_key_value=new HashMap<>();
+
+			static{
+				zhu_key_value.put("<!--","-->");
+			}
+				
+			@Override
+			public void loadWords(Words Lib)
+			{
+			
+			}
+			
+		}
+	
+	}
+	
+	public static WordsPacket getWordsPacket()
+	{
+		return new WordsPackets();
 	}
 	
 }

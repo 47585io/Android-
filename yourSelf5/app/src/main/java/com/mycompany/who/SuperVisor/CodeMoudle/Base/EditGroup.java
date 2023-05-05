@@ -47,6 +47,8 @@ import android.view.View.OnLongClickListener;
 
 /*
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
+ 我的成员全部都是对象，这意味着不会随便改变它们的指向，因此我可以是final
+ 
  使用装饰者模式，实现了EditListenerInfoUser接口，但返回的Info其实是内部实现了EditListenerInfoUser成员的Info
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  
@@ -243,7 +245,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 
 	/*关键代码*/
-	public void trimToFather()
+	protected void trimToFather()
 	{
 		//编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 		size size = getEditManipulator().WAndH();
@@ -260,6 +262,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		//记得实际大小
 	}
 
+	/* 不会自动刷新大小的修改，需要调用我刷新 */
+	public void refreshLineAndSize(){
+		EditLines. reLines(getEditManipulator(). calaEditLines());
+		trimToFather();
+	}
+	
 
 	final class RCodeEdit extends CodeEdit
 	{
@@ -1045,7 +1053,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return root;
 		}
 		
-		public void reSAll(int start,int end,final String want,final String to)
+		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
 			DoForAnyOnce d= new DoForAnyOnce(){
 
@@ -1056,6 +1064,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				}
 			};
 			d.dofor(start,end);
+			refreshLineAndSize();
 		}
 		
 		public List<Integer> SearchWord(String want)
@@ -1167,6 +1176,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				}
 			};
 			d.dofor(start,end);
+			refreshLineAndSize();
 		}
 		
 		public String MakeCommand(String state){
@@ -1184,10 +1194,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				return null;
 			Stack<Int> last= Last.pop();
 			Next.push(last);
-			for (Int l:last)
+			for (Int l:last){
 				EditList.get(l.get()).Uedo();
-			EditLines. reLines(calaEditLines());
-			trimToFather();
+			}
+			refreshLineAndSize();
 			return last;
 		}
 		public Stack<Int> Redo()
@@ -1197,10 +1207,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				return null;
 			Stack<Int> next= Next.pop();
 			Last.push(next);
-			for (Int l:next)
+			for (Int l:next){
 				EditList.get(l.get()).Redo();
-			EditLines.reLines(calaEditLines());
-			trimToFather();
+			}
+			refreshLineAndSize();
 			return next;
 		}
 
@@ -1247,6 +1257,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			private void Recursion(final size s,final size e, final int index)
 			{
 				if(index<s.start||index>e.start){
+					doOnce(-1,-1,null);
 					return;
 					//index已经递归到了末尾
 				}

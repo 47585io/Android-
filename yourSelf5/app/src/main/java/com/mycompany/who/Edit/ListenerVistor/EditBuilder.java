@@ -22,9 +22,14 @@ public interface EditBuilder
 	
 	public static interface WordsPacket
 	{
-		abstract public void SwitchWords(EditText Edit,String Lua)
+		abstract public void SwitchWords(Words Lib,String Lua)
 		
-		abstract public Words UnPackWords(String Lua)
+		abstract public AWordsPacket UnPackWords(String Lua)
+		
+		public static interface AWordsPacket
+		{
+			abstract public void loadWords(Words Lib)
+		}
 	}
 	
 	abstract public void SwitchLuagua(EditText Edit,String Lua)

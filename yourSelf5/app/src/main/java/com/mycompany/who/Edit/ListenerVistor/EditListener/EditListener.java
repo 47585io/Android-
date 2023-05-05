@@ -27,12 +27,10 @@ public abstract class EditListener extends Object
 	}
 	
 	public boolean Enabled(){
-		if(Enabled)
-			return true;
-		return false;
+		return Enabled;
 	}
 	public void setEnabled(boolean Enabled){
-		this. Enabled=Enabled;
+		this.Enabled=Enabled;
 	}
 	public void setName(String name){
 		this.name=name;

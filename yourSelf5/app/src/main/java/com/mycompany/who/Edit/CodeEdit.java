@@ -949,8 +949,9 @@ _________________________________________
 	{
 		int flag = 0;
 		EditRunnarListener li = getRunnar();
-		if(li!=null)
+		if(li!=null){
 			flag = li.LetMeRun(this,command);
+		}
 		return flag;
 	}
 	
@@ -1215,7 +1216,8 @@ _________________________________________
 		{}
 	}
 
-	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter){
+	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	{
 		/*
 		 if (!isDraw&&lengthAfter != 0){
 		 int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
@@ -1421,23 +1423,21 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static String getWord(String src,int offset)
-	{
+	final public static CharSequence getWord(CharSequence src,int offset){
 		//获得光标前的纯单词
 	    wordIndex node = tryWordSplit(src, offset);
 		if (node.end == 0)
 			node.end = offset;
-		String want= src.substring(node.start, node.end);
+		CharSequence want= src.subSequence(node.start, node.end);
 		return want;
 	}
 	
-	final public static String getAfterWord(String src,int offset)
-	{
+	final public static CharSequence getAfterWord(CharSequence src,int offset){
 		//获得光标后面的纯单词
 		wordIndex node = tryWordSplitAfter(src, offset);
 		if (node.end == 0)
 			node.end = src.length();
-		String want= src.substring(node.start, node.end);
+		CharSequence want= src.subSequence(node.start, node.end);
 		return want;
 	}
 	
