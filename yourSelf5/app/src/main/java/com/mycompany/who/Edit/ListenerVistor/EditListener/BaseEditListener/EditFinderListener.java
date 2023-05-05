@@ -6,5 +6,5 @@ import java.util.*;
 
 public interface EditFinderListener extends EditListener
 {
-	final public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
+	public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
 }

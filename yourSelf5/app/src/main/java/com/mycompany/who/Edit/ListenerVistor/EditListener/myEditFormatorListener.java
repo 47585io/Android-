@@ -3,6 +3,7 @@ package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import android.text.*;
 import android.util.*;
 import android.widget.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -15,7 +16,7 @@ import android.widget.*;
   有一段时间，为了完成我的线程大计，居然妄想着把Formator也加入线程，即先找要修改的token，最后一并修改，但我发现其实有问题: 每replace一个token，后面的token就要偏移，太麻烦了
   
 */
-public abstract class EditFormatorListener extends EditListener
+public abstract class myEditFormatorListener extends myEditListener implements EditFormatorListener
 {
 	protected abstract int dothing_Run(Editable editor, int nowIndex);
 	//开始做事

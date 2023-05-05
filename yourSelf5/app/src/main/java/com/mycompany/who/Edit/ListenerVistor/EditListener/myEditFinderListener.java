@@ -7,6 +7,7 @@ import com.mycompany.who.Edit.Base.*;
 import java.util.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -19,7 +20,7 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
   由于Find函数允许重写，所以以下代码并不唯一，但在重写时尽量保证调用上面的四个抽象方法
   
 */
-public abstract class EditFinderListener extends EditListener
+public abstract class myEditFinderListener extends myEditListener implements EditFinderListener
 {
 	
 	abstract protected void OnFindWord(List<DoAnyThing> totalList,Words WordLib);

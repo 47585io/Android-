@@ -1,6 +1,7 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import java.util.*;
 import android.widget.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
@@ -10,12 +11,12 @@ import android.widget.*;
   
   管理一组的EditListener
 */
-public class EditListenerList extends EditListener
+public class myEditListenerList extends myEditListener implements EditListenerList
 {
 	
 	private List<EditListener> lis;
 
-	public EditListenerList(){
+	public myEditListenerList(){
 		lis = Collections.synchronizedList(new ArrayList<>());
 	}
 

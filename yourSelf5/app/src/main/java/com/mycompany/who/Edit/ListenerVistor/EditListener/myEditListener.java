@@ -4,19 +4,20 @@ import android.text.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.*;
 import java.util.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
-public class EditListener extends Object
+public class myEditListener extends Object implements EditListener
 {
 	private boolean Enabled;
 	private String name;
 	private EditText self;
 	//可以不以参数传递，而是设置self，但有可能为null
 	
-	public EditListener(){
+	public myEditListener(){
 		name="@default";
 		Enabled=true;
 	}
-	public EditListener(String name,boolean e){
+	public myEditListener(String name,boolean e){
 		this. name=name;
 		Enabled=e;
 	}

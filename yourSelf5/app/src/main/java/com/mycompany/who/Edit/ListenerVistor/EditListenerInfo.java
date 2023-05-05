@@ -1,6 +1,5 @@
 package com.mycompany.who.Edit.ListenerVistor;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import java.util.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 public interface EditListenerInfo
 {

@@ -3,25 +3,24 @@ package com.mycompany.who.Edit;
 import android.content.*;
 import android.graphics.*;
 import android.text.*;
-import android.text.style.*;
 import android.util.*;
+import android.view.*;
 import android.widget.*;
 import com.mycompany.who.*;
 import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.Base.Edit.*;
+import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
 import java.util.concurrent.*;
-import com.mycompany.who.Edit.Base.EditMoudle.*;
+
 import static com.mycompany.who.Edit.Base.Colors.*;
 import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
-import android.os.*;
-import android.view.*;
 
 /*
    整理是一切的开始
@@ -498,7 +497,7 @@ Dreawr
 		if(li != null)
 		    this.HTML = li.getHTML(b);	
 		else
-			this.HTML = EditDrawerListener.getHTML(b,null);
+			this.HTML = myEditDrawerListener.getHTML(b,null);
 	}
 	
 	/* 获取准备好了的文本 */
@@ -855,9 +854,9 @@ _________________________________________
 		++IsModify;
 		try
 		{
-		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
+		    DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.OnDraw);
 			super.onDraw(canvas);
-			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
+			DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.AfterDraw);	
 		}
 		catch (Exception e){
 			Log.e("OnDraw Error", e.toString());
@@ -1872,10 +1871,10 @@ ________________________________________________________________________________
 		
 		public CodeEditListenerInfo()
 		{
-			mlistenerFS = new EditListenerList();
-			mlistenerIS = new EditListenerList();
-			mlistenerVS = new EditListenerList();
-			mlistenerCS = new EditListenerList();				
+			mlistenerFS = new myEditListenerList();
+			mlistenerIS = new myEditListenerList();
+			mlistenerVS = new myEditListenerList();
+			mlistenerCS = new myEditListenerList();				
 		}
 
 	    public boolean addAListener(EditListener li)

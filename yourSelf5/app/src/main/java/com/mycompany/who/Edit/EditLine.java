@@ -5,11 +5,11 @@ import android.graphics.*;
 import android.text.*;
 import android.util.*;
 import android.view.*;
-import android.widget.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
 
 public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser
@@ -108,9 +108,9 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		TextPaint paint = getPaint();
 		try
 		{		
-		    DrawAndDraw(canvas,paint,pos,EditCanvaserListener.OnDraw);
+		    DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.OnDraw);
 			super.onDraw(canvas);
-			DrawAndDraw(canvas,paint,pos,EditCanvaserListener.AfterDraw);	
+			DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.AfterDraw);	
 		}
 		catch (Exception e)
 		{
@@ -250,8 +250,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		protected EditListenerList mlistenerLS;
 		
 		public EditLineListenerInfo(){
-			mlistenerVS = new EditListenerList();
-			mlistenerLS = new EditListenerList();
+			mlistenerVS = new myEditListenerList();
+			mlistenerLS = new myEditListenerList();
 		}
 		
 		@Override

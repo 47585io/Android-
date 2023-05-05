@@ -1,5 +1,6 @@
 package com.mycompany.who.Edit.ListenerVistor.EditListener;
 import android.util.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
@@ -9,7 +10,7 @@ import android.util.*;
   
   start表示原本的行数，before表示删除的行，after表示增加的行
 */
-public abstract class EditLineChangeListener extends EditListener
+public abstract class myEditLineChangeListener extends myEditListener implements EditLineChangeListener
 {
 	
 	abstract protected void onLineChange(int start,int before,int after)

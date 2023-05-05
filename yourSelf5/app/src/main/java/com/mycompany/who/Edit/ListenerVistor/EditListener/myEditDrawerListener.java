@@ -7,6 +7,7 @@ import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import java.util.*;
 import android.text.style.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -19,7 +20,7 @@ import android.text.style.*;
   为什么这样，因为原生单词可以直接应用至start~end文本中，甚至是切割出来也可以
   
 */
-public abstract class EditDrawerListener extends EditListener
+public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 	
 	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)

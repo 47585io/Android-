@@ -28,6 +28,7 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -525,7 +526,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	
-	protected final class ClipCanvaser extends EditCanvaserListener
+	protected final class ClipCanvaser extends myEditCanvaserListener
 	{
 		
 		@Override

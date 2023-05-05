@@ -1,10 +1,6 @@
 package com.mycompany.who.Edit.ListenerVistor;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
-import android.widget.*;
-import com.mycompany.who.Edit.*;
 
 /*
   更灵活的方案

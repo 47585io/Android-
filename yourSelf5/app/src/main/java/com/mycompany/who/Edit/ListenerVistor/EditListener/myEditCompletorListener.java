@@ -9,6 +9,7 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import java.util.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -23,7 +24,7 @@ import com.mycompany.who.Edit.Base.Share.Share3.*;
   当用户点击一个列表项，会寻找这个单词所在范围，拿到这组单词的id，遍历所有listener，找到指定hashCode的listener，并回调它的LetMeInsertWord方法
   
 */
-public abstract class EditCompletorListener extends EditListener
+public abstract class myEditCompletorListener extends myEditListener implements EditCompletorListener
 {
 	
 	protected abstract Collection<CharSequence> onBeforeSearchWord(Words Wordlib);

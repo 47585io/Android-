@@ -9,13 +9,15 @@ import com.mycompany.who.Edit.Base.Share.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
+import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.*;
-import static com.mycompany.who.Edit.Base.Words.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.myEditFinderListener.*;
 import java.lang.reflect.*;
 import java.util.*;
-import com.mycompany.who.Edit.Base.Share.Share4.*;
+
+import static com.mycompany.who.Edit.Base.Words.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 
 
 /*
@@ -119,7 +121,7 @@ ________________________________________________________________________________
 		}
 		
 
-		public static class DefaultDrawer extends EditDrawerListener
+		public static class DefaultDrawer extends myEditDrawerListener
 		{	
 			@Override
 			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
@@ -180,7 +182,7 @@ ________________________________________________________________________________
 		public void SwitchListener(EditText Edit, String Lua)
 		{
 			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new EditListenerList();
+		    EditListenerList lis = new myEditListenerList();
 			lis.getList().add(ToLisrener(Lua));
 			E.setCanvaserList(lis);
 		}
@@ -191,7 +193,7 @@ ________________________________________________________________________________
 		}
 
 
-		public static class DefaultCanvaser extends EditCanvaserListener
+		public static class DefaultCanvaser extends myEditCanvaserListener
 		{
 			
 			private Rect bounds = new Rect();
@@ -253,7 +255,7 @@ ________________________________________________________________________________
 			return new DefultFormator();
 		}
 		
-		public static class DefultFormator extends EditFormatorListener
+		public static class DefultFormator extends myEditFormatorListener
 		{
 
 			@Override
@@ -277,7 +279,7 @@ ________________________________________________________________________________
 			}
 		}
 
-		public static class JavaFormator extends EditFormatorListener
+		public static class JavaFormator extends myEditFormatorListener
 		{
 			
 			public String START="{";
@@ -392,7 +394,7 @@ ________________________________________________________________________________
 		public void SwitchListener(EditText Edit, String Lua)
 		{
 			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new EditListenerList();
+		    EditListenerList lis = new myEditListenerList();
 			lis.getList().add(ToLisrener(Lua));
 			E.setInsertorList(lis);
 		}
@@ -406,7 +408,7 @@ ________________________________________________________________________________
 			return new XMLInsertor();
 		}
 
-		public static class DefaultInsertor extends EditInsertorListener
+		public static class DefaultInsertor extends myEditInsertorListener
 		{
 			@Override
 			protected int dothing_insert(Editable editor, int nowIndex, int len)
@@ -530,7 +532,7 @@ ________________________________________________________________________________
 		   	E.setCompletorList(ToLisrener(Lua));
 		}
 
-		public static class JavaCompletor extends EditListenerList
+		public static class JavaCompletor extends myEditListenerList
 		{		
 			public JavaCompletor()
 			{
@@ -544,7 +546,7 @@ ________________________________________________________________________________
 			}
 		}
 		
-		public static class XMLCompletor extends EditListenerList
+		public static class XMLCompletor extends myEditListenerList
 		{
 			public XMLCompletor()
 			{
@@ -554,7 +556,7 @@ ________________________________________________________________________________
 			}
 		}
 		
-		public static class CSSCompletor extends EditListenerList
+		public static class CSSCompletor extends myEditListenerList
 		{
 			public CSSCompletor()
 			{
@@ -567,7 +569,7 @@ ________________________________________________________________________________
 			}
 		}
 		
-		public static class HTMLCompletor extends EditListenerList
+		public static class HTMLCompletor extends myEditListenerList
 		{
 			public HTMLCompletor()
 			{
@@ -603,7 +605,7 @@ ________________________________________________________________________________
 		
 	    public static EditListener getKeyBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -620,7 +622,7 @@ ________________________________________________________________________________
 		}
 		public static EditListener getConstBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -638,7 +640,7 @@ ________________________________________________________________________________
 
 		public static EditListener getVillBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -657,7 +659,7 @@ ________________________________________________________________________________
 
 		public static EditListener getFuncBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 				
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -682,7 +684,7 @@ ________________________________________________________________________________
 
 		public static EditListener getObjectBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -700,7 +702,7 @@ ________________________________________________________________________________
 
 		public static EditListener getTypeBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -718,7 +720,7 @@ ________________________________________________________________________________
 
 		public static EditListener getTagBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -745,7 +747,7 @@ ________________________________________________________________________________
 		
 		public static EditListener getAttributeBox()
 		{
-			return new EditCompletorListener(){
+			return new myEditCompletorListener(){
 
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
@@ -798,7 +800,7 @@ ________________________________________________________________________________
 			return new JavaRunnar();
 		}
 		
-		public static class JavaRunnar extends EditRunnarListener
+		public static class JavaRunnar extends myEditRunnarListener
 		{
 			
 			private Shell.Runnar run = new myRunnar();
@@ -1079,7 +1081,7 @@ ________________________________________________________________________________
 		public void SwitchListener(EditText Edit, String Lua)
 		{
 			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new EditListenerList();
+		    EditListenerList lis = new myEditListenerList();
 			lis.getList().add(ToLisrener(Lua));
 			E.setFinderList(lis);
 		}
@@ -1106,7 +1108,7 @@ ________________________________________________________________________________
 		    return new FinderHTML();
 	    }
 
-		public static class FinderText extends EditFinderListener
+		public static class FinderText extends myEditFinderListener
 		{
 
 			@Override
@@ -1140,7 +1142,7 @@ ________________________________________________________________________________
 			}
 		}
 
-		public static class FinderXML extends EditFinderListener
+		public static class FinderXML extends myEditFinderListener
 		{
 
 			@Override
@@ -1170,7 +1172,7 @@ ________________________________________________________________________________
 		}
 
 
-		public static class FinderJava extends EditFinderListener
+		public static class FinderJava extends myEditFinderListener
 		{
 
 			@Override
@@ -1235,7 +1237,7 @@ ________________________________________________________________________________
 		}
 
 		
-		public static class FinderCSS extends EditFinderListener
+		public static class FinderCSS extends myEditFinderListener
 		{
 
 			@Override
@@ -1284,7 +1286,7 @@ ________________________________________________________________________________
 		}	
 
 
-		public static class FinderHTML extends EditFinderListener
+		public static class FinderHTML extends myEditFinderListener
 		{
 
 			@Override

@@ -2,6 +2,7 @@ package com.mycompany.who.Edit.ListenerVistor.EditListener;
 
 import android.util.*;
 import android.widget.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
@@ -10,7 +11,7 @@ import android.widget.*;
  此监听器用于未知的，随机的任意事件，命令参数为String，可以表示任何意思，self表示编辑器本身
 	
 */
-public abstract class EditRunnarListener extends EditListener
+public abstract class myEditRunnarListener extends myEditListener implements EditRunnarListener
 {
 	
 	abstract protected String onMakeCommand(EditText self,String state)

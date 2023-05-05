@@ -4,6 +4,7 @@ import android.text.*;
 import java.util.*;
 import android.util.*;
 import android.widget.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
@@ -14,7 +15,7 @@ import android.widget.*;
   值得注意，返回的index可以调整编辑器的光标位置
   
 */
-public abstract class EditInsertorListener extends EditListener
+public abstract class myEditInsertorListener extends myEditListener implements EditInsertorListener
 {
 	
 	abstract protected int dothing_insert(Editable editor, int nowIndex, int count)

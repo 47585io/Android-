@@ -5,6 +5,7 @@ import android.text.*;
 import android.util.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -17,7 +18,7 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
   在onDraw和afterDraw中都可以进行绘制，不同的是，onDraw在super.onDraw之前，而afterDraw在super.onDraw之后
   
 */
-public abstract class EditCanvaserListener extends EditListener
+public abstract class myEditCanvaserListener extends myEditListener implements EditCanvaserListener
 {
 	
 	public static final int OnDraw = 0;

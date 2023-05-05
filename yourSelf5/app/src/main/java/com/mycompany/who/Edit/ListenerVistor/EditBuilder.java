@@ -1,8 +1,7 @@
 package com.mycompany.who.Edit.ListenerVistor;
 import android.widget.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 /*
   知道interface里的函数加abstract有什么用吗？
