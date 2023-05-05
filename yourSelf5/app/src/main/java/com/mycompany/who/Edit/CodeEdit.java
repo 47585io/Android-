@@ -1586,7 +1586,7 @@ _________________________________________
 		}
 		return true;
 	}
-	
+
 	
 /* 
 __________________________________________________________________________________
@@ -1852,7 +1852,9 @@ ________________________________________________________________________________
  
  Completor包含搜索单词和插入单词两大功能，谁搜索到的谁插入
  
- Canvaser用于在编辑器的画布上进行绘制
+ Canvaser用于在编辑器的画布上进行绘制，当然可以有多个
+ 
+ Runnar用于制作和运行命令，命令与具体的Runnar有关
  
 __________________________________________________________________________________
 
@@ -1876,7 +1878,7 @@ ________________________________________________________________________________
 			mlistenerCS = new EditListenerList();				
 		}
 
-		synchronized public boolean addAListener(EditListener li)
+	    public boolean addAListener(EditListener li)
 		{
 			if(li==null)
 				return false;
@@ -1912,7 +1914,7 @@ ________________________________________________________________________________
 			return false;
 		}
 
-		synchronized public boolean delAListener(EditListener li)
+		public boolean delAListener(EditListener li)
 		{	
 			if(li==null)
 				return false;
@@ -1977,37 +1979,83 @@ ________________________________________________________________________________
 		@Override
 		public boolean addListenerTo(EditListener li, int toIndex)
 		{
-			switch(toIndex){
+			EditListener l = findAListener(toIndex);
+			if(l instanceof EditListenerList){
+				((EditListenerList)l).getList().add(li);
+				return true;
+			}
+			else if(l instanceof EditListener){
+				return addAListener(li);
+			}
+			return false;
+		}
+
+		@Override
+		public boolean delListenerFrom(int fromIndex)
+		{		
+			switch(fromIndex){
 				case FinderIndex:
-					
+					mlistenerFS = null;
 					return true;
 				case DrawerIndex:
+					mlistenerD = null;
 					return true;
 				case FormatorIndex:
+					mlistenerM = null;
 					return true;
 				case InsertorIndex:
+					mlistenerIS = null;
 					return true;
 				case CompletorIndex:
+					mlistenerCS = null;
 					return true;
 				case CanvaserIndex:
+					mlistenerVS =null;
 					return true;
 				case RunnarIndex:
+					mlistenerR=null;
 					return true;
 			}
 			return false;
 		}
 
 		@Override
-		public boolean delListenerFrom(int fromIndex){		
-			return false;
-		}
-
-		@Override
-		public EditListener findAListener(int fromIndex){
+		public EditListener findAListener(int fromIndex)
+		{
+			switch(fromIndex){
+				case FinderIndex:
+					return mlistenerFS;
+				case DrawerIndex:
+					return mlistenerD;
+				case FormatorIndex:
+					return mlistenerM;
+				case InsertorIndex:
+					return mlistenerIS;
+				case CompletorIndex:
+					return mlistenerCS;
+				case CanvaserIndex:
+					return mlistenerVS;
+				case RunnarIndex:
+					return mlistenerR;
+			}
 			return null;
 		}
 			
-		public static class CodeHelper extends Helper{}
+		public class CodeHelper extends Helper
+		{
+			public boolean addToIndex(EditListener li,int toIndex)
+			{
+				EditListener l = findAListener(toIndex);
+				if(l instanceof EditListenerList){
+					((EditListenerList)l).getList().add(li);
+					return true;
+				}
+				else if(l instanceof EditListener){
+					return addAListener(li);
+				}
+				return false;
+			}
+		}
 	
 	}
 	
@@ -2017,14 +2065,14 @@ ________________________________________________________________________________
 
  每一个Edit都有自己的Words，内部可以自由存储单词，但必须实现接口，通过接口，Words可以设置和获取单词
  
- 每一个Edit都应该保存所有的单词，以便在切换语言时仍可使用
+ 每一个Edit都应该尽量保存所有的单词，以便在切换语言时仍可使用
 
  __________________________________________________________________________________
  
  */
 	public static class CodeWords implements Words
 	{
-		//所有单词	
+		//所有单词使用Map存储，以使index可以为任意的值
 		private Map<Integer,Collection<Character>> mchars;
 		private Map<Integer,Collection<CharSequence>> mdates;
 		private Map<Integer,Map<CharSequence,CharSequence>> mmaps;
@@ -2035,13 +2083,17 @@ ________________________________________________________________________________
 		}
 		public void init()
 		{
+			//即使未使用，也先装入空的集合，以使get不为null
 			mchars = EmptyMap();
 			mdates = EmptyMap();
 			mmaps = EmptyMap();
 			
+			mchars.put(chars_fuhao,EmptySet());
+			mchars.put(chars_spilt,EmptySet());
 			for(int i=words_key;i<=words_attr;++i){
 				mdates.put(i,EmptySet());
 			}
+			mmaps.put(maps_zhu,EmptyMap());
 		}
 
 		@Override
@@ -2061,21 +2113,24 @@ ________________________________________________________________________________
 		public void setACollectionChars(int index, Collection<Character> words)
 		{
 			Set<Character> set = EmptySet();
-			set.addAll(words);
+			if(words!=null)
+			    set.addAll(words);
 			mchars.put(index,set);
 		}
 	    @Override
 		public void setACollectionWords(int index, Collection<CharSequence> words)
 		{
 			Set<CharSequence> set = EmptySet();
-			set.addAll(words);
+			if(words!=null)
+			    set.addAll(words);
 			mdates.put(index,set);
 		}
 		@Override
 		public void setAMapWords(int index, Map<CharSequence, CharSequence> words)
 		{
 			Map<CharSequence,CharSequence> map = EmptyMap();
-			map.putAll(words);
+			if(words!=null)
+			    map.putAll(words);
 			mmaps.put(index,map);
 		}
 		

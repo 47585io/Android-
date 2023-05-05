@@ -5,7 +5,7 @@ import android.widget.*;
 import com.mycompany.who.Edit.Base.*;
 import java.util.*;
 
-public abstract class EditListener extends Object
+public class EditListener extends Object
 {
 	private boolean Enabled;
 	private String name;

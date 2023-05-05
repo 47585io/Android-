@@ -6,10 +6,10 @@ import com.mycompany.who.Edit.Base.Share.Share3.*;
 public interface Words 
 {
 	
-	public static final int maps_zhu = 10;
+	public static final int maps_zhu = 0;
 	
-	public static final int chars_fuhao = 11;
-	public static final int chars_spilt = 12;
+	public static final int chars_fuhao = 0;
+	public static final int chars_spilt = 1;
 	
 	public static final int words_key=0;
 	public static final int words_const=1;

@@ -204,8 +204,8 @@ public class Colors
 			return Colors.toString(Bg);
 		}
 	}
-	
-	public static SpannableStringBuilder ForeColorText(CharSequence src,wordIndex[] nodes,ByteToColor Colors){
+
+	public static SpannableStringBuilder ForeColorText(CharSequence src,ByteToColor Colors,wordIndex... nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
@@ -216,7 +216,7 @@ public class Colors
 		}
 	    return styled;	
 	}
-	public static void ForeColorText(Spannable editor,wordIndex[] nodes,int start,ByteToColor Colors){
+	public static void ForeColorText(Spannable editor,int start,ByteToColor Colors,wordIndex... nodes){
 		for(wordIndex node:nodes){
 			if(Colors==null)
 		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
@@ -254,7 +254,7 @@ public class Colors
 		return b;
 	}
 	
-	public static SpannableStringBuilder BackColorText(CharSequence src,wordIndex[] nodes,ByteToColor Colors){
+	public static SpannableStringBuilder BackColorText(CharSequence src,ByteToColor Colors,wordIndex... nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
 		for(wordIndex node:nodes){
@@ -265,7 +265,7 @@ public class Colors
 		}
 	    return styled;	
 	}
-	public static void BackColorText(Spannable editor,wordIndex[] nodes,int start,ByteToColor Colors){
+	public static void BackColorText(Spannable editor,int start,ByteToColor Colors,wordIndex... nodes){
 		for(wordIndex node:nodes){
 			if(Colors==null)
 		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);

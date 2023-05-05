@@ -28,14 +28,13 @@ public interface EditListenerInfo
 	public EditListener findAListener(int fromIndex)
 
 	
-	public static class Helper{
-		
-		public static EditListener checkName(EditListener lis,String name){
-			
-			if(lis.getName().equals(name))
+	public static class Helper
+	{
+		public static EditListener checkName(EditListener lis,String name)
+		{
+			if(lis==null || lis.getName().equals(name))
 				return lis;
-			
-			if(!(lis instanceof EditListenerList))
+			if(lis instanceof EditListener)
 				return null;
 				
 			for(EditListener li:((EditListenerList)lis).getList()){
@@ -45,7 +44,6 @@ public interface EditListenerInfo
 			}
 			return null;
 		}
-		
 	}
 	
 }
