@@ -1208,8 +1208,9 @@ ________________________________________________________________________________
 			{
 				//函数名不可是关键字，但可以和变量或类型重名	
 				Array_Splitor.delSame(WordLib.getACollectionWords(words_func), WordLib.getACollectionWords(words_key));
-				//类型不可是关键字
 				Array_Splitor.delSame(WordLib.getACollectionWords(words_type), WordLib.getACollectionWords(words_key));
+				//类型不可是关键字
+				Array_Splitor.delSame(WordLib.getACollectionWords(words_type), WordLib.getACollectionWords(words_vill));
 				//类型不可是变量，类型可以和函数重名
 				Array_Splitor.delSame(WordLib.getACollectionWords(words_type), WordLib.getACollectionWords(words_const));
 				//类型不可是保留字
