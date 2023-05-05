@@ -12,6 +12,7 @@ import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.ListenerVistor.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.EditFinderListener.*;
+import static com.mycompany.who.Edit.Base.Words.*;
 import java.lang.reflect.*;
 import java.util.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
@@ -41,14 +42,7 @@ public class CodeEditBuilder implements EditBuilder
 		if(Edit instanceof CodeEdit){
 		    CodeEdit E = (CodeEdit) Edit;
 			Words lib = E.getWordLib();
-			lib.getKeyword().clear();
-			lib.getConstword().clear();
-			lib.getHistoryVillber().clear();
-			lib.getThoseObject().clear();
-			lib.getBeforetype().clear();
-			lib.getLastfunc().clear();
-			lib.getTag().clear();
-			lib.getAttribute().clear();
+			lib.clear();
 		}
 	}
 	
@@ -614,7 +608,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getKeyword();
+					return Wordlib.getACollectionWords(words_key);
 				}
 
 				@Override
@@ -631,7 +625,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getConstword();
+					return Wordlib.getACollectionWords(words_const);
 				}
 
 				@Override
@@ -649,7 +643,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getHistoryVillber();
+					return Wordlib.getACollectionWords(words_vill);
 				}
 
 				@Override
@@ -668,7 +662,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getLastfunc();
+					return Wordlib.getACollectionWords(words_func);
 				}
 
 				@Override
@@ -693,7 +687,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getThoseObject();
+					return Wordlib.getACollectionWords(words_obj);
 				}
 
 				@Override
@@ -711,7 +705,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getBeforetype();
+					return Wordlib.getACollectionWords(words_type);
 				}
 
 				@Override
@@ -729,7 +723,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib. getTag();
+					return Wordlib.getACollectionWords(words_tag);
 				}
 
 				@Override
@@ -756,7 +750,7 @@ ________________________________________________________________________________
 				@Override
 				protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib)
 				{
-					return Wordlib.getAttribute();
+					return Wordlib.getACollectionWords(words_attr);
 				}
 
 				@Override
@@ -1210,26 +1204,25 @@ ________________________________________________________________________________
 			}
 
 			@Override
-			protected void OnClearFindWord(Words WordLib )
+			protected void OnClearFindWord(Words WordLib)
 			{
-				Array_Splitor. delSame(WordLib.getLastfunc(), WordLib.getKeyword());
 				//函数名不可是关键字，但可以和变量或类型重名	
-				Array_Splitor.delSame(WordLib.getLastfunc(), WordLib.getKeyword());
+				Array_Splitor.delSame(WordLib.getACollectionWords(words_func), WordLib.getACollectionWords(words_key));
 				//类型不可是关键字
-				Array_Splitor.delSame(WordLib.getBeforetype(), WordLib.getHistoryVillber());
+				Array_Splitor.delSame(WordLib.getACollectionWords(words_type), WordLib.getACollectionWords(words_key));
 				//类型不可是变量，类型可以和函数重名
-				Array_Splitor.delSame(WordLib.getBeforetype(), WordLib.getConstword());
+				Array_Splitor.delSame(WordLib.getACollectionWords(words_type), WordLib.getACollectionWords(words_const));
 				//类型不可是保留字
-				Array_Splitor. delSame(WordLib.getHistoryVillber(), WordLib.getKeyword());
-				Array_Splitor. delSame(WordLib.getThoseObject(), WordLib.getKeyword());
+				Array_Splitor. delSame(WordLib.getACollectionWords(words_vill), WordLib.getACollectionWords(words_key));
+				Array_Splitor. delSame(WordLib.getACollectionWords(words_obj), WordLib.getACollectionWords(words_key));
 				//变量不可是关键字
-				Array_Splitor. delSame(WordLib.getThoseObject(), WordLib.getConstword());
-				Array_Splitor.delSame(WordLib.getHistoryVillber(), WordLib.getConstword());
+				Array_Splitor. delSame(WordLib.getACollectionWords(words_obj), WordLib.getACollectionWords(words_const));
+				Array_Splitor.delSame(WordLib.getACollectionWords(words_vill), WordLib.getACollectionWords(words_const));
 				//变量不可是保留字
-				Array_Splitor.delNumber(WordLib.getBeforetype());
-				Array_Splitor.delNumber(WordLib.getHistoryVillber());
-				Array_Splitor.delNumber(WordLib.getLastfunc());
-				Array_Splitor.delNumber(WordLib.getThoseObject());
+				Array_Splitor.delNumber(WordLib.getACollectionWords(words_type));
+				Array_Splitor.delNumber(WordLib.getACollectionWords(words_vill));
+				Array_Splitor.delNumber(WordLib.getACollectionWords(words_func));
+				Array_Splitor.delNumber(WordLib.getACollectionWords(words_obj));
 				//去掉数字
 			}
 
@@ -1585,10 +1578,10 @@ _________________________________________
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
 						}	
-						else if (Array_Splitor.indexOf(src.charAt(nowIndex), getFuhao()) != -1)
+						else if (getFuhao().contains(src.charAt(nowIndex)))
 						{	
 							//否则如果它是一个特殊字符，就更不可能了，清空之前累计的字符串
-							if (Array_Splitor.indexOf(src.charAt(nowIndex), getSpilt()) == -1)
+							if (!getSpilt().contains(src.charAt(nowIndex)))
 							{
 								//如果它不是会被html文本压缩的字符，将它自己加进nodes
 								//这是为了保留换行空格等
@@ -1626,7 +1619,7 @@ _________________________________________
 				for (;nowIndex < nextindex;nowIndex++)
 				{
 					//保留特殊字符
-					if (Array_Splitor.indexOf(src.charAt(nowIndex), getSpilt()) != -1)
+					if (getSpilt().contains(src.charAt(nowIndex)))
 					{
 						wordIndex node= CodeEdit.Ep.get();
 						node.set(startindex, nowIndex, wantColor);
@@ -1646,47 +1639,47 @@ _________________________________________
 			}
 			public Collection<CharSequence> getKeyword()
 			{
-				return WordLib.getKeyword();
+				return WordLib.getACollectionWords(words_key);
 			}
 			public Collection<CharSequence> getConstword()
 			{
-				return  WordLib.getConstword();
+				return  WordLib.getACollectionWords(words_const);
 			}
-			public char[] getFuhao()
+			public Collection<Character> getFuhao()
 			{
-				return WordLib.getFuhao();
+				return WordLib.getACollectionChars(chars_fuhao);
 			}
-			public char[] getSpilt()
+			public Collection<Character> getSpilt()
 			{
-				return WordLib.getSpilt();
+				return WordLib.getACollectionChars(chars_spilt);
 			}
 			public Map<CharSequence,CharSequence> get_zhu()
 			{
-				return WordLib.get_zhu();
+				return WordLib.getAMapWords(maps_zhu);
 			}
 			public Collection<CharSequence> getLastfunc()
 			{
-				return  WordLib.getLastfunc();
+				return  WordLib.getACollectionWords(words_func);
 			}
 			public Collection<CharSequence> getHistoryVillber()
 			{
-				return WordLib.getHistoryVillber();
+				return WordLib.getACollectionWords(words_vill);
 			}
 			public Collection<CharSequence> getThoseObject()
 			{
-				return  WordLib.getThoseObject();
+				return  WordLib.getACollectionWords(words_obj);
 			}
 			public Collection<CharSequence> getBeforetype()
 			{
-				return  WordLib.getBeforetype();
+				return  WordLib.getACollectionWords(words_type);
 			}
 			public Collection<CharSequence> getTag()
 			{
-				return  WordLib.getTag();
+				return  WordLib.getACollectionWords(words_tag);
 			}
 			public Collection<CharSequence> getAttribute()
 			{
-				return WordLib.getAttribute() ;
+				return WordLib.getACollectionWords(words_attr) ;
 			}
 
 		}
@@ -2219,10 +2212,10 @@ _________________________________________
 				wordIndex tmp = CodeEdit.Ep.get();
 				try
 				{
-					while (Array_Splitor. indexOf(src.charAt(index), getFuhao()) != -1)
+					while (getFuhao().contains(src.charAt(index)))
 						index--;
 					tmp.end = index + 1;
-					while (src.charAt(index) == '-' || Array_Splitor.indexOf(src.charAt(index), getFuhao()) == -1)
+					while (src.charAt(index) == '-' || !getFuhao().contains(src.charAt(index)))
 						index--;
 					tmp.start = index + 1;
 				}
@@ -2239,10 +2232,10 @@ _________________________________________
 				wordIndex tmp =CodeEdit. Ep.get();
 				try
 				{
-					while (Array_Splitor.indexOf(src.charAt(index), getFuhao()) != -1)
+					while (getFuhao().contains(src.charAt(index)))
 						index++;
 					tmp.start = index;
-					while (src.charAt(index) == '-' || Array_Splitor.indexOf(src.charAt(index), getFuhao()) == -1)
+					while (src.charAt(index) == '-' || !getFuhao().contains(src.charAt(index)))
 						index++;
 					tmp.end = index;
 				}
@@ -2326,27 +2319,31 @@ _________________________________________
 		
 		public static class BaseWordsPacket implements AWordsPacket
 		{
-			public static char[] fuhao= new char[]{
+			public static Character[] fuhaox= new Character[]{
 				'(',')','{','}','[',']',
 				'=',';',',','.',':',
 				'+','-','*','/','%',
 				'^','|','&','<','>','?','@',
 				'!','~','\'','\n',' ','\t','#','"','\''
 			};
-			public static char[] spilt= new char[]{
+			public static Character[] spiltx= new Character[]{
 				'\n',' ','\t','<','>',
 			};
+			public static Collection<Character> fuhao = new HashSet<>();
+			public static Collection<Character> spilt = new HashSet<>();
 			
 			static{
-				Arrays.sort(fuhao);
-				Arrays.sort(spilt);
+				Arrays.sort(fuhaox);
+				Arrays.sort(spiltx);
+				fuhao.addAll(Arrays.asList(fuhaox));
+				spilt.addAll(Arrays.asList(spiltx));
 			}
 			
 			@Override
 			public void loadWords(Words Lib)
 			{
-				Lib.setFuhao(fuhao);
-				Lib.setSpilt(spilt);
+				Lib.setACollectionChars(chars_fuhao,fuhao);
+				Lib.setACollectionChars(chars_spilt,spilt);
 			}
 			
 		}
@@ -2382,9 +2379,9 @@ _________________________________________
 			public void loadWords(Words Lib)
 			{
 				super.loadWords(Lib);
-				Lib.setKeyword(Arrays.asList(keyword));
-				Lib.setConstword(Arrays.asList(constword));
-				Lib.set_zhu(zhu_key_value);
+				Lib.setACollectionWords(words_key,Arrays.asList(keyword));
+				Lib.setACollectionWords(words_const,Arrays.asList(constword));
+				Lib.setAMapWords(maps_zhu,zhu_key_value);
 			}
 			
 		}

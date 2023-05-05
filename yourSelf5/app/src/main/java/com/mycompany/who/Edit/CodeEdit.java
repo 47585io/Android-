@@ -1331,10 +1331,10 @@ _________________________________________
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor. indexOf(src.charAt(index),fuhao)!=-1)
+			while(fuhao.contains(src.charAt(index)))
 				index--;
 			tmp.end=index+1;
-			while(Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
+			while(!fuhao.contains(src.charAt(index)))
 				index--;
 			tmp.start=index+1;
 		}catch(Exception e){
@@ -1349,10 +1349,10 @@ _________________________________________
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor.indexOf(src.charAt(index),fuhao)!=-1)
+			while(fuhao.contains(src.charAt(index)))
 				index++;
 			tmp.start=index;
-			while(Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
+			while(!fuhao.contains(src.charAt(index)))
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -1368,7 +1368,7 @@ _________________________________________
 		while(index<src.length()
 			  &&src.charAt(index)!='<'
 			  &&src.charAt(index)!='>'
-			  &&Array_Splitor.indexOf(src.charAt(index),spilt)!=-1){
+			  &&spilt.contains(src.charAt(index))){
 			index++;
 		}
 		return index;
@@ -1397,7 +1397,7 @@ _________________________________________
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
 		try{
-			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
+			while(index>-1&&!fuhao.contains(src.charAt(index)))
 				index--;
 			tmp.start=index+1;
 			tmp.end=nowIndex;
@@ -1414,7 +1414,7 @@ _________________________________________
 	    wordIndex tmp = Ep.get();
 		try{
 			tmp.start=index;
-			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
+			while(index<src.length()&&!fuhao.contains(src.charAt(index)))
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -2024,170 +2024,91 @@ ________________________________________________________________________________
  /*
  __________________________________________________________________________________
 
- 每一个Edit都有自己的Words，内部可以自由存储单词，但必须实现接口
+ 每一个Edit都有自己的Words，内部可以自由存储单词，但必须实现接口，通过接口，Words可以设置和获取单词
  
  每一个Edit都应该保存所有的单词，以便在切换语言时仍可使用
- 
- 通过接口，Words可以设置和获取单词，并交换两个Words的单词
- 
+
  __________________________________________________________________________________
  
  */
 	public static class CodeWords implements Words
-	{	
+	{
 		//所有单词	
-		public static final int words_func = 0;
-		public static final int words_vill = 1;
-		public static final int words_obj = 2;
-		public static final int words_type = 3;
-		public static final int words_tag = 4;
-		public static final int words_attr = 5;
-		public static final int words_key=6;
-		public static final int words_const=7;
-		
-		private char[] fuhao;
-		private char[] spilt;
-		private List<Collection<CharSequence>> mdates;
-		private Map<CharSequence,CharSequence> zhu_key_value;
+		private Map<Integer,Collection<Character>> mchars;
+		private Map<Integer,Collection<CharSequence>> mdates;
+		private Map<Integer,Map<CharSequence,CharSequence>> mmaps;
 		//支持保存Span单词，但可能有一些异常
 
-
 		public CodeWords(){
-			Creat();
+			init();
 		}
-
-		@Override
-		public void Creat()
+		public void init()
 		{
-			mdates=Collections.synchronizedList(new ArrayList<>());
-			add(8);
-		}
-
-		@Override
-		public Words CreatOne()
-		{
-			return new CodeWords();
-		}
-
-		@Override
-		public void CopyFrom(Words target)
-		{
-			setFuhao(target.getFuhao());
-			setSpilt(target.getSpilt());
-			set_zhu(target.get_zhu());
-			setKeyword(target.getKeyword());
-			setConstword(target.getConstword());
-			setLastfunc(target.getLastfunc());
-			setThoseObject(target.getThoseObject());
-			setBeforetype(target.getBeforetype());
-			setHistoryVillber(target.getHistoryVillber());
-			setTag(target.getTag());
-			setAttribute(target.getAttribute());
-		}
-
-		@Override
-		public void CopyTo(Words target)
-		{
-			target. setFuhao(getFuhao());
-			target.setSpilt(getSpilt());
-			target.set_zhu(get_zhu());
-			target.setKeyword(getKeyword());
-			target.setConstword(getConstword());
-			target.setLastfunc(getLastfunc());
-			target.setThoseObject(getThoseObject());
-			target.setBeforetype(getBeforetype());
-			target.setHistoryVillber(getHistoryVillber());
-			target.setTag(getTag());
-			target.setAttribute(getAttribute());
-		}
-		
-		public void add(int size){
-			while(size-->0){
-				Collection<CharSequence> col=Collections.synchronizedSet(new HashSet<>());
-				mdates.add(col);
-				//每个集合都是安全的
+			mchars = EmptyMap();
+			mdates = EmptyMap();
+			mmaps = EmptyMap();
+			
+			for(int i=words_key;i<=words_attr;++i){
+				mdates.put(i,EmptySet());
 			}
 		}
-		public void set(int index,Collection<CharSequence> words){
-			Set<CharSequence> set = new HashSet<>();
-			set.addAll(words);
-			words = Collections.synchronizedSet(set);
-			mdates.set(index,words);
+
+		@Override
+		public Collection<Character> getACollectionChars(int index){
+			return mchars.get(index);
 		}
+		@Override
+		public Collection<CharSequence> getACollectionWords(int index){
+			return mdates.get(index);
+		}
+		@Override
+		public Map<CharSequence, CharSequence> getAMapWords(int index){
+			return mmaps.get(index);
+		}
+
+		@Override
+		public void setACollectionChars(int index, Collection<Character> words){
+			setC(index,words);
+		}
+	    @Override
+		public void setACollectionWords(int index, Collection<CharSequence> words){
+			set(index,words);
+		}
+		@Override
+		public void setAMapWords(int index, Map<CharSequence, CharSequence> words){
+			set(index,words);
+		}
+		
+		public void setC(int index,Collection<Character> words){
+			Set<Character> set = EmptySet();
+			set.addAll(words);
+			mchars.put(index,set);
+		}
+		public void set(int index,Collection<CharSequence> words)
+		{
+			Set<CharSequence> set = EmptySet();
+			set.addAll(words);
+			mdates.put(index,set);
+		}
+		public void set(int index,Map<CharSequence,CharSequence> words)
+		{
+			Map<CharSequence,CharSequence> map = EmptyMap();
+			map.putAll(words);
+			mmaps.put(index,map);
+		}
+		
+		public Map EmptyMap(){
+			return Collections.synchronizedMap(new HashMap());
+		}
+		public Set EmptySet(){
+			return Collections.synchronizedSet(new HashSet());
+		}
+		
 		public void clear(){
-			for(Collection t:mdates)
-				t.clear();
+			init();
 		}
 		public int size(){
-			return mdates.size();
-		}
-
-		public char[] getFuhao(){
-			return fuhao;
-		}
-		public char[] getSpilt(){
-			return spilt;
-		}
-		public Map<CharSequence,CharSequence> get_zhu(){
-			return zhu_key_value;
-		}
-		public Collection<CharSequence> getKeyword(){
-			return mdates.get(words_key);
-		}
-		public Collection<CharSequence> getConstword(){
-			return mdates.get(words_const);
-		}
-		public Collection<CharSequence> getLastfunc(){
-			return mdates.get(words_func);
-		}
-		public Collection<CharSequence> getHistoryVillber(){
-			return mdates.get(words_vill);
-		}
-		public Collection<CharSequence> getThoseObject(){
-			return mdates.get(words_obj);
-		}
-		public Collection<CharSequence> getBeforetype(){
-			return mdates.get(words_type);
-		}
-		public Collection<CharSequence> getTag(){
-			return mdates.get(words_tag);
-		}
-		public Collection<CharSequence> getAttribute(){
-			return mdates.get(words_attr);
-		}
-
-		public void setFuhao(char[] fuhao){
-			this.fuhao=fuhao;
-		}
-		public void setSpilt(char[] spilt){
-			this.spilt=spilt;
-		}
-		public void set_zhu(Map<CharSequence, CharSequence> zhu){
-			zhu_key_value = Collections.synchronizedMap(zhu);
-		}
-		public void setKeyword(Collection<CharSequence> keyword){
-			set(words_key,keyword);
-		}
-		public void setConstword(Collection<CharSequence> constword){
-			set(words_const,constword);
-		}
-		public void setLastfunc(Collection<CharSequence> func){
-			set(words_func,func);
-		}
-		public void setHistoryVillber(Collection<CharSequence> villber){
-			set(words_vill,villber);
-		}
-		public void setThoseObject(Collection<CharSequence> obj){
-			set(words_obj,obj);
-		}
-		public void setBeforetype(Collection<CharSequence> type){
-			set(words_type,type);
-		}
-		public void setTag(Collection<CharSequence> tag){
-			set(words_tag,tag);
-		}
-		public void setAttribute(Collection<CharSequence> attr){
-			set(words_attr,attr);
+			return mdates.size()+mmaps.size()+mchars.size();
 		}
 		
 	}
