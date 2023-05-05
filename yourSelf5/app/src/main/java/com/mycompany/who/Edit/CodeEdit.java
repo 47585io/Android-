@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import static com.mycompany.who.Edit.Base.Colors.*;
+import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
 import android.os.*;
 import android.view.*;
 
@@ -195,12 +196,13 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 		super.Creat();
 		laugua = new StringBuffer();
-		WordLib=new Words();
+		WordLib=new CodeWords();
 		stack = new EditDate();
 		Info = new CodeEditListenerInfo();
 		addTextChangedListener(new DefaultText());
 		builder = new CodeEditBuilder();
 		trimListener();
+		builder.loadWords(this);
 	}
 	
 /*
@@ -1329,10 +1331,10 @@ _________________________________________
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor. indexOf(src.charAt(index),Words.fuhao)!=-1)
+			while(Array_Splitor. indexOf(src.charAt(index),fuhao)!=-1)
 				index--;
 			tmp.end=index+1;
-			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
+			while(Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
 				index--;
 			tmp.start=index+1;
 		}catch(Exception e){
@@ -1347,10 +1349,10 @@ _________________________________________
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
-			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)!=-1)
+			while(Array_Splitor.indexOf(src.charAt(index),fuhao)!=-1)
 				index++;
 			tmp.start=index;
-			while(Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
+			while(Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -1366,7 +1368,7 @@ _________________________________________
 		while(index<src.length()
 			  &&src.charAt(index)!='<'
 			  &&src.charAt(index)!='>'
-			  &&Array_Splitor.indexOf(src.charAt(index),Words.spilt)!=-1){
+			  &&Array_Splitor.indexOf(src.charAt(index),spilt)!=-1){
 			index++;
 		}
 		return index;
@@ -1395,7 +1397,7 @@ _________________________________________
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
 		try{
-			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
+			while(index>-1&&Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
 				index--;
 			tmp.start=index+1;
 			tmp.end=nowIndex;
@@ -1412,7 +1414,7 @@ _________________________________________
 	    wordIndex tmp = Ep.get();
 		try{
 			tmp.start=index;
-			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),Words.fuhao)==-1)
+			while(index<src.length()&&Array_Splitor.indexOf(src.charAt(index),fuhao)==-1)
 				index++;
 			tmp.end=index;
 		}catch(Exception e){
@@ -1658,7 +1660,7 @@ _________________________________________
   clearSpan: 清除范围内的span
   
   subSpanPos: 获取span的范围
-
+  
 _________________________________________
 
 */
@@ -1840,7 +1842,6 @@ ________________________________________________________________________________
  CodeEditListenerInfo实现了EditListenerInfo，并实现了基本功能
 
  CodeEdit实现了EditListenerInfoUser，可以直接操作Info
-
 __________________________________________________________________________________
 	 
  可以有多个Finder，但只有一个Drawer，这就是我把Finder与Drawer分开的原因，不用每个Finder都各自Draw
@@ -2019,8 +2020,180 @@ ________________________________________________________________________________
 	
 	}
 	
-	
+
  /*
+ __________________________________________________________________________________
+
+ 每一个Edit都有自己的Words，内部可以自由存储单词，但必须实现接口
+ 
+ 每一个Edit都应该保存所有的单词，以便在切换语言时仍可使用
+ 
+ 通过接口，Words可以设置和获取单词，并交换两个Words的单词
+ 
+ __________________________________________________________________________________
+ 
+ */
+	public static class CodeWords implements Words
+	{	
+		//所有单词	
+		public static final int words_func = 0;
+		public static final int words_vill = 1;
+		public static final int words_obj = 2;
+		public static final int words_type = 3;
+		public static final int words_tag = 4;
+		public static final int words_attr = 5;
+		public static final int words_key=6;
+		public static final int words_const=7;
+		
+		private char[] fuhao;
+		private char[] spilt;
+		private List<Collection<CharSequence>> mdates;
+		private Map<CharSequence,CharSequence> zhu_key_value;
+		//支持保存Span单词，但可能有一些异常
+
+
+		public CodeWords(){
+			Creat();
+		}
+
+		@Override
+		public void Creat()
+		{
+			mdates=Collections.synchronizedList(new ArrayList<>());
+			add(8);
+		}
+
+		@Override
+		public Words CreatOne()
+		{
+			return new CodeWords();
+		}
+
+		@Override
+		public void CopyFrom(Words target)
+		{
+			setFuhao(target.getFuhao());
+			setSpilt(target.getSpilt());
+			set_zhu(target.get_zhu());
+			setKeyword(target.getKeyword());
+			setConstword(target.getConstword());
+			setLastfunc(target.getLastfunc());
+			setThoseObject(target.getThoseObject());
+			setBeforetype(target.getBeforetype());
+			setHistoryVillber(target.getHistoryVillber());
+			setTag(target.getTag());
+			setAttribute(target.getAttribute());
+		}
+
+		@Override
+		public void CopyTo(Words target)
+		{
+			target. setFuhao(getFuhao());
+			target.setSpilt(getSpilt());
+			target.set_zhu(get_zhu());
+			target.setKeyword(getKeyword());
+			target.setConstword(getConstword());
+			target.setLastfunc(getLastfunc());
+			target.setThoseObject(getThoseObject());
+			target.setBeforetype(getBeforetype());
+			target.setHistoryVillber(getHistoryVillber());
+			target.setTag(getTag());
+			target.setAttribute(getAttribute());
+		}
+		
+		public void add(int size){
+			while(size-->0){
+				Collection<CharSequence> col=Collections.synchronizedSet(new HashSet<>());
+				mdates.add(col);
+				//每个集合都是安全的
+			}
+		}
+		public void set(int index,Collection<CharSequence> words){
+			Set<CharSequence> set = new HashSet<>();
+			set.addAll(words);
+			words = Collections.synchronizedSet(set);
+			mdates.set(index,words);
+		}
+		public void clear(){
+			for(Collection t:mdates)
+				t.clear();
+		}
+		public int size(){
+			return mdates.size();
+		}
+
+		public char[] getFuhao(){
+			return fuhao;
+		}
+		public char[] getSpilt(){
+			return spilt;
+		}
+		public Map<CharSequence,CharSequence> get_zhu(){
+			return zhu_key_value;
+		}
+		public Collection<CharSequence> getKeyword(){
+			return mdates.get(words_key);
+		}
+		public Collection<CharSequence> getConstword(){
+			return mdates.get(words_const);
+		}
+		public Collection<CharSequence> getLastfunc(){
+			return mdates.get(words_func);
+		}
+		public Collection<CharSequence> getHistoryVillber(){
+			return mdates.get(words_vill);
+		}
+		public Collection<CharSequence> getThoseObject(){
+			return mdates.get(words_obj);
+		}
+		public Collection<CharSequence> getBeforetype(){
+			return mdates.get(words_type);
+		}
+		public Collection<CharSequence> getTag(){
+			return mdates.get(words_tag);
+		}
+		public Collection<CharSequence> getAttribute(){
+			return mdates.get(words_attr);
+		}
+
+		public void setFuhao(char[] fuhao){
+			this.fuhao=fuhao;
+		}
+		public void setSpilt(char[] spilt){
+			this.spilt=spilt;
+		}
+		public void set_zhu(Map<CharSequence, CharSequence> zhu){
+			zhu_key_value = Collections.synchronizedMap(zhu);
+		}
+		public void setKeyword(Collection<CharSequence> keyword){
+			set(words_key,keyword);
+		}
+		public void setConstword(Collection<CharSequence> constword){
+			set(words_const,constword);
+		}
+		public void setLastfunc(Collection<CharSequence> func){
+			set(words_func,func);
+		}
+		public void setHistoryVillber(Collection<CharSequence> villber){
+			set(words_vill,villber);
+		}
+		public void setThoseObject(Collection<CharSequence> obj){
+			set(words_obj,obj);
+		}
+		public void setBeforetype(Collection<CharSequence> type){
+			set(words_type,type);
+		}
+		public void setTag(Collection<CharSequence> tag){
+			set(words_tag,tag);
+		}
+		public void setAttribute(Collection<CharSequence> attr){
+			set(words_attr,attr);
+		}
+		
+	}
+	
+	
+/*
  _________________________________________
 
  更详细的执行过程，也许你会使用它们，但这样可能很麻烦

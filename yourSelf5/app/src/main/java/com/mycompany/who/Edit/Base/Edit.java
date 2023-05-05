@@ -58,7 +58,7 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 	public static int Text_Color=0xffabb2bf;
 	public static int CursorRect_Color=0x25616263;
 	public static Typeface type=Typeface.MONOSPACE;
-	public float TextSize;
+	private float TextSize;
 
 
 	public Edit(Context cont){

@@ -149,7 +149,8 @@ public class String_Splitor
 	}
 	
 	
-	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException {
+	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException 
+	{
 	    String zhPattern = "[\u4e00-\u9fa5]+";//正则表达式，用于匹配url里面的中文
 
 		Pattern p = Pattern.compile(zhPattern);
@@ -162,7 +163,8 @@ public class String_Splitor
 		return b.toString();
 	}
 	
-	public static int getBeforeBindow(String text,int index,String st,String en){
+	public static int getBeforeBindow(String text,int index,String st,String en)
+	{
 		//用栈把前括号一个个收起来，每遇到一个后括号pop一个，直至遇到指定的后括号
 		int now=0;
 		Stack<Integer> stack=new Stack<>();
@@ -186,13 +188,12 @@ public class String_Splitor
 				//遇到前括号，push
 				stack.push(start);
 			}
-			
 		}
-		
 		return -1;
 	}
 	
-	public static int getAfterBindow(String text,int index,String st,String en){
+	public static int getAfterBindow(String text,int index,String st,String en)
+	{
 		//用栈把后括号一个个收起来，每遇到一个前括号pop一个，直至遇到指定的前括号
 		int now=text.length();
 		Stack<Integer> stack=new Stack<>();

@@ -40,7 +40,15 @@ public class CodeEditBuilder implements EditBuilder
 	{
 		if(Edit instanceof CodeEdit){
 		    CodeEdit E = (CodeEdit) Edit;
-			E.setWordLib(null);
+			Words lib = E.getWordLib();
+			lib.getKeyword().clear();
+			lib.getConstword().clear();
+			lib.getHistoryVillber().clear();
+			lib.getThoseObject().clear();
+			lib.getBeforetype().clear();
+			lib.getLastfunc().clear();
+			lib.getTag().clear();
+			lib.getAttribute().clear();
 		}
 	}
 	
@@ -1646,15 +1654,15 @@ _________________________________________
 			}
 			public char[] getFuhao()
 			{
-				return WordLib.fuhao;
+				return WordLib.getFuhao();
 			}
 			public char[] getSpilt()
 			{
-				return WordLib.spilt;
+				return WordLib.getSpilt();
 			}
 			public Map<CharSequence,CharSequence> get_zhu()
 			{
-				return WordLib.zhu_key_value;
+				return WordLib.get_zhu();
 			}
 			public Collection<CharSequence> getLastfunc()
 			{
@@ -2337,12 +2345,13 @@ _________________________________________
 			@Override
 			public void loadWords(Words Lib)
 			{
-				
+				Lib.setFuhao(fuhao);
+				Lib.setSpilt(spilt);
 			}
 			
 		}
 		
-		public static class JavaWordsPacket implements AWordsPacket
+		public static class JavaWordsPacket extends BaseWordsPacket
 		{
 			//所有单词
 			public static CharSequence[] keyword = new String[]{
@@ -2372,12 +2381,15 @@ _________________________________________
 			@Override
 			public void loadWords(Words Lib)
 			{
-			
+				super.loadWords(Lib);
+				Lib.setKeyword(Arrays.asList(keyword));
+				Lib.setConstword(Arrays.asList(constword));
+				Lib.set_zhu(zhu_key_value);
 			}
 			
 		}
 		
-		public static class XMLWordsPackets implements AWordsPacket
+		public static class XMLWordsPackets extends BaseWordsPacket
 		{
 			public static CharSequence[] IknowTag= new String[]{	"*",
 				"html","body","head","title","a","img","audio","input","b","sup","i","small","font","em","strong","sub",
@@ -2399,7 +2411,7 @@ _________________________________________
 			@Override
 			public void loadWords(Words Lib)
 			{
-			
+				super.loadWords(Lib);
 			}
 			
 		}
