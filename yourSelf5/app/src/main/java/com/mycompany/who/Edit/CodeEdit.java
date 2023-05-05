@@ -1867,15 +1867,6 @@ ________________________________________________________________________________
 		protected EditListenerList mlistenerCS;
 		protected EditListenerList mlistenerVS;
 		protected EditListener mlistenerR;
-
-		public static final int FinderIndex = 0;
-		public static final int DrawerIndex = 1;
-		public static final int FormatorIndex = 2;
-		public static final int InsertorIndex = 3;
-		public static final int CompletorIndex = 4;
-		public static final int CanvaserIndex = 5;
-		public static final int RunnarIndex = 6;
-		
 		
 		public CodeEditListenerInfo()
 		{
@@ -2067,30 +2058,21 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void setACollectionChars(int index, Collection<Character> words){
-			setC(index,words);
-		}
-	    @Override
-		public void setACollectionWords(int index, Collection<CharSequence> words){
-			set(index,words);
-		}
-		@Override
-		public void setAMapWords(int index, Map<CharSequence, CharSequence> words){
-			set(index,words);
-		}
-		
-		public void setC(int index,Collection<Character> words){
+		public void setACollectionChars(int index, Collection<Character> words)
+		{
 			Set<Character> set = EmptySet();
 			set.addAll(words);
 			mchars.put(index,set);
 		}
-		public void set(int index,Collection<CharSequence> words)
+	    @Override
+		public void setACollectionWords(int index, Collection<CharSequence> words)
 		{
 			Set<CharSequence> set = EmptySet();
 			set.addAll(words);
 			mdates.put(index,set);
 		}
-		public void set(int index,Map<CharSequence,CharSequence> words)
+		@Override
+		public void setAMapWords(int index, Map<CharSequence, CharSequence> words)
 		{
 			Map<CharSequence,CharSequence> map = EmptyMap();
 			map.putAll(words);

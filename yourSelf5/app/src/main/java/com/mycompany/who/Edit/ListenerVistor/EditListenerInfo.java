@@ -5,6 +5,16 @@ import java.util.*;
 public interface EditListenerInfo
 {
 	
+	public static final int FinderIndex = 0;
+	public static final int DrawerIndex = 1;
+	public static final int FormatorIndex = 2;
+	public static final int InsertorIndex = 3;
+	public static final int CompletorIndex = 4;
+	public static final int CanvaserIndex = 5;
+	public static final int RunnarIndex = 6;
+	public static final int LineCheckerIndex = 7;
+	
+	
 	public boolean addAListener(EditListener li)
 
 	public boolean delAListener(EditListener li)
@@ -20,12 +30,15 @@ public interface EditListenerInfo
 	
 	public static class Helper{
 		
-		public static EditListener checkName(EditListenerList lis,String name){
+		public static EditListener checkName(EditListener lis,String name){
 			
 			if(lis.getName().equals(name))
 				return lis;
 			
-			for(EditListener li:lis.getList()){
+			if(!(lis instanceof EditListenerList))
+				return null;
+				
+			for(EditListener li:((EditListenerList)lis).getList()){
 				if(li.getName().equals(name)){
 					return li;
 				}
