@@ -1056,6 +1056,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
+			Last.push(new Stack<Int>());
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -1168,6 +1169,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void Format(int start, int end)
 		{
+			Last.push(new Stack<Int>());
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override

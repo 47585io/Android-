@@ -218,6 +218,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 						Editable editor = E.getText();
 						E.reSAll(0,editor.length(),"\t","    ");
 						E.getPool().execute(E.ReDraw(0,editor.length()));
+						E.clearStackDate();
 					}
 				}
 			};

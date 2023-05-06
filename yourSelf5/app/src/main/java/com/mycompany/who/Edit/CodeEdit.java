@@ -1053,7 +1053,7 @@ _________________________________________
 		return endSelection;
 	}
 
-	public void Uedo()
+	final public void Uedo()
 	{
 		if (stack == null||stack.Usize()==0)
 			return;
@@ -1075,7 +1075,8 @@ _________________________________________
 		isUR = false;
 		--IsModify;
 	}
-	public void Redo()
+	
+	final public void Redo()
 	{
 		if (stack == null||stack.Rsize()==0)
 			return;
@@ -1095,6 +1096,10 @@ _________________________________________
 		}
 		isUR = false;
 		--IsModify;
+	}
+	
+	public void clearStackDate(){
+		stack.clear();
 	}
 	
 	protected void onGetUR(EditDate.Token token){}

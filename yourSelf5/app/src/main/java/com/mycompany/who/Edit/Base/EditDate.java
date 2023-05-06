@@ -59,6 +59,11 @@ public class EditDate
 		return RedoList.size();
 	}
 	
+	public void clear(){
+		UedoList.clear();
+		RedoList.clear();
+	}
+	
 	public static class Token
 	{
 		public Token(int start, int end, CharSequence src)
