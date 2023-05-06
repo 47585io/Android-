@@ -980,35 +980,36 @@ _________________________________________
 
     final protected int Uedo_(EditDate.Token token)
 	{
-		int endSelection=0;
+		int endSelection=getSelectionEnd();
 		if (token != null)
 		{
 			//范围限制
+			Editable editor = getText();
 			if (token.start < 0)
 				token.start = 0;
-			if (token.end > getText().length())
-				token.end = getText().length();
+			if (token.end > editor.length())
+				token.end = editor.length();
 			onGetUR(token);
 
-			if (token.src == "")
+			if (token.src.equals(""))
 			{
-				stack.Reput(token.start, token.start, getText().subSequence(token.start, token.end));
+				stack.Reput(token.start, token.start, editor.subSequence(token.start, token.end));
 				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
-				getText().delete(token.start, token.end);	
+				editor.delete(token.start, token.end);	
 				endSelection = token.start;
 			}
 			else if (token.start == token.end)
 			{
-				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
 				stack.Reput(token.start, token.start + token.src.length(), "");
-				getText().insert(token.start, token.src);
+				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
+				editor.insert(token.start, token.src);
 				endSelection = token.start + token.src.length();
 			}
 			else
 			{
-				stack.Reput(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end));
+				stack.Reput(token.start, token.start + token.src.length(), editor.subSequence(token.start, token.end));
 				//另外的，则是反向替换某个字符串
-			    getText().replace(token.start, token.end, token.src);
+			    editor.replace(token.start, token.end, token.src);
 				endSelection = token.start + token.src.length();
 			}
 		}
@@ -1017,34 +1018,35 @@ _________________________________________
 
 	final protected int Redo_(EditDate.Token token)
 	{
-		int endSelection=0;
+		int endSelection=getSelectionEnd();
 		if (token != null)
 		{
+			Editable editor = getText();
 			if (token.start < 0)
 				token.start = 0;
-			if (token.end > getText().length())
-				token.end = getText().length();
+			if (token.end > editor.length())
+				token.end = editor.length();
 			onGetUR(token);
 
-			if (token.src == "")
+			if (token.src.equals(""))
 			{
-				stack.put(token.start, token.start , getText().subSequence(token.start, token.end));
+				stack.put(token.start, token.start , editor.subSequence(token.start, token.end));
 				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
-				getText().delete(token.start, token.end);
+				editor.delete(token.start, token.end);
 				endSelection = token.start;
 			}
 			else if (token.start == token.end)
 			{
-				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
 				stack.put(token.start, token.start + token.src.length(), "");
-				getText().insert(token.start, token.src);
+				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
+				editor.insert(token.start, token.src);
 				endSelection = token.start + token.src.length();
 			}
 			else
 			{
-				stack.put(token.start, token.start + token.src.length(), getText().subSequence(token.start, token.end));
+				stack.put(token.start, token.start + token.src.length(), editor.subSequence(token.start, token.end));
 				//另外的，则是反向替换某个字符串
-			    getText().replace(token.start, token.end, token.src);
+			    editor.replace(token.start, token.end, token.src);
 				endSelection = token.start + token.src.length();
 		    }
 		}
@@ -1197,24 +1199,30 @@ _________________________________________
 
 		try
 		{
-			if (count != 0)
+			if(count!= 0 && after!=0)
+			{
+				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
+				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
+				stack.put(start,start+after,str.subSequence(start,start+count));
+				onPutUR(stack.seeLast());
+			}
+			else if (count != 0)
 			{
 				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 				//从现在start开始，插入start～start+count之间的字符串
 				stack.put(start, start, str.subSequence(start , start + count));
 				onPutUR(stack.seeLast());
 			}
-			if (after != 0)
+			else if (after != 0)
 			{
-				//如果还插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
+				//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
 				//删除现在start～start+after之间的字符串
 				stack.put(start, start + after, "");
 				onPutUR(stack.seeLast());
 			}					
 
 		}
-		catch (Exception e)
-		{}
+		catch (Exception e){}
 	}
 
 	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
@@ -1877,7 +1885,7 @@ ________________________________________________________________________________
 			mlistenerCS = new myEditListenerList();				
 		}
 
-	    public boolean addAListener(EditListener li)
+	    public boolean addAListener(EditListener li) throws NullPointerException
 		{
 			if(li==null)
 				return false;
@@ -1913,7 +1921,7 @@ ________________________________________________________________________________
 			return false;
 		}
 
-		public boolean delAListener(EditListener li)
+		public boolean delAListener(EditListener li) throws NullPointerException
 		{	
 			if(li==null)
 				return false;
@@ -1922,11 +1930,15 @@ ________________________________________________________________________________
 				mlistenerD=null;
 				return true;
 			}
-			else if(mlistenerFS.getList().remove(li)){
-				return true;
-			}
 			else if(li.equals(mlistenerM)){
 				mlistenerM=null;
+				return true;
+			}
+			else if(li.equals(mlistenerR)){
+				mlistenerR = null;
+				return true;
+			}
+			else if(mlistenerFS.getList().remove(li)){
 				return true;
 			}
 			else if(mlistenerIS.getList().remove(li)){
@@ -1938,10 +1950,7 @@ ________________________________________________________________________________
 			else if(mlistenerVS.getList().remove(li)){
 				return true;
 			}
-			else if(li.equals(mlistenerR)){
-				mlistenerR = null;
-				return true;
-			}
+			
 			return false;
 		}
 
@@ -1949,39 +1958,53 @@ ________________________________________________________________________________
 		{	
 			EditListener li = null;
 			
-			if(mlistenerD.getName().equals(name))
+			if(mlistenerD.getName().equals(name)){
 				return mlistenerD;
-			else if(mlistenerM.getName().equals(name))
+			}
+			else if(mlistenerM.getName().equals(name)){
 				return mlistenerM;
-			else if(mlistenerR.getName().equals(name))
+			}
+			else if(mlistenerR.getName().equals(name)){
 				return mlistenerR;
-				
-			li = Helper.checkName(mlistenerIS,name);
-			if(li!=null)
+			}
+			else if(Helper.checkName(mlistenerIS,name)!=null){
 				return li;
-			
-			li = Helper.checkName(mlistenerFS,name);
-			if(li!=null)		
+			}
+			else if(Helper.checkName(mlistenerFS,name)!=null){
 				return li;
-			
-			li = Helper.checkName(mlistenerCS,name);
-			if(li!=null)
+			}
+			else if(Helper.checkName(mlistenerCS,name)!=null){
 			    return li;
-			
-			li = Helper.checkName(mlistenerVS,name);
-			if(li!=null)
+			}
+			else if(Helper.checkName(mlistenerVS,name)!=null){
 				return li;
-				
-			return null;
+			}
+			return li;
 		}
 		
 		@Override
-		public boolean addListenerTo(EditListener li, int toIndex)
+		public boolean addListenerTo(EditListener li, int toIndex) throws NullPointerException
 		{
 			EditListener l = findAListener(toIndex);
-			if(l instanceof EditListenerList){
+			if(l instanceof EditListenerList && li instanceof EditListener){
 				((EditListenerList)l).getList().add(li);
 				return true;
+			}
+			else if(l instanceof EditListenerList && li instanceof EditListenerList){
+				switch(toIndex){
+					case FinderIndex:
+						mlistenerFS = (EditListenerList) li;
+						return true;
+					case InsertorIndex:
+						mlistenerIS = (EditListenerList) li;
+						return true;
+					case CompletorIndex:
+						mlistenerCS = (EditListenerList) li;
+						return true;
+					case CanvaserIndex:
+						mlistenerVS = (EditListenerList) li;
+						return true;
+				}
 			}
 			else if(l instanceof EditListener){
 				return addAListener(li);
@@ -2038,22 +2061,6 @@ ________________________________________________________________________________
 					return mlistenerR;
 			}
 			return null;
-		}
-			
-		public class CodeHelper extends Helper
-		{
-			public boolean addToIndex(EditListener li,int toIndex)
-			{
-				EditListener l = findAListener(toIndex);
-				if(l instanceof EditListenerList){
-					((EditListenerList)l).getList().add(li);
-					return true;
-				}
-				else if(l instanceof EditListener){
-					return addAListener(li);
-				}
-				return false;
-			}
 		}
 	
 	}

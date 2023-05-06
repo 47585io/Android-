@@ -22,9 +22,9 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 public class WordAdpter extends BaseAdapter
 {
 
-	protected Map<size,Integer> Range;
-    protected List<Icon> mfile;
-	protected int rid;
+	private Map<size,Integer> Range;
+    private List<Icon> mfile;
+	private int rid;
 
 	public WordAdpter(int id) 
 	{

@@ -5,8 +5,8 @@ import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
-  EditListenerList，EditListener的子类，可向上转型
-
+  myEditListenerList，myEditListener的子接口，可向上转型
+ 
   内部使用synchronizedList存储EditListener，这个lis一定不为null
   
   管理一组的EditListener

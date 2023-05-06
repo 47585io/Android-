@@ -6,6 +6,10 @@ import com.mycompany.who.Edit.Base.*;
 import java.util.*;
 import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
+
+/*
+  一般情况下，都使用此类扩展其它EditListener
+*/
 public class myEditListener extends Object implements EditListener
 {
 	private boolean Enabled;
