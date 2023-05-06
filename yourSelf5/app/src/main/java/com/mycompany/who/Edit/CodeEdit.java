@@ -1873,8 +1873,7 @@ ________________________________________________________________________________
 
 */
     public static class CodeEditListenerInfo implements EditListenerInfo
-	{
-		
+	{	
 		private EditListenerList mlistenerFS;
 		private EditListener mlistenerD;
 		private EditListener mlistenerM;
@@ -1927,33 +1926,34 @@ ________________________________________________________________________________
 			return false;
 		}
 
-		public boolean delAListener(EditListener li) throws NullPointerException
+		public boolean delAListener(EditListener li) 
 		{	
-			if(li==null)
-				return false;
-
-			if(li.equals(mlistenerD)){
+			if(Helper.Remove(mlistenerD,li)){
 				mlistenerD=null;
 				return true;
 			}
-			else if(li.equals(mlistenerM)){
+			else if(Helper.Remove(mlistenerM,li)){
 				mlistenerM=null;
 				return true;
 			}
-			else if(li.equals(mlistenerR)){
+			else if(Helper.Remove(mlistenerR,li)){
 				mlistenerR = null;
 				return true;
 			}
-			else if(mlistenerFS.getList().remove(li)){
+			else if(Helper.Remove(mlistenerFS,li)){
+				mlistenerFS = null;
 				return true;
 			}
-			else if(mlistenerIS.getList().remove(li)){
+			else if(Helper.Remove(mlistenerIS,li)){
+				mlistenerIS = null;
 				return true;
 			}
-			else if(mlistenerCS.getList().remove(li)){
+			else if(Helper.Remove(mlistenerCS,li)){
+				mlistenerCS = null;
 				return true;
 			}
-			else if(mlistenerVS.getList().remove(li)){
+			else if(Helper.Remove(mlistenerVS,li)){
+				mlistenerVS = null;
 				return true;
 			}
 			return false;
@@ -1963,39 +1963,40 @@ ________________________________________________________________________________
 		{	
 			EditListener li = null;
 			
-			if(mlistenerD.getName().equals(name)){
+			if(Helper.checkName(mlistenerD,name)!=null){
 				return mlistenerD;
 			}
-			else if(mlistenerM.getName().equals(name)){
+			else if(Helper.checkName(mlistenerM,name)!=null){
 				return mlistenerM;
 			}
-			else if(mlistenerR.getName().equals(name)){
+			else if(Helper.checkName(mlistenerR,name)!=null){
 				return mlistenerR;
 			}
-			else if(Helper.checkName(mlistenerIS,name)!=null){
-				return li;
-			}
-			else if(Helper.checkName(mlistenerFS,name)!=null){
-				return li;
-			}
-			else if(Helper.checkName(mlistenerCS,name)!=null){
+			 
+			li = Helper.checkName(mlistenerIS,name);
+			if(li!=null)
 			    return li;
-			}
-			else if(Helper.checkName(mlistenerVS,name)!=null){
-				return li;
-			}
+			
+			li = Helper.checkName(mlistenerFS,name);
+			if(li!=null)
+			    return li;
+			
+			li = Helper.checkName(mlistenerCS,name);
+			if(li!=null)
+			    return li;
+			
+			li = Helper.checkName(mlistenerVS,name);
+			if(li!=null)
+			    return li;
+			
 			return li;
 		}
 		
 		@Override
-		public boolean addListenerTo(EditListener li, int toIndex) throws NullPointerException
+		public boolean addListenerTo(EditListener li, int toIndex)
 		{
-			EditListener l = findAListener(toIndex);
-			if(l instanceof EditListenerList && li instanceof EditListener){
-				((EditListenerList)l).getList().add(li);
-				return true;
-			}
-			else if(l instanceof EditListenerList && li instanceof EditListenerList){
+			if(li instanceof EditListenerList){
+				//若它是一个EditListenerList，才能直接覆盖对应的EditListenerList
 				switch(toIndex){
 					case FinderIndex:
 						mlistenerFS = (EditListenerList) li;
@@ -2011,22 +2012,13 @@ ________________________________________________________________________________
 						return true;
 				}
 			}
-			else if(l instanceof EditListener){
-				switch(toIndex){
-					case DrawerIndex:
-						mlistenerD = li;
-						return true;
-					case FormatorIndex:
-						mlistenerM = li;
-						return true;
-					case RunnarIndex:
-						mlistenerR=li;
-						return true;
-				}
+			else{
+				//若它是一个EditListener，让它覆盖对应的EditListener，或添加到一个EditListenerList中
+				return addAListener(li);
 			}
 			return false;
 		}
-
+		
 		@Override
 		public boolean delListenerFrom(int fromIndex)
 		{		

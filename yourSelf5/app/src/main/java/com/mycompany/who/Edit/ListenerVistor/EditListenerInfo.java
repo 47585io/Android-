@@ -40,15 +40,35 @@ public interface EditListenerInfo
 		{
 			if(lis==null || lis.getName().equals(name))
 				return lis;
-			if(lis instanceof EditListener)
+			if(!(lis instanceof EditListenerList))
 				return null;
-				
+			
+			//它是一个EditListenerList，就额外遍历它的子元素
 			for(EditListener li:((EditListenerList)lis).getList()){
 				if(li.getName().equals(name)){
 					return li;
 				}
 			}
 			return null;
+		}
+		
+		public static boolean Remove(EditListener src,EditListener target)
+		{
+			if(src==null||target==null)
+				return false;
+			if(src.equals(target))
+				return true;
+				
+			//它是一个EditListenerList，就额外看看它是否是它的子元素
+			if(src instanceof EditListenerList){
+				for(EditListener li:((EditListenerList)src).getList()){
+					if(li.equals(target)){
+						((EditListenerList)src).getList().remove(li);
+						return false;
+					}
+				}
+			}
+			return false;
 		}
 	}
 	
