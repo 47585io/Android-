@@ -5,12 +5,19 @@ public interface EditListenerInfo
 {
 	
 	public static final int FinderIndex = 0;
+	
 	public static final int DrawerIndex = 1;
+	
 	public static final int FormatorIndex = 2;
+	
 	public static final int InsertorIndex = 3;
+	
 	public static final int CompletorIndex = 4;
+	
 	public static final int CanvaserIndex = 5;
+	
 	public static final int RunnarIndex = 6;
+	
 	public static final int LineCheckerIndex = 7;
 	
 	

@@ -55,7 +55,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	{	
 	    String subStr = text.substring(start,end);
 		List<wordIndex> nodes=new ArrayList<>();
-		List<DoAnyThing> totalList =new ArrayList<>();
+		List<DoAnyThing> totalList =new LinkedList<>();
 		//为每一个listener分配一个nodes和totalList
 		
 		OnFindWord(totalList, WordLib); 

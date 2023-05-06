@@ -9,20 +9,23 @@ import java.util.*;
 
 /*
  EditText管理文本数据，也管理文本绘制，文本数据由其内部SpannableStringBuilder容器管理，而文本绘制是用TextPaint画的
+ 
  EditText在onDraw中可以将画笔分享给别人，这个人就是Span，所以自定义Span可以将文本绘制成任何样子
 
  每次onDraw，EditText遍历每个Span，并调用它们的方法，至于如何绘制这段文本由Span自己决定
+ 
  (另外的，文本起始和末尾的位置是由EditText内部的Layout测量后决定的)
 
  您只要使用支持设置Span的文本容器的setSpan方法就可以设置一个Span
+ 
  setSpan 内部会判断 Span 对象是否之前设置过了，如果是同一个对象，会修改它的位置和flag值
+
  但单个Span可以应用到多个Span容器中，这样可以节省内存
 
  */
 public class Colors
 {
 	//所有颜色
-	
 	public static int Default =0xffabb2bf;//灰白
 	public static int zhuShi =0xff585f65;//深灰
 	public static int Str=0xff98c379;//青草奶油

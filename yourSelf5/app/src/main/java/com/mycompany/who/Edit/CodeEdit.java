@@ -1586,6 +1586,7 @@ _________________________________________
 		}
 		return true;
 	}
+	
 	@Override
 	public boolean postDelayed(Runnable action, long delayMillis)
 	{
@@ -1874,13 +1875,13 @@ ________________________________________________________________________________
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
 		
-		protected EditListenerList mlistenerFS;
-		protected EditListener mlistenerD;
-		protected EditListener mlistenerM;
-		protected EditListenerList mlistenerIS;
-		protected EditListenerList mlistenerCS;
-		protected EditListenerList mlistenerVS;
-		protected EditListener mlistenerR;
+		private EditListenerList mlistenerFS;
+		private EditListener mlistenerD;
+		private EditListener mlistenerM;
+		private EditListenerList mlistenerIS;
+		private EditListenerList mlistenerCS;
+		private EditListenerList mlistenerVS;
+		private EditListener mlistenerR;
 		
 		public CodeEditListenerInfo()
 		{
@@ -1955,7 +1956,6 @@ ________________________________________________________________________________
 			else if(mlistenerVS.getList().remove(li)){
 				return true;
 			}
-			
 			return false;
 		}
 
@@ -2012,7 +2012,17 @@ ________________________________________________________________________________
 				}
 			}
 			else if(l instanceof EditListener){
-				return addAListener(li);
+				switch(toIndex){
+					case DrawerIndex:
+						mlistenerD = li;
+						return true;
+					case FormatorIndex:
+						mlistenerM = li;
+						return true;
+					case RunnarIndex:
+						mlistenerR=li;
+						return true;
+				}
 			}
 			return false;
 		}
@@ -2162,7 +2172,7 @@ ________________________________________________________________________________
 	}
 	
 	
-/*
+ /*
  _________________________________________
 
  更详细的执行过程，也许你会使用它们，但这样可能很麻烦
@@ -2170,6 +2180,7 @@ ________________________________________________________________________________
  _________________________________________
  
  */
+ 
 	public static interface myDrawer extends Drawer{
 			
 		public void onFindNodes(int start, int end, String text, List<wordIndex> nodes)

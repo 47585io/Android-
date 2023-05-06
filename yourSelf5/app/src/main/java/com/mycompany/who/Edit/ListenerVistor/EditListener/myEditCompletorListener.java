@@ -54,7 +54,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	{
 		Collection<CharSequence> lib;
 		List<CharSequence> words = null;
-		List<Icon> Adapter = new ArrayList<>();
+		List<Icon> Adapter = new LinkedList<>();
 		//为每一个listener分配一个Adapter
 		
 		lib = onBeforeSearchWord(Wordlib);

@@ -9,15 +9,23 @@ public interface Words
 	public static final int maps_zhu = 0;
 	
 	public static final int chars_fuhao = 0;
+	
 	public static final int chars_spilt = 1;
 	
 	public static final int words_key=0;
+	
 	public static final int words_const=1;
+	
 	public static final int words_func = 2;
+	
 	public static final int words_vill = 3;
+	
 	public static final int words_obj = 4;
+	
 	public static final int words_type = 5;
+	
 	public static final int words_tag = 6;
+	
 	public static final int words_attr = 7;
 	
 	
