@@ -3,7 +3,9 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditL
 import java.util.*;
 
 /*
-  EditListenerList，EditListener的子接口，可向上转型，内部管理一组的EditListener
+  EditListenerList，EditListener的子接口，可向上转型
+  
+  内部管理一组的EditListener
 */
 public interface EditListenerList extends EditListener
 {

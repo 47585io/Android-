@@ -24,7 +24,9 @@ import static com.mycompany.who.Edit.EditBuilder.WordsVistor.Words.*;
 
 
 /*
-  各种Listener的工厂，可以直接get使用，或者继承，全部都是static
+  各种Listener的工厂和Words包，
+  
+  可以直接get使用，或者继承，全部都是static
 
   若没有特殊情况，Extension关我什么事
   
@@ -35,12 +37,14 @@ public class CodeEditBuilder implements EditBuilder
 	@Override
 	public void loadWords(Words Lib)
 	{
+		//使用默认单词包
 		WordsPackets.getBaseWordsPacket().loadWords(Lib);
 	}
 
 	@Override
 	public void trimListener(EditListenerInfo Info)
 	{
+		//使用默认配置
 	    Info.addListenerTo(CodeEditBuilder.DrawerFactory.getDefaultDrawer(),DrawerIndex);
 		Info.addListenerTo(CodeEditBuilder.CanvaserFactory.getDefultCanvaser(),CanvaserIndex);
 		Info.addListenerTo(CodeEditBuilder.FormatorFactory.getJavaFormator(),FormatorIndex);
@@ -50,6 +54,7 @@ public class CodeEditBuilder implements EditBuilder
 	@Override
 	public void SwitchLuagua(Object O, String Lua)
 	{
+		//使用指定语言的EditListener工厂和Words包
 		EditListenerInfo Info = null;
 		Words WordLib = null;
 		if(O instanceof EditListenerInfo){
@@ -105,6 +110,7 @@ ________________________________________________________________________________
 
 		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
+			//所有的工厂都替换了监听器
 			Info.delListenerFrom(DrawerIndex);
 			Info.addListenerTo(ToLisrener(Lua),DrawerIndex);
 		}
@@ -212,6 +218,8 @@ ________________________________________________________________________________
 FormatorFactory
 	
    ->  DefaultFormator
+   
+   ->  JavaFormator
 	 
 ___________________________________________________________________________________________________________________________
 
@@ -2261,7 +2269,7 @@ WordsPackets
 
         -> JavaWordsPacket
 
-	    -> XMLWordsPackets
+	    -> XMLWordsPacket
 	
 	    -> ...
 _________________________________________
@@ -2295,7 +2303,7 @@ _________________________________________
 			return new JavaWordsPacket();
 		}
 		public static AWordsPacket getXMLWordsPacket(){
-			return new XMLWordsPackets();
+			return new XMLWordsPacket();
 		}
 		public static AWordsPacket getBaseWordsPacket(){
 			return new BaseWordsPacket();
@@ -2371,7 +2379,7 @@ _________________________________________
 			
 		}
 		
-		public static class XMLWordsPackets extends BaseWordsPacket
+		public static class XMLWordsPacket extends BaseWordsPacket
 		{
 			public static CharSequence[] IknowTag= new String[]{	"*",
 				"html","body","head","title","a","img","audio","input","b","sup","i","small","font","em","strong","sub",
@@ -2394,6 +2402,8 @@ _________________________________________
 			public void loadWords(Words Lib)
 			{
 				super.loadWords(Lib);
+				Lib.setACollectionWords(words_tag,Arrays.asList(IknowTag));
+				Lib.setAMapWords(maps_zhu,zhu_key_value);
 			}
 			
 		}

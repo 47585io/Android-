@@ -10,6 +10,14 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 
  这是为了方便以后将interfac改成abstract class
 
+ 通过EditBuilder，使用指定的EditListener和Words快速构建一个Edit
+ 
+ 构建包含两大东西: 
+ 
+   EditListener工厂，各种监听器，根据需要去配置EditListenerInfo
+		
+   Words包，装满了一些单词，根据需要去配置Words
+   
 */
 public interface EditBuilder
 {

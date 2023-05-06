@@ -100,16 +100,15 @@ import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacke
 public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditListenerInfoUser,WordsUser
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
+	
 	private Words WordLib;
 	private EditDate stack;
 	private EditBuilder builder;
 	private ThreadPoolExecutor pool;
 	private CodeEditListenerInfo Info;
-	/*
-	  不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
-	  但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
-	  呜呜呜，对不起真的没办法了
-	*/
+	  //不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
+	  //但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
+	  //呜呜呜，对不起真的没办法了
 	
 	private boolean isDraw;
 	private boolean isFormat;
@@ -117,12 +116,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	private boolean isUR;
 	private int IsModify;
 	private boolean IsModify2;
-	/*
-	  你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
-	  IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
-	  IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
-	  这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
-    */
+	  //你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
+	  //IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
+	  //IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
+	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
 	
 	private EditLine Line;
 	private ListView mWindow;
@@ -205,12 +202,13 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		loadWords();
 	}
 	
+	
 /*
 __________________________________________________________________________________
 
-对Listener进行操作
+对Listener和Words进行操作
 
-  为了方便，这里的set和get方法限制参数类型
+  为了方便和安全，这里的set和get方法限制参数类型，而words可以瞎存单词
   
   trimListener，loadWords及setLuagua都依赖EditBuilder，所以可以设置EditBuilder
   
@@ -238,6 +236,16 @@ ________________________________________________________________________________
 	{
 		if(WordLib!=null)
 		    WordLib.clear();
+	}
+	public void setLuagua(String Lua)
+	{
+		if(builder!=null){
+		    laugua.replace(0,laugua.length(),Lua);
+			builder.SwitchLuagua(this,Lua);
+	    }
+	}
+	public String getLuagua(){
+		return laugua.toString();
 	}
 	
 	public void setFinderList(EditListenerList lis)
@@ -314,34 +322,18 @@ ________________________________________________________________________________
 		return null;
 	}
 	
-	public CodeEditListenerInfo getInfo(){
-		return Info;
-	}
-	public void setInfo(EditListenerInfo i){
-		//必须传递CodeEditListenerInfo及其子类。否则无法保证安全
-	    if(i instanceof CodeEditListenerInfo||i==null)
-		    Info = (CodeEdit.CodeEditListenerInfo) i;
-	}
-
-	public void setLuagua(String Lua)
-	{
-		if(builder!=null){
-		    laugua.replace(0,laugua.length(),Lua);
-			builder.SwitchLuagua(this,Lua);
-	    }
-	}
-	public String getLuagua(){
-		return laugua.toString();
-	}
-	
 	
 /*
+ __________________________________________________________________________________
+	 
   我真服了，在super()中会调用setText("")，然后会调用onTextChanged，这时候自己的成员全是null，
 	  
   而是最坑的是: 居然也没有与外部类绑定，那么就不能直接在任何函数中返回外部类的成员，因为外部类对象为null
-	  
+  
+ __________________________________________________________________________________
+ 
 */
-	
+
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
 	}	
@@ -350,6 +342,11 @@ ________________________________________________________________________________
 	}
 	public void setEditLine(EditLine l){
 		Line = l;
+	}
+	public void setInfo(EditListenerInfo i){
+		//必须传递CodeEditListenerInfo及其子类。否则无法保证安全
+	    if(i instanceof CodeEditListenerInfo||i==null)
+		    Info = (CodeEdit.CodeEditListenerInfo) i;
 	}
 	public void setWordLib(Words WordLib){
 		this.WordLib = WordLib;
@@ -366,6 +363,9 @@ ________________________________________________________________________________
 	}
 	public EditLine getEditLine(){
 		return Line;
+	}
+	public CodeEditListenerInfo getInfo(){
+		return Info;
 	}
 	public Words getWordLib(){
 		return WordLib;
@@ -1887,6 +1887,7 @@ ________________________________________________________________________________
 */
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
+		
 		private EditListenerList mlistenerFS;
 		private EditListener mlistenerD;
 		private EditListener mlistenerM;
@@ -1897,6 +1898,7 @@ ________________________________________________________________________________
 		
 		public CodeEditListenerInfo()
 		{
+			//即使未使用，也先装入空的集合，以使get不为null
 			mlistenerFS = new myEditListenerList();
 			mlistenerIS = new myEditListenerList();
 			mlistenerVS = new myEditListenerList();
@@ -2084,7 +2086,6 @@ ________________________________________________________________________________
 			return null;
 		}
 	
-
 		@Override
 		public void clear()
 		{

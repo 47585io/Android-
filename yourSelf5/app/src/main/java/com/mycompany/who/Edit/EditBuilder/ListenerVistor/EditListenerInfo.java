@@ -2,6 +2,9 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor;
 
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 
+/* 
+  用EditListenerInfo管理一堆EditListener 
+*/
 public interface EditListenerInfo
 {
 	

@@ -2,6 +2,10 @@ package com.mycompany.who.Edit.EditBuilder.WordsVistor;
 
 import java.util.*;
 
+
+/* 
+  Words是一个单词库，用于存储和交换单词
+*/
 public interface Words 
 {
 	
