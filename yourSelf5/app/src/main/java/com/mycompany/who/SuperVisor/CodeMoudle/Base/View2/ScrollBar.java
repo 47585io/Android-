@@ -3,10 +3,8 @@ import android.content.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import java.util.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
-import android.graphics.*;
 
 
 /*

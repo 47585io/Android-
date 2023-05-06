@@ -1,7 +1,6 @@
-package com.mycompany.who.Edit.Base;
+package com.mycompany.who.Edit.EditBuilder.WordsVistor;
 
 import java.util.*;
-import com.mycompany.who.Edit.Base.Share.Share3.*;
 
 public interface Words 
 {

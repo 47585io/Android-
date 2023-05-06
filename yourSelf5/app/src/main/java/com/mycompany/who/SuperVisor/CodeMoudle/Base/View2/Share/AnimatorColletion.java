@@ -1,6 +1,5 @@
 package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share;
 import android.view.*;
-import android.graphics.*;
 import android.animation.*;
 
 public class AnimatorColletion

@@ -2,10 +2,7 @@ package com.mycompany.who.SuperVisor.CodeMoudle.Base.View3;
 import android.widget.*;
 import android.content.*;
 import android.view.*;
-import java.text.*;
 import android.util.*;
-import android.content.res.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 
 
 /*

@@ -1,5 +1,7 @@
 package com.mycompany.who.Edit;
 
+import java.util.*;
+import java.lang.reflect.*;
 import android.graphics.*;
 import android.os.*;
 import android.text.*;
@@ -10,14 +12,15 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.myEditFinderListener.*;
-import java.lang.reflect.*;
-import java.util.*;
+import com.mycompany.who.Edit.EditBuilder.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 
-import static com.mycompany.who.Edit.Base.Words.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditFinderListener.DoAnyThing;
+import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
+import static com.mycompany.who.Edit.EditBuilder.WordsVistor.Words.*;
 
 
 /*
@@ -30,66 +33,51 @@ public class CodeEditBuilder implements EditBuilder
 {
 
 	@Override
-	public void loadWords(EditText Edit)
+	public void loadWords(Words Lib)
 	{
-		if(Edit instanceof CodeEdit){
-			CodeEdit E = (CodeEdit) Edit;
-		    WordsPackets.getBaseWordsPacket().loadWords(E.getWordLib());
-		}
+		WordsPackets.getBaseWordsPacket().loadWords(Lib);
 	}
 
 	@Override
-	public void clearWords(EditText Edit)
+	public void trimListener(EditListenerInfo Info)
 	{
-		if(Edit instanceof CodeEdit){
-		    CodeEdit E = (CodeEdit) Edit;
-			Words lib = E.getWordLib();
-			lib.clear();
-		}
+	    Info.addListenerTo(CodeEditBuilder.DrawerFactory.getDefaultDrawer(),DrawerIndex);
+		Info.addListenerTo(CodeEditBuilder.CanvaserFactory.getDefultCanvaser(),CanvaserIndex);
+		Info.addListenerTo(CodeEditBuilder.FormatorFactory.getJavaFormator(),FormatorIndex);
+		Info.addListenerTo(CodeEditBuilder.InsertorFactory.getDefultInsertor(),InsertorIndex);
 	}
 	
 	@Override
-	public void clearListener(EditText Edit)
+	public void SwitchLuagua(Object O, String Lua)
 	{
-		if(Edit instanceof CodeEdit){
-		    CodeEdit E = (CodeEdit) Edit;
-		    E.setFinderList(null);
-		    E.setDrawer(null);
-		    E.setFormator(null);
-		    E.setInsertorList(null);
-		    E.setCompletorList(null);
-		    E.setCanvaserList(null);
-			E.setRunnar(null);
+		EditListenerInfo Info = null;
+		Words WordLib = null;
+		if(O instanceof EditListenerInfo){
+			Info = (EditListenerInfo) O;
 		}
-	}
-
-	@Override
-	public void trimListener(EditText Edit)
-	{
-		if(Edit instanceof CodeEdit){
-		    CodeEdit E = (CodeEdit) Edit;
-		    E.setDrawer((EditDrawerListener)CodeEditBuilder.DrawerFactory.getDefaultDrawer());
-		    E.getCanvaserList().getList().add(CodeEditBuilder.CanvaserFactory.getDefultCanvaser());
-		    E.setFormator((EditFormatorListener)CodeEditBuilder.FormatorFactory.getJavaFormator());
-		    E.getInsertorList().getList().add((CodeEditBuilder.InsertorFactory.getDefultInsertor()));
+		if(O instanceof EditListenerInfoUser){
+			Info = ((EditListenerInfoUser)O).getInfo();
+		}
+		if(O instanceof Words){
+			WordLib = (Words) O;
+		}
+		if(O instanceof WordsUser){
+			WordLib = ((WordsUser)O).getWordLib();
+		}
+		if(Info!=null){
+			getFinderFactory().SwitchListener(Info,Lua);
+			getDrawerDactory().SwitchListener(Info,Lua);
+			getFormatorFactory().SwitchListener(Info,Lua);
+			getInsertorFactory().SwitchListener(Info,Lua);
+			getCompletorBox().SwitchListener(Info,Lua);
+			getCanvaserFactory().SwitchListener(Info,Lua);
+			getRunnarFactory().SwitchListener(Info,Lua);
+		}
+		if(WordLib!=null){
+			getWordsPacket().SwitchWords(WordLib,Lua);
 		}
 	}
 	
-	@Override
-	public void SwitchLuagua(EditText self, String Lua)
-	{
-		if(self instanceof CodeEdit){
-			getFinderFactory().SwitchListener(self,Lua);
-			getDrawerDactory().SwitchListener(self,Lua);
-			getFormatorFactory().SwitchListener(self,Lua);
-			getInsertorFactory().SwitchListener(self,Lua);
-			getCompletorBox().SwitchListener(self,Lua);
-			getCanvaserFactory().SwitchListener(self,Lua);
-			getRunnarFactory().SwitchListener(self,Lua);
-			CodeEdit E = (CodeEdit) self;
-			getWordsPacket().SwitchWords(E.getWordLib(),Lua);
-		}
-	}
 
 	
 /*
@@ -115,9 +103,10 @@ ________________________________________________________________________________
 			return getDefaultDrawer();
 		}
 
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			((CodeEdit)Edit).setDrawer((EditDrawerListener)getDefaultDrawer());
+			Info.delListenerFrom(DrawerIndex);
+			Info.addListenerTo(ToLisrener(Lua),DrawerIndex);
 		}
 		
 
@@ -179,12 +168,10 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new myEditListenerList();
-			lis.getList().add(ToLisrener(Lua));
-			E.setCanvaserList(lis);
+			Info.delListenerFrom(CanvaserIndex);
+			Info.addListenerTo(ToLisrener(Lua),CanvaserIndex);
 		}
 
 		public static EditListener getDefultCanvaser()
@@ -241,9 +228,10 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			((CodeEdit)Edit).setFormator((EditFormatorListener)ToLisrener(Lua));
+			Info.delListenerFrom(FormatorIndex);
+			Info.addListenerTo(ToLisrener(Lua),FormatorIndex);
 		}
 
 		public static EditListener getJavaFormator()
@@ -391,12 +379,10 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new myEditListenerList();
-			lis.getList().add(ToLisrener(Lua));
-			E.setInsertorList(lis);
+			Info.delListenerFrom(InsertorIndex);
+			Info.addListenerTo(ToLisrener(Lua),InsertorIndex);
 		}
 
 		public static EditListener getDefultInsertor()
@@ -526,10 +512,10 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			CodeEdit E = (CodeEdit) Edit;
-		   	E.setCompletorList(ToLisrener(Lua));
+			Info.delListenerFrom(CompletorIndex);
+			Info.addListenerTo(ToLisrener(Lua),CompletorIndex);
 		}
 
 		public static class JavaCompletor extends myEditListenerList
@@ -780,10 +766,10 @@ ________________________________________________________________________________
 	{
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			CodeEdit E = (CodeEdit) Edit;
-			E.setRunnar((EditRunnarListener)ToLisrener(Lua));
+			Info.delListenerFrom(RunnarIndex);
+			Info.addListenerTo(ToLisrener(Lua),RunnarIndex);
 		}
 
 		@Override
@@ -1078,12 +1064,10 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void SwitchListener(EditText Edit, String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
-			CodeEdit E = (CodeEdit)Edit;
-		    EditListenerList lis = new myEditListenerList();
-			lis.getList().add(ToLisrener(Lua));
-			E.setFinderList(lis);
+			Info.delListenerFrom(FinderIndex);
+			Info.addListenerTo(ToLisrener(Lua),FinderIndex);
 		}
 
 
@@ -1131,13 +1115,13 @@ ________________________________________________________________________________
 			protected void OnClearFindNodes(int start, int end, String text, Words WordLib , List<wordIndex> nodes)
 			{
 				clearRepeatNode(nodes);
-				/* List<DoAnyThing> total = new ArrayList<>();
+				/*
+				List<DoAnyThing> total = new ArrayList<>();
 				List<wordIndex> no = new ArrayList<>();
-			    Words lib = ((CodeEdit)self).getWordLib();
-				total.add(AnyThingFactory.getAnyThingText(lib).getGoTo_Str());
-				total.add(AnyThingFactory.getAnyThingText(lib).getGoTo_zhuShi());
-				CodeEdit.startFind(self.getText().toString(),total,no);
-				CodeEdit.offsetNode(no,-start);
+			    total.add(AnyThingFactory.getAnyThingText(WordLib).getGoTo_Str());
+				total.add(AnyThingFactory.getAnyThingText(WordLib).getGoTo_zhuShi());
+				startFind(text,total,no);
+				offsetNode(no,-start);
 				nodes.addAll(no);*/
 			}
 		}
@@ -1185,7 +1169,6 @@ ________________________________________________________________________________
 				totalList.add(AllThings.getSans_TryObject());
 				totalList.add(AllThings.getNoSans_Char());
 				//请您在任何时候都加入getChar，因为它可以适时切割单词
-
 			}
 
 			@Override
@@ -1202,7 +1185,6 @@ ________________________________________________________________________________
 				totalList.add(AllThings.getNoSans_Type());
 				totalList.add(AllThings.getNoSans_Char());
 				//请您在任何时候都加入getChar，因为它可以适时切割单词
-
 			}
 
 			@Override

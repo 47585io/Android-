@@ -9,7 +9,7 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
-import java.util.logging.*;
+
 
 public class DownBar extends HasAll
 {

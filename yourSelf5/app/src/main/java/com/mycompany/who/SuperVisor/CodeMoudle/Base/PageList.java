@@ -4,10 +4,9 @@ import android.content.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
-import java.util.*;
+
 
 /*
   支持页面的切换以及滚动切换

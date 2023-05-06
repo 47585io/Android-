@@ -1,5 +1,6 @@
-package com.mycompany.who.Edit.ListenerVistor;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor;
+
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 
 public interface EditListenerInfo
 {
@@ -33,9 +34,14 @@ public interface EditListenerInfo
 
 	public EditListener findAListener(int fromIndex)
 
+	public void clear()
+	
+	public boolean contrans(EditListener li)
+	
 	
 	public static class Helper
 	{
+		
 		public static EditListener checkName(EditListener lis,String name)
 		{
 			if(lis==null || lis.getName().equals(name))

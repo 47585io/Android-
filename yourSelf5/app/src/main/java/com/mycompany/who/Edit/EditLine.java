@@ -1,5 +1,6 @@
 package com.mycompany.who.Edit;
 
+import java.util.*;
 import android.content.*;
 import android.graphics.*;
 import android.text.*;
@@ -7,10 +8,10 @@ import android.util.*;
 import android.view.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
-import java.util.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+
 
 public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser
 {
@@ -245,6 +246,20 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	public static class EditLineListenerInfo implements EditListenerInfo
 	{
+
+		@Override
+		public void clear()
+		{
+			// TODO: Implement this method
+		}
+
+		@Override
+		public boolean contrans(EditListener li)
+		{
+			// TODO: Implement this method
+			return false;
+		}
+		
 
 	    protected EditListenerList mlistenerVS;
 		protected EditListenerList mlistenerLS;

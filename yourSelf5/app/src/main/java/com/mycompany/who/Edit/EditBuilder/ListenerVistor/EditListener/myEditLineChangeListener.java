@@ -1,6 +1,7 @@
-package com.mycompany.who.Edit.ListenerVistor.EditListener;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
+
 import android.util.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /* 
@@ -16,7 +17,8 @@ public abstract class myEditLineChangeListener extends myEditListener implements
 	abstract protected void onLineChange(int start,int before,int after)
 	//行数变化了
 	
-	final public void Change(int start,int before,int after){
+	final public void Change(int start,int before,int after)
+	{
 		try{
 			if(Enabled())
 			    onChange(start,before,after);

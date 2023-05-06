@@ -1,6 +1,6 @@
 package com.mycompany.who.Activity;
 
-public abstract class WhenInputEnter
+public interface WhenInputEnter
 {
 	public abstract void whenenter(String text);
 }

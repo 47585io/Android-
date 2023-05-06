@@ -5,7 +5,6 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.*;
 
-import android.util.*;
 
 public class String_Splitor
 {

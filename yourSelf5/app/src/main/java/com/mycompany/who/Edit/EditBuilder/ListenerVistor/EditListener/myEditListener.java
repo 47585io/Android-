@@ -1,14 +1,16 @@
-package com.mycompany.who.Edit.ListenerVistor.EditListener;
-import android.graphics.*;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
+
 import android.text.*;
 import android.widget.*;
-import com.mycompany.who.Edit.Base.*;
 import java.util.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
-  一般情况下，都使用此类扩展其它EditListener
+  一般情况下，都可以继承此类扩展其它EditListener
+  
+  但在特殊情况下，使用EditListener接口会更加轻便
+  
 */
 public class myEditListener extends Object implements EditListener
 {

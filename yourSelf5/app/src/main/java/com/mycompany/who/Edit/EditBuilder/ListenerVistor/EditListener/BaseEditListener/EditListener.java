@@ -1,8 +1,8 @@
-package com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener;
 import android.widget.*;
 
 /*
-  您可以使用此基本接口扩展更多的类或接口，也可以使用myEditListener
+  您可以使用此基本接口扩展更多的类或接口
 */
 public interface EditListener
 {

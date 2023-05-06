@@ -3,9 +3,6 @@ package com.mycompany.who.SuperVisor.CodeMoudle.Base.View;
 import android.content.*;
 import android.util.*;
 import android.widget.*;
-import android.graphics.*;
-import com.mycompany.who.*;
-import android.graphics.drawable.*;
 
 public class ReSpinner extends  Spinner
  {

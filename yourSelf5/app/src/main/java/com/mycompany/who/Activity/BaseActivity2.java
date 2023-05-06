@@ -1,9 +1,8 @@
 package com.mycompany.who.Activity;
+
+import android.os.*;
 import android.view.*;
 import android.view.View.*;
-import com.mycompany.who.*;
-import android.os.*;
-import android.content.res.*;
 
 public class BaseActivity2 extends BaseActivity
 {

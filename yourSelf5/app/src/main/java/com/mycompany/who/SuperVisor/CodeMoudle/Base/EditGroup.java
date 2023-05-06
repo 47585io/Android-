@@ -6,10 +6,9 @@ import android.graphics.*;
 import android.text.*;
 import android.util.*;
 import android.view.*;
-import android.view.View.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
-import com.mycompany.who.*;
+import com.mycompany.who.R;
 import com.mycompany.who.Edit.*;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
@@ -17,18 +16,19 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.CodeEdit.*;
-import com.mycompany.who.Edit.Base.EditMoudle.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
+
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
@@ -1402,6 +1402,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 	public static class EditGroupListenerInfo implements EditListenerInfo
 	{
+
+		@Override
+		public void clear()
+		{
+			// TODO: Implement this method
+		}
+
+		@Override
+		public boolean contrans(EditListener li)
+		{
+			// TODO: Implement this method
+			return false;
+		}
+
 
 		CodeEdit.CodeEditListenerInfo CodeInfo;
 		EditLine.EditLineListenerInfo LineInfo;

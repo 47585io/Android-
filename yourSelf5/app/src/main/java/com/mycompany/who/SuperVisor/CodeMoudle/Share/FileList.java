@@ -1,6 +1,5 @@
 package com.mycompany.who.SuperVisor.CodeMoudle.Share;
 
-import android.content.*;
 import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
@@ -22,7 +21,7 @@ public class FileList
 		refreshDate();
 	}
 
-	public List<Icon> refresh(Context cont)
+	public List<Icon> refresh()
 	{	  
 		List<Icon> tmp  = new ArrayList<Icon>();
 		tmp.add(new Icon3(Share.getFileIcon("打开夹"), ".."));

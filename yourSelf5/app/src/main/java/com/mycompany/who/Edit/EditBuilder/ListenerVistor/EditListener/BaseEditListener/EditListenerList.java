@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener;
 
 import java.util.*;
 
@@ -7,6 +7,8 @@ import java.util.*;
 */
 public interface EditListenerList extends EditListener
 {
+	public void setList(EditListener li)
+	
 	public void setList(List<EditListener> lis)
 		
 	public List<EditListener> getList()

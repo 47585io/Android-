@@ -1,5 +1,6 @@
-package com.mycompany.who.Edit.ListenerVistor;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor;
+
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
 
 /*

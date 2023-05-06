@@ -1,7 +1,8 @@
-package com.mycompany.who.Edit.ListenerVistor.EditListener;
-import java.util.*;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
+
 import android.widget.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import java.util.*;
 
 
 /* 
@@ -19,8 +20,20 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	public myEditListenerList(){
 		lis = Collections.synchronizedList(new ArrayList<>());
 	}
-
-	public void setList(List<EditListener> lis){
+	
+	public void setList(EditListener li)
+	{
+		this.lis.clear();
+		if(lis!=null){
+			if(!(li instanceof EditListenerList))
+				lis.add(li);
+			else if(li instanceof EditListenerList){
+				lis.addAll(((EditListenerList)li).getList());
+			}
+		}
+	}
+	public void setList(List<EditListener> lis)
+	{
 		this.lis.clear();
 		if(lis!=null)
 		    this.lis.addAll(lis);

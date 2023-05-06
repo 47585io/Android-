@@ -1,11 +1,9 @@
 package com.mycompany.who.Edit.Base.Share.Share2;
 
-import android.content.*;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
 import com.mycompany.who.R;
-import android.graphics.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 
 

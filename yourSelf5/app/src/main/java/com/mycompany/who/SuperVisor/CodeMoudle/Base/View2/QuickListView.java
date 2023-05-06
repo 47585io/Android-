@@ -1,12 +1,9 @@
 package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2;
 import android.content.*;
-import android.graphics.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
-import com.mycompany.who.R;
-import java.util.*;
 
 
 /*

@@ -1,4 +1,4 @@
-package com.mycompany.who.Edit.ListenerVistor;
+package com.mycompany.who.Edit.EditBuilder.ListenerVistor;
 
 public interface EditListenerInfoUser
 {

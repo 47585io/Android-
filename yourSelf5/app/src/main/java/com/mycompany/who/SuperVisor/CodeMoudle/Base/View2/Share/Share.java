@@ -2,7 +2,7 @@ package com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share;
 import android.widget.*;
 import android.net.*;
 import android.webkit.*;
-import com.mycompany.who.*;
+import com.mycompany.who.R;
 import com.mycompany.who.Edit.*;
 import java.io.*;
 

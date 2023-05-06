@@ -4,10 +4,7 @@ import android.view.*;
 import android.widget.*;
 import java.util.*;
 import android.util.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
-import android.graphics.*;
 
 
 /*

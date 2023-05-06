@@ -6,21 +6,23 @@ import android.text.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.*;
+import com.mycompany.who.R;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
-import com.mycompany.who.Edit.ListenerVistor.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.*;
-import com.mycompany.who.Edit.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.mycompany.who.Edit.Base.Colors.*;
+import com.mycompany.who.Edit.EditBuilder.*;
+import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
+
 
 /*
    整理是一切的开始
@@ -95,9 +97,8 @@ import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacke
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
  */
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditListenerInfoUser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditListenerInfoUser,WordsUser
 {
-	
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	private Words WordLib;
 	private EditDate stack;
@@ -201,7 +202,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		addTextChangedListener(new DefaultText());
 		builder = new CodeEditBuilder();
 		trimListener();
-		builder.loadWords(this);
+		loadWords();
 	}
 	
 /*
@@ -211,7 +212,7 @@ ________________________________________________________________________________
 
   为了方便，这里的set和get方法限制参数类型
   
-  trimListener，clearListener，及setLuagua都依赖EditBuilder，所以可以设置EditBuilder
+  trimListener，loadWords及setLuagua都依赖EditBuilder，所以可以设置EditBuilder
   
 __________________________________________________________________________________
 
@@ -219,12 +220,24 @@ ________________________________________________________________________________
 	public void trimListener()
 	{
 		if(builder!=null)
-			builder.trimListener(this);
+			builder.trimListener(Info);
 	}
 	public void clearListener()
 	{
+		if(Info!=null)
+			Info.clear();
+	}
+	@Override
+	public void loadWords()
+	{
 		if(builder!=null)
-			builder.clearListener(this);
+			builder.loadWords(WordLib);
+	}
+	@Override
+	public void clearWords()
+	{
+		if(WordLib!=null)
+		    WordLib.clear();
 	}
 	
 	public void setFinderList(EditListenerList lis)
@@ -452,7 +465,7 @@ Dreawr
 			Words WordLib = getWordLib();
 		    List<EditListener> lis = list.getList();
 		    for(EditListener li:lis){
-		        if(li instanceof EditFinderListener){
+		        if(li!=null && li instanceof EditFinderListener){
 				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
@@ -618,7 +631,7 @@ _________________________________________
 			int selection = 0;
 			List<EditListener> lis = list.getList();
 			for(EditListener li:lis){
-		        if(li instanceof EditInsertorListener){
+		        if(li!=null && li instanceof EditInsertorListener){
 				    selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
 				}
 		    } 
@@ -730,7 +743,7 @@ _________________________________________
 			//获得光标前后的单词，并开始查找
 	    	
 			for(EditListener li:lis){
-			    if(li instanceof EditCompletorListener){
+			    if(li!=null && li instanceof EditCompletorListener){
 			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
@@ -814,7 +827,7 @@ _________________________________________
 		if(list != null){
 			List<EditListener> lis = list.getList();
 			for(EditListener li: lis){
-			    if(li.hashCode() == id && li instanceof EditCompletorListener){
+			    if(li!=null && li.hashCode() == id && li instanceof EditCompletorListener){
 				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
 				    setSelection(selection);
 				    return;
@@ -870,7 +883,7 @@ _________________________________________
 		if(list != null){
 		    List<EditListener> lis = list.getList();
 			for (EditListener li:lis){
-			    if(li instanceof EditCanvaserListener){
+			    if(li!=null && li instanceof EditCanvaserListener){
 			        ((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, pos, flag);
 				}
 			}
@@ -1304,7 +1317,7 @@ _________________________________________
 			        reDraw(tmp.start,tmp.end);	
 			}
 			
-			IsModify2=false;
+			IsModify2=false; //双重拦截
 		}
 		
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
@@ -1873,7 +1886,7 @@ ________________________________________________________________________________
 
 */
     public static class CodeEditListenerInfo implements EditListenerInfo
-	{	
+	{
 		private EditListenerList mlistenerFS;
 		private EditListener mlistenerD;
 		private EditListener mlistenerM;
@@ -1890,11 +1903,12 @@ ________________________________________________________________________________
 			mlistenerCS = new myEditListenerList();				
 		}
 
-	    public boolean addAListener(EditListener li) throws NullPointerException
+	    public boolean addAListener(EditListener li) 
 		{
 			if(li==null)
 				return false;
-
+			checkNullCollection();
+				
 			if(li instanceof EditFinderListener){
 				mlistenerFS.getList().add(li);
 				return true;
@@ -2070,6 +2084,39 @@ ________________________________________________________________________________
 			return null;
 		}
 	
+
+		@Override
+		public void clear()
+		{
+			mlistenerD=null;
+			mlistenerM=null;
+			mlistenerR=null;
+			mlistenerFS=null;
+			mlistenerIS=null;
+			mlistenerCS=null;
+			mlistenerVS=null;
+		}
+
+		@Override
+		public boolean contrans(EditListener li)
+		{
+			if(mlistenerD.equals(li)||mlistenerM.equals(li)||mlistenerR.equals(li)||mlistenerFS.equals(li)||mlistenerIS.equals(li)||mlistenerCS.equals(li)||mlistenerVS.equals(li))
+				return true;
+			return false;
+		}
+		
+		protected void checkNullCollection()
+		{
+			if(mlistenerFS==null)
+			    mlistenerFS=new myEditListenerList();
+			if(mlistenerIS==null)
+				mlistenerIS=new myEditListenerList();
+			if(mlistenerCS==null)
+				mlistenerCS=new myEditListenerList();
+			if(mlistenerVS==null)
+				mlistenerVS=new myEditListenerList();
+		}
+		
 	}
 	
 

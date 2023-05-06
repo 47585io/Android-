@@ -4,13 +4,9 @@ import android.app.*;
 import android.content.*;
 import android.os.*;
 import android.view.*;
-import android.view.View.*;
 import android.widget.*;
-import com.mycompany.who.Edit.*;
-import android.content.res.*;
-import android.graphics.*;
 import com.mycompany.who.Edit.Base.*;
-import com.mycompany.who.Edit.Base.Edit.*;
+
 
 public class BaseActivity extends Activity
 {

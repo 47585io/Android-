@@ -1,14 +1,14 @@
 package com.mycompany.who.SuperVisor.CodeMoudle;
+
 import android.content.*;
 import android.content.res.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.*;
+import com.mycompany.who.R;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
-import java.util.logging.*;
 
 
 /*

@@ -1,6 +1,5 @@
 package com.mycompany.who.Edit.Base.Share;
 
-import java.io.*;
 import com.mycompany.who.R;
 
 public class Share
