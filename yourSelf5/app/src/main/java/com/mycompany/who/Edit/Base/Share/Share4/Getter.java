@@ -4,7 +4,8 @@ import java.lang.reflect.*;
 
 public class Getter
 {
-	public static Object getObject(String type,Object...args){
+	public static Object getObject(String type,Object...args)
+	{
 		//用指定的type和参数args创建一个对象
 		Class clazz=null;
 		Class[] types=new Class[args.length];
@@ -28,7 +29,8 @@ public class Getter
 		return null;
 	}
 
-	public static<T> Object getField(String name,T vector){
+	public static<T> Object getField(String name,T vector)
+	{
 		//获得vector中名为name的成员
 		try
 		{
@@ -47,7 +49,8 @@ public class Getter
 		{}
 		return null;
 	}
-	public static<T> void setFiled(String name,T vector,T n){
+	public static<T> void setFiled(String name,T vector,T n)
+	{
 		try
 		{
 			Field f= vector.getClass().getField(name);
@@ -64,7 +67,8 @@ public class Getter
 		catch (NoSuchFieldException e)
 		{}
 	}
-	public static<T> Method getFunc(String name,T block,Object...args){
+	public static<T> Method getFunc(String name,T block,Object...args)
+	{
 		//得到block中名为name且参数列表为args的方法
 		Class[] types=new Class[args.length];
 		int i;
@@ -86,7 +90,8 @@ public class Getter
 		return null;
 	}
 
-	public static boolean Args(Class...dst,Class...src) throws NoSuchMethodException, SecurityException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException{
+	public static boolean Args(Class...dst,Class...src) throws NoSuchMethodException, SecurityException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException
+	{
 		//类型列表dst中的类型是否src中的类型，或父类，接口的类型
 		int i=0;
 		if(dst.length!=src.length)
@@ -101,7 +106,8 @@ public class Getter
 		}
 		return true;
 	}
-	public static boolean Arg(Class d,Class s){
+	public static boolean Arg(Class d,Class s)
+	{
 		//类型src的类型是否为dst的类型，或父类，接口的类型
 		if(d.getTypeName().equals(s.getTypeName()))
 			return true;
@@ -110,7 +116,8 @@ public class Getter
 
 		return false;
 	}
-	public static boolean ArgUP(Class d,Class s){
+	public static boolean ArgUP(Class d,Class s)
+	{
 		//向上遍历父类
 		if(d.getSimpleName().equals("Object"))
 		//已经遍历到了Object

@@ -340,7 +340,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		
 		@Override
-		protected void onPutUR(EditDate.Token token)
+		protected void onPutUR(token token)
 		{
 			Last.peek().push(index);
 			//监听器优先调用，所以Last会先开一个空间让我push

@@ -991,7 +991,7 @@ _________________________________________
 
 */
 
-    final protected int Uedo_(EditDate.Token token)
+    final protected int Uedo_(token token)
 	{
 		int endSelection=getSelectionEnd();
 		if (token != null)
@@ -1029,7 +1029,7 @@ _________________________________________
 		return endSelection;
 	}
 
-	final protected int Redo_(EditDate.Token token)
+	final protected int Redo_(token token)
 	{
 		int endSelection=getSelectionEnd();
 		if (token != null)
@@ -1073,7 +1073,7 @@ _________________________________________
 
 		++IsModify;
 		isUR = true;
-		EditDate.Token token = null;	
+		token token = null;	
 		int endSelection;
 		try
 		{
@@ -1096,7 +1096,7 @@ _________________________________________
 
 		++IsModify;
 		isUR = true;
-		EditDate.Token token = null;
+		token token = null;
 		int endSelection;
 		try
 		{
@@ -1115,9 +1115,9 @@ _________________________________________
 		stack.clear();
 	}
 	
-	protected void onGetUR(EditDate.Token token){}
+	protected void onGetUR(token token){}
 	
-	protected void onPutUR(EditDate.Token token){}
+	protected void onPutUR(token token){}
 
 	
 /*
@@ -1221,24 +1221,21 @@ _________________________________________
 			{
 				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
 				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
-				stack.put(start,start+after,str.subSequence(start,start+count));
-				onPutUR(stack.seeLast());
+				stack.put(start,start+after,str.subSequence(start,start+count));	
 			}
 			else if (count != 0)
 			{
 				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 				//从现在start开始，插入start～start+count之间的字符串
 				stack.put(start, start, str.subSequence(start , start + count));
-				onPutUR(stack.seeLast());
 			}
 			else if (after != 0)
 			{
 				//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
 				//删除现在start～start+after之间的字符串
-				stack.put(start, start + after, "");
-				onPutUR(stack.seeLast());
+				stack.put(start, start + after, "");		
 			}					
-
+			onPutUR(stack.seeLast());
 		}
 		catch (Exception e){}
 	}
@@ -1467,8 +1464,37 @@ _________________________________________
 		CharSequence want= src.subSequence(node.start, node.end);
 		return want;
 	}
+
 	
-	
+/*
+__________________________________________________________________________________
+	 
+EditDate
+
+  存储修改时装入的token，用于Uedo，Redo
+  
+__________________________________________________________________________________
+
+*/
+    public static class EditDate extends TwoStack<token>
+	{
+		
+		public EditDate(){
+			super();
+		}
+
+		public void put(int start, int end, CharSequence src)
+		{
+			put(new token(start, end, src));
+		}
+		public void Reput(int start, int end, CharSequence src)
+		{
+			Reput(new token(start, end, src));
+		}
+		
+	}
+
+
 /*
 __________________________________________________________________________________
 
@@ -1483,7 +1509,8 @@ ________________________________________________________________________________
 __________________________________________________________________________________
 
 */
-	public static class EditChroot{	
+	public static class EditChroot
+	{	
 	
 	    public EditChroot(){}
 		public EditChroot(boolean m,boolean d,boolean f,boolean c,boolean u){
@@ -2265,13 +2292,13 @@ ________________________________________________________________________________
 	
 	public static interface myUedoWithRedo extends UedoWithRedo{
 		
-		public int Uedo_(EditDate.Token token)
+		public int Uedo_(token token)
 
-		public int Redo_(EditDate.Token token)
+		public int Redo_(token token)
 		
-		public void onGetUR(EditDate.Token token)	
+		public void onGetUR(token token)	
 		
-		public void onPutUR(EditDate.Token token)
+		public void onPutUR(token token)
 	
 	}
 	
