@@ -27,11 +27,15 @@ public abstract class EPool<T>
 		if(p>Es.size()-1)
 			put(onceCount);
 		T E= Es.get(p++);
-		resetE(E); //重置元素
 		
 		++size;
 		//记录本次使用的size
 		//若未start就使用get，只要调stop，size会累计至下次一起回收
+		return E;
+	}
+	synchronized public T getAndReset(){
+		T E = get();
+		resetE(E); //重置元素
 		return E;
 	}
 	
@@ -81,6 +85,7 @@ public abstract class EPool<T>
 	public int onceCount(){
 		return 1000;
 	}
+	
 	synchronized public void isDisbled(boolean is){
 		if(is){
 			MaxSize = 0;
