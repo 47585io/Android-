@@ -16,13 +16,13 @@ import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.RunLi;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.mycompany.who.Edit.EditBuilder.*;
 import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
-import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerItrator.*;
 
 
 /*
@@ -466,25 +466,33 @@ Dreawr
 		EditListener lis = getFinderList();
 		RunLi run = new RunLi()
 		{
-			public void run(EditListener li)
+			public boolean run(EditListener li)
 			{
 				if(li instanceof EditFinderListener){
 				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
+				return false;
 			}
 		};
-		foreachCheck(lis,run);
+		lis.dispatchCallBack(run);
 	}
 
 	/* 会修改文本，不允许直接调用 */
-	protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
+	protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
 	{
-		EditDrawerListener li = getDrawer();
-		if(li != null){
-			//无法保证线程安全，就不设置Edit了
-			li.LetMeDraw(start, end, nodes, editor);
-		}
+		EditListener li = getDrawer();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditDrawerListener){
+				    ((EditDrawerListener)li).LetMeDraw(start, end, nodes, editor);
+				}
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
 	}
 	
 	/* 准备指定文本的颜料 */
@@ -600,12 +608,20 @@ _________________________________________
 	    return editor.length()-before;
 	}
 
-	protected void onFormat(int start, int end, Editable editor)
+	protected void onFormat(final int start, final int end, final Editable editor)
 	{	
-		EditFormatorListener li = getFormator();
-		if(li != null){
-			li.LetMeFormat(start, end, editor);
-		}
+		EditListener li = getFormator();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditFormatorListener){
+				    ((EditFormatorListener)li).LetMeFormat(start, end, editor);
+				}
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
 	}
 	
     /* 在指定位置插入后续字符 */
@@ -633,15 +649,16 @@ _________________________________________
 		EditListener lis = getInsertorList();
 		RunLi run = new RunLi()
 		{
-			public void run(EditListener li)
+			public boolean run(EditListener li)
 			{
 				if(li instanceof EditInsertorListener){
 				    int selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
 					setSelection(selection);
 				}
+				return false;
 			}
 		};
-		foreachCheck(lis,run);
+		lis.dispatchCallBack(run);
 	}
 	
 
@@ -744,15 +761,16 @@ _________________________________________
 		//获得光标前后的单词，并开始查找
 		RunLi run = new RunLi()
 		{
-			public void run(EditListener li)
+			public boolean run(EditListener li)
 			{
 				if(li instanceof EditCompletorListener){
 			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
+				return false;
 			}
 		};
-	    foreachCheck(lis,run);
+	    lis.dispatchCallBack(run);
 	}
 	
     /* 排序并添加一组相同icon的单词块到adapter，支持Span文本 */
@@ -828,7 +846,7 @@ _________________________________________
 		final size range = new size(tmp.start,tmp2.end);
 		
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
-		RunLiCut cut = new RunLiCut()
+		RunLi run = new RunLi()
 		{
 			public boolean run(EditListener li)
 			{
@@ -841,7 +859,7 @@ _________________________________________
 			}
 		};
 		
-		if(!foreachCheck(lis,cut)){
+		if(!lis.dispatchCallBack(run)){
 		    //没有找到listener，就执行默认操作
 		    editor.replace(tmp.start, tmp2.end, word);
 		    setSelection(tmp.start + word.length());
@@ -881,6 +899,7 @@ _________________________________________
 		}
 		catch (Exception e){
 			Log.e("OnDraw Error", e.toString());
+			super.onDraw(canvas); //即使Listener出现问题，也请继续绘制
 		}
 		--IsModify;
     }
@@ -890,14 +909,15 @@ _________________________________________
 		EditListener lis = getCanvaserList();
 		RunLi run = new RunLi()
 		{
-			public void run(EditListener li)
+			public boolean run(EditListener li)
 			{
 				if(li instanceof EditCanvaserListener){
 			        ((EditCanvaserListener)li).LetMeCanvaser(CodeEdit.this, canvas, paint, pos, flag);
 				}
+				return false;
 			}
 		};
-		foreachCheck(lis,run);
+		lis.dispatchCallBack(run);
 	}
 	
 	
@@ -945,18 +965,24 @@ _________________________________________
 		return com;//为保证isxxx能成功配对，请不要提前返回
 	}
 
-	protected String onMakeCommand( String state)
+	protected String onMakeCommand(final String state)
 	{
-		String com = "";
-		EditRunnarListener li = getRunnar();
-		if(li!=null){
-			com = li.LetMeMake(this,state);
-		}
-		return com;
+		StringBuffer com = new StringBuffer();
+		EditListener li = getRunnar();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
+		return com.toString();
 	}
 	
 	@Override
-	final public int RunCommand( String command)
+	final public int RunCommand(String command)
 	{
 		int flag = 0;
 		++IsModify;
@@ -972,10 +998,16 @@ _________________________________________
 	protected int onRunCommand(final String command)
 	{
 		int flag = 0;
-		EditRunnarListener li = getRunnar();
-		if(li!=null){
-			flag = li.LetMeRun(this,command);
-		}
+		EditListener li = getRunnar();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
 		return flag;
 	}
 	
@@ -1268,7 +1300,8 @@ _________________________________________
 			return;
 		//如果正被修改，不允许再次修改	
 		
-		if(Enabled_Complete&&!isComplete){
+		if(Enabled_Complete&&!isComplete)
+		{
 			//是否启用自动补全
 			if(getPool()!=null)
 				getPool().execute(OpenWindow());
@@ -1289,7 +1322,8 @@ _________________________________________
 				//为了安全，不调用Format
 			}
 			
-			if(Enabled_Drawer&&!isDraw){
+			if(Enabled_Drawer&&!isDraw)
+			{
 				//是否启用自动染色		
 				String src = text.toString();
 			    wordIndex tmp=new wordIndex();
@@ -1342,7 +1376,8 @@ _________________________________________
 
 */
 
-	final public static wordIndex tryWord(CharSequence src,int index){
+	final public static wordIndex tryWord(CharSequence src,int index)
+	{
 		//试探前面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -1360,7 +1395,8 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static wordIndex tryWordAfter(CharSequence src,int index){
+	final public static wordIndex tryWordAfter(CharSequence src,int index)
+	{
 		//试探后面的单词
 		wordIndex tmp = Ep.get();
 		try{
@@ -1378,7 +1414,8 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static int tryAfterIndex(CharSequence src,int index){
+	final public static int tryAfterIndex(CharSequence src,int index)
+	{
 		//试探后面的下一个非分隔符
 		while(index<src.length()
 			  &&src.charAt(index)!='<'
@@ -1389,7 +1426,8 @@ _________________________________________
 		return index;
 	}
 	
-	final public static int tryLine_Start(String src,int index){
+	final public static int tryLine_Start(String src,int index)
+	{
 		//试探当前下标所在行的起始
 		int start= src.lastIndexOf('\n',index-1);	
 		if(start==-1)
@@ -1399,7 +1437,8 @@ _________________________________________
 		return start;
 	}
 	
-	final public static int tryLine_End(String src,int index){
+	final public static int tryLine_End(String src,int index)
+	{
 		//试探当前下标所在行的末尾
 		int end=src.indexOf('\n',index);
 		if(end==-1)
@@ -1407,7 +1446,8 @@ _________________________________________
 		return end;
 	}
 	
-	final public static wordIndex tryWordSplit(CharSequence src,int nowIndex){
+	final public static wordIndex tryWordSplit(CharSequence src,int nowIndex)
+	{
 		//试探纯单词
 		int index=nowIndex-1;
 	    wordIndex tmp = Ep.get();
@@ -1424,7 +1464,8 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static wordIndex tryWordSplitAfter(CharSequence src,int index){
+	final public static wordIndex tryWordSplitAfter(CharSequence src,int index)
+	{
 		//试探纯单词
 	    wordIndex tmp = Ep.get();
 		try{
@@ -1440,7 +1481,8 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static CharSequence getWord(CharSequence src,int offset){
+	final public static CharSequence getWord(CharSequence src,int offset)
+	{
 		//获得光标前的纯单词
 	    wordIndex node = tryWordSplit(src, offset);
 		if (node.end == 0)
@@ -1449,7 +1491,8 @@ _________________________________________
 		return want;
 	}
 	
-	final public static CharSequence getAfterWord(CharSequence src,int offset){
+	final public static CharSequence getAfterWord(CharSequence src,int offset)
+	{
 		//获得光标后面的纯单词
 		wordIndex node = tryWordSplitAfter(src, offset);
 		if (node.end == 0)
@@ -1660,8 +1703,6 @@ _________________________________________
 
   reSAll: 从起始位置开始，反向把字符串中的want替换为to
   
-  zoomBy: 调节字符大小
-  
   getCursorPos: 获取光标坐标
   
   getRawCursorPos: 获取绝对光标坐标
@@ -1697,11 +1738,6 @@ _________________________________________
 		}
 		isFormat = false;
 		--IsModify;
-	}
-	
-	public void zoomBy(float size)
-	{
-		super.zoomBy(size);
 	}
 	
 	final public size getCursorPos(int offset)

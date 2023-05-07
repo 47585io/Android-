@@ -3,6 +3,7 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
 import android.widget.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.*;
 
 
 /* 
@@ -25,11 +26,11 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	{
 		this.lis.clear();
 		if(lis!=null){
-			if(!(li instanceof EditListenerList))
-				lis.add(li);
-			else if(li instanceof EditListenerList){
+			if(li instanceof EditListenerList){
 				lis.addAll(((EditListenerList)li).getList());
 			}
+			else if(li instanceof EditListener)
+				lis.add(li);
 		}
 	}
 	public void setList(List<EditListener> lis)
@@ -78,15 +79,17 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 		}
 		super.setEdit(t);
 	}
-	
-	/*
-	 protected void dispatchArgs(int flag,Object... args)
-	 {
-		 for(EditListener li:lis){
-			 li.LetMeDo(flag,args);
-		 }
-	 }
-	 
-	*/
+
+	@Override
+	public boolean dispatchCallBack(EditListener.RunLi Callback)
+	{
+		//遍历孑元素，并传递Callback，当有EditListener返回true，直接返回true
+		for(EditListener li:lis){
+			if(Callback.run(li)){
+				return true;
+			}
+		}
+		return super.dispatchCallBack(Callback);
+	}
 	
 }

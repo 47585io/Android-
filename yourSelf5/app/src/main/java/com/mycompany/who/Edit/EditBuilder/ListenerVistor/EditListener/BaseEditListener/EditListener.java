@@ -21,4 +21,14 @@ public interface EditListener
 	
 	public EditText getEdit()
 	
+	public boolean dispatchCallBack(RunLi Callback)
+	
+	
+	/* 使用此接口管理外部调用的情况 */
+	
+	public static interface RunLi
+	{
+		public boolean run(EditListener li);
+	}
+	
 }

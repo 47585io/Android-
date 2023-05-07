@@ -4,6 +4,7 @@ import android.text.*;
 import android.widget.*;
 import java.util.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.*;
 
 
 /*
@@ -52,32 +53,11 @@ public class myEditListener extends Object implements EditListener
 		return self;
 	}
 	
-	/* 
-	   解析参数比较麻烦，传参也很难，已废弃   
-	*/
-	/*
-	public final void LetMeDo(int flag,Object... args)
+	@Override
+	public boolean dispatchCallBack(EditListener.RunLi Callback)
 	{
-		if(Enabled()){
-		    dispatchArgs(flag,args);
-		}
+		return Callback.run(this);
 	}
-	protected void dispatchArgs(int flag,Object... args)
-	{
-		switch(flag){
-			default:
-			    decodeArgsWithDraw(args);
-		}
-	}
-	protected void decodeArgsWithDraw(Object... args)
-	{
-		int start = args[0];
-		int end = args[1];
-		String src = args[2];
-		DoDraw(start,end,src);
-	}
-	protected void DoDraw(int start,int end,String src){
-		...
-	}
-	*/
+	
+	
 }
