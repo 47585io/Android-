@@ -957,22 +957,20 @@ ________________________________________________________________________________
 		{
 			private Shell bash;
 			private HashMap<String,String> Common;
-			private Stack<String> Uedo;
-			private Stack<String> Redo;
+			private TwoStack<String> stack;
 			private boolean isUedo=false;
 
 			public ShellStack(Shell ba){
 				bash=ba;
 				bash.setshellListener(new sl());
 				Common=new HashMap<>();
-				Uedo=new Stack<>();
-				Redo=new Stack<>();
+				stack = new TwoStack<>();
 			}
 
 			public Shell getShell(){
 				return bash;
 			}
-			public void putFunc(String key,String value){
+			public void putCommand(String key,String value){
 				Common.put(key,value);
 			}
 			public int Run(String com) throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
@@ -981,20 +979,20 @@ ________________________________________________________________________________
 
 			public void Uedo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
 				isUedo=true;
-				String com = Uedo.pop();
+				String com = stack.getLast();
 
 				String src = com.substring(0,com.indexOf(' '));
 				String other= getOther(src);
 				if(other==null)
 					return;
-				Redo.push(com);
+				stack.Reput(com);
 
 				com= com.replace(src,other);
 				bash.Run(com);
 				isUedo=false;
 			}
 			public void Redo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
-				bash.Run(Redo.pop());
+				bash.Run(stack.getNext());
 			}
 
 			public String getOther(String name){
@@ -1022,7 +1020,7 @@ ________________________________________________________________________________
 				{
 					if(isUedo)
 						return;
-					Uedo.push(src);
+					stack.put(src);
 				}
 
 			}

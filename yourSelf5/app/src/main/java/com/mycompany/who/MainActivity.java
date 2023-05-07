@@ -64,7 +64,8 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 					// 此时主线程是会被阻塞的
 					Thread.sleep(1000);
 					p2.execute(p1);
-				} catch (Exception e) {}
+				} 
+				catch (Exception e) {}
 			}
 		};
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();

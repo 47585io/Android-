@@ -1207,7 +1207,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			if (stack.Rsize() < 1)
 				return null;
 			Stack<Int> next= stack.getNext();
-			stack.put (next);
+			stack.put (next); //哪些编辑器Uedo的，待会还是由它们去Redo
 			for (Int l:next){
 				EditList.get(l.get()).Redo();
 			}

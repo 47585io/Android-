@@ -10,86 +10,86 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public class EditListenerItrator
 {
 	
-	public static void foreach(RunLi Callback,Collection<EditListener> lis)
+	public static void foreachOne(RunLi Callback,EditListener li)
+	{
+		if(li==null || Callback==null)
+			return;
+		try{
+			Callback.run(li);
+		}catch(Exception e){}
+	}
+	
+	public static void foreachSome(RunLi Callback,EditListenerList lis)
 	{
 		if(lis==null)
 			return;
-		for(EditListener li:lis){
-			try{
-			    Callback.runSelf(li);
-			}catch(Exception e){}
+		for(EditListener li:lis.getList()){
+			foreachOne(Callback,li);
 		}
+		foreachOne(Callback,lis);
 	}
-	public static void foreach(RunLi Callback,EditListener lis)
+	
+	public static void foreachCheck(EditListener lis,RunLi Callback)
 	{
 		if(lis==null)
 			return;
-		if(lis instanceof EditListener){
-			Callback.runSelf(lis);
-		}
+			//先判断它是不是孑类，再判断是不是父类
 		else if(lis instanceof EditListenerList){
-			foreach(Callback,((EditListenerList)lis).getList());
+			foreachSome(Callback,((EditListenerList)lis));
+		}
+		else if(lis instanceof EditListener){
+			foreachOne(Callback,lis);
 		}
 	}
 	
-	public static<T> List<T> foreach(Collection<EditListener> lis, RunLi<List<T>> Callback)
+	/* 带回EditListener的返回值 */
+	public static boolean foreachOne(RunLiCut Callback,EditListener li)
 	{
-		if(lis==null)
-			return null;
-		List<T> r=new LinkedList<>();
-		for(EditListener li:lis){
-			try{
-				r.addAll( Callback.runSelf(li));
-			}catch(Exception e){}
+		boolean is = false;
+		if(li==null || Callback==null)
+			return is;
+		try{
+			is = Callback.run(li);
 		}
-		return r;
-	}
-	public static<T> List<T> foreach(EditListener lis, RunLi<List<T>> Callback)
-	{
-		if(lis==null)
-			return null;
-		List<T> r = null;
-		if(!(lis instanceof EditListenerList))
-			r = Callback.runSelf(lis);
-		else if(lis instanceof EditListenerList)
-			r = foreach(((EditListenerList)lis).getList(),Callback);
-		return r;
-	}
-	
-	public static<T> List<T> foreach(final RunLi<T> Callback,Collection<EditListener> lis,List<T> r)
-	{
-		if(lis==null)
-			return null;
-		for(EditListener li:lis){
-			try{
-				r.add(Callback.runSelf(li));
-			}catch(Exception e){}
-		}
-		return r;
-	}
-	
-	public static<T> List<T> foreach(final RunLi<T> Callback,EditListener lis,List<T> r)
-	{
-		if(lis==null)
-			return null;
-		if(!(lis instanceof EditListenerList))
-			r.add(Callback.runSelf(lis));
-		else if(lis instanceof EditListenerList){
-			foreach(Callback,((EditListenerList)lis).getList(),r);
-		}
-		return r;
+		catch(Exception e){}
+		return is;
 	}
 
-	public static abstract class RunLi<T>
+	/* 当有EditListener返回true，直接返回true */
+	public static boolean foreachSome(RunLiCut Callback,EditListenerList lis)
 	{
-		abstract protected T run(EditListener li);
-		
-		final public T runSelf(EditListener li)
-		{
-			if(li.Enabled())
-				return run(li);
-			return null;
+		if(lis==null)
+			return false;
+		for(EditListener li:lis.getList()){
+			if(foreachOne(Callback,li))
+				return true;
 		}
+		return foreachOne(Callback,lis);
+	}
+
+	public static boolean foreachCheck(EditListener lis,RunLiCut Callback)
+	{
+		boolean is = false;
+		if(lis==null)
+			return is;
+		//先判断它是不是孑类，再判断是不是父类
+		else if(lis instanceof EditListenerList){
+			is = foreachSome(Callback,((EditListenerList)lis));
+		}
+		else if(lis instanceof EditListener){
+			is = foreachOne(Callback,lis);
+		}
+		return is;
+	}
+	
+	public static interface RunLi
+	{
+		public void run(EditListener li);
+	}
+	
+	public static interface RunLiCut
+	{
+		public boolean run(EditListener li)
 	}
 	
 }

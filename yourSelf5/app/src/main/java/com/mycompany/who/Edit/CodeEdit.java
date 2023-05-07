@@ -22,6 +22,7 @@ import java.util.concurrent.*;
 import com.mycompany.who.Edit.EditBuilder.*;
 import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
+import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerItrator.*;
 
 
 /*
@@ -79,7 +80,9 @@ import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacke
  /*
    在基类上开一些接口，另外的，复杂的函数我都设置成了final
 
-   从现在开始，所有被调函数，例如Drawing，必须自己管理好线程和IsModify安全，然后将真正操作交给另一个函数
+   从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数
+   
+   为了兼容外部的东西，除了EditText不作为参数传递，其它的都应尽量以参数传递，例如之后的onDrawNodes，它可以给任意的Editable进行染色
 
    在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
@@ -413,7 +416,7 @@ Dreawr
 	/* 立即进行一次默认的完整的染色 */
 	final public void reDraw(final int start,final int end)
 	{	
-	    final String text = getText().toString();
+	    final Editable editor = getText();
 		final List<wordIndex> nodes = new ArrayList<>();
 		
 		Ep.start(); //开始记录
@@ -421,7 +424,7 @@ Dreawr
 		last = System.currentTimeMillis();
 		
 		try{
-			onFindNodes(start, end, text, nodes); 
+			onFindNodes(start, end, editor.toString(), nodes); 
 			//找nodes，即使getFinderList为null，因为我认为onFindNodes也可以不用listener
 		}catch (Exception e){
 			Log.e("FindNodes Error", e.toString());
@@ -431,9 +434,8 @@ Dreawr
 		Log.w("After FindNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
 		//经过一次寻找，nodes里装满了单词，让我们开始染色
 		
-		Runnable run =new Runnable(){
-
-			@Override
+		Runnable run =new Runnable()
+		{
 			public void run()
 			{
 				++IsModify;
@@ -442,7 +444,7 @@ Dreawr
 				last = System.currentTimeMillis();
 
 				try{
-					onDrawNodes(start, end, nodes, getText()); 
+					onDrawNodes(start, end, nodes, editor); 
 				}catch (Exception e){
 					Log.e("DrawNodes Error", e.toString());
 				}
@@ -458,19 +460,21 @@ Dreawr
 	}
 	
 	/* FindNodes不会修改文本和启动Ep，所以可以直接调用 */
-	public void onFindNodes(int start, int end, String text, List<wordIndex> nodes)
+	public void onFindNodes(final int start, final int end, final String text, final List<wordIndex> nodes)
 	{
-		EditListenerList list = getFinderList();
-		if(list != null){
-			Words WordLib = getWordLib();
-		    List<EditListener> lis = list.getList();
-		    for(EditListener li:lis){
-		        if(li!=null && li instanceof EditFinderListener){
+		final Words WordLib = getWordLib();
+		EditListener lis = getFinderList();
+		RunLi run = new RunLi()
+		{
+			public void run(EditListener li)
+			{
+				if(li instanceof EditFinderListener){
 				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
-		    }      
-		}
+			}
+		};
+		foreachCheck(lis,run);
 	}
 
 	/* 会修改文本，不允许直接调用 */
@@ -613,7 +617,7 @@ _________________________________________
 		isFormat = true;
 		
 		try{
-		    onInsert(index,count,getText());
+		    onInsert(index,count,editor);
 		}
 		catch (Exception e){
 			Log.e("Insert Error", e.toString());
@@ -624,19 +628,20 @@ _________________________________________
 		return editor.length()-before;
 	}	
 
-	protected void onInsert(int index,int count, Editable editor)
+	protected void onInsert(final int index,final int count, final Editable editor)
 	{
-		EditListenerList list = getInsertorList();
-		if(list != null){
-			int selection = 0;
-			List<EditListener> lis = list.getList();
-			for(EditListener li:lis){
-		        if(li!=null && li instanceof EditInsertorListener){
-				    selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
+		EditListener lis = getInsertorList();
+		RunLi run = new RunLi()
+		{
+			public void run(EditListener li)
+			{
+				if(li instanceof EditInsertorListener){
+				    int selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
+					setSelection(selection);
 				}
-		    } 
-			setSelection(selection);
-		}
+			}
+		};
+		foreachCheck(lis,run);
 	}
 	
 
@@ -704,9 +709,8 @@ _________________________________________
 		now = System.currentTimeMillis();
 		Log.w("After SearchWords","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Epp.toString());
 		
-		Runnable run2=new Runnable(){
-			
-		    @Override
+		Runnable run2=new Runnable()
+		{
 			public void run()
 			{
 			    isComplete=true;
@@ -729,26 +733,26 @@ _________________________________________
 	}
 	
 	/* 在不同集合中找单词 */
-	public void SearchInGroup(String src,int index,WordAdpter Adapter)
+	public void SearchInGroup(final String src,final int index,final WordAdpter Adapter)
 	{
-		EditListenerList list = getCompletorList();
-		if(list != null)
+		EditListener lis = getCompletorList();
+		final Words WordLib = getWordLib();
+		final CharSequence wantBefore= getWord(src,index);
+		final CharSequence wantAfter = getAfterWord(src,index);
+		final int before = 0;
+		final int after = wantBefore.length();
+		//获得光标前后的单词，并开始查找
+		RunLi run = new RunLi()
 		{
-			Words WordLib = getWordLib();
-			List<EditListener> lis = list.getList();
-			final CharSequence wantBefore= getWord(src,index);
-			final CharSequence wantAfter = getAfterWord(src,index);
-			final int before = 0;
-			final int after = wantBefore.length();
-			//获得光标前后的单词，并开始查找
-	    	
-			for(EditListener li:lis){
-			    if(li!=null && li instanceof EditCompletorListener){
+			public void run(EditListener li)
+			{
+				if(li instanceof EditCompletorListener){
 			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
-	        }
-		}
+			}
+		};
+	    foreachCheck(lis,run);
 	}
 	
     /* 排序并添加一组相同icon的单词块到adapter，支持Span文本 */
@@ -808,7 +812,7 @@ _________________________________________
 		int before = editor.length();
 		++IsModify;
 		try{
-			onInsertword(getText(),word,index,id);
+			onInsertword(editor,word,index,id);
 		}
 		catch (Exception e){
 			Log.e("InsertWord With Complete Error ",e.toString());
@@ -816,29 +820,33 @@ _________________________________________
 		--IsModify;
 		return editor.length()-before;
 	}
-	protected void onInsertword(Editable editor,CharSequence word, int index, int id)
+	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
 	{
-		EditListenerList list = getCompletorList();
+		EditListener lis = getCompletorList();
 		wordIndex tmp = tryWordSplit(editor.toString(), index);
 		wordIndex tmp2 = tryWordSplitAfter(editor.toString(), index);
-		size range = new size(tmp.start,tmp2.end);
+		final size range = new size(tmp.start,tmp2.end);
 		
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
-		if(list != null){
-			List<EditListener> lis = list.getList();
-			for(EditListener li: lis){
-			    if(li!=null && li.hashCode() == id && li instanceof EditCompletorListener){
+		RunLiCut cut = new RunLiCut()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditCompletorListener && li.hashCode() == id){
 				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
 				    setSelection(selection);
-				    return;
-		 	    }
-		    }
-		}
+				    return true;
+				}
+				return false;
+			}
+		};
 		
-		//没有找到listener，就执行默认操作
-		editor.replace(tmp.start, tmp2.end, word);
-		setSelection(tmp.start + word.length());
-		//把光标移动到最后
+		if(!foreachCheck(lis,cut)){
+		    //没有找到listener，就执行默认操作
+		    editor.replace(tmp.start, tmp2.end, word);
+		    setSelection(tmp.start + word.length());
+		    //把光标移动到最后
+		}
 	}
 	
 
@@ -877,17 +885,19 @@ _________________________________________
 		--IsModify;
     }
 	
-	protected void DrawAndDraw(Canvas canvas, TextPaint paint, size pos, int flag)
+	protected void DrawAndDraw(final Canvas canvas, final TextPaint paint, final size pos, final int flag)
 	{
-		EditListenerList list = getCanvaserList();
-		if(list != null){
-		    List<EditListener> lis = list.getList();
-			for (EditListener li:lis){
-			    if(li!=null && li instanceof EditCanvaserListener){
-			        ((EditCanvaserListener)li).LetMeCanvaser(this, canvas, paint, pos, flag);
+		EditListener lis = getCanvaserList();
+		RunLi run = new RunLi()
+		{
+			public void run(EditListener li)
+			{
+				if(li instanceof EditCanvaserListener){
+			        ((EditCanvaserListener)li).LetMeCanvaser(CodeEdit.this, canvas, paint, pos, flag);
 				}
 			}
-		}
+		};
+		foreachCheck(lis,run);
 	}
 	
 	
@@ -1857,7 +1867,7 @@ ________________________________________________________________________________
 
  Format和Insert分开也是这个原因，即不用每个Insertor都绑定一个Formator
  
- Completor包含搜索单词和插入单词两大功能，谁搜索到的谁插入
+ Completor包含搜索单词和插入单词两大功能，谁搜索到的单词谁插入
  
  Canvaser用于在编辑器的画布上进行绘制，当然可以有多个
  
@@ -2214,7 +2224,7 @@ ________________________________________________________________________________
 
 		public int onFormat(int start, int end, Editable editor)
 		
-		public int onInsert(int index, Editable editor)
+		public int onInsert(int index, int count, Editable editor)
 	
 	}
 	
