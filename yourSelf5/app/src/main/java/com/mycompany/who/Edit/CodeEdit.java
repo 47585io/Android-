@@ -101,11 +101,11 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	
-	private Words WordLib;
-	private EditDate stack;
-	private EditBuilder builder;
+	private TwoStack<token> stack;
 	private ThreadPoolExecutor pool;
+	private Words WordLib;
 	private CodeEditListenerInfo Info;
+	private EditBuilder builder;
 	  //不要随便修改Listener，现在使用pool，并且一组Edit使用一个Info，如果有多个线程同时修改，非常不安全
 	  //但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
 	  //呜呜呜，对不起真的没办法了
@@ -159,7 +159,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		CodeEdit Edit = (CodeEdit) target;
 		this.WordLib=Edit.WordLib;	
 		if(stack==null)
-		    this.stack = new EditDate();
+		    this.stack = new TwoStack<>();
 		this.Info = Edit.Info;	
 		this.pool = Edit.pool;
 		this.Line = Edit.Line;
@@ -194,7 +194,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		super.Creat();
 		laugua = new StringBuffer();
 		WordLib=new CodeWords();
-		stack = new EditDate();
+		stack = new TwoStack<>();
 		Info = new CodeEditListenerInfo();
 		addTextChangedListener(new DefaultText());
 		builder = new CodeEditBuilder();
@@ -991,99 +991,81 @@ _________________________________________
 
 */
 
-    final protected int Uedo_(token token)
+    /* 应用Token到文本，并将其反向转化 */
+    final protected void DoAndCastToken(token token)
 	{
+		CharSequence text;
+		Editable editor = getText();
+		if (token.start < 0)
+			token.start = 0;
+		if (token.end > editor.length())
+			token.end = editor.length();
+		onGetUR(token);
+
+		if (token.src.equals(""))
+		{	
+			//如果token会将范围内字符串删除，则我要将其保存，待之后插入
+			text = editor.subSequence(token.start, token.end);
+			editor.delete(token.start, token.end);	
+			token.set(token.start, token.start, text);
+		}
+		else if (token.start == token.end)
+		{
+			//如果token会将在那里插入一个字符串，则我要将其下标保存，待之后删除
+			editor.insert(token.start, token.src);
+			token.set(token.start, token.start + token.src.length(), "");
+		}
+		else
+		{
+			//另外的，则是反向替换某个字符串
+			text = editor.subSequence(token.start, token.end);
+			editor.replace(token.start, token.end, token.src);
+			token.set(token.start, token.start + token.src.length(), text);
+		}
+	}
+
+	/* 得到Token并应用到文本，并把转化的Token存入stack */
+    final protected int Uedo_()
+	{
+		token token = stack.getLast();
 		int endSelection=getSelectionEnd();
 		if (token != null)
 		{
-			//范围限制
-			Editable editor = getText();
-			if (token.start < 0)
-				token.start = 0;
-			if (token.end > editor.length())
-				token.end = editor.length();
-			onGetUR(token);
-
-			if (token.src.equals(""))
-			{
-				stack.Reput(token.start, token.start, editor.subSequence(token.start, token.end));
-				//如果Uedo会将范围内字符串删除，则我要将其保存，待之后插入
-				editor.delete(token.start, token.end);	
-				endSelection = token.start;
-			}
-			else if (token.start == token.end)
-			{
-				stack.Reput(token.start, token.start + token.src.length(), "");
-				//如果Uedo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
-				editor.insert(token.start, token.src);
-				endSelection = token.start + token.src.length();
-			}
-			else
-			{
-				stack.Reput(token.start, token.start + token.src.length(), editor.subSequence(token.start, token.end));
-				//另外的，则是反向替换某个字符串
-			    editor.replace(token.start, token.end, token.src);
-				endSelection = token.start + token.src.length();
-			}
+			DoAndCastToken(token);
+			stack.Reput(token);
+			endSelection = token.end;
 		}
 		return endSelection;
 	}
 
-	final protected int Redo_(token token)
+	/* 得到Token并应用到文本，并把转化的Token存入stack */
+	final protected int Redo_()
 	{
+		token token = stack.getNext();
 		int endSelection=getSelectionEnd();
 		if (token != null)
 		{
-			Editable editor = getText();
-			if (token.start < 0)
-				token.start = 0;
-			if (token.end > editor.length())
-				token.end = editor.length();
-			onGetUR(token);
-
-			if (token.src.equals(""))
-			{
-				stack.put(token.start, token.start , editor.subSequence(token.start, token.end));
-				//如果Redo会将范围内字符串删除，则我要将其保存，待之后插入
-				editor.delete(token.start, token.end);
-				endSelection = token.start;
-			}
-			else if (token.start == token.end)
-			{
-				stack.put(token.start, token.start + token.src.length(), "");
-				//如果Redo会将在那里插入一个字符串，则我要将其下标保存，待之后删除
-				editor.insert(token.start, token.src);
-				endSelection = token.start + token.src.length();
-			}
-			else
-			{
-				stack.put(token.start, token.start + token.src.length(), editor.subSequence(token.start, token.end));
-				//另外的，则是反向替换某个字符串
-			    editor.replace(token.start, token.end, token.src);
-				endSelection = token.start + token.src.length();
-		    }
+			DoAndCastToken(token);
+			stack.put(token);
+			endSelection = token.end;
 		}
 		return endSelection;
 	}
 
 	final public void Uedo()
 	{
-		if (stack == null||stack.Usize()==0)
+		if (stack.Usize()==0)
 			return;
 
 		++IsModify;
 		isUR = true;
-		token token = null;	
-		int endSelection;
-		try
-		{
-			token = stack.getLast();
-			endSelection = Uedo_(token);
+		try{
+			int endSelection = Uedo_();
 			setSelection(endSelection);
 			//设置光标位置
 		}
 		catch (Exception e){
-			Log.e("Uedo Error",token.toString()+" "+e.toString());
+			Log.e("Uedo Error",e.toString());
 		}
 		isUR = false;
 		--IsModify;
@@ -1091,21 +1073,17 @@ _________________________________________
 	
 	final public void Redo()
 	{
-		if (stack == null||stack.Rsize()==0)
+		if (stack.Rsize()==0)
 			return;
 
 		++IsModify;
 		isUR = true;
-		token token = null;
-		int endSelection;
-		try
-		{
-			token = stack.getNext();
-			endSelection = Redo_(token);
+		try{
+			int endSelection = Redo_();
 			setSelection(endSelection);	
 		}
 		catch (Exception e){
-			Log.e("Redo Error",token.toString()+" "+e.toString());
+			Log.e("Redo Error",e.toString());
 		}
 		isUR = false;
 		--IsModify;
@@ -1217,25 +1195,30 @@ _________________________________________
 
 		try
 		{
+			token token = null;
 			if(count!= 0 && after!=0)
 			{
 				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
 				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
-				stack.put(start,start+after,str.subSequence(start,start+count));	
+				token = new token(start,start+after,str.subSequence(start,start+count));	
 			}
 			else if (count != 0)
 			{
 				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 				//从现在start开始，插入start～start+count之间的字符串
-				stack.put(start, start, str.subSequence(start , start + count));
+				token = new token(start, start, str.subSequence(start , start + count));
 			}
 			else if (after != 0)
 			{
 				//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
 				//删除现在start～start+after之间的字符串
-				stack.put(start, start + after, "");		
-			}					
-			onPutUR(stack.seeLast());
+				token = new token(start, start + after, "");		
+			}	
+			if(token!=null)
+			{
+			    stack.put(token);
+				onPutUR(token);
+			}
 		}
 		catch (Exception e){}
 	}
@@ -1463,35 +1446,6 @@ _________________________________________
 			node.end = src.length();
 		CharSequence want= src.subSequence(node.start, node.end);
 		return want;
-	}
-
-	
-/*
-__________________________________________________________________________________
-	 
-EditDate
-
-  存储修改时装入的token，用于Uedo，Redo
-  
-__________________________________________________________________________________
-
-*/
-    public static class EditDate extends TwoStack<token>
-	{
-		
-		public EditDate(){
-			super();
-		}
-
-		public void put(int start, int end, CharSequence src)
-		{
-			put(new token(start, end, src));
-		}
-		public void Reput(int start, int end, CharSequence src)
-		{
-			Reput(new token(start, end, src));
-		}
-		
 	}
 
 
@@ -2292,9 +2246,9 @@ ________________________________________________________________________________
 	
 	public static interface myUedoWithRedo extends UedoWithRedo{
 		
-		public int Uedo_(token token)
+		public int Uedo_()
 
-		public int Redo_(token token)
+		public int Redo_()
 		
 		public void onGetUR(token token)	
 		

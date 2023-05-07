@@ -74,13 +74,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private LineGroup EditLines;
 	private ListView mWindow;
 
-	private EditManipulator manipulator;
+	private EditFactory mfactory;
+	private ThreadPoolExecutor pool;
 	private List<CodeEdit> EditList;
 	private TwoStack<Stack<Int>> stack;
-	private ThreadPoolExecutor pool;
-	private EditFactory mfactory;
+	private EditManipulator manipulator;
 	
-	
+
 	public EditGroup(Context cont)
 	{
 		super(cont);	
@@ -95,7 +95,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Creator.ConfigSelf(this);
 	}
 	
-	@Override
 	public boolean equals(Object obj)
 	{
 		if (super.equals(obj)||(obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag())))
