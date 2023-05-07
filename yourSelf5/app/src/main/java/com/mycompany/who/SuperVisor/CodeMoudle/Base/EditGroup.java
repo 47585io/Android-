@@ -76,8 +76,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 	private EditManipulator manipulator;
 	private List<CodeEdit> EditList;
-	private Stack<Stack<Int>> Last;
-	private Stack<Stack<Int>> Next;
+	private TwoStack<Stack<Int>> stack;
 	private ThreadPoolExecutor pool;
 	private EditFactory mfactory;
 	
@@ -342,7 +341,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onPutUR(token token)
 		{
-			Last.peek().push(index);
+			stack.seeLast().push(index);
 			//监听器优先调用，所以Last会先开一个空间让我push
 			//每一轮次onTextChanged执行后紧跟其后再开一个空间
 		}		
@@ -350,8 +349,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (Last.size() == 0 || Last.peek().size() != 0))
-				Last.push(new Stack<Int>());  
+			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0))
+				stack.put(new Stack<Int>());  
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
 			
@@ -399,7 +398,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				int line = getEditManipulator().calaEditLines();
 				EditLines. reLines(line);	
 				//最后一个编辑器单独计算行，这个太卡了，得优化一下
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + Last.size() + " 注意，Stack Size不会太大");		
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() + " 注意，Stack Size不会太大");		
 			}
 			
 		}
@@ -1056,7 +1055,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
-			Last.push(new Stack<Int>());
+			stack.put (new Stack<Int>());
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -1169,7 +1168,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void Format(int start, int end)
 		{
-			Last.push(new Stack<Int>());
+			stack.put(new Stack<Int>());
 			DoForAnyOnce d= new DoForAnyOnce(){
 
 				@Override
@@ -1193,10 +1192,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			//与顺序无关的Uedo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
-			if (Last.size() < 1)
+			if (stack.Usize() < 1)
 				return null;
-			Stack<Int> last= Last.pop();
-			Next.push(last);
+			Stack<Int> last= stack.getLast();
+			stack.Reput(last);
 			for (Int l:last){
 				EditList.get(l.get()).Uedo();
 			}
@@ -1206,10 +1205,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public Stack<Int> Redo()
 		{
 			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
-			if (Next.size() < 1)
+			if (stack.Rsize() < 1)
 				return null;
-			Stack<Int> next= Next.pop();
-			Last.push(next);
+			Stack<Int> next= stack.getNext();
+			stack.put (next);
 			for (Int l:next){
 				EditList.get(l.get()).Redo();
 			}
@@ -1489,8 +1488,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			Group.Configer = new Config_hesView();
 			Group.config = new Config_hesSize();
 			Group.EditList = new ArrayList<>();
-			Group.Last = new Stack<>();
-			Group.Next = new Stack<>();
+			Group.stack = new TwoStack<>();
 			Group.root = new CodeEdit.EditChroot();
 			Group.creatInfo();
 			Group.creatEditManipulator();

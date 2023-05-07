@@ -97,7 +97,7 @@ import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacke
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
  */
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditListenerInfoUser,WordsUser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditBuilderUser
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	
