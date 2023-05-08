@@ -119,7 +119,7 @@ ________________________________________________________________________________
 		public static class DefaultDrawer extends myEditDrawerListener
 		{	
 			@Override
-			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
+			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Spannable editor)
 			{
 				//protected的成员在本包或子类可以访问
 				CodeEdit.Ep.isDisbled(true);

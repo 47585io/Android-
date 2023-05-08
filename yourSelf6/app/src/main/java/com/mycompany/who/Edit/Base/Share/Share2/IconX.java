@@ -8,9 +8,7 @@ public class IconX implements Icon
 	private String path;
 	private CharSequence name;//通过id或path加载图像
 
-	public IconX(){
-
-	}
+	public IconX(){}
 	public IconX(int id,CharSequence name){
 		this.icon=id;
 		this.name=name;

@@ -38,22 +38,13 @@ public class WordAdpter extends BaseAdapter
 		addAll(file,flag);
 	}
 	
-	synchronized public void addAll(List<Icon> file,int flag)
+	synchronized public void addAll(Collection<Icon> file,int flag)
 	{
 		if(file!=null){
 			size range = new size(mfile.size(),mfile.size()+file.size());
 		    Range.put(range,flag);
 		    mfile.addAll(file);
 		}
-	}
-	
-	public int posFlag(int position)
-	{
-		for(size pos:Range.keySet()){
-			if(pos.start<=position && pos.end>position)
-				return Range.get(pos);
-		}
-		return 0;
 	}
 
     @Override
@@ -67,8 +58,13 @@ public class WordAdpter extends BaseAdapter
     }
 
     @Override
-    public long getItemId(int position) {
-        return position;
+    public long getItemId(int position) 
+	{
+        for(size pos:Range.keySet()){
+			if(pos.start<=position && pos.end>position)
+				return Range.get(pos);
+		}
+		return 0;
     }
 
     @Override

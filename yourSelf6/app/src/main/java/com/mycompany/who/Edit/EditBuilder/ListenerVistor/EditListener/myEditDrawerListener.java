@@ -22,10 +22,10 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 	
-	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Editable editor)
+	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 	//在这里为Editable染色
 	
-	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Editable editor)
+	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
 	{
 		try{
 			if (Enabled())
@@ -36,7 +36,7 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		}
 	}
 
-	protected void Draw(int start, int end, List<wordIndex> nodes,Editable editor){
+	protected void Draw(int start, int end, List<wordIndex> nodes,Spannable editor){
 		onDrawNodes(start, end, nodes, editor);
 	}
 	

@@ -7,9 +7,7 @@ public class Icon3 implements Icon
 	private int icon; //通过id加载图像
 	private CharSequence name;
 	
-	public Icon3(){
-		
-	}
+	public Icon3(){}
 	public Icon3(int id,CharSequence name){
 		this.icon=id;
 		this.name=name;

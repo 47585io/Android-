@@ -560,11 +560,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
 		//如果点击了就插入单词并关闭窗口
-		WordAdpter adapter = (WordAdpter) p1.getAdapter();
-		IconX icon = (IconX) adapter.getItem(p3);
+		Adapter adapter = p1.getAdapter();
+		Icon icon = (Icon) adapter.getItem(p3);
 		if(historyId!=null){
 			CodeEdit Edit = getHistoryEdit();
-			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), adapter.posFlag(p3));
+			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), (int)adapter.getItemId(p3));
 		}
 		getWindow().setX(-9999);
 	}

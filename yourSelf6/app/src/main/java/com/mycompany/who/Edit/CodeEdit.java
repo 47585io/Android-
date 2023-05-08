@@ -417,20 +417,21 @@ Dreawr
 		Runnable run =new Runnable()
 		{
 			public void run()
-			{
-				++IsModify;
-				isDraw = true; //为保证isxxx能成功配对，它们必须写在try和catch外			
+			{		
 				long last=0,now=0;
 				last = System.currentTimeMillis();
-
+				++IsModify; //为保证isxxx安全，不要在子线程中使用它们
+				isDraw = true; 	
+				
 				try{
 					onDrawNodes(start, end, nodes, editor); 
-				}catch (Exception e){
+				}
+				catch (Exception e){
 					Log.e("DrawNodes Error", e.toString());
 				}
 
 				isDraw = false;
-				--IsModify;
+				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
 				Ep.stop(); //Draw完后申请回收nodes		
 				now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
@@ -459,7 +460,7 @@ Dreawr
 	}
 
 	/* 会修改文本，不允许直接调用 */
-	protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Editable editor)
+	protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Spannable editor)
 	{
 		EditListener li = getDrawer();
 		RunLi run = new RunLi()
@@ -491,7 +492,7 @@ Dreawr
 		catch (Exception e){
 			Log.e("prepare Error",e.toString());
 		}
-		Ep.stop();
+		Ep.stop(); //为保证Ep能成功配对，它们必须写在try和catch外，并贴进try和catch
 	}
 	
 	/* 存储文本 */
@@ -569,10 +570,10 @@ _________________________________________
 		//为了安全，禁止重写
 		Editable editor = getText();
 		int before = editor.length();
-		++IsModify;
-		isFormat = true; 	
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
+		++IsModify;
+		isFormat = true; 	
 		
 		try{
 			onFormat(start, end, editor);
@@ -711,16 +712,20 @@ _________________________________________
 		{
 			public void run()
 			{
-			    isComplete=true;
 				Window.setAdapter(adapter);
 			    Epp.stop(); //将单词放入Window后回收Icons
+			    isComplete=true;
+				++IsModify; //我害怕会在callOnopenWindow中修改文本，既然不在子线程，就也加上吧
+				
 				try{
 				    callOnopenWindow(Window);
 				}catch (Exception e){
 				    Log.e("OpenWindow Error", e.toString());
 				}
+				
+				--IsModify;
+				isComplete=false;
 				Log.w("After OpenWindow","I'm "+hashCode()+", "+ Epp.toString());
-			 	isComplete=false;//为保证isxxx安全，不要在子线程中使用它们
 		    }
 		};
 		post(run2);//将UI任务交给主线程

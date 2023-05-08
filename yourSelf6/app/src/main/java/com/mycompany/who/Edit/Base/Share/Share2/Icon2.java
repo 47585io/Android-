@@ -8,9 +8,7 @@ public class Icon2 implements Icon
 	private String path; //通过文件路径加载图像
 	private CharSequence name; 
 	
-	public Icon2(){
-
-	}
+	public Icon2(){}
 	public Icon2(String path,CharSequence name){
 		this.path=path;
 		setName(name);
