@@ -121,21 +121,9 @@ ________________________________________________________________________________
 			@Override
 			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Spannable editor)
 			{
-				//protected的成员在本包或子类可以访问
-				CodeEdit.Ep.isDisbled(true);
-				//设置Disbled以禁止使用池子，使元素值保存
-				new Handler().postDelayed(new Runnable(){
-
-						@Override
-						public void run()
-						{
-							clearSpan(start,end,editor);
-							setSpan(start,end,editor,nodes);
-							//清理旧的Span，设置新的Span
-							CodeEdit.Ep.isDisbled(false);
-							//设置Disbled以启用池子，让后续编辑器获取
-						}
-					},50);
+				clearSpan(start,end,editor);
+				setSpan(start,end,editor,nodes);
+				//清理旧的Span，设置新的Span
 			}
 			
 			public Colors.ByteToColor2 BToC = null;

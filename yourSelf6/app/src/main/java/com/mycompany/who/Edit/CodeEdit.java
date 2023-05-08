@@ -55,9 +55,9 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
      本包中的类只能使用本包及子包中的类，便于拿走使用
      如果本包中需要做一些繁琐的事，不妨创建一个Share包，在其中写
 
- */
+*/
  
- /*
+/*
  
  主要功能：
  
@@ -75,9 +75,9 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 	
 	Lines
 	
- */
+*/
 
- /*
+/*
    在基类上开一些接口，另外的，复杂的函数我都设置成了final
 
    从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数
@@ -86,9 +86,9 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 
    在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
- */
+*/
  
- /*
+/*
    Enabled_Drawer  禁用所有的自动染色
    Enabled_Format  禁用所有的自动格式化
    Enabled_Complete  禁用所有的自动补全
@@ -99,7 +99,14 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
    isComplete              当前编辑器已在自动补全，不再自动补全
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
- */
+   
+   tryLines          染色或其它工作检查的行数，tryLines的值越小，编辑器速度更快  
+   Delayed_Millis    (为所有的post任务设置一个延迟时间，以及缓冲时间
+                     您不应该在EditListener中使用Handler，因为它并不安全，所造成的后果本人概不承担
+                     您应该使用Delayed_Millis设置一个统一的任务post延时，以由编辑器内部管理何时进行调度)
+   
+*/
+
 public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditBuilderUser
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
@@ -133,10 +140,10 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	static EPool2 Ep;
 	static EPool3 Epp;
 	
-	public static int tryLines=1;
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
 	public static boolean Enabled_Complete=false;
+	public static int tryLines=1;
 	public static int Delayed_Millis = 50;
 	
 	static{
@@ -437,7 +444,7 @@ Dreawr
 				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
 		};
-		post(run);//将UI任务交给主线程
+		postDelayed(run,Delayed_Millis);//将UI任务交给主线程
 	}
 	
 	/* FindNodes不会修改文本和启动Ep，所以可以直接调用 */
@@ -709,7 +716,7 @@ _________________________________________
 		now = System.currentTimeMillis();
 		Log.w("After SearchWords","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Epp.toString());
 		
-		Runnable run2=new Runnable()
+		Runnable run = new Runnable()
 		{
 			public void run()
 			{
@@ -730,7 +737,7 @@ _________________________________________
 				Log.w("After OpenWindow","I'm "+hashCode()+", "+ Epp.toString());
 		    }
 		};
-		post(run2);//将UI任务交给主线程
+		postDelayed(run,Delayed_Millis);//将UI任务交给主线程
 	}
 	
 	public void closeWindow(){

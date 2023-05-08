@@ -23,6 +23,10 @@ public abstract interface EditListener
 	
 	public abstract EditText getEdit()
 	
+	public abstract boolean equals(Object o)
+	
+	public abstract String toString()
+	
 	public abstract boolean dispatchCallBack(RunLi Callback)
 	
 	
