@@ -398,10 +398,10 @@ Dreawr
 	{	
 	    final Editable editor = getText();
 		final List<wordIndex> nodes = new ArrayList<>();
-		
-		Ep.start(); //开始记录
+			
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
+		Ep.start(); //开始记录
 		
 		try{
 			onFindNodes(start, end, editor.toString(), nodes); 
@@ -432,7 +432,7 @@ Dreawr
 
 				isDraw = false;
 				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
-				Ep.stop(); //Draw完后申请回收nodes		
+				Ep.stop(); //Draw完后申请回收nodes，若Ep和isxxx同时出现，它应紧贴isxxx之前或之后后，避免异常		
 				now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
@@ -694,14 +694,15 @@ _________________________________________
 		if(Window==null)
 			return;
 		
-		Epp.start();//开始存储
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
 		final WordAdpter adapter = new WordAdpter(R.layout.WordIcon);
+		Epp.start();//开始存储
 		
 		try{
 		    SearchInGroup(getText().toString(),getSelectionEnd(),adapter);
-		}catch(Exception e){
+		}
+		catch(Exception e){
 			Log.e("SearchWord Error", e.toString());
 		}
 		//经过一次查找，Icons里装满了单词
@@ -713,13 +714,14 @@ _________________________________________
 			public void run()
 			{
 				Window.setAdapter(adapter);
-			    Epp.stop(); //将单词放入Window后回收Icons
+			    Epp.stop(); //将单词放入Window后回收Icons，在isxxx之前，避免异常
 			    isComplete=true;
 				++IsModify; //我害怕会在callOnopenWindow中修改文本，既然不在子线程，就也加上吧
 				
 				try{
 				    callOnopenWindow(Window);
-				}catch (Exception e){
+				}
+				catch (Exception e){
 				    Log.e("OpenWindow Error", e.toString());
 				}
 				
@@ -945,7 +947,8 @@ _________________________________________
 		++IsModify;
 		try{
 			com = onMakeCommand(state);
-		}catch(Exception e){
+		}
+		catch(Exception e){
 			Log.e("onMakeCommand Error",e.toString());
 		}
 		--IsModify;
@@ -975,7 +978,8 @@ _________________________________________
 		++IsModify;
 		try{
 			flag = onRunCommand(command);
-		}catch(Exception e){
+		}
+		catch(Exception e){
 			Log.e("onRunCommand Error",e.toString());
 		}
 		--IsModify;
