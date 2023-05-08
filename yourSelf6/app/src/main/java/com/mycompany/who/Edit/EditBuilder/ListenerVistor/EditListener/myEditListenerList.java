@@ -3,14 +3,14 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
 import android.widget.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import java.util.*;
+import com.mycompany.who.Edit.Base.Share.Share3.*;
 
 
 /* 
   myEditListenerList，myEditListener的子接口，可向上转型
  
-  内部使用List存储EditListener，这个lis一定不为null
+  内部使用List存储一组EditListener，这个lis一定不为null
   
-  管理一组的EditListener
 */
 public class myEditListenerList extends myEditListener implements EditListenerList
 {
@@ -20,17 +20,17 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	public myEditListenerList()
 	{
 		super();
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 	}
 	public myEditListenerList(String name,boolean e)
 	{
 		super(name,e);
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 	}
 	public myEditListenerList(EditListener li)
 	{
 		super(li);
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 		if(li instanceof EditListenerList)
 		{
 			EditListener[] list = ((EditListenerList)li).toArray();

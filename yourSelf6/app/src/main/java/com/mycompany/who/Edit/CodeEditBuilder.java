@@ -803,7 +803,7 @@ ________________________________________________________________________________
 				StringBuilder command = new StringBuilder();
 				switch(state){
 					default:
-					command.append("make FuncTemplete");
+					    command.append("make FuncTemplete");
 				}
 				return command.toString();
 			}
@@ -928,17 +928,17 @@ ________________________________________________________________________________
 			}
 
 
-			public static interface Getter
+			public static abstract interface Getter
 			{
 				public abstract String[] spiltArgs(String com)
 
 				public abstract Object[] decodeArags(String[] args)
 			}
 
-			public static interface Runnar{}
+			public static abstract interface Runnar{}
 			
 
-			public static interface ShellListener
+			public static abstract interface ShellListener
 			{
 				public abstract void onShellBeforeRunning(Method func,Object[] args);
 

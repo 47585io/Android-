@@ -117,7 +117,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public LineGroup getEditLine(){
 		return EditLines;
 	}
-	public ListView getWindow(){
+	public AdapterView getWindow(){
 		return mWindow;
 	}
 
@@ -286,56 +286,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			super(cont, Edit);
 			can = true;
 			index = new Int();
-		}
-
-		@Override
-		public void setInfo(EditListenerInfo i)
-		{
-			//为任意一个Edit设置Info，都会为整组的Edit设置
-			if(ShareFlag.get()==0){
-				ShareFlag.add();
-				for(CodeEdit E:EditList){
-					E.setInfo(i);
-				}
-				ShareFlag.less();
-			}
-			super.setInfo(i);
-		}
-
-		@Override
-		public void setWordLib(Words WordLib)
-		{
-			if(ShareFlag.get()==0){
-				ShareFlag.add();
-				for(CodeEdit E:EditList){
-					E.setWordLib(WordLib);
-				}
-				ShareFlag.less();
-			}
-			super.setWordLib(WordLib);
-		}
-
-		@Override
-		public void setEditBuilder(EditBuilder b)
-		{
-			if(ShareFlag.get()==0){
-				ShareFlag.add();
-				for(CodeEdit E:EditList){
-					E.setEditBuilder(b);
-				}
-				ShareFlag.less();
-			}
-			super.setEditBuilder(b);
-		}
-
-		@Override
-		public void setWindow(ListView Window)
-		{
-			//不允许设置其它Window
-			if(getWindow()==null)
-			    super.setWindow(Window);
-		}
-		
+		}	
 		
 		@Override
 		protected void onPutUR(token token)
@@ -658,9 +609,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		    float is = onTouchToZoom.Iszoom(p2);
 			float scale = hScro.getScaleX();
 		    if(is>1)
-			    getEditManipulator().zoomByScro(scale+0.1f);	
+			    getEditManipulator().zoomByScro(scale+scale*0.1f);	
 		    else if(is<1)
-			    getEditManipulator().zoomByScro(scale-0.1f); 
+			    getEditManipulator().zoomByScro(scale-scale*0.1f); 
 		}
 		else if(p2.getActionMasked()==MotionEvent.ACTION_UP)
 		{
@@ -686,11 +637,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	
 	
-	final public static class LineGroup extends LinearLayout implements EditLine.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
+	final public static class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
 	{
 
 		public static int MaxLine = 5000;
-		private int lineCount;
+		private int lineCount=1;
 		private List<EditLine> LineList;
 
 		public LineGroup(Context cont){
@@ -737,7 +688,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public void reLines(int line)
 		{
-			int caline= line-lineCount;
+			int caline= line-lineCount+1;
 			if(caline<0){
 				delLines(-caline);
 			}
@@ -802,7 +753,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 
 		@Override
-		public int maxWidth(){	
+		public int maxWidth()
+		{	
 			float TextSize = getTextSize();
 			int count = String.valueOf(lineCount).length()+1;
 			return (int)(count*TextSize);
@@ -811,7 +763,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public int maxHeight()
 		{
-			int lineHeight = getLineHeight();
+			int lineHeight = getLineHeight()+1;
 			return (lineCount*lineHeight);
 		}
 

@@ -14,6 +14,16 @@ public class Collection_Spiltor
 			p.putAll(p2);
 	}
 	
+	public static List EmptyList(){
+		return Collections.synchronizedList(new ArrayList());
+	}
+	public static Map EmptyMap(){
+		return Collections.synchronizedMap(new HashMap());
+	}
+	public static Set EmptySet(){
+		return Collections.synchronizedSet(new HashSet());
+	}
+	
 	public static Object vualeToKey(Object v,Map map)
 	{
 		for(Object k: map.keySet())

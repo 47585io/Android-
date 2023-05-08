@@ -43,7 +43,6 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 		Group.AddEdit(name);
 		Group.setTarget(this);
 		addView(Group,name);
-	   // requestDisallowInterceptTouchEvent(true);
 	}
 	
 	@Override
@@ -61,13 +60,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 		super.tabView(index);
 		getConfig().ConfigSelf(this);
 	}
-	@Override
-	public void removeViewAt(int index)
-	{
-		super.removeViewAt(index);
-	}
 
-	
 	public ThreadPoolExecutor getPool()
 	{
 		return pool;
@@ -145,7 +138,7 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 	
 	
 	/*  在View被加入页面时，可以进行额外配置  */
-	public static interface ViewBuiler extends OnTouchListener,OnKeyListener{
+	public static interface ViewBuiler{
 		
 		public void eatView(View v, String name, PageHandler self)
 		
@@ -161,18 +154,6 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 		public boolean onPageKey(int keyCode, KeyEvent p2, PageHandler self)
 		{
 			return false;
-		}
-
-		@Override
-		public boolean onKey(View p1, int p2, KeyEvent p3)
-		{
-			return false;
-		}
-
-		@Override
-		public boolean onTouch(View p1, MotionEvent p2)
-		{
-			return true;
 		}
 		
 		@Override
@@ -228,14 +209,6 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				@Override
 				public void run()
 				{
-					
-				}
-			};
-			final Runnable run3 = new Runnable(){
-
-				@Override
-				public void run()
-				{
 					Group.refreshLineAndSize();
 					Group.requestFocus();
 				}
@@ -247,7 +220,6 @@ public class PageHandler extends PageList implements EditGroup.requestWithEditGr
 				{
 					Group.post(run1);
 					Group.postDelayed(run2,50);
-					Group.postDelayed(run3,100);
 				}
 			};
 			

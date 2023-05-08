@@ -89,7 +89,7 @@ public class PageList extends HasAll
 		for (index = 0;index < getChildCount();index++)
 		{
 			View p = getChildAt(index);
-			if (p.getId()==Page.getId()||p.getTag().equals(Page.getTag())){
+			if (p.getTag().equals(Page.getTag())){
 			    return index;
 			}
 		}

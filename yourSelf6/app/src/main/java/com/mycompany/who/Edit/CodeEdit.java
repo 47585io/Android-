@@ -124,8 +124,8 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  //IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
 	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
 	
-	private EditLine Line;
-	private ListView mWindow;
+	private LineSpiltor Line;
+	private AdapterView mWindow;
 	private StringBuffer laugua;
 	private String HTML;
 	private Spanned spanStr;
@@ -322,10 +322,10 @@ ________________________________________________________________________________
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
 	}	
-	public void setWindow(ListView Window){
+	public void setWindow(AdapterView Window){
 		mWindow = Window;
 	}
-	public void setEditLine(EditLine l){
+	public void setEditLine(LineSpiltor l){
 		Line = l;
 	}
 	public void setInfo(EditListenerInfo i){
@@ -341,10 +341,10 @@ ________________________________________________________________________________
     public ThreadPoolExecutor getPool(){
 		return pool;
 	}
-	public ListView getWindow(){
+	public AdapterView getWindow(){
 		return mWindow;
 	}
-	public EditLine getEditLine(){
+	public LineSpiltor getEditLine(){
 		return Line;
 	}
 	public EditListenerInfo getInfo(){
@@ -689,7 +689,8 @@ _________________________________________
     /* 打开窗口，并排列可选单词 */
 	final public void openWindow()
 	{
-		if(getWindow()==null)
+		final AdapterView Window = getWindow(); 
+		if(Window==null)
 			return;
 		
 		Epp.start();//开始存储
@@ -711,10 +712,10 @@ _________________________________________
 			public void run()
 			{
 			    isComplete=true;
-				getWindow().setAdapter(adapter);
+				Window.setAdapter(adapter);
 			    Epp.stop(); //将单词放入Window后回收Icons
 				try{
-				    callOnopenWindow(getWindow());
+				    callOnopenWindow(Window);
 				}catch (Exception e){
 				    Log.e("OpenWindow Error", e.toString());
 				}
@@ -787,13 +788,13 @@ _________________________________________
 		}
 	}
 	
-	protected void callOnopenWindow(ListView Window)
+	protected void callOnopenWindow(AdapterView Window)
 	{
-		if ( getWindow().getAdapter() != null && getWindow().getAdapter().getCount() > 0)
+		if (Window.getAdapter() != null && Window.getAdapter().getCount() > 0)
 		{
 			size pos = calc(this);
-			getWindow().setX(pos.start);
-			getWindow().setY(pos.end);
+			Window.setX(pos.start);
+			Window.setY(pos.end);
 		}
 		else{
 			//如果删除字符后没有了单词，则移走
@@ -1897,7 +1898,7 @@ ________________________________________________________________________________
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
 		
-		private Map<Integer,EditListener> mlistenerS = new HashMap<>();
+		private Map<Integer,EditListener> mlistenerS = Collection_Spiltor.EmptyMap();
 
 		public CodeEditListenerInfo()
 		{
@@ -1998,14 +1999,12 @@ ________________________________________________________________________________
 		}
 		
 		@Override
-		public boolean delListenerFrom(int fromIndex)
-		{		
+		public boolean delListenerFrom(int fromIndex){		
 		    return mlistenerS.remove(fromIndex)!=null;
 		}
 
 		@Override
-		public EditListener findAListener(int fromIndex)
-		{
+		public EditListener findAListener(int fromIndex){
 			return mlistenerS.get(fromIndex);
 		}
 
@@ -2077,25 +2076,22 @@ ________________________________________________________________________________
 		@Override
 		public void setACollectionChars(int index, Collection<Character> words)
 		{
-			Set<Character> set = EmptySet();
-			if(words!=null)
-			    set.addAll(words);
+			Set set = EmptySet();
+			Collection_Spiltor.addAll(set,words);
 			mchars.put(index,set);
 		}
 	    @Override
 		public void setACollectionWords(int index, Collection<CharSequence> words)
 		{
-			Set<CharSequence> set = EmptySet();
-			if(words!=null)
-			    set.addAll(words);
+			Set set = EmptySet();
+			Collection_Spiltor.addAll(set,words);
 			mdates.put(index,set);
 		}
 		@Override
 		public void setAMapWords(int index, Map<CharSequence, CharSequence> words)
 		{
-			Map<CharSequence,CharSequence> map = EmptyMap();
-			if(words!=null)
-			    map.putAll(words);
+			Map map = EmptyMap();
+			Collection_Spiltor.addAll(map,words);
 			mmaps.put(index,map);
 		}
 		
@@ -2115,8 +2111,7 @@ ________________________________________________________________________________
 			return mdates.size()+mmaps.size()+mchars.size();
 		}
 		@Override
-		public boolean contrans(int index)
-		{
+		public boolean contrans(int index){
 			return mchars.containsKey(index) || mdates.containsKey(index) || mmaps.containsKey(index);
 		}
 		
@@ -2210,13 +2205,13 @@ ________________________________________________________________________________
 	
 	public static interface IneedWindow{
 
-		public ListView getWindow()
+		public AdapterView getWindow()
 		
 	}
 	
 	public static interface IwantLine{
 		
-		public Edit getEditLine()
+		public EditLine getEditLine()
 		
 	}
 	

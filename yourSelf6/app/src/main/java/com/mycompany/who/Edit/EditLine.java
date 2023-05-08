@@ -15,7 +15,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.RunLi;
 
 
-public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser
+public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerInfoUser,EditMoudle.LineSpiltor
 {
 
 	//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
@@ -192,7 +192,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		return LineCount;
 	}
 	
-	protected void onLineChange(final int start,final int before,final int after)
+	public void onLineChange(final int start,final int before,final int after)
 	{
 		EditListener lis = getLineChecker();
 		if(lis==null)
@@ -330,19 +330,4 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	}
 	
-	
-	public static interface LineSpiltor{
-		
-		public void reLines(int line)
-		
-		public void addLines(int count)
-		
-		public void delLines(int count)
-	  
-		public int getLineCount()
-		
-		public void onLineChange(int start,int before,int after)
-		
-	}
-
 }
