@@ -9,7 +9,7 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
  */
 public interface EditBuilderUser extends EditListenerInfoUser,WordsUser
 {
-	public void setLuagua(String Lua)
+	public void setEditBuilder(EditBuilder builder)
 	
-	public String getLuagua()
+	public EditBuilder getEditBuilder()
 }

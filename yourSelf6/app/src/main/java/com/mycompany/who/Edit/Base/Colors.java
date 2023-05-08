@@ -22,7 +22,7 @@ import java.util.*;
 
  但单个Span可以应用到多个Span容器中，这样可以节省内存
 
- */
+*/
 public class Colors
 {
 	//所有颜色

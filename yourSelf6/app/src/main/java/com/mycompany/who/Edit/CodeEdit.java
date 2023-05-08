@@ -1977,10 +1977,21 @@ ________________________________________________________________________________
 		public boolean addListenerTo(EditListener li, int toIndex)
 		{
 			EditListener l = findAListener(toIndex);
-			if(l!=null && l instanceof EditListenerList){
-				((EditListenerList)l).add(li);
+			if(l!=null)
+			{
+				if(l instanceof EditListenerList){
+					((EditListenerList)l).add(li);
+				}
+				else if(l instanceof EditListener){
+					EditListenerList list = new myEditListenerList();
+					list.add(l);
+					list.add(li);
+					mlistenerS.remove(toIndex);
+					mlistenerS.put(toIndex,list);
+				}
 			}
 			else{
+				mlistenerS.remove(toIndex);
 			    mlistenerS.put(toIndex,li);
 			}
 			return true;
@@ -1989,8 +2000,7 @@ ________________________________________________________________________________
 		@Override
 		public boolean delListenerFrom(int fromIndex)
 		{		
-		    mlistenerS.put(fromIndex,null);
-			return true;
+		    return mlistenerS.remove(fromIndex)!=null;
 		}
 
 		@Override

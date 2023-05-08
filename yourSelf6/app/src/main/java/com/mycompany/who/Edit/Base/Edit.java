@@ -212,7 +212,6 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 			setKeyListener(listener);
 	}
 
-
 	final public static void closeInputor(Context context, View editText)
 	{
 		editText.requestFocus();//请求焦点
