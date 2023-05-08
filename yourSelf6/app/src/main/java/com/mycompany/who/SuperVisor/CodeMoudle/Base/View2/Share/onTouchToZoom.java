@@ -99,13 +99,13 @@ public abstract class onTouchToZoom implements OnTouchListener
 	}
 	
 	
-	public static interface onTouchToZoom extends OnTouchListener{
+	public static abstract interface onTouchToZoom extends OnTouchListener{
 		
-		abstract public void onNarrow(View p1, MotionEvent p2,float bili);
+		public abstract void onNarrow(View p1, MotionEvent p2,float bili);
 		
-		abstract public void onAmplification(View p1, MotionEvent p2,float bili);
+		public abstract void onAmplification(View p1, MotionEvent p2,float bili);
 		
-		abstract public boolean onMoveEnd(View p1,MotionEvent p2,float bili);
+		public abstract boolean onMoveEnd(View p1,MotionEvent p2,float bili);
 	
 	}
 	

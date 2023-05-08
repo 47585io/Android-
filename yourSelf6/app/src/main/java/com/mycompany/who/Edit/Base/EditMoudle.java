@@ -3,69 +3,69 @@ package com.mycompany.who.Edit.Base;
 import java.util.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 
-public class EditMoudle
+public abstract interface EditMoudle
 {
 
-	public static interface Creat<T>
+	public static abstract interface Creat<T>
 	{
-		public void Creat()
+		public abstract void Creat()
 
-		public T CreatOne()
+		public abstract T CreatOne()
 
-		public void CopyFrom(T target)
+		public abstract void CopyFrom(T target)
 
-		public void CopyTo(T target)
+		public abstract void CopyTo(T target)
 	}
 
 	
-	public static interface Sizer
+	public static abstract interface Sizer
 	{
-		public int maxWidth()
+		public abstract int maxWidth()
 		
-		public int maxHeight()
+		public abstract int maxHeight()
 		
-		public size WAndH()
+		public abstract size WAndH()
 	}
 
 	
-	public static interface Drawer
+	public static abstract interface Drawer
 	{	
-		public void reDraw(int start,int end)
+		public abstract void reDraw(int start,int end)
 	}
 
 
-	public static interface Formator
+	public static abstract interface Formator
 	{
-		public int Format(int start, int end)
+		public abstract int Format(int start, int end)
 
-		public int Insert(int index, int count)
+		public abstract int Insert(int index, int count)
 	}
 
 
-	public static interface Completor
+	public static abstract interface Completor
 	{
-		public void openWindow()
+		public abstract void openWindow()
 		
-		public void closeWindow()
+		public abstract void closeWindow()
 	}
 
 
-	public static interface Canvaser{}
+	public static abstract interface Canvaser{}
 	
 	
-	public static interface Runnar
+	public static abstract interface Runnar
 	{
-		public String MakeCommand(String state)
+		public abstract String MakeCommand(String state)
 		
-		public int RunCommand(String command)
+		public abstract int RunCommand(String command)
 	}
 	
 	
-	public static interface UedoWithRedo
+	public static abstract interface UedoWithRedo
 	{
-		public void Uedo()
+		public abstract void Uedo()
 
-		public void Redo()
+		public abstract void Redo()
 	}
 	
 }

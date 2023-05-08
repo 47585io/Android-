@@ -6,7 +6,7 @@ import java.util.*;
 /* 
   Words是一个单词库，用于存储和交换单词
 */
-public interface Words 
+public abstract interface Words 
 {
 	
 	public static final int maps_zhu = 0;
@@ -32,23 +32,23 @@ public interface Words
 	public static final int words_attr = 7;
 	
 	
-	public void clear()
+	public abstract void clear()
 
-	public int size()
+	public abstract int size()
 	
-	public boolean contrans(int index)
+	public abstract boolean contrans(int index)
 
-	public Collection<Character> getACollectionChars(int index)
+	public abstract Collection<Character> getACollectionChars(int index)
 	
-	public Collection<CharSequence> getACollectionWords(int index)
+	public abstract Collection<CharSequence> getACollectionWords(int index)
 	
-	public Map<CharSequence,CharSequence> getAMapWords(int index)
+	public abstract Map<CharSequence,CharSequence> getAMapWords(int index)
 	
-	public void setACollectionChars(int index,Collection<Character> words)
+	public abstract void setACollectionChars(int index,Collection<Character> words)
 	
-	public void setACollectionWords(int index,Collection<CharSequence> words)
+	public abstract void setACollectionWords(int index,Collection<CharSequence> words)
 	
-	public void setAMapWords(int index,Map<CharSequence,CharSequence> words)
+	public abstract void setAMapWords(int index,Map<CharSequence,CharSequence> words)
 	
 }
 

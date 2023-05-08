@@ -5,7 +5,7 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 /* 
   用EditListenerInfo管理一堆EditListener 
 */
-public interface EditListenerInfo
+public abstract interface EditListenerInfo
 {
 	
 	public static final int FinderIndex = 0;
@@ -25,22 +25,22 @@ public interface EditListenerInfo
 	public static final int LineCheckerIndex = 7;
 	
 	
-	public boolean addAListener(EditListener li)
+	public abstract boolean addAListener(EditListener li)
 
-	public boolean delAListener(EditListener li)
+	public abstract boolean delAListener(EditListener li)
 
-	public EditListener findAListener(String name)
+	public abstract EditListener findAListener(String name)
 
-	public boolean addListenerTo(EditListener li,int toIndex)
+	public abstract boolean addListenerTo(EditListener li,int toIndex)
 
-	public boolean delListenerFrom(int fromIndex)
+	public abstract boolean delListenerFrom(int fromIndex)
 
-	public EditListener findAListener(int fromIndex)
+	public abstract EditListener findAListener(int fromIndex)
 
-	public int size()
+	public abstract int size()
 	
-	public void clear()
+	public abstract void clear()
 	
-	public boolean contrans(EditListener li)
+	public abstract boolean contrans(EditListener li)
 	
 }

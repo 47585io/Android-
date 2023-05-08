@@ -1,9 +1,9 @@
 package com.mycompany.who.SuperVisor.CodeMoudle.Base.View3;
 import java.util.*;
 
-public interface Configer<T>
+public abstract interface Configer<T>
 {
-	public void ConfigSelf(T target)
+	public abstract void ConfigSelf(T target)
 	
 	public static class ConfigAll
 	{

@@ -6,18 +6,18 @@ import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import android.util.*;
 
-public interface CodeBlock
+public abstract interface CodeBlock
 {
 
-	public void loadSize(int width, int height ,int is)
+	public abstract void loadSize(int width, int height ,int is)
 
-	public void init()
+	public abstract void init()
 
-	public void config()
+	public abstract void config()
 
-	public void ShiftConfig(Level Configer)
+	public abstract void ShiftConfig(Level Configer)
 
-	public Config_Size getConfig()
+	public abstract Config_Size getConfig()
 
 	/* 非常好用 */
 	public static abstract class Creator<T extends ViewGroup> implements Configer<T>{
@@ -44,11 +44,11 @@ public interface CodeBlock
 		abstract public void init(T target,View root)
 
 	}
-	public static interface Level<T> extends Configer<T>{
+	public static abstract interface Level<T> extends Configer<T>{
 
-		public void config(T target)
+		public abstract void config(T target)
 
-		public void clearConfig(T target)
+		public abstract void clearConfig(T target)
 
 	}
 

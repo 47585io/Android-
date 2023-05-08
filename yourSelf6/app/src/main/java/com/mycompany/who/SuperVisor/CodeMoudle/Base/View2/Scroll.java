@@ -16,23 +16,23 @@ import android.view.*;
  (不过要注意的是，canvas的变换是影响后面draw的图(导致坐标系变换)，不影响前面画好的的图，也是是canva调用draw的时候，相当于画版就把画取走了，后面的canvas是一张白布，所有的图像在View这个画框上面叠加，画框外的图是看不到的
 
  */
-public interface Scroll{
+public abstract interface Scroll{
 
-	public void setCanScroll(boolean can)
+	public abstract void setCanScroll(boolean can)
 
-	public void setCanSave(boolean can)
+	public abstract void setCanSave(boolean can)
 
-	public void setTouchInter(boolean can)
+	public abstract void setTouchInter(boolean can)
 	
-	public void setzoomListener(onTouchToZoom zoom)
+	public abstract void setzoomListener(onTouchToZoom zoom)
 	
-	public void goback()
+	public abstract void goback()
 
-	public void gonext()
+	public abstract void gonext()
 	
-	public int size()
+	public abstract int size()
 	
-	public int isScrollToEdge()
+	public abstract int isScrollToEdge()
 	
 	public static class NoThingScroll extends OnTouchToMove
 	{

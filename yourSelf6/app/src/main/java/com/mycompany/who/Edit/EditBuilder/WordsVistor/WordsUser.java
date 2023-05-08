@@ -5,13 +5,13 @@ package com.mycompany.who.Edit.EditBuilder.WordsVistor;
 
  需要管理内部的单词，并共享它们
 */
-public interface WordsUser
+public abstract interface WordsUser
 {
-	public Words getWordLib()
+	public abstract Words getWordLib()
 	
-	public void setWordLib(Words Lib)
+	public abstract void setWordLib(Words Lib)
 	
-	public void loadWords()
+	public abstract void loadWords()
 	
-	public void clearWords()
+	public abstract void clearWords()
 }

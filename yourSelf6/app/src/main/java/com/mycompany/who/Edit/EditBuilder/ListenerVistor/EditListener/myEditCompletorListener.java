@@ -25,9 +25,9 @@ import java.util.*;
 public abstract class myEditCompletorListener extends myEditListener implements EditCompletorListener
 {
 	
-	protected abstract Collection<CharSequence> onBeforeSearchWord(Words Wordlib);
+	abstract protected Collection<CharSequence> onBeforeSearchWord(Words Wordlib);
 	//返回任意的集合，我们帮您查找
-	protected abstract void onFinishSearchWord(List<CharSequence> words,List<Icon> adapter);
+	abstract protected void onFinishSearchWord(List<CharSequence> words,List<Icon> adapter);
 	//我们把找到的单词传给您，您只要把对应的Icon添加到adapter中
 	
 

@@ -5,13 +5,13 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor;
   
   需要管理内部的EditListener，并共享EditListenerInfo 
 */
-public interface EditListenerInfoUser
+public abstract interface EditListenerInfoUser
 {
-	public EditListenerInfo getInfo()
+	public abstract EditListenerInfo getInfo()
 
-	public void setInfo(EditListenerInfo Info)
+	public abstract void setInfo(EditListenerInfo Info)
 	
-	public void trimListener()
+	public abstract void trimListener()
 	
-	public void clearListener()
+	public abstract void clearListener()
 }

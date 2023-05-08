@@ -19,32 +19,32 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
    Words包，装满了一些单词，根据需要去配置Words
    
 */
-public interface EditBuilder
+public abstract interface EditBuilder
 {
 
-	public static interface ListenerFactory
+	public static abstract interface ListenerFactory
 	{
-		abstract public void SwitchListener(EditListenerInfo Info,String Lua)
+		public abstract void SwitchListener(EditListenerInfo Info,String Lua)
 
-		abstract public EditListener ToLisrener(String Lua)
+		public abstract EditListener ToLisrener(String Lua)
 	}
 
-	public static interface WordsPacket
+	public static abstract interface WordsPacket
 	{
-		abstract public void SwitchWords(Words Lib,String Lua)
+		public abstract void SwitchWords(Words Lib,String Lua)
 
-		abstract public AWordsPacket UnPackWords(String Lua)
+		public abstract AWordsPacket UnPackWords(String Lua)
 
-		public static interface AWordsPacket
+		public static abstract interface AWordsPacket
 		{
-			abstract public void loadWords(Words Lib)
+			public abstract void loadWords(Words Lib)
 		}
 	}
 
-	abstract public void SwitchLuagua(Object O,String Lua)
+	public abstract void SwitchLuagua(Object O,String Lua)
 
-	abstract public void trimListener(EditListenerInfo Info)
+	public abstract void trimListener(EditListenerInfo Info)
 
-	abstract public void loadWords(Words Lib)
+	public abstract void loadWords(Words Lib)
 
 }

@@ -7,7 +7,7 @@ import java.util.*;
   
   内部管理一组的EditListener
 */
-public interface EditListenerList extends EditListener
+public abstract interface EditListenerList extends EditListener
 {
 	
 	public abstract int size();
@@ -20,6 +20,6 @@ public interface EditListenerList extends EditListener
 
     public abstract void clear();
 	
-	public EditListener[] toArray()
+	public abstract EditListener[] toArray()
 	
 }

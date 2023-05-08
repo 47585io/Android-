@@ -6,31 +6,31 @@ import android.widget.*;
   
   给编辑器设置EditListener，当它调用EditListener时，以改变编辑器行为
 */
-public interface EditListener
+public abstract interface EditListener
 {
 
-	public boolean Enabled()
+	public abstract boolean Enabled()
 	
-	public void setEnabled(boolean Enabled)
+	public abstract void setEnabled(boolean Enabled)
 		
-	public void setName(String name)
+	public abstract void setName(String name)
 		
-	public String getName()
+	public abstract String getName()
 	
-	public EditListener findListenerByName(String name)
+	public abstract EditListener findListenerByName(String name)
 	
-	public void setEdit(EditText t)
+	public abstract void setEdit(EditText t)
 	
-	public EditText getEdit()
+	public abstract EditText getEdit()
 	
-	public boolean dispatchCallBack(RunLi Callback)
+	public abstract boolean dispatchCallBack(RunLi Callback)
 	
 	
 	/* 使用此接口管理外部调用的情况 */
 	
-	public static interface RunLi
+	public static abstract interface RunLi
 	{
-		public boolean run(EditListener li);
+		public abstract boolean run(EditListener li);
 	}
 	
 }

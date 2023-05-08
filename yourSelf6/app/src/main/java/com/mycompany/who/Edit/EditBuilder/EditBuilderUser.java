@@ -7,9 +7,9 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 
  需要管理监听器和单词，加载它们，切换它们
  */
-public interface EditBuilderUser extends EditListenerInfoUser,WordsUser
+public abstract interface EditBuilderUser extends EditListenerInfoUser,WordsUser
 {
-	public void setEditBuilder(EditBuilder builder)
+	public abstract void setEditBuilder(EditBuilder builder)
 	
-	public EditBuilder getEditBuilder()
+	public abstract EditBuilder getEditBuilder()
 }

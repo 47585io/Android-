@@ -83,17 +83,17 @@ public abstract class OnTouchToMove implements OnTouchListener
 		return nowY-lastY;
 	}
 	
-	public static interface OnTouchToMove extends OnTouchListener{
+	public static abstract interface OnTouchToMove extends OnTouchListener{
 		
-		abstract public void onMoveToLeft(View p1,MotionEvent p2,float dx);
+		public abstract void onMoveToLeft(View p1,MotionEvent p2,float dx);
 		
-		abstract public void onMoveToRight(View p1,MotionEvent p2,float dx)
+		public abstract void onMoveToRight(View p1,MotionEvent p2,float dx)
 		
-		abstract public void onMoveToTop(View p1,MotionEvent p2,float dy);
+		public abstract void onMoveToTop(View p1,MotionEvent p2,float dy);
 		
-		abstract public void onMoveToDown(View p1,MotionEvent p2,float dy)
+		public abstract void onMoveToDown(View p1,MotionEvent p2,float dy)
 		
-		abstract public boolean onMoveEnd(View p1,MotionEvent p2)
+	    public abstract boolean onMoveEnd(View p1,MotionEvent p2)
 
 	}
 
