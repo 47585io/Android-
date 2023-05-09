@@ -63,17 +63,17 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
  
     reDraw
 	
-	Format
-	
-	Insert
+	Format & Insert
 	
 	openWindow
 	
-	Uedo
+	Canvaser
 	
-	Redo
+	Runnar
 	
-	Lines
+	Uedo & Redo
+	
+	Lines & Selection
 	
 */
 
@@ -98,8 +98,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
    isFormat                当前编辑器已在格式化，不再格式化
    isComplete              当前编辑器已在自动补全，不再自动补全
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
-   
-   
+ 
    tryCount          染色或其它工作检查的行数，次数或个数，tryCount的值越小，编辑器速度更快  
    Delayed_Millis    (为所有的post任务设置一个延迟时间，以及缓冲时间
                      您不应该在EditListener中使用Handler，因为它并不安全，所造成的后果本人概不承担
@@ -416,7 +415,7 @@ Dreawr
 	    final Editable editor = getText();
 		final List<wordIndex> nodes = new ArrayList<>();
 			
-		long last = 0,now = 0;
+		long last, now;
 		last = System.currentTimeMillis();
 		Ep.start(); //开始记录
 		
@@ -435,7 +434,7 @@ Dreawr
 		{
 			public void run()
 			{		
-				long last=0,now=0;
+				long last, now;
 				last = System.currentTimeMillis();
 				++IsModify; //为保证isxxx安全，不要在子线程中使用它们
 				isDraw = true; 	
@@ -498,8 +497,10 @@ Dreawr
 	{
 		List<wordIndex> nodes = new ArrayList<>();
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		
+		long last, now;
+		last = System.currentTimeMillis();
 		Ep.start();
+		
 		try
 		{	
 			onFindNodes(start, end, text, nodes);
@@ -509,7 +510,11 @@ Dreawr
 		catch (Exception e){
 			Log.e("prepare Error",e.toString());
 		}
+		
 		Ep.stop(); //为保证Ep能成功配对，它们必须写在try和catch外，并贴进try和catch
+		now = System.currentTimeMillis();
+		Log.w("After PrePare","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
+		
 	}
 	
 	/* 存储文本 */
@@ -587,8 +592,9 @@ _________________________________________
 		//为了安全，禁止重写
 		Editable editor = getText();
 		int before = editor.length();
-		long last = 0,now = 0;
+		long last, now;
 		last = System.currentTimeMillis();
+		
 		++IsModify;
 		isFormat = true; 	
 		
@@ -601,6 +607,7 @@ _________________________________________
 		
 		isFormat = false;
 		--IsModify;
+		
 		now = System.currentTimeMillis();
 		Log.w("After Format Replacer","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms," +"The time maybe too Loog！");
 	    return editor.length()-before;
@@ -711,7 +718,7 @@ _________________________________________
 		if(Window==null)
 			return;
 		
-		long last = 0,now = 0;
+		long last, now;
 		last = System.currentTimeMillis();
 		final WordAdpter adapter = WordAdpter.getDefultAdapter();
 		Epp.start();//开始存储
@@ -722,6 +729,7 @@ _________________________________________
 		catch(Exception e){
 			Log.e("SearchWord Error", e.toString());
 		}
+		
 		//经过一次查找，Icons里装满了单词
 		now = System.currentTimeMillis();
 		Log.w("After SearchWords","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Epp.toString());
@@ -802,12 +810,14 @@ _________________________________________
 		Editable editor = getText();
 		int before = editor.length();
 		++IsModify;
+		
 		try{
 			onInsertword(editor,word,index,id);
 		}
 		catch (Exception e){
 			Log.e("InsertWord With Complete Error ",e.toString());
 		}
+		
 		--IsModify;
 		return editor.length()-before;
 	}
@@ -1725,9 +1735,7 @@ _________________________________________
   
   getScrollCursorPos: 获取存在滚动条时的绝对光标坐标
   
-  fromy_getLineOffset: 从纵坐标获取行
-  
-  fromPos_getCharOffset: 从坐标获取光标位置
+  getOffsetForPosition: 坐标获取光标
   
   setSpans: 设置一些span
   
@@ -1790,31 +1798,6 @@ _________________________________________
 		return pos;
 	}
 
-	final public int fromy_getLineOffset(int y)
-	{
-		float xLine;
-		int nowN = 0;
-		xLine = y / getLineHeight();
-
-		while (xLine-- > 0)
-		{
-			nowN = tryLine_End(getText().toString(), nowN + 1);
-			//从起始行开始，向后试探至那行的offset
-		}
-		return nowN;
-	}
-	final public int fromPos_getCharOffset(int x, int y)
-	{
-		//从坐标获取光标位置
-		int xCount=(int)(x / getTextSize());
-		int Line=fromy_getLineOffset(y);
-		while (xCount-- != 0 && xCount < getText().toString().length() && getText().toString().charAt(Line) != '\n')
-		{
-			++Line;
-		}
-		return Line;
-	}
-	
 	public void setSpans(size[] nodes,Object[] spans,int start){
 		Colors.setSpans(nodes,spans,getText());
 	}
