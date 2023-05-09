@@ -202,7 +202,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			public boolean run(EditListener li)
 			{
 				if(li instanceof EditLineChangeListener){
-			        ((EditLineChangeListener)li).Change(start,before,after);
+			        ((EditLineChangeListener)li).LineChange(start,before,after);
 				}
 				return false;
 			}
@@ -329,5 +329,5 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		}
 	
 	}
-	
+
 }

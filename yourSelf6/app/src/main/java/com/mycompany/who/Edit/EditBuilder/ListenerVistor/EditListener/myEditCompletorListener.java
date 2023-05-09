@@ -29,8 +29,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	//返回任意的集合，我们帮您查找
 	abstract protected void onFinishSearchWord(List<CharSequence> words,List<Icon> adapter);
 	//我们把找到的单词传给您，您只要把对应的Icon添加到adapter中
-	
 
+	@Override
 	final public List<Icon> LetMeSearch(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
 	{
 		List<Icon> Adapter = null;
@@ -64,6 +64,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		return Adapter;
 	}
 	
+	@Override
 	final public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
 	{
 		int selection = index+word.length();
@@ -153,6 +154,5 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		    adapter.add(token);
 		}
 	}
-	
 	
 }

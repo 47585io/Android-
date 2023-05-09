@@ -2,5 +2,5 @@ package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditL
 
 public abstract interface EditLineChangeListener extends EditListener
 {
-	public abstract void Change(int start,int before,int after)	
+	public abstract void LineChange(int start,int before,int after)	
 }

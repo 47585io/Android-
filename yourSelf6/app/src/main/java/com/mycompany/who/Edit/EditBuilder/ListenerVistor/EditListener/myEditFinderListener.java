@@ -34,6 +34,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	
 	
 	/*  所有Listener都会将繁琐的判断放在LetMeDo中，将主要执行过程写在Do函数中，LetMeDo函数不允许重写，但Do可以重写  */
+	@Override
 	final public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
 	{
 		List<wordIndex> nodes = null;
@@ -139,10 +140,9 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	}
 	
 	/* DoAnyThing，用于找nodes */
-	public static interface DoAnyThing{
-		
+	public static interface DoAnyThing
+	{
 		public abstract int dothing(String src,StringBuffer nowWord,int nowIndex,List<wordIndex> nodes);
-		//修饰符非常重要，之前没写public，总是会函数执行异常
 	}
 	
 }

@@ -25,6 +25,7 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	abstract protected int dothing_End(Editable editor, int beforeIndex,int start,int end);
 	//收尾工作
 	
+	@Override
 	final public void LetMeFormat(int start, int end, Editable editor)
 	{
 		try{

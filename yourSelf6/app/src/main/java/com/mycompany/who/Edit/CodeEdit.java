@@ -107,7 +107,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
    
 */
 
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,EditBuilderUser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,SelectionSeer,Liner,EditBuilderUser
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	
@@ -313,6 +313,22 @@ ________________________________________________________________________________
 	{
 		return Info!=null ? Info.findAListener(RunnarIndex):null;
 	}
+	public boolean setLinerChecker(EditListener li)
+	{
+		return Info!=null ? Info.addListenerTo(li,LineCheckerIndex):false;
+	}
+	public EditListener getLinerChecker()
+	{
+		return Info!=null ? Info.findAListener(LineCheckerIndex):null;
+	}
+	public boolean setSelectionSeer(EditListener li)
+	{
+		return Info!=null ? Info.addListenerTo(li,SelectionSeer):false;
+	}
+	public EditListener getSelectionSeer()
+	{
+		return Info!=null ? Info.findAListener(SelectionSeer):null;
+	}
 	
 	
 /*
@@ -456,7 +472,7 @@ Dreawr
 		{
 			public boolean run(EditListener li)
 			{
-				if( li instanceof EditFinderListener){
+				if(li!=null && li instanceof EditFinderListener){
 				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
@@ -474,7 +490,7 @@ Dreawr
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditDrawerListener){
+				if(li!=null && li instanceof EditDrawerListener){
 				    ((EditDrawerListener)li).LetMeDraw(start, end, nodes, editor);
 				}
 				return false;
@@ -603,7 +619,7 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditFormatorListener){
+				if(li!=null && li instanceof EditFormatorListener){
 				    ((EditFormatorListener)li).LetMeFormat(start, end, editor);
 				}
 				return false;
@@ -639,7 +655,7 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditInsertorListener){
+				if(li!=null && li instanceof EditInsertorListener){
 				    int selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
 					setSelection(selection);
 				}
@@ -759,7 +775,7 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditCompletorListener){
+				if(li!=null && li instanceof EditCompletorListener){
 			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
@@ -814,7 +830,7 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditCompletorListener && li.hashCode() == id){
+				if(li!=null && li instanceof EditCompletorListener && li.hashCode() == id){
 				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
 				    setSelection(selection);
 				    return true;
@@ -875,7 +891,7 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditCanvaserListener){
+				if(li!=null && li instanceof EditCanvaserListener){
 			        ((EditCanvaserListener)li).LetMeCanvaser(CodeEdit.this, canvas, paint, pos, flag);
 				}
 				return false;
@@ -938,7 +954,9 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				if(li!=null && li instanceof EditRunnarListener){
+				    ((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				}
 				return false;
 			}
 		};
@@ -969,12 +987,39 @@ _________________________________________
 		{
 			public boolean run(EditListener li)
 			{
-				((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+				if(li!=null && li instanceof EditRunnarListener){
+				    ((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+			    }
 				return false;
 			}
 		};
 		li.dispatchCallBack(run);
 		return flag;
+	}
+	
+	
+/*
+_________________________________________
+
+ Liner和SelectionSeer
+
+ 一个用于计算行数，以便以后使用
+
+ 一个用于检查光标变化，更重要的是调用监听器
+
+_________________________________________
+
+*/
+
+	public void onLineChange(final int start,final int before,final int after)
+	{
+
+	}
+
+	@Override
+	protected void onSelectionChanged(int selStart, int selEnd)
+	{
+		super.onSelectionChanged(selStart, selEnd);
 	}
 	
 	
@@ -1114,11 +1159,13 @@ _________________________________________
 
  核心功能的调度监听器TextWatcher
  
-	 onBeforeTextChanged
+ 以下内容无需重写:
+ 
+	onBeforeTextChanged
 	 
-	 put Token
+	put Token
 	 
-	 Add or Del Lines
+	Add or Del Lines
 	 
 _________________________________________
 
@@ -1153,7 +1200,8 @@ _________________________________________
 		{
 			try{
 			    onBeforeTextChanged(str,start,count,after);
-			}catch(Exception e){
+			}
+			catch(Exception e){
 				Log.e("BeforeTextChange",e.toString());
 			}
 		}
@@ -1170,7 +1218,8 @@ _________________________________________
 		{	
 		    try{
 		        NowTextChanged(text,start,lengthBefore,lengthAfter);
-		    }catch(Exception e){
+		    }
+			catch(Exception e){
 		    	Log.e("NowTextChange",e.toString());
 		    }
 		}
@@ -1185,25 +1234,13 @@ _________________________________________
 	
 	protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 	{
-		/*
-		 if(count!=0 && !isDraw) 
-		 { 
-		     //在删除\n前，删除行 
-		     int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
-		     lines. delLines(size); 
-		 }
-		*/
+		countLineBefore(str,start,count,after);
 		saveTokenToStack(str,start,count,after);
 	}
 
-	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	protected void NowTextChanged(CharSequence str, int start, int count, int after)
 	{
-		/*
-		 if (!isDraw&&lengthAfter != 0){
-		     int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
-		     lines. addLines(size);
-		     //增加行
-		 }*/
+		countLineAfter(str,start,count,after);
 	}
 	
 	final protected void saveTokenToStack(CharSequence str, int start, int count, int after)
@@ -1243,6 +1280,29 @@ _________________________________________
 			}
 		}
 		catch (Exception e){}
+	}
+	
+	final protected void countLineBefore(CharSequence str, int start, int count, int after)
+	{
+		/*
+		 if(count!=0 && !isDraw) 
+		 { 
+		 //在删除\n前，删除行 
+		 int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
+		 lines. delLines(size); 
+		 }
+		 */
+	}
+	
+	final protected void countLineAfter(CharSequence str, int start, int count, int after)
+	{
+		/*
+		 if (!isDraw&&lengthAfter != 0){
+		 int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
+		 lines. addLines(size);
+		 //增加行
+		 }
+		 */
 	}
 	
 
@@ -1896,6 +1956,12 @@ ________________________________________________________________________________
 			}
 			else if(li instanceof EditRunnarListener){
 				return addListenerTo(li,RunnarIndex);
+			}
+			else if(li instanceof EditLineChangeListener){
+				return addListenerTo(li,LineCheckerIndex);
+			}
+			else if(li instanceof EditSelectionChangeListener){
+				return addListenerTo(li,SelectionSeer);
 			}
 			return false;
 		}

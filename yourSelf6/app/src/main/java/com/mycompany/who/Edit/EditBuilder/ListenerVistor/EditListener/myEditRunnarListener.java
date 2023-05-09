@@ -19,6 +19,7 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	abstract protected int onRunCommand(EditText self,String command)
 	//执行命令
 	
+	@Override
 	public final String LetMeMake(EditText self,String state)
 	{
 		String command = "";
@@ -32,10 +33,12 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 		return command;
 	}
 	
-	protected String Make(EditText self,String state){
+	protected String Make(EditText self,String state)
+	{
 		return onMakeCommand(self,state);
 	}
 	
+	@Override
 	public final int LetMeRun(EditText self,String command)
 	{
 		int flag = 0;

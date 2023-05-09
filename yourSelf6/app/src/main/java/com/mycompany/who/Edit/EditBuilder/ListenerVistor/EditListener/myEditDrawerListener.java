@@ -25,6 +25,7 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 	//在这里为Editable染色
 	
+	@Override
 	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
 	{
 		try{
@@ -40,10 +41,11 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		onDrawNodes(start, end, nodes, editor);
 	}
 	
-	
+	@Override
 	public String getHTML(List<wordIndex> nodes,String text){
 		return getHTML(nodes,text,null);
 	}
+	@Override
 	public String getHTML(Spanned b){
 		return getHTML(b,null);
 	}

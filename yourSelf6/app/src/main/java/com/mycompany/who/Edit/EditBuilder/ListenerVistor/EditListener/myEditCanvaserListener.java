@@ -30,6 +30,7 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	abstract protected void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
 	//在编辑器绘制后，进行绘制
 	
+	@Override
 	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
 		try{
@@ -47,5 +48,5 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 		else if(flag==AfterDraw)
 			afterDraw(self,canvas,paint,pos);
 	}
-}
 	
+}

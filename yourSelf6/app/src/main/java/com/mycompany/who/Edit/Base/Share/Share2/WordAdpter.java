@@ -37,8 +37,8 @@ public class WordAdpter extends BaseAdapter
 		rid=id;	
 		addAll(file,flag);
 	}
-	
-	public static WordAdpter getDefultAdapter(){
+	public static WordAdpter getDefultAdapter()
+	{
 		return new WordAdpter(R.layout.WordIcon);
 	}
 	
@@ -52,12 +52,14 @@ public class WordAdpter extends BaseAdapter
 	}
 
     @Override
-    public int getCount() {
+    public int getCount() 
+	{
         return mfile == null ? 0 : mfile.size();
     }
 
     @Override
-    public Icon getItem(int position) {
+    public Icon getItem(int position)
+	{
         return mfile.get(position);
     }
 

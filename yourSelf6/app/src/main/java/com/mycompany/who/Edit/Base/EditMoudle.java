@@ -27,7 +27,17 @@ public abstract interface EditMoudle
 		public abstract size WAndH()
 	}
 
-	public static abstract interface LineSpiltor{
+	
+	public static abstract interface Liner{
+
+		public abstract int getLineCount()
+
+		public abstract void onLineChange(int start,int before,int after)
+
+	}
+	
+	
+	public static abstract interface LineSpiltor extends Liner{
 
 		public abstract void reLines(int line)
 
@@ -35,11 +45,11 @@ public abstract interface EditMoudle
 
 		public abstract void delLines(int count)
 
-		public abstract int getLineCount()
-
-		public abstract void onLineChange(int start,int before,int after)
-
 	}
+	
+	
+	public static abstract interface SelectionSeer{}
+	
 	
 	public static abstract interface Drawer
 	{	

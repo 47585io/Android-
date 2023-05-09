@@ -24,6 +24,8 @@ public abstract interface EditListenerInfo
 	
 	public static final int LineCheckerIndex = 7;
 	
+	public static final int SelectionSeer = 8;
+	
 	
 	public abstract boolean addAListener(EditListener li)
 

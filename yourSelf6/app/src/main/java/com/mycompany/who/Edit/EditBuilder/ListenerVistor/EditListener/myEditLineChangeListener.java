@@ -17,7 +17,8 @@ public abstract class myEditLineChangeListener extends myEditListener implements
 	abstract protected void onLineChange(int start,int before,int after)
 	//行数变化了
 	
-	final public void Change(int start,int before,int after)
+	@Override
+	final public void LineChange(int start,int before,int after)
 	{
 		try{
 			if(Enabled())
