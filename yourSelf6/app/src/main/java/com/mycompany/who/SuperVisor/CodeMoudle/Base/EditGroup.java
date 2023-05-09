@@ -226,7 +226,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		Edit.setWindow(getWindow());
 		Edit.setPool(getPool());
-		Edit.compareChroot(root); //设置root
+		Edit.setChroot(root); //设置root
 		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
@@ -912,9 +912,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			insert(start,str);
 		}
 		
-		/*
-		  一组的Edit共享Info，对于Info的操作都是内存空间的修改
-		*/
+		/*  一组的Edit共享Info，对于Info的操作都是内存空间的修改  */
+		
 		public void setLuagua(String luagua){
 			EditList.get(0).setLuagua(luagua);
 		}
@@ -925,9 +924,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			EditList.get(0).getInfo().delAListener(li);
 		}
 		
-		/*
-		  一组的Edit的Info成员却是指针
-		*/
+		/*  一组的Edit的Info成员却是指针  */
+		
 		public void setInfo(EditListenerInfo Info){
 			EditList.get(0).setInfo(Info);
 		}
@@ -975,30 +973,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			getHscro().setScaleX(x);
 		}
 		
-		public void IsModify(boolean is){
-			root.IsModify = is;
-			compareChroot(root);
-		}
-		public void IsDraw(boolean is){
-			root.isDraw=is;
-			compareChroot(root);
-		}
-		public void IsFormat(boolean is){
-			root.isFormat = is;
-			compareChroot(root);
-		}
-		public void IsComplete(boolean is){
-			root.isComplete = is;
-			compareChroot(root);
-		}
-		public void IsUR(boolean is){
-			root.isUR = is;
-			compareChroot(root);
-		}
 		public void compareChroot(CodeEdit.EditChroot f){
-			root.compare(f);
+			root.set(f);
 			for(CodeEdit E: EditList)    
-			    E.compareChroot(f);
+			    E.setChroot(f);
 		}
 		public CodeEdit.EditChroot getRoot(){
 			return root;

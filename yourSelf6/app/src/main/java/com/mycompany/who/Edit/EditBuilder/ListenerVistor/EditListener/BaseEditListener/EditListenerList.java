@@ -20,6 +20,6 @@ public abstract interface EditListenerList extends EditListener
 
     public abstract void clear();
 	
-	public abstract EditListener[] toArray()
+	public EditListener[] toArray()
 	
 }

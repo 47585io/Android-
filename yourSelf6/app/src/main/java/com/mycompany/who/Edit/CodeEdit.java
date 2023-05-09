@@ -100,7 +100,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    
    
-   tryLines          染色或其它工作检查的行数，tryLines的值越小，编辑器速度更快  
+   tryCount          染色或其它工作检查的行数，次数或个数，tryCount的值越小，编辑器速度更快  
    Delayed_Millis    (为所有的post任务设置一个延迟时间，以及缓冲时间
                      您不应该在EditListener中使用Handler，因为它并不安全，所造成的后果本人概不承担
                      您应该使用Delayed_Millis设置一个统一的任务post延时，以由编辑器内部管理何时进行调度)
@@ -143,7 +143,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	public static boolean Enabled_Drawer=false;
 	public static boolean Enabled_Format=false;
 	public static boolean Enabled_Complete=false;
-	public static int tryLines=1;
+	public static int tryCount=1;
 	public static int Delayed_Millis = 50;
 	
 	static{
@@ -659,9 +659,9 @@ _________________________________________
  
  openWindow：打开单词窗口
  
- SearchInGroup: 为所有Listener搜索单词
+ closeWindow: 关闭窗口
  
- addSomeWord：将单词添加到窗口
+ SearchInGroup: 为所有Listener搜索单词
  
  callOnopenWindow: 将要打开窗口了
  
@@ -703,7 +703,7 @@ _________________________________________
 		
 		long last = 0,now = 0;
 		last = System.currentTimeMillis();
-		final WordAdpter adapter = new WordAdpter(R.layout.WordIcon);
+		final WordAdpter adapter = WordAdpter.getDefultAdapter();
 		Epp.start();//开始存储
 		
 		try{
@@ -769,39 +769,6 @@ _________________________________________
 	    lis.dispatchCallBack(run);
 	}
 	
-    /* 排序并添加一组相同icon的单词块到adapter，支持Span文本 */
-	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, int icon)
-	{
-		if (words == null || words.size() == 0)
-			return;
-		Array_Splitor.sort(words);
-		Array_Splitor.sort2(words);
-	
-		for (CharSequence word: words)
-		{
-			IconX token = (IconX) Epp.get();
-			token.setIcon(icon);
-			token.setName(word);
-		    adapter.add(token);
-		}
-	}
-	/* 排序并添加一组的单词块，支持Span文本 */
-	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, String path)
-	{
-		if (words == null || words.size() == 0)
-			return;
-		Array_Splitor.sort(words);
-		Array_Splitor.sort2(words);
-
-		for (CharSequence word: words)
-		{
-			IconX token = (IconX) Epp.get();
-			token.setPath(path);
-			token.setName(word);
-		    adapter.add(token);
-		}
-	}
-	
 	protected void callOnopenWindow(AdapterView Window)
 	{
 		if (Window.getAdapter() != null && Window.getAdapter().getCount() > 0)
@@ -834,11 +801,12 @@ _________________________________________
 		--IsModify;
 		return editor.length()-before;
 	}
+	
 	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
 	{
 		EditListener lis = getCompletor();
-		wordIndex tmp = tryWordSplit(editor.toString(), index);
-		wordIndex tmp2 = tryWordSplitAfter(editor.toString(), index);
+		wordIndex tmp = tryWordOnce(editor.toString(), index);
+		wordIndex tmp2 = tryWordAfterOnce(editor.toString(), index);
 		final size range = new size(tmp.start,tmp2.end);
 		
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
@@ -1024,6 +992,8 @@ Uedo和Redo
  当修改时，Uedo存储token
  
  当Uedo时，Redo存储token
+ 
+ 当Redo时，Uedo存储token
  
  不包含Uedo和Redo造成的修改，这由isUR的状态决定
 	
@@ -1222,8 +1192,22 @@ _________________________________________
 		     int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
 		     lines. delLines(size); 
 		 }
-		 */
+		*/
+		saveTokenToStack(str,start,count,after);
+	}
 
+	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	{
+		/*
+		 if (!isDraw&&lengthAfter != 0){
+		     int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
+		     lines. addLines(size);
+		     //增加行
+		 }*/
+	}
+	
+	final protected void saveTokenToStack(CharSequence str, int start, int count, int after)
+	{
 		if (isUR)
 		{
 			return;
@@ -1260,16 +1244,6 @@ _________________________________________
 		}
 		catch (Exception e){}
 	}
-
-	protected void NowTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
-	{
-		/*
-		 if (!isDraw&&lengthAfter != 0){
-		     int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
-		     lines. addLines(size);
-		     //增加行
-		 }*/
-	}
 	
 
 /*
@@ -1296,7 +1270,7 @@ _________________________________________
 			return;
 		//如果正被修改，不允许再次修改	
 		
-		if(Enabled_Complete&&!isComplete)
+		if(Enabled_Complete&&!isComplete&&lengthAfter<=tryCount&&lengthBefore<=tryCount)
 		{
 			//是否启用自动补全
 			if(getPool()!=null)
@@ -1310,27 +1284,24 @@ _________________________________________
 			//如果没有输入，则不用做什么
 		    IsModify2=true;	
 			
-			if (Enabled_Format&&!isFormat)
+			if (Enabled_Format&&!isFormat&&lengthAfter<=tryCount)
 			{		
 				//是否启用自动format
 				Insert(start,lengthAfter);
-				//Format(start,start+lengthAfter);
-				//为了安全，不调用Format
 			}
 			
 			if(Enabled_Drawer&&!isDraw)
 			{
 				//是否启用自动染色		
 				String src = text.toString();
-			    wordIndex tmp=new wordIndex();
-			    tmp.start=tryLine_Start(src,start);
-			    tmp.end=tryLine_End(src,start+lengthAfter);
-			  	
-				//试探起始行和之前之后的tryLines行，并染色
-				for(int i=1;i<tryLines;i++){
+			    size tmp=new size(start,start+lengthAfter);
+				
+				//试探起始行和之前之后的tryCount行，并染色
+				for(int i=0;i<tryCount;i++){
 				    tmp.start=tryLine_Start(src,tmp.start-1);
 				    tmp.end=tryLine_End(src,tmp.end+1);
 				}
+				
 				if(getPool()!=null)
 					getPool().execute(ReDraw(tmp.start,tmp.end));
 				else
@@ -1354,19 +1325,19 @@ _________________________________________
 	 
 	 tryWordAfter //试探后面的单词
 	 
-	 tryAfterIndex	//试探后面的下一个非分隔符
+	 tryAfterIndex	 //试探后面的下一个非分隔符
 	 
-	 tryLine_Start //试探当前下标所在行的起始
+	 tryLine_Start   //试探当前下标所在行的起始
 	 
-	 tryLine_End //试探当前下标所在行的末尾
+	 tryLine_End   //试探当前下标所在行的末尾
 	 
-	 tryWordSplit //试探纯单词
+	 tryWordOnce   //试探前面的单词(仅一次)
 	 
-	 tryWordSplitAfter //试探后面的纯单词
+	 tryWordAfterOnce //试探后面的单词(仅一次)
 	 
-	 getWord 	//获得光标前的纯单词 
+	 getWord 	//获得光标前的单词 
 	 
-	 getAfterWord	//获得光标后的纯单词
+	 getAfterWord	//获得光标后的单词
 	 
 _________________________________________
 
@@ -1442,7 +1413,7 @@ _________________________________________
 		return end;
 	}
 	
-	final public static wordIndex tryWordSplit(CharSequence src,int nowIndex)
+	final public static wordIndex tryWordOnce(CharSequence src,int nowIndex)
 	{
 		//试探纯单词
 		int index=nowIndex-1;
@@ -1460,7 +1431,7 @@ _________________________________________
 		return tmp;
 	}
 	
-	final public static wordIndex tryWordSplitAfter(CharSequence src,int index)
+	final public static wordIndex tryWordAfterOnce(CharSequence src,int index)
 	{
 		//试探纯单词
 	    wordIndex tmp = new wordIndex();
@@ -1480,7 +1451,7 @@ _________________________________________
 	final public static CharSequence getWord(CharSequence src,int offset)
 	{
 		//获得光标前的纯单词
-	    wordIndex node = tryWordSplit(src, offset);
+	    wordIndex node = tryWordOnce(src, offset);
 		if (node.end == 0)
 			node.end = offset;
 		CharSequence want= src.subSequence(node.start, node.end);
@@ -1490,7 +1461,7 @@ _________________________________________
 	final public static CharSequence getAfterWord(CharSequence src,int offset)
 	{
 		//获得光标后面的纯单词
-		wordIndex node = tryWordSplitAfter(src, offset);
+		wordIndex node = tryWordAfterOnce(src, offset);
 		if (node.end == 0)
 			node.end = src.length();
 		CharSequence want= src.subSequence(node.start, node.end);
@@ -1520,7 +1491,7 @@ ________________________________________________________________________________
 			set(m,d,f,c,u);
 		}
 		public EditChroot(EditChroot o){
-			compare(o);
+			set(o);
 		}
 		public void set(boolean m,boolean d,boolean f,boolean c,boolean u)
 		{
@@ -1530,7 +1501,7 @@ ________________________________________________________________________________
 			isComplete = c;
 			isUR = u;
 		}
-		public void compare(EditChroot f)
+		public void set(EditChroot f)
 		{
 			IsModify = f.IsModify;
 			isDraw = f.isDraw;
@@ -1550,7 +1521,7 @@ ________________________________________________________________________________
 		
 	}
 	
-	public void compareChroot(EditChroot f)
+	public void setChroot(EditChroot f)
 	{
 		IsModify2 = f.IsModify;
 		isDraw = f.isDraw;
@@ -1790,7 +1761,7 @@ _________________________________________
 		int Line=fromy_getLineOffset(y);
 		while (xCount-- != 0 && xCount < getText().toString().length() && getText().toString().charAt(Line) != '\n')
 		{
-			Line++;
+			++Line;
 		}
 		return Line;
 	}
@@ -1937,16 +1908,20 @@ ________________________________________________________________________________
 				
 			for(EditListener l:mlistenerS.values())
 			{
-				if(l!=null && l instanceof EditListenerList){
-					if(((EditListenerList)l).remove(li)){
-						return true;
+				if(l!=null)
+				{
+					if(l instanceof EditListenerList){
+						if(((EditListenerList)l).remove(li)){
+							return true;
+						}
 					}
-				}
-				else if(l!=null && l.equals(li)){
-					int key = Collection_Spiltor.vualeToKey(l,mlistenerS);
-					mlistenerS.remove(key);
-					return true;
-				}
+					else if(l.equals(li)){
+						int key = Collection_Spiltor.vualeToKey(l,mlistenerS);
+						if(mlistenerS.remove(key)!=null){
+						    return true;
+						}
+					}
+				}	
 			}
 			return false;
 		}
@@ -2148,6 +2123,8 @@ ________________________________________________________________________________
 	}
 	
 	public static interface myUedoWithRedo extends UedoWithRedo{
+		
+		public void saveTokenToStack(CharSequence str, int start, int count, int after)
 		
 		public token DoAndCastToken(token token)
 		

@@ -469,6 +469,8 @@ EditCompletorBoxes
 	-> HTMLCompletor
 	
 	  ->  keyBox
+	  
+	  ->  constBox
 	
 	  ->  DefultBox
 	
@@ -594,7 +596,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_key));
+					selfAddSomeWord(word, adpter, Share.getWordIcon(Share.icon_key));
 				}
 			};
 		}
@@ -611,7 +613,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_default));
+					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_default));
 				}
 			};
 		}
@@ -629,7 +631,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_villber));
+					selfAddSomeWord(word, adpter, Share.getWordIcon(Share.icon_villber));
 				}
 			};
 		}
@@ -648,7 +650,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit. addSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
+					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
 				}
 				
 				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
@@ -673,7 +675,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter, Share.getWordIcon(Share.icon_obj));
+					selfAddSomeWord(word, adpter, Share.getWordIcon(Share.icon_obj));
 				}
 			};
 		}
@@ -691,7 +693,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_type));
+					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_type));
 				}
 			};
 		}
@@ -709,7 +711,7 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> word, List<Icon> adpter)
 				{
-					CodeEdit.addSomeWord(word, adpter,Share.getWordIcon(Share.icon_tag));
+					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_tag));
 				}
 				
 				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
@@ -736,9 +738,26 @@ ________________________________________________________________________________
 				@Override
 				protected void onFinishSearchWord(List<CharSequence> words, List<Icon> adapter)
 				{
-					CodeEdit.addSomeWord(words, adapter,Share.getWordIcon(Share.icon_default));
+					selfAddSomeWord(words, adapter,Share.getWordIcon(Share.icon_default));
 				}
 			};
+		}
+		
+		/* 排序并添加一组相同icon的单词块到adapter，支持Span文本 */
+		final public static void selfAddSomeWord(List<CharSequence> words, List<Icon> adapter, int icon)
+		{
+			if (words == null || words.size() == 0)
+				return;
+			Array_Splitor.sort(words);
+			Array_Splitor.sort2(words);
+
+			for (CharSequence word: words)
+			{
+				IconX token = (IconX) CodeEdit.Epp.get();
+				token.setIcon(icon);
+				token.setName(word);
+				adapter.add(token);
+			}
 		}
 		
 	}

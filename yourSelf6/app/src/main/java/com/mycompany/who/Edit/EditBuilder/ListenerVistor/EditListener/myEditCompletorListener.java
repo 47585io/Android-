@@ -15,7 +15,7 @@ import java.util.*;
   
   Wordlib表示编辑器内部的单词库，在Finder查找nodes时自动存储一些了，您可以返回其中的一个库，也可以返回外部的任意的单词库
   
-  在之后，我们用SearchOnce找到当前光标位置对应的单词，然后以words发送给您，您只要把对应的Icon添加到adapter中，可以用CodeEdit.addSomeWord
+  在之后，我们用SearchOnce找到当前光标位置对应的单词，然后以words发送给您，您只要把对应的Icon添加到adapter中，可以用addSomeWord
   
   最后，我们会将单词放到ListView的adapter中，并为这组单词添加一个id(这个id就是当前listener的hashCode)，然后展示ListView
   
@@ -123,5 +123,36 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		}
 		return words;
 	}
+	
+	/* 排序并添加一组相同icon的单词块到adapter，支持Span文本 */
+	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, int icon)
+	{
+		if (words == null || words.size() == 0)
+			return;
+		Array_Splitor.sort(words);
+		Array_Splitor.sort2(words);
+
+		for (CharSequence word: words)
+		{
+			Icon3 token = new Icon3(icon,word);
+		    adapter.add(token);
+		}
+	}
+	
+	/* 排序并添加一组的单词块，支持Span文本 */
+	final public static void addSomeWord(List<CharSequence> words, List<Icon> adapter, String path)
+	{
+		if (words == null || words.size() == 0)
+			return;
+		Array_Splitor.sort(words);
+		Array_Splitor.sort2(words);
+
+		for (CharSequence word: words)
+		{
+			Icon2 token = new Icon2(path,word);
+		    adapter.add(token);
+		}
+	}
+	
 	
 }

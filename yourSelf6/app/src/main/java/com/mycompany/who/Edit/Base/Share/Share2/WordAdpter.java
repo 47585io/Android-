@@ -38,6 +38,10 @@ public class WordAdpter extends BaseAdapter
 		addAll(file,flag);
 	}
 	
+	public static WordAdpter getDefultAdapter(){
+		return new WordAdpter(R.layout.WordIcon);
+	}
+	
 	synchronized public void addAll(Collection<Icon> file,int flag)
 	{
 		if(file!=null){
