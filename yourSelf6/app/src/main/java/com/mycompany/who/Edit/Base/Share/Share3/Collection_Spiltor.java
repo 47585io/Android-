@@ -4,14 +4,35 @@ import java.util.*;
 public class Collection_Spiltor
 {
 	
-	public static void addAll(Collection t,Collection t2){
-		if(t!=null && t2!=null)
-			t.addAll(t2);
+	public static void addAll(Collection target,Collection src){
+		if(target!=null && src!=null)
+			target.addAll(src);
 	}
 	
-	public static void addAll(Map p,Map p2){
-		if(p!=null && p2!=null)
-			p.putAll(p2);
+	public static void addAll(Map target,Map src){
+		if(target!=null && src!=null)
+			target.putAll(src);
+	}
+	
+	public static List copyList(Collection src){
+		List target = EmptyList();
+		addAll(target,src);
+		return target;
+	}
+	public static Map copyMap(Map src){
+		Map target = EmptyMap();
+		addAll(target,src);
+		return target;
+	}
+	public static Set copySet(Collection src){
+		Set target = EmptySet();
+		addAll(target,src);
+		return target;
+	}
+	public static Collection copyCollection(Collection t){
+		if(t!=null)
+		    return Collections.synchronizedCollection(t);
+		return null;
 	}
 	
 	public static List EmptyList(){

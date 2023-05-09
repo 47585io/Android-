@@ -1209,10 +1209,7 @@ _________________________________________
 		 * editable 输入结束呈现在输入框中的信息
 		 */
 		@Override
-		public void afterTextChanged(Editable p1)
-		{
-			
-		}
+		public void afterTextChanged(Editable p1){}
 
 	}
 	
@@ -1221,9 +1218,9 @@ _________________________________________
 		/*
 		 if(count!=0 && !isDraw) 
 		 { 
-		 //在删除\n前，删除行 
-		 int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
-		 lines. delLines(size); 
+		     //在删除\n前，删除行 
+		     int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
+		     lines. delLines(size); 
 		 }
 		 */
 
@@ -1268,9 +1265,9 @@ _________________________________________
 	{
 		/*
 		 if (!isDraw&&lengthAfter != 0){
-		 int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
-		 lines. addLines(size);
-		 //增加行
+		     int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
+		     lines. addLines(size);
+		     //增加行
 		 }*/
 	}
 	
@@ -1378,7 +1375,7 @@ _________________________________________
 	final public static wordIndex tryWord(CharSequence src,int index)
 	{
 		//试探前面的单词
-		wordIndex tmp = Ep.get();
+		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
 				index--;
@@ -1397,7 +1394,7 @@ _________________________________________
 	final public static wordIndex tryWordAfter(CharSequence src,int index)
 	{
 		//试探后面的单词
-		wordIndex tmp = Ep.get();
+		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
 				index++;
@@ -1449,7 +1446,7 @@ _________________________________________
 	{
 		//试探纯单词
 		int index=nowIndex-1;
-	    wordIndex tmp = Ep.get();
+	    wordIndex tmp = new wordIndex();
 		try{
 			while(index>-1&&!fuhao.contains(src.charAt(index)))
 				index--;
@@ -1466,7 +1463,7 @@ _________________________________________
 	final public static wordIndex tryWordSplitAfter(CharSequence src,int index)
 	{
 		//试探纯单词
-	    wordIndex tmp = Ep.get();
+	    wordIndex tmp = new wordIndex();
 		try{
 			tmp.start=index;
 			while(index<src.length()&&!fuhao.contains(src.charAt(index)))
@@ -1814,17 +1811,9 @@ ________________________________________________________________________________
 
   为你省下更多开辟和释放空间的时间，但可能占很多内存  
 	
-    Ep应该比较安全，任意时间内，只有一个线程中的一个Edit能获取一个
+    我根本无法将Epool共享，因为无法保证安全，因此外部不可使用
 	
-	获取到的这个元素只属于这个Edit，之后获取的元素是之后的事
-
-	若池子正启用，一时半会这个元素不会重置，也不用担心了
-	
-	如果马上stop了，虽然会清除本次拿走的元素，但也只是把下标偏移，但不重置元素
-
-    如果池子正关闭，您硬要从中拿，那么池子会宽容地将下标向后移
-	
-	之后再启动，之后获取的元素是之后的事
+	但我仍将保留以供默认的监听器使用，如果您使用默认的监听器，这会提升内存利用率
 	
 __________________________________________________________________________________
 	
@@ -1869,22 +1858,6 @@ ________________________________________________________________________________
 		
 	}
 	
-	public static wordIndex getANode()
-	{
-		return Ep.get();	
-	}
-	
-	public static Icon getAIcon()
-	{
-		return Epp.get();
-	}
-	
-	public static void requestDisbledEpool(boolean is,boolean is2)
-	{
-		Ep.isDisbled(is);
-		Epp.isDisbled(is2);
-	}
-	
 
 /*  
 __________________________________________________________________________________
@@ -1914,10 +1887,11 @@ ________________________________________________________________________________
     public static class CodeEditListenerInfo implements EditListenerInfo
 	{
 		
-		private Map<Integer,EditListener> mlistenerS = Collection_Spiltor.EmptyMap();
+		private Map<Integer,EditListener> mlistenerS;
 
 		public CodeEditListenerInfo()
 		{
+			mlistenerS = Collection_Spiltor.EmptyMap();
 			//我们希望它们一开始就是EditListenerList
 			mlistenerS.put(FinderIndex,new myEditListenerList());
 			mlistenerS.put(InsertorIndex,new myEditListenerList());
@@ -2064,16 +2038,16 @@ ________________________________________________________________________________
 		public void init()
 		{
 			//即使未使用，也先装入空的集合，以使get不为null
-			mchars = EmptyMap();
-			mdates = EmptyMap();
-			mmaps = EmptyMap();
+			mchars = Collection_Spiltor.EmptyMap();
+			mdates = Collection_Spiltor.EmptyMap();
+			mmaps = Collection_Spiltor.EmptyMap();
 			
-			mchars.put(chars_fuhao,EmptySet());
-			mchars.put(chars_spilt,EmptySet());
+			mchars.put(chars_fuhao,Collection_Spiltor.EmptySet());
+			mchars.put(chars_spilt,Collection_Spiltor.EmptySet());
 			for(int i=words_key;i<=words_attr;++i){
-				mdates.put(i,EmptySet());
+				mdates.put(i,Collection_Spiltor.EmptySet());
 			}
-			mmaps.put(maps_zhu,EmptyMap());
+			mmaps.put(maps_zhu,Collection_Spiltor.EmptyMap());
 		}
 
 		@Override
@@ -2090,32 +2064,16 @@ ________________________________________________________________________________
 		}
 
 		@Override
-		public void setACollectionChars(int index, Collection<Character> words)
-		{
-			Set set = EmptySet();
-			Collection_Spiltor.addAll(set,words);
-			mchars.put(index,set);
+		public void setACollectionChars(int index, Collection<Character> words){
+			mchars.put(index,Collection_Spiltor.copySet(words));
 		}
 	    @Override
-		public void setACollectionWords(int index, Collection<CharSequence> words)
-		{
-			Set set = EmptySet();
-			Collection_Spiltor.addAll(set,words);
-			mdates.put(index,set);
+		public void setACollectionWords(int index, Collection<CharSequence> words){
+			mdates.put(index,Collection_Spiltor.copySet(words));
 		}
 		@Override
-		public void setAMapWords(int index, Map<CharSequence, CharSequence> words)
-		{
-			Map map = EmptyMap();
-			Collection_Spiltor.addAll(map,words);
-			mmaps.put(index,map);
-		}
-		
-		public Map EmptyMap(){
-			return Collections.synchronizedMap(new HashMap());
-		}
-		public Set EmptySet(){
-			return Collections.synchronizedSet(new HashSet());
+		public void setAMapWords(int index, Map<CharSequence, CharSequence> words){
+			mmaps.put(index,Collection_Spiltor.copyMap(words));
 		}
 		
 		@Override
