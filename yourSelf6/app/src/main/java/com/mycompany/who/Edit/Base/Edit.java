@@ -75,7 +75,8 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		CopyFrom(Edit);
 	}
 
-	public void config(){	
+	public void config()
+	{	
 		setTextColor(Text_Color);
 		setBackgroundColor(Background_Color);
 		setTypeface(type);

@@ -672,8 +672,6 @@ _________________________________________
 
 提示器
  
- getWindow: 获取窗口
- 
  openWindow：打开单词窗口
  
  closeWindow: 关闭窗口
@@ -1010,6 +1008,8 @@ _________________________________________
  一个用于计算行数，以便以后使用
 
  一个用于检查光标变化，更重要的是调用监听器
+ 
+ 我太累了，所以就乱写了
 
 _________________________________________
 
@@ -1017,12 +1017,37 @@ _________________________________________
 
 	public void onLineChange(final int start,final int before,final int after)
 	{
-		
+		EditListener li = getLinerChecker();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li!=null && li instanceof EditLineChangeListener){
+				    ((EditLineChangeListener)li).LineChange(start,before,after);
+			    }
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
+		li.setEdit(this);
 	}
 
 	@Override
-	protected void onSelectionChanged(int selStart, int selEnd)
+	protected void onSelectionChanged(final int selStart, final int selEnd)
 	{
+		EditListener li = getSelectionSeer();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li!=null && li instanceof EditSelectionChangeListener){
+				    ((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd);
+			    }
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
+		li.setEdit(this);
 		super.onSelectionChanged(selStart, selEnd);
 	}
 	
@@ -1263,19 +1288,19 @@ _________________________________________
 			{
 				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
 				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
-				token = new token(start,start+after,str.subSequence(start,start+count));	
+				token = new token(start, start+after, str.subSequence(start, start+count));	
 			}
 			else if (count != 0)
 			{
 				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
 				//从现在start开始，插入start～start+count之间的字符串
-				token = new token(start, start, str.subSequence(start , start + count));
+				token = new token(start, start, str.subSequence(start, start+count));
 			}
 			else if (after != 0)
 			{
 				//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
 				//删除现在start～start+after之间的字符串
-				token = new token(start, start + after, "");		
+				token = new token(start, start+after, "");		
 			}	
 			if(token!=null)
 			{

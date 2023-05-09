@@ -321,26 +321,27 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 			Log.w("onTextChanged", "My index is " + index.get());
 
-			if(EditFlag.get()==0)
-				trimToFather();    //第一个编辑器扩展大小
+			if(EditFlag.get()==0){
+				trimToFather();  //第一个编辑器扩展大小
+			}
 			/*
 			   编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-			   注意onTextChange优先于onMesure()调用，并且当前什么事也没做，此时设置最好
-			   因为本次事件流未结束，所以EditText的数据未刷新，直接getHeight()是错误的
 			   因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
 			  
 			   但是，为什么我要将trimToFather交给第一个编辑器？
 			   这是因为，在下面的代码中，会调用super.onTextChanged()
-			   在其中，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
+			   在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
 			   
 			*/
 			
 			EditFlag.add();		
-			if (lengthAfter != 0 && text.toString().indexOf('\n', start) != -1 )
-				sendOutLineToNext(text, start, lengthBefore, lengthAfter);		
-			//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
-			else
+			if (lengthAfter != 0 && text.toString().indexOf('\n', start) != -1 ){
+				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
+				sendOutLineToNext(text, start, lengthBefore, lengthAfter);	
+			}
+			else{
 				super.onTextChanged(text, start, lengthBefore, lengthAfter);
+			}
 			EditFlag.less();
 
 			if (EditFlag.get() == 0)
@@ -348,7 +349,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				int line = getEditManipulator().calaEditLines();
 				EditLines. reLines(line);	
 				//最后一个编辑器单独计算行，这个太卡了，得优化一下
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() + " 注意，Stack Size不会太大");		
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() );		
 			}
 			
 		}

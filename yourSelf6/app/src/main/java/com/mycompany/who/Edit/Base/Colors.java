@@ -5,6 +5,7 @@ import android.text.*;
 import android.text.style.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import java.util.*;
+import android.os.*;
 
 
 /*
@@ -370,5 +371,26 @@ public class Colors
 	public static Class<ForegroundColorSpan> ForeSpanType = ForegroundColorSpan.class;
 	
 	public static int SpanFlag = Spannable.SPAN_EXCLUSIVE_EXCLUSIVE;
+	
+	
+	public static class FG extends ForegroundColorSpan{
+		
+		FG(int color){
+			super(color);
+		}
+
+		@Override
+		public void updateDrawState(TextPaint ds)
+		{
+			super.updateDrawState(ds);
+		}
+
+		@Override
+		public void writeToParcel(Parcel dest, int flags)
+		{
+			super.writeToParcel(dest, flags);
+		}
+		
+	}
 	
 }

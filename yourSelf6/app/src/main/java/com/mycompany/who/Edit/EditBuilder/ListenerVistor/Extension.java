@@ -9,10 +9,10 @@ import java.util.*;
 public abstract class Extension
 {
 	
-	List<EditListener> Lis;
-	List<EditListenerInfo> Infos;
-	boolean Enabled;
-	String name;
+	private List<EditListener> Lis;
+	private List<EditListenerInfo> Infos;
+	private boolean Enabled;
+	private String name;
 	
 	public Extension(){
 		Lis=new LinkedList<>();
@@ -48,6 +48,7 @@ public abstract class Extension
 			}
 		}
 	}
+	
 	public void creatListener(EditListenerInfo self){
 		//创建一些Listener，并将它的指针添加至Lis，之后将它的指针添加至Info
 		//将Info的指针加入Infos
@@ -68,6 +69,7 @@ public abstract class Extension
 			}
 		}
 	}
+	
 	public void delListener(EditListenerInfo self){
 		//将指定的Listener的指针从Info中移除
 		for(EditListener li:Lis){
@@ -76,6 +78,7 @@ public abstract class Extension
 				    Lis.remove(li);	
 		}
 	}
+	
 	public void Delete(){
 		//踢出所有的Info，踢出前删除Listener
 		onDestory();
@@ -93,11 +96,13 @@ public abstract class Extension
 		}
 		this. Enabled = Enabled;
 	}
-	
 	public boolean getEnabled(){
 		return Enabled;
 	}
 	
+	public void setName(String name){
+		this.name=name;
+	}
 	public String getName(){
 		return name;
 	}
