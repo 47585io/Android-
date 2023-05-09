@@ -233,7 +233,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	@Override
 	public int maxHeight(){
-		return LineCount*(getLineHeight()+1);
+		return LineCount*(getLineHeight());
 	}
 	
 	@Override

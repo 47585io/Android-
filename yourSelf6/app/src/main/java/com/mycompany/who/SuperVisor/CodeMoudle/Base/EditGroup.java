@@ -641,7 +641,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 
 		public static int MaxLine = 5000;
-		private int lineCount=1;
+		private int lineCount;
 		private List<EditLine> LineList;
 
 		public LineGroup(Context cont){
@@ -653,6 +653,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			init();
 		}
 		protected void init(){
+			lineCount = 1;
 			LineList = new ArrayList<>();
 			addEditLine();
 			setOrientation(VERTICAL);
@@ -763,7 +764,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public int maxHeight()
 		{
-			int lineHeight = getLineHeight()+1;
+			int lineHeight = getLineHeight();
 			return (lineCount*lineHeight);
 		}
 
@@ -806,7 +807,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return LineList.get(0).getTextSize();
 		}
 		public int getLineHeight(){
-			return LineList.get(0).getLineHeight()+1;
+			return LineList.get(0).getLineHeight();
 		}
 		
 	}

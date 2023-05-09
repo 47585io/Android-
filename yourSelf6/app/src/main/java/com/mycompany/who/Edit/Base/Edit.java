@@ -94,20 +94,24 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		super.setTextSize(size);
 	}
 	
-	public float getTextSize(){
+	public float getTextSize()
+	{
 		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里/1.65f后就是等宽字符大小
 		return super.getTextSize()/1.65f;
 	}
 
-	public int getLineCount(){
+	public int getLineCount()
+	{
 		return getLineCount(getText().toString());
 	}
-	public static int getLineCount(String src){
+	public static int getLineCount(String src)
+	{
 		return String_Splitor.Count('\n',src)+1;
 	}
 
-	public int maxHeight(){
-		return getLineHeight()*(String_Splitor.Count('\n',getText().toString())+1);
+	public int maxHeight()
+	{
+		return getLineHeight()*getLineCount();
 	}
 	public int maxWidth()
 	{
@@ -128,6 +132,7 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		return (int)(width*getTextSize());
 		//仍应乘以getTextSize()，以适配显示器
 	}
+	
     public size WAndH()
 	{
 		size s = LAndC(getText().toString());

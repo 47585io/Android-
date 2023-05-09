@@ -130,8 +130,8 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  //IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
 	  //IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
 	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
-	
-	private LineSpiltor Line;
+
+	private int lineCount;
 	private AdapterView mWindow;
 	private StringBuffer laugua;
 	private String HTML;
@@ -172,7 +172,6 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		    this.stack = new TwoStack<>();
 		this.Info = Edit.Info;	
 		this.pool = Edit.pool;
-		this.Line = Edit.Line;
 		this.mWindow = Edit.mWindow;
 		this.laugua = Edit.laugua;
 		this.builder = Edit.builder;
@@ -189,7 +188,6 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Edit.stack = this.stack;
 		Edit.Info = this.Info;	
 		Edit.pool = this.pool;
-		Edit.Line = this.Line;
 		Edit.mWindow = this.mWindow;
 		Edit.laugua = this.laugua;
 		Edit.builder = this.builder;
@@ -223,11 +221,13 @@ ________________________________________________________________________________
 __________________________________________________________________________________
 
 */
+	@Override
 	public void trimListener()
 	{
 		if(builder!=null)
 			builder.trimListener(Info);
 	}
+	@Override
 	public void clearListener()
 	{
 		if(Info!=null)
@@ -323,11 +323,11 @@ ________________________________________________________________________________
 	}
 	public boolean setSelectionSeer(EditListener li)
 	{
-		return Info!=null ? Info.addListenerTo(li,SelectionSeer):false;
+		return Info!=null ? Info.addListenerTo(li,SelectionSeerIndex):false;
 	}
 	public EditListener getSelectionSeer()
 	{
-		return Info!=null ? Info.findAListener(SelectionSeer):null;
+		return Info!=null ? Info.findAListener(SelectionSeerIndex):null;
 	}
 	
 	
@@ -348,9 +348,6 @@ ________________________________________________________________________________
 	public void setWindow(AdapterView Window){
 		mWindow = Window;
 	}
-	public void setEditLine(LineSpiltor l){
-		Line = l;
-	}
 	public void setInfo(EditListenerInfo i){
 		Info = i;
 	}
@@ -366,9 +363,6 @@ ________________________________________________________________________________
 	}
 	public AdapterView getWindow(){
 		return mWindow;
-	}
-	public LineSpiltor getEditLine(){
-		return Line;
 	}
 	public EditListenerInfo getInfo(){
 		return Info;
@@ -1013,7 +1007,7 @@ _________________________________________
 
 	public void onLineChange(final int start,final int before,final int after)
 	{
-
+		
 	}
 
 	@Override
@@ -1175,7 +1169,7 @@ _________________________________________
 		
 		/**
 		 * 输入框改变前的内容
-		 *  charSequence 输入前字符串
+		 *  charSequence 输入前EditText的文本
 		 *  start 起始光标，在最前面的位置
 		 *  count 删除字符串的数量（这里的count是用str.length()计算的，因为删除一个emoji表情，count打印结果是 2）
 		 *  after 输入框中改变后的字符串与起始位置的偏移量（也就是输入字符串的length）
@@ -1208,7 +1202,7 @@ _________________________________________
 
 		/**
 		 * 输入框改变后的内容
-		 *  charSequence 字符串信息
+		 *  charSequence  输入后EditText的文本
 		 *  start 起始光标
 		 *  before 输入框中改变前的字符串与起始位置的偏移量（也就是删除字符串的length）
 		 *  count 输入字符串的数量（输入一个emoji表情，count打印结果是2）
@@ -1284,25 +1278,24 @@ _________________________________________
 	
 	final protected void countLineBefore(CharSequence str, int start, int count, int after)
 	{
-		/*
-		 if(count!=0 && !isDraw) 
+		 if(count!=0) 
 		 { 
-		 //在删除\n前，删除行 
-		 int size=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
-		 lines. delLines(size); 
+		     //在删除\n前，删除行 
+		     int line=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
+		     onLineChange(lineCount,line,0);
+			 lineCount-=line;
 		 }
-		 */
 	}
 	
 	final protected void countLineAfter(CharSequence str, int start, int count, int after)
 	{
-		/*
-		 if (!isDraw&&lengthAfter != 0){
-		 int size=String_Splitor.Count('\n', text.toString().substring(start, start + lengthAfter));	
-		 lines. addLines(size);
-		 //增加行
-		 }
-		 */
+		if (after != 0)
+	    {
+			//增加行
+		    int line = String_Splitor.Count('\n', str.toString().substring(start, start + after));	
+		    onLineChange(lineCount,0,line);
+			lineCount+=line; 
+	    }
 	}
 	
 
@@ -1409,10 +1402,10 @@ _________________________________________
 		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
-				index--;
+				--index;
 			tmp.end=index+1;
 			while(!fuhao.contains(src.charAt(index)))
-				index--;
+				--index;
 			tmp.start=index+1;
 		}catch(Exception e){
 			tmp.start=0;
@@ -1428,10 +1421,10 @@ _________________________________________
 		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
-				index++;
+				++index;
 			tmp.start=index;
 			while(!fuhao.contains(src.charAt(index)))
-				index++;
+				++index;
 			tmp.end=index;
 		}catch(Exception e){
 			tmp.start=0;
@@ -1448,7 +1441,7 @@ _________________________________________
 			  &&src.charAt(index)!='<'
 			  &&src.charAt(index)!='>'
 			  &&spilt.contains(src.charAt(index))){
-			index++;
+			++index;
 		}
 		return index;
 	}
@@ -1457,10 +1450,7 @@ _________________________________________
 	{
 		//试探当前下标所在行的起始
 		int start= src.lastIndexOf('\n',index-1);	
-		if(start==-1)
-			start=0;
-	    else
-			start+=1;
+		start = start==-1 ? 0:start+1;
 		return start;
 	}
 	
@@ -1468,8 +1458,7 @@ _________________________________________
 	{
 		//试探当前下标所在行的末尾
 		int end=src.indexOf('\n',index);
-		if(end==-1)
-			end=src.length();
+		end = end==-1 ? src.length():end;
 		return end;
 	}
 	
@@ -1480,7 +1469,7 @@ _________________________________________
 	    wordIndex tmp = new wordIndex();
 		try{
 			while(index>-1&&!fuhao.contains(src.charAt(index)))
-				index--;
+				--index;
 			tmp.start=index+1;
 			tmp.end=nowIndex;
 		}catch(Exception e){
@@ -1498,7 +1487,7 @@ _________________________________________
 		try{
 			tmp.start=index;
 			while(index<src.length()&&!fuhao.contains(src.charAt(index)))
-				index++;
+				++index;
 			tmp.end=index;
 		}catch(Exception e){
 			tmp.start=0;
@@ -1842,7 +1831,7 @@ ________________________________________________________________________________
 
   为你省下更多开辟和释放空间的时间，但可能占很多内存  
 	
-    我根本无法将Epool共享，因为无法保证安全，因此外部不可使用
+    我根本无法将Epool共享，因为无法保证安全，因此外部尽量不要使用
 	
 	但我仍将保留以供默认的监听器使用，如果您使用默认的监听器，这会提升内存利用率
 	
@@ -1887,6 +1876,22 @@ ________________________________________________________________________________
 		@Override
 		protected void resetE(Icon E){}
 		
+	}
+	
+	public static wordIndex getANode()
+	{
+		return Ep.get();
+	}
+	
+	public static Icon getAIcon()
+	{
+		return Epp.get();
+	}
+	
+	public static void DisbledEPool(boolean is, boolean is2)
+	{
+		Ep.isDisbled(is);
+		Epp.isDisbled(is2);
 	}
 	
 
@@ -1961,7 +1966,7 @@ ________________________________________________________________________________
 				return addListenerTo(li,LineCheckerIndex);
 			}
 			else if(li instanceof EditSelectionChangeListener){
-				return addListenerTo(li,SelectionSeer);
+				return addListenerTo(li,SelectionSeerIndex);
 			}
 			return false;
 		}
