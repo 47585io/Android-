@@ -1098,7 +1098,7 @@ _________________________________________
 */
 
     /* 应用Token到文本，并将其反向转化 */
-    final protected token DoAndCastToken(token token)
+    final protected void DoAndCastToken(token token)
 	{
 		CharSequence text;
 		Editable editor = getText();
@@ -1128,7 +1128,6 @@ _________________________________________
 			editor.replace(token.start, token.end, token.src);
 			token.set(token.start, token.start + token.src.length(), text);
 		}
-		return token;
 	}
 
 	/* 得到Token并应用到文本，并把转化的Token存入stack */
@@ -1138,7 +1137,7 @@ _________________________________________
 		int endSelection=getSelectionEnd();
 		if (token != null)
 		{
-			token = DoAndCastToken(token);
+			DoAndCastToken(token);
 			stack.Reput(token);
 			endSelection = token.end;
 		}
@@ -1892,7 +1891,7 @@ ________________________________________________________________________________
 		
 	}
 	
-	public static class EPool3 extends EPool<Icon>
+	public static class EPool3 extends EPool<IconX>
 	{
 
 		@Override
@@ -1902,13 +1901,13 @@ ________________________________________________________________________________
 		}
 		
 		@Override
-		protected Icon creat()
+		protected IconX creat()
 		{
 			return new IconX();
 		}
 		
 		@Override
-		protected void resetE(Icon E){}
+		protected void resetE(IconX E){}
 		
 	}
 	
@@ -1917,7 +1916,7 @@ ________________________________________________________________________________
 		return Ep.get();
 	}
 	
-	public static Icon getAIcon()
+	public static IconX getAIcon()
 	{
 		return Epp.get();
 	}

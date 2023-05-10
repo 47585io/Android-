@@ -754,7 +754,7 @@ ________________________________________________________________________________
 
 			for (CharSequence word: words)
 			{
-				IconX token = (IconX) CodeEdit.Epp.get();
+				IconX token = CodeEdit.Epp.get();
 				token.setIcon(icon);
 				token.setName(word);
 				adapter.add(token);
