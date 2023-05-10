@@ -347,12 +347,15 @@ ________________________________________________________________________________
 	public void setWindow(AdapterView Window){
 		mWindow = Window;
 	}
+	@Override
 	public void setInfo(EditListenerInfo i){
 		Info = i;
 	}
+	@Override
 	public void setWordLib(Words WordLib){
 		this.WordLib = WordLib;
 	}
+	@Override
 	public void setEditBuilder(EditBuilder b){
 		builder = b;
 	}
@@ -363,12 +366,15 @@ ________________________________________________________________________________
 	public AdapterView getWindow(){
 		return mWindow;
 	}
+	@Override
 	public EditListenerInfo getInfo(){
 		return Info;
 	}
+	@Override
 	public Words getWordLib(){
 		return WordLib;
 	}
+	@Override
 	public EditBuilder getEditBuilder(){
 		return builder;
 	}
@@ -410,6 +416,7 @@ Dreawr
  */
 	
 	/* 立即进行一次默认的完整的染色 */
+	@Override
 	final public void reDraw(final int start,final int end)
 	{	
 	    final Editable editor = getText();
@@ -518,7 +525,7 @@ Dreawr
 	}
 	
 	/* 存储文本 */
-	protected void onPrePare(int start, int end, String text, List<wordIndex> nodes,Spanned b)
+	public void onPrePare(int start, int end, String text, List<wordIndex> nodes,Spanned b)
 	{
 		this.spanStr = b;
 		EditDrawerListener li = (EditDrawerListener) getDrawer();
@@ -587,6 +594,7 @@ _________________________________________
 */
 
     /* 对齐范围内的文本 */
+	@Override
 	public final int Format(final int start, final int end)
 	{
 		//为了安全，禁止重写
@@ -630,6 +638,7 @@ _________________________________________
 	}
 	
     /* 在指定位置插入后续字符 */
+	@Override
 	public final int Insert(final int index,final int count)
 	{
 		Editable editor = getText();
@@ -662,7 +671,7 @@ _________________________________________
 				}
 				return false;
 			}
-		};
+		}; 
 		lis.dispatchCallBack(run);
 	}
 	
@@ -710,6 +719,7 @@ _________________________________________
  */
  
     /* 打开窗口，并排列可选单词 */
+	@Override
 	final public void openWindow()
 	{
 		final AdapterView Window = getWindow(); 
@@ -756,6 +766,7 @@ _________________________________________
 		postDelayed(run,Delayed_Millis);//将UI任务交给主线程
 	}
 	
+	@Override
 	public void closeWindow(){
 		getWindow().setX(-9999);
 	}
@@ -785,7 +796,7 @@ _________________________________________
 	    lis.dispatchCallBack(run);
 	}
 	
-	protected void callOnopenWindow(AdapterView Window)
+	public void callOnopenWindow(AdapterView Window)
 	{
 		if (Window.getAdapter() != null && Window.getAdapter().getCount() > 0)
 		{
@@ -1015,39 +1026,49 @@ _________________________________________
 
 */
 
+    @Override
 	public void onLineChange(final int start,final int before,final int after)
 	{
-		EditListener li = getLinerChecker();
-		RunLi run = new RunLi()
-		{
-			public boolean run(EditListener li)
+		try{
+			EditListener li = getLinerChecker();
+			RunLi run = new RunLi()
 			{
-				if(li!=null && li instanceof EditLineChangeListener){
-				    ((EditLineChangeListener)li).LineChange(start,before,after);
-			    }
-				return false;
-			}
-		};
-		li.dispatchCallBack(run);
-		li.setEdit(this);
+				public boolean run(EditListener li)
+				{
+					if(li!=null && li instanceof EditLineChangeListener){
+						((EditLineChangeListener)li).LineChange(start,before,after);
+					}
+					return false;
+				}
+			};
+			li.dispatchCallBack(run);
+		}
+		catch(Exception e){}
 	}
-
+	
 	@Override
 	protected void onSelectionChanged(final int selStart, final int selEnd)
 	{
-		EditListener li = getSelectionSeer();
-		RunLi run = new RunLi()
-		{
-			public boolean run(EditListener li)
+		++IsModify;
+		try{
+			EditListener li = getSelectionSeer();
+			RunLi run = new RunLi()
 			{
-				if(li!=null && li instanceof EditSelectionChangeListener){
-				    ((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd);
-			    }
-				return false;
-			}
-		};
-		li.dispatchCallBack(run);
-		li.setEdit(this);
+				public boolean run(EditListener li)
+				{
+					if(li!=null && li instanceof EditSelectionChangeListener){
+						((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd);
+					}
+					return false;
+				}
+			};
+			li.dispatchCallBack(run);
+			li.setEdit(this);
+		}
+		catch(Exception e){
+			Log.e("onSelectionChanged Error",e.toString());
+		}
+		--IsModify;
 		super.onSelectionChanged(selStart, selEnd);
 	}
 	
@@ -1137,6 +1158,7 @@ _________________________________________
 		return endSelection;
 	}
 
+	@Override
 	final public void Uedo()
 	{
 		if (stack.Usize()==0)
@@ -1156,6 +1178,7 @@ _________________________________________
 		--IsModify;
 	}
 	
+	@Override
 	final public void Redo()
 	{
 		if (stack.Rsize()==0)
@@ -1311,25 +1334,29 @@ _________________________________________
 		catch (Exception e){}
 	}
 	
-	final protected void countLineBefore(CharSequence str, int start, int count, int after)
+	protected void countLineBefore(CharSequence str, int start, int count, int after)
 	{
 		 if(count!=0) 
 		 { 
 		     //在删除\n前，删除行 
 		     int line=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
-		     onLineChange(lineCount,line,0);
-			 lineCount-=line;
+		     if(line>0){
+			     onLineChange(lineCount,line,0);
+			     lineCount-=line;
+			 }
 		 }
 	}
 	
-	final protected void countLineAfter(CharSequence str, int start, int count, int after)
+	protected void countLineAfter(CharSequence str, int start, int count, int after)
 	{
 		if (after != 0)
 	    {
 			//增加行
 		    int line = String_Splitor.Count('\n', str.toString().substring(start, start + after));	
-		    onLineChange(lineCount,0,line);
-			lineCount+=line; 
+		    if(line>0){
+			    onLineChange(lineCount,0,line);
+			    lineCount+=line; 
+			}
 	    }
 	}
 	
@@ -1354,17 +1381,21 @@ _________________________________________
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
 		
-		if(IsModify!=0||IsModify2)
+		if(IsModify!=0||IsModify2){
 			return;
-		//如果正被修改，不允许再次修改	
+			//如果正被修改，不允许再次修改	
+		}
 		
 		if(Enabled_Complete&&!isComplete&&lengthAfter<=tryCount&&lengthBefore<=tryCount)
 		{
 			//是否启用自动补全
-			if(getPool()!=null)
+			if(getPool()!=null){
+				//如果设置了pool，将提升效率
 				getPool().execute(OpenWindow());
-			else
+			}
+			else{
 			    openWindow();
+			}
 		}
 		
 		if (lengthAfter != 0)
@@ -1385,15 +1416,18 @@ _________________________________________
 			    size tmp=new size(start,start+lengthAfter);
 				
 				//试探起始行和之前之后的tryCount行，并染色
-				for(int i=0;i<tryCount;i++){
-				    tmp.start=tryLine_Start(src,tmp.start-1);
-				    tmp.end=tryLine_End(src,tmp.end+1);
+				for(int i=0;i<tryCount;++i){
+				    tmp.start=tryLine_Start(src,tmp.start);
+				    tmp.end=tryLine_End(src,tmp.end);
+					--tmp.start; ++tmp.end;
 				}
 				
-				if(getPool()!=null)
+				if(getPool()!=null){
 					getPool().execute(ReDraw(tmp.start,tmp.end));
-				else
+				}
+				else{
 			        reDraw(tmp.start,tmp.end);	
+				}
 			}
 			
 			IsModify2=false; //双重拦截

@@ -299,10 +299,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0))
+			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0)){
 				stack.put(new Stack<Int>());  
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
+			}
 			
 			super.onBeforeTextChanged(str, start, count, after);
 		}
@@ -311,18 +312,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
 			
-			if (!can)	
+			if (!can){
 				return;
 			//在构造对象前，会调用一次onTextChanged
+			}
 
-			if (IsModify())
+			if (IsModify()){
 				return ;
 			//已经被修改，不允许再修改
+			}
 
 			Log.w("onTextChanged", "My index is " + index.get());
-
+			
 			if(EditFlag.get()==0){
-				trimToFather();  //第一个编辑器扩展大小
+				trimToFather();  
+				//第一个编辑器扩展大小，无论文本怎么截取，但总量不变，所以宽高不变
 			}
 			/*
 			   编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
@@ -348,7 +352,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			{
 				int line = getEditManipulator().calaEditLines();
 				EditLines. reLines(line);	
-				//最后一个编辑器单独计算行，这个太卡了，得优化一下
+				//最后一个编辑器单独计算行
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() );		
 			}
 			
