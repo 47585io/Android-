@@ -7,7 +7,7 @@ import android.text.*;
 public abstract class myEditSelectionChangeListener extends myEditListener implements EditSelectionChangeListener
 {
 
-	abstract void onSelectionChange(int selStart, int selEnd)
+	abstract protected void onSelectionChange(int selStart, int selEnd)
 	
 	@Override
 	final public void SelectionChange(int selStart, int selEnd)

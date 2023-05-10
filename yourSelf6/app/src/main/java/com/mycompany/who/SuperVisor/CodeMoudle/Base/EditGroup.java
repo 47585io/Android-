@@ -488,7 +488,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 		/* 提升效率，不想用可以remove */
 		@Override
-		public void onDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
+		public void beforeDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
 		{	
 			/*关键代码*/
 			Rect rect =selfRect(self);

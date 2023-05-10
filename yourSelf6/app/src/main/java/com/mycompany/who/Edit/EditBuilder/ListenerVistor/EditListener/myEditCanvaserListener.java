@@ -21,11 +21,11 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public abstract class myEditCanvaserListener extends myEditListener implements EditCanvaserListener
 {
 	
-	public static final int OnDraw = 0;
+	public static final int BeforeDraw = 0;
 	public static final int AfterDraw = 1;
 	//用flag值分别表示调用哪个
 	
-	abstract protected void onDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
+	abstract protected void beforeDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
 	//在编辑器绘制前，进行绘制
 	abstract protected void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
 	//在编辑器绘制后，进行绘制
@@ -43,10 +43,12 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	
 	protected void Canvaser(EditText self, Canvas canvas, TextPaint paint,size pos,int flag)
 	{
-		if(flag == OnDraw)
-		    onDraw(self,canvas,paint,pos);
-		else if(flag==AfterDraw)
+		if(flag == BeforeDraw){
+		    beforeDraw(self,canvas,paint,pos);
+		}
+		else if(flag==AfterDraw){
 			afterDraw(self,canvas,paint,pos);
+		}
 	}
 	
 }

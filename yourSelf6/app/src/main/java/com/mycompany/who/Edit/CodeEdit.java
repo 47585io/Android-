@@ -887,7 +887,7 @@ _________________________________________
 		++IsModify;
 		try
 		{
-		    DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.OnDraw);
+		    DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.BeforeDraw);
 			super.onDraw(canvas);
 			DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.AfterDraw);	
 		}

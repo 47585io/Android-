@@ -21,6 +21,7 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditFinderListener.DoAnyThing;
 import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
 import static com.mycompany.who.Edit.EditBuilder.WordsVistor.Words.*;
+import android.text.style.*;
 
 
 /*
@@ -77,6 +78,7 @@ public class CodeEditBuilder implements EditBuilder
 			getCompletorBox().SwitchListener(Info,Lua);
 			getCanvaserFactory().SwitchListener(Info,Lua);
 			getRunnarFactory().SwitchListener(Info,Lua);
+			getSelectionSeerFactory().SwitchListener(Info,Lua);
 		}
 		if(WordLib!=null){
 			getWordsPacket().SwitchWords(WordLib,Lua);
@@ -183,7 +185,7 @@ ________________________________________________________________________________
 			protected void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
 		
 			@Override
-			protected void onDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
+			protected void beforeDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
 			{
 				//设置画笔的描边宽度值
 				paint.setStrokeWidth(0.2f);
@@ -200,6 +202,67 @@ ________________________________________________________________________________
 	}
 
 
+/*
+___________________________________________________________________________________________________________________________
+	 
+SelectionSeerFactory
+
+   ->  DefaultSelectionSeer
+   
+___________________________________________________________________________________________________________________________
+
+*/	
+	public static class SelectionSeerFactory implements ListenerFactory
+	{
+
+		@Override
+		public void SwitchListener(EditListenerInfo Info, String Lua)
+		{
+			Info.delListenerFrom(SelectionSeerIndex);
+			Info.addListenerTo(ToLisrener(Lua),SelectionSeerIndex);
+		}
+
+		@Override
+		public EditListener ToLisrener(String Lua)
+		{
+			return getDefaultSeer();
+		}
+		
+		public static EditListener getDefaultSeer()
+		{
+			return new DefaultSelectionSeer();
+		}
+		
+		public static class DefaultSelectionSeer extends myEditSelectionChangeListener
+		{
+
+			BackgroundColorSpan st,en;
+			
+			@Override
+			protected void onSelectionChange(int selStart, int selEnd)
+			{
+				EditText self = getEdit();
+				if(self!=null && selStart==selStart)
+				{
+					Spannable editor = self.getText();
+					editor.removeSpan(st);
+					editor.removeSpan(en);
+					
+					String text = editor.toString();
+					int start = text.lastIndexOf('{',selEnd);
+					int end = String_Splitor.getAfterBindow(text,selEnd,"{","}");
+					
+					st = new BackgroundColorSpan(Edit.Selected_Color);
+					en = new BackgroundColorSpan(Edit.Selected_Color);
+					editor.setSpan(st,start,start+1,Colors.SpanFlag);
+					editor.setSpan(en,end,end+1,Colors.SpanFlag);
+				}
+			}
+			
+		}
+		
+	}
+	
 /*	
 ___________________________________________________________________________________________________________________________
 
@@ -1443,7 +1506,11 @@ ________________________________________________________________________________
 	{
 		return new RunnarFactory();
 	}
-
+	public static SelectionSeerFactory getSelectionSeerFactory()
+	{
+		return new SelectionSeerFactory();
+	}
+	
 
 /*
 _________________________________________
