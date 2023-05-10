@@ -1012,20 +1012,19 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return String_Splitor.indexsOf(want,b.toString());
 		}
 		
-		public void setSpan(size[] poses,Object[] spans)
+		public void setSpans(wordIndex[] nodes)
 		{
-			for(int i=0;i<spans.length;++i){
-				size pos = poses[i];
-				final Object span = spans[i];
+			for(final wordIndex node:nodes)
+			{
 				DoForAnyOnce d= new DoForAnyOnce(){
 					
 					@Override
 					public void doOnce(int start, int end, CodeEdit Edit)
 					{
-						Edit.getText().setSpan(start,end,span,Colors.SpanFlag);
+						Edit.getText().setSpan(start,end,node.span,Colors.SpanFlag);
 					}
 				};
-				d.dofor(pos.start,pos.end);
+				d.dofor(node.start,node.end);
 			}
 		}
 		public<T> void clearSpan(int start,int end,final Class<T>type)

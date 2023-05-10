@@ -9,7 +9,6 @@ package com.mycompany.who.Edit.Base.Share.Share1;
  对象头：对象头存储的是对象在运行时状态的相关信息、指向该对象所属类的元数据的指针，如果对象是数组对象那么还会额外存储对象的数组长度
  实例数据：实例数据存储的是对象的真正有效数据，也就是各个属性字段的值，如果在拥有父类的情况下，还会包含父类的字段，字段的存储顺序会受到数据类型长度、以及虚拟机的分配策略的影响对齐
  填充字节：在java对象中，需要对齐填充字节的原因是，64位的jvm中对象的大小被要求向8字节对齐，因此当对象的长度不足8字节的整数倍时，需要在对象中进行填充操作
-
  (因此如果实例数据没有对齐，那么需要进行对齐补全空缺，补全的bit位仅起占位符作用，不具有特殊含义)
  
  内存结构从上到下分别为：
@@ -33,27 +32,26 @@ package com.mycompany.who.Edit.Base.Share.Share1;
  4字节  自己指针大小  偏移量为8 (4的倍数)
  4字节  start    偏移量为12 (4的倍数)
  4字节  end      偏移量为16 (4的倍数)
- 4字节  b        偏移量为20 (4的倍数)
+ 4字节  span指针  偏移量为20 (4的倍数)
  
  (这样所有成员的地址间没有缝隙，而且刚好占满了24字节，3*8=24，因此也不需要再将整个对象的空间填充到8的倍数了)
 */
 public class wordIndex extends size
 {
-	//单个词的范围和颜料标签
-	//对于查找词和替换，它们是要替换单个词的范围，以及要替换字符串重复的次数
+	//单个词的范围和Span
 	
-	public int b;
+	public Object span;
 	
 	public wordIndex(){}
-	public wordIndex(int start,int end,int b){
+	public wordIndex(int start,int end,Object span){
 		this.start=start;
 		this.end=end;
-		this.b=b;
+		this.span=span;
 	}
 	public wordIndex(wordIndex o){
 		start = o.start;
 		end = o.end;
-		b = o.b;
+		span = o.span;
 	}
 	
 	public boolean equals2(Object other){
@@ -62,10 +60,10 @@ public class wordIndex extends size
 		return false;
 	}
 
-	public void set(int s,int e,int b){
+	public void set(int s,int e,Object span){
 		this.start=s;
 		this.end=e;
-		this.b=b;
+		this.span=span;
 	}
 	
 }

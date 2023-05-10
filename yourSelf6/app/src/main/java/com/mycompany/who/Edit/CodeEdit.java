@@ -1848,13 +1848,13 @@ _________________________________________
 		return pos;
 	}
 
-	public void setSpans(size[] nodes,Object[] spans,int start){
-		Colors.setSpans(nodes,spans,getText());
+	public void setSpans(int start,wordIndex... spans){
+		Colors.setSpans(start,getText(),spans);
 	}
 	public<T> void clearSpan(int start,int end,Class<T> type){
 		Colors.clearSpan(start,end,getText(),type);
 	}
-	public<T> size[] subSpanPos(int start,int end,Class<T> type){
+	public<T> wordIndex[] subSpanPos(int start,int end,Class<T> type){
 		return Colors.subSpanPos(start,end,getText(),type);
 	}
 

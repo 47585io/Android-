@@ -65,22 +65,22 @@ public class Colors
 	public static String Bg_ = "#222222";
 	public static String Bg2_ = "#1e2126";
 	
-	public final static byte color_white=0;
-	public final static byte color_zhu=1;
-	public final static byte color_str=2;
-	public final static byte color_fuhao=3;
-	public final static byte color_number=4;
-	public final static byte color_key=5;
-	public final static byte color_const=6;
-	public final static byte color_villber=7;
-	public final static byte color_func=8;
-	public final static byte color_type=9;
-	public final static byte color_obj=10;
-	public final static byte color_tag=11;
-	public final static byte color_attr=12;
-	public final static byte color_cssid=13;
-	public final static byte color_csscla=14;
-	public final static byte color_cssfl=15;
+	public final static int color_white=0xffabb2bf;
+	public final static int color_zhu=0xff585f65;
+	public final static int color_str=0xff98c379;
+	public final static int color_fuhao=0xff99c8ea;
+	public final static int color_number=0xffff9090;
+	public final static int color_key=0xffcc80a9;
+	public final static int color_const=0xffcd9861;
+	public final static int color_villber=0xffff9090;
+	public final static int color_func=0xff99c8ea;
+	public final static int color_type=0xffd4b876;
+	public final static int color_obj=0xffd4b876;
+	public final static int color_tag=0xffde6868;
+	public final static int color_attr=0xffcd9861;
+	public final static int color_cssid=0xff99c8ea;
+	public final static int color_csscla=0xffd4b876;
+	public final static int color_cssfl=0xff57adbb;
 	
 	public static int fromByteToColor(int b){
 		switch(b){
@@ -126,6 +126,9 @@ public class Colors
 		return "";
 	}
 	
+	public static Object fromColorToSpan(int b){
+		return new ForegroundColorSpan(b);
+	}
 	public static int vualeOf(String color){
 		return Integer.parseInt(color,16);
 	}
@@ -209,6 +212,7 @@ public class Colors
 		}
 	}
 
+	/*
 	public static SpannableStringBuilder ForeColorText(CharSequence src,ByteToColor Colors,wordIndex... nodes){
 		SpannableStringBuilder styled = new SpannableStringBuilder(src);
         //i未起始字符索引，j 为结束字符索引
@@ -301,7 +305,7 @@ public class Colors
 		b.setSpan(new BackgroundColorSpan(color),0,text.length(),SpanFlag);
 		return b;
 	}
-	
+	*/
 	public static String textForeColor(String src,String fgcolor){
 		src=Replace(src);
 		return "<pre style='display:inline;color:"+fgcolor+";'>"+src+"</pre>";
@@ -325,42 +329,50 @@ public class Colors
 	}
 	
 	
-	public static SpannableStringBuilder setSpans(size[] nodes,Object[] spans,CharSequence src){
-		SpannableStringBuilder builder = new SpannableStringBuilder(src);
-		int i;
-		for(i=0;i<nodes.length;++i){
-			Object span = spans[i];
-			size node = nodes[i];
-			builder.setSpan(span,node.start,node.end,SpanFlag);
+	
+	public static CharSequence setSpans(CharSequence text,wordIndex... nodes)
+	{
+		SpannableStringBuilder b = new SpannableStringBuilder(text);
+		for(wordIndex node:nodes){
+			b.setSpan(node.span,node.start,node.end,SpanFlag);
 		}
-		return builder;
+		return b;
 	}
-	public static void setSpans(size[] nodes,Object[] spans,Spannable editor){
-		int i;
-		for(i=0;i<nodes.length;++i){
-			Object span = spans[i];
-			size node = nodes[i];
-			editor.setSpan(span,node.start,node.end,SpanFlag);
+	public static void setSpans(int start,Spannable editor,wordIndex... nodes)
+	{
+		for(wordIndex node:nodes){
+			editor.setSpan(node.span,node.start+start,node.end+start,SpanFlag);
+		}
+	}
+	public static void setSpans(int start,Spannable editor,Collection<wordIndex> nodes)
+	{
+		for(wordIndex node:nodes){
+			editor.setSpan(node.span,node.start+start,node.end+start,SpanFlag);
 		}
 	}
 	
-	public static<T> size[] subSpanPos(int start,int end,Spanned editor,Class<T> type){
+	public static<T> wordIndex[] subSpanPos(int start,int end,Spanned editor,Class<T> type)
+	{
 		Object[] spans = editor.getSpans(start,end,type);
-		size[] nodes = new size[spans.length];
+		wordIndex[] nodes = new wordIndex[spans.length];
 		
-		for(int i=0;i<spans.length;++i ){
-			size s = new size();
+		for(int i=0;i<spans.length;++i )
+		{
+			wordIndex node = new wordIndex();
 			Object span = spans[i];
-			s.start= editor.getSpanStart(span);
-			s.end = editor.getSpanEnd(span);
-			nodes[i] = s;
+			node.start = editor.getSpanStart(span);
+			node.end = editor.getSpanEnd(span);
+			node.span = span;
+			nodes[i] = node;
 		}
 		return nodes;
 	}
-	public static<T> void clearSpan(int start,int end,Spannable editor,Class<T> type){
+	public static<T> void clearSpan(int start,int end,Spannable editor,Class<T> type)
+	{
 		Object[] spans = editor.getSpans(start,end,type);
-		for(Object span: spans)
+		for(Object span: spans){
 		    editor.removeSpan(span);
+		}
 	}
 	
 	

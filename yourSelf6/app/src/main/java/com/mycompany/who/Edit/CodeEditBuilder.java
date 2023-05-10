@@ -21,6 +21,8 @@ import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditFinderListener.DoAnyThing;
 import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
 import static com.mycompany.who.Edit.EditBuilder.WordsVistor.Words.*;
+import static com.mycompany.who.Edit.Base.Colors.*;
+import static com.mycompany.who.Edit.CodeEdit.*;
 import android.text.style.*;
 
 
@@ -134,7 +136,9 @@ ________________________________________________________________________________
 				return BToC;
 			}
 			public void setSpan(int start,int end,Spannable b,List<wordIndex> nodes){
-				Colors.ForeColorText(b,nodes,start,getByteToColor());
+				for(wordIndex node:nodes){
+					 b.setSpan(node.span,node.start+start,node.end+start,SpanFlag);
+				}
 			}
 			public void clearSpan(int start,int end,Spannable b){
 				Colors.clearSpan(start,end,b,Colors.ForeSpanType);
@@ -1604,7 +1608,7 @@ _________________________________________
 							if (src.charAt(nowIndex + 1) == '\\')
 							{
 								wordIndex node= CodeEdit.Ep.get();
-								node.set(nowIndex, nowIndex + 4, Colors.color_str);
+								node.set(nowIndex, nowIndex + 4, fromColorToSpan(color_str));
 								nodes.add(node);
 								nowIndex += 3;	
 							}
@@ -1612,7 +1616,7 @@ _________________________________________
 							else
 							{		
 								int endIndex = src.indexOf('\'', nowIndex + 1);
-								saveChar(src, nowIndex, endIndex + 1, Colors.color_str, nodes);
+								saveChar(src, nowIndex, endIndex + 1,color_str, nodes);
 								nowIndex = endIndex;
 							}
 							nowWord.delete(0, nowWord.length());
@@ -1635,7 +1639,7 @@ _________________________________________
 							//否则如果当前的字符是一个数字，就把它加进nodes
 							//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
 							wordIndex node= CodeEdit.Ep.get();
-							node.set(nowIndex, nowIndex + 1, Colors.color_number);
+							node.set(nowIndex, nowIndex + 1, fromColorToSpan( color_number));
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -1648,7 +1652,7 @@ _________________________________________
 								//如果它不是会被html文本压缩的字符，将它自己加进nodes
 								//这是为了保留换行空格等
 								wordIndex node=CodeEdit.Ep.get();
-								node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
+								node.set(nowIndex, nowIndex + 1, fromColorToSpan( color_fuhao));
 								nodes.add(node);
 							}
 							nowWord.delete(0, nowWord.length());
@@ -1675,7 +1679,7 @@ _________________________________________
 				};
 			}
 
-			public void saveChar(CharSequence src, int nowIndex, int nextindex, byte wantColor, List<wordIndex> nodes)
+			public void saveChar(CharSequence src, int nowIndex, int nextindex, int wantColor, List<wordIndex> nodes)
 			{
 				int startindex=nowIndex;
 				for (;nowIndex < nextindex;nowIndex++)
@@ -1684,13 +1688,13 @@ _________________________________________
 					if (getSpilt().contains(src.charAt(nowIndex)))
 					{
 						wordIndex node= CodeEdit.Ep.get();
-						node.set(startindex, nowIndex, wantColor);
+						node.set(startindex, nowIndex, fromColorToSpan(wantColor));
 						nodes.add(node);
 						startindex = nowIndex + 1;
 					}
 				}
 				wordIndex node= CodeEdit.Ep.get();
-				node.set(startindex, nextindex, wantColor);
+				node.set(startindex, nextindex, fromColorToSpan(wantColor));
 				nodes.add(node);
 
 			}
@@ -1743,7 +1747,7 @@ _________________________________________
 			{
 				return WordLib.getACollectionWords(words_attr) ;
 			}
-
+					
 		}
 
 
@@ -1767,7 +1771,7 @@ _________________________________________
 						{
 							wordIndex node = CodeEdit.Ep.get();
 						    CodeEdit.tryWordAfter(src, nowIndex + 1,node);
-							node.b = Colors.color_tag;
+							node.span = fromColorToSpan(color_tag);
 							getTag().add(src.substring(node.start, node.end));
 							nodes.add(node);
 							nowIndex = node.end - 1;
@@ -1789,7 +1793,7 @@ _________________________________________
 						{
 							wordIndex node = CodeEdit.Ep.get();
 							CodeEdit.tryWord(src, nowIndex - 1,node);
-							node.b = Colors.color_attr;
+							node.span = fromColorToSpan(color_attr);
 							getAttribute().add(src.substring(node.start, node.end));
 							nodes.add(node);
 							nowIndex = node.end - 1;
@@ -1821,7 +1825,7 @@ _________________________________________
 						{
 							//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
 							wordIndex node= CodeEdit.Ep.get();
-							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_key);
+							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_key));
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -1840,7 +1844,7 @@ _________________________________________
 						{
 							//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
 							wordIndex node= CodeEdit.Ep.get();
-							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_const);
+							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_const));
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -1866,7 +1870,7 @@ _________________________________________
 							{
 								//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
 								wordIndex node= CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_func);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_func));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return afterIndex - 1;
@@ -1890,7 +1894,7 @@ _________________________________________
 							{
 								//否则如果当前累计的字符串是一个变量并且后面没有a～z和（ 这些字符，就把它加进nodes
 								wordIndex node= CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_villber);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_villber));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return afterIndex - 1;
@@ -1914,7 +1918,7 @@ _________________________________________
 							{
 								//否则如果当前累计的字符串是一个对象并且后面没有a～z和（ 这些字符，就把它加进nodes
 								wordIndex node= CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_obj);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_obj));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return afterIndex - 1;
@@ -1939,7 +1943,7 @@ _________________________________________
 							{
 								//否则如果当前累计的字符串是一个类型并且后面没有a～z和（ 这些字符，就把它加进nodes
 								wordIndex node= CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_type);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_type));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return afterIndex - 1;
@@ -2084,10 +2088,10 @@ _________________________________________
 							//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
 							wordIndex node = CodeEdit.Ep.get();
 							CodeEdit.tryWord(src, nowIndex,node);
-							node.b = Colors.color_func;
+							node.span = fromColorToSpan(color_func);
 							nodes.add(node);
 							wordIndex node2=CodeEdit.Ep.get();
-							node2.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
+							node2.set(nowIndex, nowIndex + 1, fromColorToSpan( color_fuhao));
 							nodes.add(node2);
 							getLastfunc().add(src.substring(node.start, node.end));
 							nowWord.delete(0, nowWord.length());
@@ -2109,10 +2113,10 @@ _________________________________________
 							//否则如果当前累计的字符串是一个对象并且后面是.字符，就把它加进nodes
 							wordIndex node = CodeEdit.Ep.get();
 							CodeEdit. tryWord(src, nowIndex,node);
-							node.b = Colors.color_obj;
+							node.span = fromColorToSpan(color_obj);
 							nodes.add(node);
 							wordIndex node2=CodeEdit.Ep.get();
-							node2.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
+							node2.set(nowIndex, nowIndex + 1, fromColorToSpan( color_fuhao));
 							nodes.add(node2);
 							getThoseObject().add(src.substring(node.start, node.end));
 							nowWord.delete(0, nowWord.length());
@@ -2133,10 +2137,10 @@ _________________________________________
 						if (src.charAt(nowIndex) == '#')
 						{
 							node = CodeEdit.Ep.get();
-							node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
+							node.set(nowIndex, nowIndex + 1, fromColorToSpan( color_fuhao));
 							nodes.add(node);
 							node2 = tryWordAfterCSS(src, nowIndex + 1);
-							node2.b = Colors.color_cssid;
+							node2.span = fromColorToSpan(color_cssid);
 							nodes.add(node2);
 							getHistoryVillber().add(src.substring(node2.start, node2.end));
 							return node2.end - 1;
@@ -2145,11 +2149,11 @@ _________________________________________
 						else if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex - 1)) && !String_Splitor.IsNumber(src.charAt(nowIndex + 1)))
 						{
 							node = CodeEdit.Ep.get();
-							node.set(nowIndex, nowIndex + 1, Colors.color_fuhao);
+							node.set(nowIndex, nowIndex + 1, fromColorToSpan( color_fuhao));
 							nodes.add(node);
 							node2 = tryWordAfterCSS(src, nowIndex + 1);
 							getBeforetype().add(src.substring(node2.start, node2.end));
-							node2.b = Colors.color_csscla;
+							node2.span = fromColorToSpan(color_csscla);
 							nodes.add(node2);
 							return node2.end - 1;
 						}
@@ -2170,7 +2174,7 @@ _________________________________________
 							if (getHistoryVillber().contains(nowWord.toString()))
 							{
 								wordIndex node=CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_cssid);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_cssid));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return nowIndex;
@@ -2178,7 +2182,7 @@ _________________________________________
 							else if (getBeforetype().contains(nowWord.toString()))
 							{
 								wordIndex node=CodeEdit.Ep.get();
-								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_csscla);
+								node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_csscla));
 								nodes.add(node);
 								nowWord.delete(0, nowWord.length());
 								return nowIndex;
@@ -2204,7 +2208,7 @@ _________________________________________
 						{
 							//如果当前累计的字符串是一个Tag并且后面没有a～z和这些字符，就把它加进nodes
 							wordIndex node=CodeEdit.Ep.get();
-							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_tag);
+							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_tag));
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -2226,7 +2230,7 @@ _________________________________________
 						{
 							//如果当前累计的字符串是一个属性并且后面没有a～z这些字符，就把它加进nodes
 							wordIndex node=CodeEdit.Ep.get();
-							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, Colors.color_attr);
+							node.set(nowIndex - nowWord.length() + 1, nowIndex + 1, fromColorToSpan( color_attr));
 							nodes.add(node);
 							nowWord.delete(0, nowWord.length());
 							return nowIndex;
@@ -2250,7 +2254,7 @@ _________________________________________
 							if (i < CodeEdit.tryLine_End(src, nowIndex) && i != -1)
 							{
 								node = tryWordAfterCSS(src, nowIndex + 1);
-								node.b = Colors.color_cssfl;
+								node.span = fromColorToSpan(color_cssfl);
 								getAttribute().add(src.substring(node.start, node.end));
 								nodes.add(node);
 								return node.end - 1;
@@ -2258,7 +2262,7 @@ _________________________________________
 							else
 							{
 								node = tryWordForCSS(src, nowIndex - 1);
-								node.b = Colors.color_attr;
+								node.span = fromColorToSpan(color_attr);
 								getAttribute().add(src.substring(node.start, node.end));
 								nodes.add(node);
 								return node.end - 1;

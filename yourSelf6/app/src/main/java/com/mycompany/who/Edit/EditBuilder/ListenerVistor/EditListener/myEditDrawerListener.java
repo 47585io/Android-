@@ -67,7 +67,8 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 			if(node.start>index)
 			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
 				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
-			arr.append(Colors.textForeColor(text.substring(node.start,node.end),Color.fromByteToColorS(node.b)));
+			String color = Colors.toString(((ForegroundColorSpan)node. span).getForegroundColor());
+			arr.append(Colors.textForeColor(text.substring(node.start,node.end),color));
 			index=node.end;
 		}
 		
