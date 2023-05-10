@@ -834,8 +834,9 @@ _________________________________________
 	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
 	{
 		EditListener lis = getCompletor();
-		wordIndex tmp = tryWordOnce(editor.toString(), index);
-		wordIndex tmp2 = tryWordAfterOnce(editor.toString(), index);
+		size tmp =new size(), tmp2 = new size();
+		tryWordOnce(editor.toString(), index,tmp);
+		tryWordAfterOnce(editor.toString(), index,tmp2);
 		final size range = new size(tmp.start,tmp2.end);
 		
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
@@ -1465,10 +1466,9 @@ _________________________________________
 
 */
 
-	final public static wordIndex tryWord(CharSequence src,int index)
+	final public static void tryWord(CharSequence src,int index,size tmp)
 	{
 		//试探前面的单词
-		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
 				--index;
@@ -1479,15 +1479,12 @@ _________________________________________
 		}catch(Exception e){
 			tmp.start=0;
 			tmp.end=0;
-			return tmp;
 		}
-		return tmp;
 	}
 	
-	final public static wordIndex tryWordAfter(CharSequence src,int index)
+	final public static void tryWordAfter(CharSequence src,int index,size tmp)
 	{
 		//试探后面的单词
-		wordIndex tmp = new wordIndex();
 		try{
 			while(fuhao.contains(src.charAt(index)))
 				++index;
@@ -1498,9 +1495,7 @@ _________________________________________
 		}catch(Exception e){
 			tmp.start=0;
 			tmp.end=0;
-			return tmp;
 		}
-		return tmp;
 	}
 	
 	final public static int tryAfterIndex(CharSequence src,int index)
@@ -1531,12 +1526,11 @@ _________________________________________
 		return end;
 	}
 	
-	final public static wordIndex tryWordOnce(CharSequence src,int nowIndex)
+	final public static void tryWordOnce(CharSequence src,int nowIndex,size tmp)
 	{
 		//试探纯单词
 		int index=nowIndex-1;
-	    wordIndex tmp = new wordIndex();
-		try{
+	    try{
 			while(index>-1&&!fuhao.contains(src.charAt(index)))
 				--index;
 			tmp.start=index+1;
@@ -1544,16 +1538,13 @@ _________________________________________
 		}catch(Exception e){
 			tmp.start=0;
 			tmp.end=0;
-			return tmp;
 		}
-		return tmp;
 	}
 	
-	final public static wordIndex tryWordAfterOnce(CharSequence src,int index)
+	final public static void tryWordAfterOnce(CharSequence src,int index,size tmp)
 	{
 		//试探纯单词
-	    wordIndex tmp = new wordIndex();
-		try{
+	    try{
 			tmp.start=index;
 			while(index<src.length()&&!fuhao.contains(src.charAt(index)))
 				++index;
@@ -1561,15 +1552,14 @@ _________________________________________
 		}catch(Exception e){
 			tmp.start=0;
 			tmp.end=0;
-			return tmp;
 		}
-		return tmp;
 	}
 	
 	final public static CharSequence getWord(CharSequence src,int offset)
 	{
 		//获得光标前的纯单词
-	    wordIndex node = tryWordOnce(src, offset);
+	    size node = new size();
+		tryWordOnce(src, offset,node);
 		if (node.end == 0)
 			node.end = offset;
 		CharSequence want= src.subSequence(node.start, node.end);
@@ -1579,7 +1569,8 @@ _________________________________________
 	final public static CharSequence getAfterWord(CharSequence src,int offset)
 	{
 		//获得光标后面的纯单词
-		wordIndex node = tryWordAfterOnce(src, offset);
+		size node = new size();
+		tryWordAfterOnce(src, offset,node);
 		if (node.end == 0)
 			node.end = src.length();
 		CharSequence want= src.subSequence(node.start, node.end);
@@ -1698,6 +1689,7 @@ _________________________________________
 		if(index>=0&&index<=getText().length())
 		    super.setSelection(index);
 	}
+	
 	@Override
 	public void setSelection(int start, int stop)
 	{

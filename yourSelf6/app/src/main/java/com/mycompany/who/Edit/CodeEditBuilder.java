@@ -444,7 +444,8 @@ ________________________________________________________________________________
 				if (src.charAt(nowIndex - 1) == '<' && c=='/')
 				{
 					int index= String_Splitor.getBeforeBindow(src, nowIndex - 1, "<", "</");
-					wordIndex j=CodeEdit. tryWordAfter(src, index);
+					size j = new size();
+					CodeEdit. tryWordAfter(src, index, j);
 					editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 					return j.end + 1;
 				}
@@ -1695,17 +1696,16 @@ _________________________________________
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//简单的一个xml方案
-						wordIndex node;
 						if (src.charAt(nowIndex) == '<')
 						{
-							node = CodeEdit.tryWordAfter(src, nowIndex + 1);
+							wordIndex node = CodeEdit.Ep.get();
+						    CodeEdit.tryWordAfter(src, nowIndex + 1,node);
 							node.b = Colors.color_tag;
 							getTag().add(src.substring(node.start, node.end));
 							nodes.add(node);
 							nowIndex = node.end - 1;
 							return nowIndex;
 						}
-
 						return -1;
 					}
 				};
@@ -1716,12 +1716,12 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						wordIndex node;
 						if (src.charAt(nowIndex) == '='
 							|| src.charAt(nowIndex) == ':'
 							)
 						{
-							node = CodeEdit.tryWord(src, nowIndex - 1);
+							wordIndex node = CodeEdit.Ep.get();
+							CodeEdit.tryWord(src, nowIndex - 1,node);
 							node.b = Colors.color_attr;
 							getAttribute().add(src.substring(node.start, node.end));
 							nodes.add(node);
@@ -1893,15 +1893,14 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						wordIndex node;
 						if (src.charAt(nowIndex) == '(')
 						{
 							//如果它是(字符，将之前的函数名存起来
-							node = CodeEdit.tryWord(src, nowIndex - 1);
+							wordIndex node = CodeEdit.Ep.get();
+							CodeEdit.tryWord(src, nowIndex - 1,node);
 							getLastfunc().add(src.substring(node.start, node.end));
 							return nowIndex;
 						}
-
 						return -1;	
 					}	
 				};
@@ -1918,7 +1917,8 @@ _________________________________________
 						{
 							//如果它是.或=字符，将之前的对象名或变量存起来	
 							//=前后必须是分割符或普通的英文字符，不能是任何与=结合的算术字符
-							node = CodeEdit.tryWord(src, nowIndex - 1);
+							node = CodeEdit.Ep.get();
+							CodeEdit.tryWord(src, nowIndex - 1,node);
 							if (src.charAt(nowIndex) == '=' && !getHistoryVillber().contains(src.substring(node.start, node.end))
 								&& Array_Splitor.indexOf(src.charAt(nowIndex - 1), arr) == -1
 								&& Array_Splitor.indexOf(src.charAt(nowIndex + 1), arr) == -1)
@@ -1926,12 +1926,12 @@ _________________________________________
 								//二次试探，得到类型
 								//变量必须首次出现才有类型
 								int nowN= CodeEdit.tryLine_Start(src, node.start);
-								wordIndex tmp = CodeEdit.tryWord(src, node.start - 1);
+								wordIndex tmp = CodeEdit.Ep.get();
+								CodeEdit.tryWord(src, node.start - 1,tmp);
 								if (tmp.start > nowN)
 								//类型与变量必须在同一行
 									getBeforetype().add(src.substring(tmp.start, tmp.end));
 							}
-
 							getHistoryVillber().add(src.substring(node.start, node.end));
 							return nowIndex;
 						}
@@ -1946,10 +1946,10 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						wordIndex node;
 						if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex + 2)))
 						{
-							node = CodeEdit.tryWord(src, nowIndex - 1);
+							wordIndex node = CodeEdit.Ep.get();
+							CodeEdit.tryWord(src, nowIndex - 1,node);
 							getThoseObject().add(src.substring(node.start, node.end));
 							return nowIndex;
 						}
@@ -1973,7 +1973,8 @@ _________________________________________
 								|| Word.equals("implements")
 								|| Word.equals("interface"))
 							{
-								wordIndex tmp=CodeEdit.tryWordAfter(src, nowIndex + 1);
+								wordIndex tmp=CodeEdit.Ep.get();
+								CodeEdit.tryWordAfter(src, nowIndex + 1,tmp);
 								getBeforetype().add(src.substring(tmp.start, tmp.end));
 								return tmp.end - 1;
 							}
@@ -2011,11 +2012,11 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-
 						if (src.charAt(nowIndex) == '(')
 						{
 							//否则如果当前累计的字符串是一个函数并且后面是（ 字符，就把它加进nodes
-							wordIndex node = CodeEdit.tryWord(src, nowIndex);
+							wordIndex node = CodeEdit.Ep.get();
+							CodeEdit.tryWord(src, nowIndex,node);
 							node.b = Colors.color_func;
 							nodes.add(node);
 							wordIndex node2=CodeEdit.Ep.get();
@@ -2036,11 +2037,11 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-
 						if (src.charAt(nowIndex) == '.')
 						{
 							//否则如果当前累计的字符串是一个对象并且后面是.字符，就把它加进nodes
-							wordIndex node =CodeEdit. tryWord(src, nowIndex);
+							wordIndex node = CodeEdit.Ep.get();
+							CodeEdit. tryWord(src, nowIndex,node);
 							node.b = Colors.color_obj;
 							nodes.add(node);
 							wordIndex node2=CodeEdit.Ep.get();
