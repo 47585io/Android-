@@ -82,7 +82,7 @@ public class Colors
 	public final static byte color_csscla=14;
 	public final static byte color_cssfl=15;
 	
-	public static int fromByteToColor(byte b){
+	public static int fromByteToColor(int b){
 		switch(b){
 			case 0: return Default;
 			case 1: return zhuShi;
@@ -104,7 +104,7 @@ public class Colors
 		return 0;
 	}
 
-	public static String fromByteToColorS(byte b){
+	public static String fromByteToColorS(int b){
 		switch(b){
 			case 0: return Default_;
 			case 1: return zhuShi_;
@@ -146,9 +146,9 @@ public class Colors
 	/* 自定义您的颜色  */
 	public static interface ByteToColor{
 
-		public int fromByteToColor(byte b)
+		public int fromByteToColor(int b)
 
-		public String fromByteToColorS(byte b)
+		public String fromByteToColorS(int b)
 
 	}
 	
@@ -168,13 +168,13 @@ public class Colors
 	{
 
 		@Override
-		public int fromByteToColor(byte b)
+		public int fromByteToColor(int b)
 		{
 			return Colors. fromByteToColor(b);
 		}
 
 		@Override
-		public String fromByteToColorS(byte b)
+		public String fromByteToColorS(int b)
 		{
 			return Colors. fromByteToColorS(b);
 		}

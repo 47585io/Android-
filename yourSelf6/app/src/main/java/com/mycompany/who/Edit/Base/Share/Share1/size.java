@@ -1,5 +1,6 @@
 package com.mycompany.who.Edit.Base.Share.Share1;
 
+/*  无论如何都浪费4个字节  */
 public class size
 {
 	public int start;
@@ -27,4 +28,5 @@ public class size
 		start=s;
 		end=e;
 	}
+	
 }

@@ -46,13 +46,14 @@ public class FuturePool
 	public static void FuturePop(Collection<Future> results)
 	{
 		int size = 0;
-		while (size != results.size())
+		Future[] res = new Future[results.size()];
+	    results.toArray(res);
+		while (size != res.length)
 		{
-			for (Object result:results.toArray()){
-				Future f = (Future) result;
-				if (f.isCancelled() || f.isDone()){
+			for (Future result:res)
+			{
+				if (result.isCancelled() || result.isDone()){
 					++size;
-					results.remove(f);
 				}
 			}
 			try{
