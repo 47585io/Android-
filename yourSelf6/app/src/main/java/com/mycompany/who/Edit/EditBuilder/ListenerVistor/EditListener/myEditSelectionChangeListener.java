@@ -4,6 +4,8 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 import android.util.*;
 import android.text.*;
 
+
+/* 光标位置变化了 */
 public abstract class myEditSelectionChangeListener extends myEditListener implements EditSelectionChangeListener
 {
 

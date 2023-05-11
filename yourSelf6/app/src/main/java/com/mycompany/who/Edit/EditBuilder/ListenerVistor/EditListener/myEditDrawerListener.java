@@ -101,4 +101,5 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		String text = b.toString();
 		return getHTML(Arrays.asList(nodes),text,Color);
 	}
+	
 }

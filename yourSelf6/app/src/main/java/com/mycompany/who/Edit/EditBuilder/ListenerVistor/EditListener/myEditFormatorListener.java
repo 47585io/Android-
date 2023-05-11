@@ -13,17 +13,17 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
   
   三个抽象方法顺次调用，dothing_Start和dothing_End只在起始和末尾调一次，而dothing_Run只要没到end就一直调
   
-  有一段时间，为了完成我的线程大计，居然妄想着把Formator也加入线程，即先找要修改的token，最后一并修改，但我发现其实有问题: 每replace一个token，后面的token就要偏移，太麻烦了
-  
 */
 public abstract class myEditFormatorListener extends myEditListener implements EditFormatorListener
 {
+	
 	abstract protected int dothing_Run(Editable editor, int nowIndex);
 	//开始做事
 	abstract protected int dothing_Start(Editable editor, int nowIndex,int start,int end);
 	//为了避免繁琐的判断，一开始就调用start方法，将事情初始化为你想要的样子
 	abstract protected int dothing_End(Editable editor, int beforeIndex,int start,int end);
 	//收尾工作
+	
 	
 	@Override
 	final public void LetMeFormat(int start, int end, Editable editor)

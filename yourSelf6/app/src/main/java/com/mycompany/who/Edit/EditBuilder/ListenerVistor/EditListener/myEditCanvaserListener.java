@@ -22,13 +22,14 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 {
 	
 	public static final int BeforeDraw = 0;
+	
 	public static final int AfterDraw = 1;
-	//用flag值分别表示调用哪个
 	
 	abstract protected void beforeDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
 	//在编辑器绘制前，进行绘制
 	abstract protected void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
 	//在编辑器绘制后，进行绘制
+	
 	
 	@Override
 	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
