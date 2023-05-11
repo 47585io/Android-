@@ -92,8 +92,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, CharSequence[] target, int before, int after)
 	{
 		List<CharSequence> words=null;
-		Idea ino = new Idea.INo();
-		Idea iyes = new Idea.Iyes();
+		Idea ino = Idea.ino;
+		Idea iyes = Idea.iyes;
 		if (!wantBefore.equals(""))
 		//如果前字符串不为空，则搜索
 		    words = Array_Splitor.indexsOf(wantBefore, target, before, ino);
@@ -112,8 +112,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target, int before, int after)
 	{
 		List<CharSequence> words=null;
-		Idea ino = new Idea.INo();
-		Idea iyes = new Idea.Iyes();
+		Idea ino = Idea.ino;
+		Idea iyes = Idea.iyes;
 		if (!wantBefore.equals(""))
 		    words = Collection_Spiltor.indexsOf(wantBefore, target, before, ino);
 		if (!wantAfter.equals("") && words != null)

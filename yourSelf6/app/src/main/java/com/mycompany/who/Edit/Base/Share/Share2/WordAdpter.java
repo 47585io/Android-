@@ -20,20 +20,20 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 public class WordAdpter extends BaseAdapter
 {
 
-	private Map<size,Integer> Range;
+	private List<size> indexs;
     private List<Icon> mfile;
 	private int rid;
 
 	public WordAdpter(int id) 
 	{
         mfile = new ArrayList<>();
-		Range = new HashMap<>();
+		indexs = new ArrayList<>();
 		rid=id;	
     }
 	public WordAdpter(List<Icon> file,int id,int flag)
 	{
 		mfile = new ArrayList<>();
-		Range = new HashMap<>();
+		indexs = new ArrayList<>();
 		rid=id;	
 		addAll(file,flag);
 	}
@@ -45,8 +45,8 @@ public class WordAdpter extends BaseAdapter
 	synchronized public void addAll(Collection<Icon> file,int flag)
 	{
 		if(file!=null){
-			size range = new size(mfile.size(),mfile.size()+file.size());
-		    Range.put(range,flag);
+			size index = new size(mfile.size(),flag);
+			indexs.add(index);
 		    mfile.addAll(file);
 		}
 	}
@@ -66,9 +66,11 @@ public class WordAdpter extends BaseAdapter
     @Override
     public long getItemId(int position) 
 	{
-        for(size pos:Range.keySet()){
-			if(pos.start<=position && pos.end>position)
-				return Range.get(pos);
+        for(int i=indexs.size()-1;i>=0;--i){
+			size index = indexs.get(i);
+			if(index.start<=position){
+				return index.end;
+			}
 		}
 		return 0;
     }
@@ -110,5 +112,6 @@ public class WordAdpter extends BaseAdapter
             tvIcon = (ImageView) rootView.findViewById(R.id.Fileicon);
         }
     }
+	
 }
 

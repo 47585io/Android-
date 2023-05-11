@@ -221,6 +221,7 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 				List<Icon> list = new LinkedList<>();
 				toList(list);
 				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
+			
 			}
 
 			@Override

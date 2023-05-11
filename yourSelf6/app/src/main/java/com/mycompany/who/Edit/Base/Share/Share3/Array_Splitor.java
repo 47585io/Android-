@@ -4,6 +4,11 @@ import java.util.*;
 
 public class Array_Splitor
 {
+	
+	public static final Comparator<CharSequence> sortStrForChar = new sortStrForChar();
+	
+	public static final Comparator<CharSequence> sortStrForLen = new sortStrForLen();
+	
 
 	public static<T> void toArray(Collection<T> coll, T[] arr)
 	{
@@ -103,12 +108,12 @@ public class Array_Splitor
 
 	public static void sortStrForChar(List<CharSequence> words)
 	{
-		quickSort(words,new sortStrForChar());
+		quickSort(words,sortStrForChar);
 	}
 
 	public static void sortStrForLen(List<CharSequence> words)
 	{
-		quickSort(words,new sortStrForLen());
+		quickSort(words,sortStrForLen);
 	}
 
 

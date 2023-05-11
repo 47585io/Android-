@@ -2,7 +2,14 @@ package com.mycompany.who.Edit.Base.Share.Share3;
 
 abstract public interface Idea
 {
+	
 	public abstract boolean can(CharSequence s,CharSequence want,int start);
+	
+	
+	public static final Idea ino = new INo();
+	
+	public static final Idea iyes = new Iyes();
+	
 	
 	public static class INo implements Idea{
 		@Override
@@ -26,5 +33,6 @@ abstract public interface Idea
 			return false;
 		}
 	}
+	
 }
 	
