@@ -133,21 +133,6 @@ public class String_Splitor
 		return arr.toString();
 	}
 	
-	public static boolean isnullStr(CharSequence str){
-		//字符串是否为null，是否为""，是否为全空格
-		if(str==null)
-			return true;
-		if(str.length()==0)
-			return true;
-		int i;
-		for(i=0;i<str.length();i++){
-		    if(str.charAt(i)!=' ')
-				return false;
-		}
-		return true;
-	}
-	
-	
 	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException 
 	{
 	    String zhPattern = "[\u4e00-\u9fa5]+";//正则表达式，用于匹配url里面的中文

@@ -126,8 +126,11 @@ public class Colors
 		return "";
 	}
 	
-	public static Object fromColorToSpan(int b){
+	public static Object ForeColorSpan(int b){
 		return new ForegroundColorSpan(b);
+	}
+	public static Object BackColorSpan(int b){
+		return new BackgroundColorSpan(b);
 	}
 	public static int vualeOf(String color){
 		return Integer.parseInt(color,16);

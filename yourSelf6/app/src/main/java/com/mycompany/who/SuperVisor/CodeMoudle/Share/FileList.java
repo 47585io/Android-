@@ -88,7 +88,7 @@ public class FileList
 	public List<File> sortFile(List<File> list)
 	{
 		FileSort sorter = new FileSort();
-		Array_Splitor.quick(list,sorter);
+		Array_Splitor.quickSort(list,sorter);
 		//按首字母排列
 		
 		List<File> tmp = new ArrayList<>();

@@ -42,7 +42,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		}
 		return Adapter;
 	}
-	
+
 	/*
 	  text表示编辑器文本，index表示光标位置，wantBefore和wantAfter分别表示光标前后的字符串，before和after表示搜索前单词和后单词的起始下标，Wordlib为单词库
 	  
@@ -92,14 +92,14 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, CharSequence[] target, int before, int after)
 	{
 		List<CharSequence> words=null;
-		Array_Splitor. Idea ino = Array_Splitor.getNo();
-		Array_Splitor. Idea iyes = Array_Splitor.getyes();
+		Idea ino = new Idea.INo();
+		Idea iyes = new Idea.Iyes();
 		if (!wantBefore.equals(""))
 		//如果前字符串不为空，则搜索
 		    words = Array_Splitor.indexsOf(wantBefore, target, before, ino);
 		if (!wantAfter.equals("") && words != null)
 		//如果前字符串搜索结果不为空并且后字符串不为空，就从之前的搜索结果中再次搜索
-		    words = Array_Splitor.indexsOf(wantAfter, words, after, iyes);
+		    words = Collection_Spiltor.indexsOf(wantAfter, words, after, iyes);
 		else if (!wantAfter.equals("") && wantBefore.equals(""))
 		{
 			//如果前字符串为空，但后字符串不为空，则只从后字符串开始搜索
@@ -112,15 +112,15 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target, int before, int after)
 	{
 		List<CharSequence> words=null;
-		Array_Splitor. Idea ino = Array_Splitor.getNo();
-		Array_Splitor. Idea iyes = Array_Splitor.getyes();
+		Idea ino = new Idea.INo();
+		Idea iyes = new Idea.Iyes();
 		if (!wantBefore.equals(""))
-		    words = Array_Splitor.indexsOf(wantBefore, target, before, ino);
+		    words = Collection_Spiltor.indexsOf(wantBefore, target, before, ino);
 		if (!wantAfter.equals("") && words != null)
-		    words = Array_Splitor.indexsOf(wantAfter, words, after, iyes);
+		    words = Collection_Spiltor.indexsOf(wantAfter, words, after, iyes);
 		else if (!wantAfter.equals("") && wantBefore.equals(""))
 		{
-			words = Array_Splitor.indexsOf(wantAfter, target, after, iyes);
+			words = Collection_Spiltor.indexsOf(wantAfter, target, after, iyes);
 		}
 		return words;
 	}
@@ -130,8 +130,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	{
 		if (words == null || words.size() == 0)
 			return;
-		Array_Splitor.sort(words);
-		Array_Splitor.sort2(words);
+		Array_Splitor.sortStrForChar(words);
+		Array_Splitor.sortStrForLen(words);
 
 		for (CharSequence word: words)
 		{
@@ -145,8 +145,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	{
 		if (words == null || words.size() == 0)
 			return;
-		Array_Splitor.sort(words);
-		Array_Splitor.sort2(words);
+		Array_Splitor.sortStrForChar(words);
+		Array_Splitor.sortStrForLen(words);
 
 		for (CharSequence word: words)
 		{
