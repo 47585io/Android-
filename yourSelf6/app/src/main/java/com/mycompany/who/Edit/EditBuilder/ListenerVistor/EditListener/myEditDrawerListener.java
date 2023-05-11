@@ -41,11 +41,12 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		onDrawNodes(start, end, nodes, editor);
 	}
 	
+	
+	/* 必须使用List存储nodes，否则无法制作HTML文本 */
 	@Override
 	public String getHTML(List<wordIndex> nodes,String text){
 		return getHTML(nodes,text,null);
 	}
-	@Override
 	public String getHTML(Spanned b){
 		return getHTML(b,null);
 	}
@@ -64,9 +65,10 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		
 		//遍历node，将范围内的文本混合颜色制作成小段HTML文本，追加在大段文本之后
 		for(wordIndex node:nodes){
-			if(node.start>index)
-			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
+			if(node.start>index){
+			    //如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
 				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
+			}
 			String color = Colors.toString(((ForegroundColorSpan)node. span).getForegroundColor());
 			arr.append(Colors.textForeColor(text.substring(node.start,node.end),color));
 			index=node.end;
@@ -94,28 +96,9 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	*/
 	final public static String getHTML(Spanned b,Colors.ByteToColor2 Color)
 	{
-		if(Color==null)
-			Color = new Colors.myColor2();
-		
 		//用Spanned容器中的Span，获取范围和颜色，然后制作成HTML文本
-		size[] nodes = Colors. subSpanPos(0,b.length(),b,Colors.ForeSpanType);
-		Object[] spans = b.getSpans(0,b.length(),Colors.SpanType);
-		int index = 0;
+		wordIndex[] nodes = Colors. subSpans(0,b.length(),b,Colors.ForeSpanType);
 		String text = b.toString();
-		StringBuilder arr = new StringBuilder();
-		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Color.getDefultS()+";background-color: "+Color.getDefultBgS()+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
-
-		for(int i=0;i<spans.length;++i){
-			size node = nodes[i];
-			ForegroundColorSpan span = (ForegroundColorSpan) spans[i];
-			//如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
-			if(node.start>index)
-				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
-			arr.append(Colors.textForeColor(text.substring(node.start,node.end),Colors.toString(span.getForegroundColor())));
-			index=node.end;
-		}
-		arr.append("<br><br><br><hr><br><br></body></html>");
-		return arr.toString();
+		return getHTML(Arrays.asList(nodes),text,Color);
 	}
-	
 }

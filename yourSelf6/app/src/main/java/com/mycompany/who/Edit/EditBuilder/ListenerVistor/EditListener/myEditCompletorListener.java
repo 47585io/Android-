@@ -30,6 +30,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	abstract protected void onFinishSearchWord(List<CharSequence> words,List<Icon> adapter);
 	//我们把找到的单词传给您，您只要把对应的Icon添加到adapter中
 
+	
+	/* 必须用List存储Icon，以保持顺序 */
 	@Override
 	final public List<Icon> LetMeSearch(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
 	{

@@ -220,6 +220,7 @@ ________________________________________________________________________________
 __________________________________________________________________________________
 
 */
+
 	@Override
 	public void trimListener()
 	{
@@ -530,9 +531,9 @@ Dreawr
 		this.spanStr = b;
 		EditDrawerListener li = (EditDrawerListener) getDrawer();
 		if(li != null)
-		    this.HTML = li.getHTML(b);	
+		    this.HTML = li.getHTML(nodes,text);	
 		else
-			this.HTML = myEditDrawerListener.getHTML(b,null);
+			this.HTML = myEditDrawerListener.getHTML(nodes,text,null);
 	}
 	
 	/* 获取准备好了的文本 */
@@ -1044,7 +1045,9 @@ _________________________________________
 			};
 			li.dispatchCallBack(run);
 		}
-		catch(Exception e){}
+		catch(Exception e){
+			Log.e("LineChanged Error",e.toString());
+		}
 	}
 	
 	@Override
@@ -1785,13 +1788,13 @@ _________________________________________
   
   getScrollCursorPos: 获取存在滚动条时的绝对光标坐标
   
-  getOffsetForPosition: 坐标获取光标
+  getOffsetForPosition: 从坐标获取光标位置
   
   setSpans: 设置一些span
   
   clearSpan: 清除范围内的span
   
-  subSpanPos: 获取span的范围
+  subSpans: 获取span的范围和span
   
 _________________________________________
 
@@ -1854,8 +1857,8 @@ _________________________________________
 	public<T> void clearSpan(int start,int end,Class<T> type){
 		Colors.clearSpan(start,end,getText(),type);
 	}
-	public<T> wordIndex[] subSpanPos(int start,int end,Class<T> type){
-		return Colors.subSpanPos(start,end,getText(),type);
+	public<T> wordIndex[] subSpans(int start,int end,Class<T> type){
+		return Colors.subSpans(start,end,getText(),type);
 	}
 
 	

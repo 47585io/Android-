@@ -332,7 +332,6 @@ public class Colors
 	}
 	
 	
-	
 	public static CharSequence setSpans(CharSequence text,wordIndex... nodes)
 	{
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
@@ -354,7 +353,7 @@ public class Colors
 		}
 	}
 	
-	public static<T> wordIndex[] subSpanPos(int start,int end,Spanned editor,Class<T> type)
+	public static<T> wordIndex[] subSpans(int start,int end,Spanned editor,Class<T> type)
 	{
 		Object[] spans = editor.getSpans(start,end,type);
 		wordIndex[] nodes = new wordIndex[spans.length];
