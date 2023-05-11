@@ -41,35 +41,25 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	}
 	
 	@Override
-	public int size()
-	{
+	public int size(){
 		return lis.size();
 	}
-
 	@Override
-	public boolean contains(EditListener p1)
-	{
+	public boolean contains(EditListener p1){
 		return lis.contains(p1);
 	}
-
 	@Override
-	public boolean add(EditListener p1)
-	{
+	public boolean add(EditListener p1){
 		return lis.add(p1);
 	}
-
 	@Override
-	public boolean remove(EditListener p1)
-	{
+	public boolean remove(EditListener p1){
 		return lis.remove(p1);
 	}
-
 	@Override
-	public void clear()
-	{
+	public void clear(){
 		lis.clear();
 	}
-
 	@Override
 	public EditListener[] toArray()
 	{
@@ -108,12 +98,12 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	}
 
 	@Override
-	public void setEnabled(boolean Enabled)
+	public void setFlag(int flag)
 	{
 		for(EditListener li:lis){
-			li.setEnabled(Enabled);
+			li.setFlag(flag);
 		}
-		super.setEnabled(Enabled);
+		super.setFlag(flag);
 	}
 	
 	@Override

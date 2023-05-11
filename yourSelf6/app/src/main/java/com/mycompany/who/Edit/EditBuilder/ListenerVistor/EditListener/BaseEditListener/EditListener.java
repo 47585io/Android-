@@ -9,9 +9,9 @@ import android.widget.*;
 public abstract interface EditListener
 {
 
-	public abstract boolean Enabled()
+	public abstract int getFlag()
 	
-	public abstract void setEnabled(boolean Enabled)
+	public abstract void setFlag(int flag)
 		
 	public abstract void setName(String name)
 		

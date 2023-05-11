@@ -26,10 +26,7 @@ public class Share
 	}
 	public static boolean getbit(int x,byte y){
 		int tmp= ((x) >> (y)&1);
-		if(tmp==0)
-			return false;
-		else
-			return true;
+		return tmp==1;
 	}
 
 	

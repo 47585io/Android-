@@ -11,7 +11,7 @@ public abstract class Extension
 	
 	private List<EditListener> Lis;
 	private List<EditListenerInfo> Infos;
-	private boolean Enabled;
+	private int flag;
 	private String name;
 	
 	public Extension(){
@@ -89,15 +89,12 @@ public abstract class Extension
 		Lis=null;
 	}
 	
-	protected void setEnabled(boolean Enabled){
+	protected void setFlag(int flag){
 		//为所有分配的Listener设置Enabled
 		for(EditListener li:Lis){
-			li.setEnabled(Enabled);
+			li.setFlag(flag);
 		}
-		this. Enabled = Enabled;
-	}
-	public boolean getEnabled(){
-		return Enabled;
+		this.flag = flag;
 	}
 	
 	public void setName(String name){

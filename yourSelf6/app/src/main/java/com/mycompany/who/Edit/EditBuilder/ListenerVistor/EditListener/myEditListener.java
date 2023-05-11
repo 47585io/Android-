@@ -4,7 +4,7 @@ import android.text.*;
 import android.widget.*;
 import java.util.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
-import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.*;
+import com.mycompany.who.Edit.Base.Share.*;
 
 
 /*
@@ -16,7 +16,7 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public class myEditListener extends Object implements EditListener
 {
 	
-	private boolean Enabled;
+	private int flag;
 	private String name;
 	private EditText self;
 	//可以不以参数传递，而是设置self，但有可能为null
@@ -24,47 +24,41 @@ public class myEditListener extends Object implements EditListener
 	public myEditListener()
 	{
 		name="@default";
-		Enabled=true;
+		flag=1;
 	}
 	public myEditListener(String name,boolean e)
 	{
 		this.name=name;
-		Enabled=e;
+		flag=1;
 	}
 	public myEditListener(EditListener li)
 	{
 		this.name=li.getName();
-		this.Enabled=li.Enabled();
+		this.flag=li.getFlag();
 	}
-	
+
 	@Override
-	public boolean Enabled()
-	{
-		return Enabled;
-	}
-	@Override
-	public void setEnabled(boolean Enabled)
-	{
-		this.Enabled=Enabled;
+	public void setFlag(int flag){
+		this.flag = flag;
 	}
 	@Override
-	public void setName(String name)
-	{
+	public int getFlag(){
+		return flag;
+	}
+	@Override
+	public void setName(String name){
 		this.name=name;
 	}
 	@Override
-	public String getName()
-	{
+	public String getName(){
 		return name;
 	}
 	@Override
-	public void setEdit(EditText t)
-	{
+	public void setEdit(EditText t){
 		self = t;
 	}
 	@Override
-	public EditText getEdit()
-	{
+	public EditText getEdit(){
 		return self;
 	}
 
@@ -73,7 +67,7 @@ public class myEditListener extends Object implements EditListener
 	{
 		if(obj instanceof EditListener){
 			EditListener li = (EditListener) obj;
-			if(getName().equals(li.getName()) && li.Enabled()==Enabled() && li.getEdit().equals(getEdit())){
+			if(getName().equals(li.getName()) && li.getFlag()==getFlag() && li.getEdit().equals(getEdit())){
 				return true;
 			}
 		}
@@ -81,8 +75,14 @@ public class myEditListener extends Object implements EditListener
 	}
 	
 	@Override
-	public String toString(){
+	public String toString()
+	{
 		return "监听器："+name+"  ;类型: "+getClass().getName();
+	}
+	
+	public boolean Enabled()
+	{
+		return Share.getbit(flag,(byte)0);
 	}
 	
 	@Override
