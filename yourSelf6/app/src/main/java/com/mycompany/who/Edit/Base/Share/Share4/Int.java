@@ -24,17 +24,11 @@ final public class Int
 		date = d;
 	}
 	
-	public int add()
-	{
-		int before = date;
+	public void add(){
 		++date;
-		return before;
 	}
-	public int less()
-	{
-		int before = date;
+	public void less(){
 		--date;
-		return before;
 	}
 	
 }

@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 
 public class Getter
 {
+	
 	public static Object getObject(String type,Object...args)
 	{
 		//用指定的type和参数args创建一个对象
@@ -49,6 +50,7 @@ public class Getter
 		{}
 		return null;
 	}
+	
 	public static<T> void setFiled(String name,T vector,T n)
 	{
 		try
@@ -67,6 +69,7 @@ public class Getter
 		catch (NoSuchFieldException e)
 		{}
 	}
+	
 	public static<T> Method getFunc(String name,T block,Object...args)
 	{
 		//得到block中名为name且参数列表为args的方法
@@ -138,4 +141,5 @@ public class Getter
 		return ArgUP(d.getSuperclass(),s);
 		//不与上面任意类型相同，继续向上遍历，并将之后的函数返回值作为最终返回值
 	}
+	
 }

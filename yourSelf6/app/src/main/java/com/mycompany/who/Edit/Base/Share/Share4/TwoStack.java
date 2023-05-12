@@ -54,4 +54,5 @@ public class TwoStack<T>
 		UedoList.clear();
 		RedoList.clear();
 	}
+	
 }

@@ -17,8 +17,7 @@ public class size
 	public size(){}
 	
 	@Override
-	public boolean equals(Object other)
-	{
+	public boolean equals(Object other){
 		if(start==((wordIndex)other).start && end==((wordIndex)other).end )
 			return true;
 		return false;
@@ -27,6 +26,10 @@ public class size
 	public void set(int s,int e){
 		start=s;
 		end=e;
+	}
+	public void set(size s){
+		start = s.start;
+		end = s.end;
 	}
 	
 }

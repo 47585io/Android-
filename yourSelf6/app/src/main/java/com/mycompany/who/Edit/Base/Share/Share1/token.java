@@ -31,5 +31,10 @@ public class token extends size
 		this.end=e;
 		this.src = src;
 	}
+	public void set(token t){
+		this.start=t.start;
+		this.end=t.end;
+		this.src = t.src;
+	}
 	
 }

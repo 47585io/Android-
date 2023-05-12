@@ -4,7 +4,6 @@ import android.graphics.*;
 
 public class Icon2 implements Icon
 {
-	
 	private String path; //通过文件路径加载图像
 	private CharSequence name; 
 	
@@ -20,7 +19,7 @@ public class Icon2 implements Icon
     public void setName(CharSequence name) {
         this.name = name;
     }
-
+	
 	public void setPath(String path){
 		this.path=path;
 	}

@@ -37,6 +37,7 @@ public class WordAdpter extends BaseAdapter
 		rid=id;	
 		addAll(file,flag);
 	}
+	
 	public static WordAdpter getDefultAdapter()
 	{
 		return new WordAdpter(R.layout.WordIcon);
@@ -44,7 +45,8 @@ public class WordAdpter extends BaseAdapter
 	
 	synchronized public void addAll(Collection<Icon> file,int flag)
 	{
-		if(file!=null){
+		if(file!=null)
+		{
 			size index = new size(mfile.size(),flag);
 			indexs.add(index);
 		    mfile.addAll(file);
@@ -66,7 +68,8 @@ public class WordAdpter extends BaseAdapter
     @Override
     public long getItemId(int position) 
 	{
-        for(int i=indexs.size()-1;i>=0;--i){
+        for(int i=indexs.size()-1;i>=0;--i)
+		{
 			size index = indexs.get(i);
 			if(index.start<=position){
 				return index.end;

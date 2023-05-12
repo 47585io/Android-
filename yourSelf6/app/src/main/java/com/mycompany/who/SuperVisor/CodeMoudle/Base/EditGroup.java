@@ -89,7 +89,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		super(cont,attrs);
 	}
-	public void init(){
+	public void init()
+	{
 		super.init();
 		Creator = new GroupCreator(R.layout.EditGroup);
 		Creator.ConfigSelf(this);
@@ -97,8 +98,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 	public boolean equals(Object obj)
 	{
-		if (super.equals(obj)||(obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag())))
+		if (super.equals(obj)||(obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag()))){
 			return true;
+		}
 		return false;
 	}
 	
@@ -147,8 +149,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	public void setEditFactory(EditFactory factory)
 	{
-		if (factory != null)
-		    mfactory = factory;	
+		if (factory != null){
+		    mfactory = factory;
+		}
 	}
 
 	@Override
@@ -262,8 +265,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	/* 不会自动刷新大小的修改，需要调用我刷新 */
-	public void refreshLineAndSize(){
-		EditLines. reLines(getEditManipulator(). calaEditLines());
+	public void refreshLineAndSize()
+	{
+		EditLines.reLines(getEditManipulator(). calaEditLines());
 		trimToFather();
 	}
 	
@@ -304,7 +308,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
 			}
-			
 			super.onBeforeTextChanged(str, start, count, after);
 		}
 
@@ -314,12 +317,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			
 			if (!can){
 				return;
-			//在构造对象前，会调用一次onTextChanged
+			    //在构造对象前，会调用一次onTextChanged
 			}
-
 			if (IsModify()){
 				return ;
-			//已经被修改，不允许再修改
+			    //已经被修改，不允许再修改
 			}
 
 			Log.w("onTextChanged", "My index is " + index.get());
@@ -335,7 +337,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			   但是，为什么我要将trimToFather交给第一个编辑器？
 			   这是因为，在下面的代码中，会调用super.onTextChanged()
 			   在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
-			   
 			*/
 			
 			EditFlag.add();		
@@ -437,11 +438,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			EditGroup.this.onLongClick(this);
 			return super.performLongClick();
 		}
+		
+		public EditGroup getEditGroup()
+		{
+			return EditGroup.this;
+		}
 
 		@Override
 	 	public size calc(EditText Edit)
 		{
-			size pos=Calc(((RCodeEdit)Edit), EditGroup.this);
+			size pos=Calc(((RCodeEdit)Edit), getEditGroup());
 			return pos;
 		}
 		
@@ -466,93 +472,22 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		int selfWidth=config.width;
 		int selfHeight=config.height;
 
-		if (pos.start + WindowWidth >selfWidth)
+		if (pos.start + WindowWidth >selfWidth){
 			pos.start =selfWidth - WindowWidth;
-		//如果x超出屏幕，总是设置在最右侧
+			//如果x超出屏幕，总是设置在最右侧
+		}
 
-		if (pos.end + WindowHeight + Edit.getLineHeight() > selfHeight)
+		if (pos.end + WindowHeight + Edit.getLineHeight() > selfHeight){
 			pos.end = pos.end - WindowHeight - Edit.getLineHeight();
-		//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
-		else
+			//如果y超出屏幕，将其调整为光标之前，否则调整在光标后
+		}
+		else{
 			pos.end = pos.end + Edit.getLineHeight() ;
-
+		}
+		
 		return pos;
 	}
 
-	
-	protected final class ClipCanvaser extends myEditCanvaserListener
-	{
-		
-		@Override
-		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
-
-		/* 提升效率，不想用可以remove */
-		@Override
-		public void beforeDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
-		{	
-			/*关键代码*/
-			Rect rect =selfRect(self);
-			addRect(rect,1f);  //扩大范围，以便下次滚动时可见
-			canvas.clipRect(rect);
-			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
-
-			if(EditDrawFlag.get()==0){
-				//第一个编辑器还要遍历所有其它编辑器，并显示
-				EditDrawFlag.set(EditList.size()); //当前还有size个编辑器要显示
-				Int id = historyId;
-				historyId=((RCodeEdit)self).index;
-				for(CodeEdit e: EditList){
-					//如果是第一个编辑器，则不用重新绘制
-					if(((RCodeEdit)e).index.get()!=historyId.get())
-						e.invalidate();
-				}
-				historyId=id;
-			}
-			EditDrawFlag.less();
-			//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
-		}
-
-		/* 计算编辑器在可视区域中的自己的范围 */
-		public Rect selfRect(EditText self)
-		{
-			int index = ((RCodeEdit)self).index.get();
-			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
-			int EditTop=getEditManipulator().calaEditTop(index); //编辑器较ForEdit的顶部位置
-			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
-			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
-
-			int left = SeeLeft - EditLines.maxWidth();
-			//编辑器左边是当前可视区域左边减EditLines的宽
-			int top = SeeTop - EditTop;
-			//编辑器顶部为从0开始至可视区域顶部的偏移
-			int right = config.width + left;
-			//编辑器右边是左边加一个可视区域的宽
-			int bottom= top+ config.height;
-			//编辑器底部是上面加一个可视区域的高
-			return new Rect(left,top,right,bottom);
-		}
-		
-		/* 扩大Rect的范围 */
-		public void addRect(Rect rect,float x){
-			float width = rect.width()*x/2;
-			float height = rect.height()*x/2;
-			rect.left -= width;
-			rect.right += width;
-			rect.top -= height;
-			rect.bottom += height;
-		}
-
-	}
-	protected EditCanvaserListener getOneClipCanvaser()
-	{
-		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
-		//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
-		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
-		//其实不安全
-		return new ClipCanvaser();
-	}
-		
-	
 	@Override
 	public void onClick(View p1)
 	{
@@ -580,7 +515,81 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		// TODO: Implement this method
 		return false;
 	}
+
 	
+	protected final class ClipCanvaser extends myEditCanvaserListener
+	{
+		
+		private Rect rect = new Rect();
+		
+		@Override
+		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
+
+		/* 提升效率，不想用可以remove */
+		@Override
+		public void beforeDraw(EditText self, Canvas canvas, TextPaint paint, size pos)
+		{	
+			/*关键代码*/
+			selfRect(self,rect);
+			addRect(rect,1f);  //扩大范围，以便下次滚动时可见
+			canvas.clipRect(rect);
+			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
+
+			if(EditDrawFlag.get()==0){
+				//第一个编辑器还要遍历所有其它编辑器，并显示
+				EditDrawFlag.set(EditList.size()); //当前还有size个编辑器要显示
+				Int id = historyId;
+				historyId=((RCodeEdit)self).index;
+				for(CodeEdit e: EditList){
+					//如果是第一个编辑器，则不用重新绘制
+					if(((RCodeEdit)e).index.get()!=historyId.get())
+						e.invalidate();
+				}
+				historyId=id;
+			}
+			EditDrawFlag.less();
+			//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
+		}
+
+		/* 计算编辑器在可视区域中的自己的范围 */
+		public void selfRect(EditText self,Rect rect)
+		{
+			int index = ((RCodeEdit)self).index.get();
+			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
+			int EditTop=getEditManipulator().calaEditTop(index); //编辑器较ForEdit的顶部位置
+			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
+			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
+
+			rect.left = SeeLeft - EditLines.maxWidth();
+			//编辑器左边是当前可视区域左边减EditLines的宽
+			rect.top = SeeTop - EditTop;
+			//编辑器顶部为从0开始至可视区域顶部的偏移
+			rect.right = config.width + rect.left;
+			//编辑器右边是左边加一个可视区域的宽
+			rect.bottom = rect.top+ config.height;
+			//编辑器底部是上面加一个可视区域的高
+		}
+		
+		/* 扩大Rect的范围 */
+		public void addRect(Rect rect,float x){
+			float width = rect.width()*x/2;
+			float height = rect.height()*x/2;
+			rect.left -= width;
+			rect.right += width;
+			rect.top -= height;
+			rect.bottom += height;
+		}
+
+	}
+	protected EditCanvaserListener getOneClipCanvaser()
+	{
+		//一直不知道，为什么明明EditCanvaserListener需要EditGroup内部的成员，却还允许返回并作为其它Edit的监听器
+		//在调试时，发现EditCanvaserListener内部还有一个this$0成员，原来这个成员就是EditGroup
+		//原来每个内部类，还有一个额外的成员，就是指向外部类实例的指针，在创建一个内部类对象时，内部类对象就与外部类实例绑定了
+		//其实不安全
+		return new ClipCanvaser();
+	}
+		
 	
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
@@ -801,7 +810,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			LineList.get(0).clearListener();
 		}
 
-		public void zoomBy(float x){
+		public void zoomBy(float x)
+		{
 			for(EditLine line:LineList){
 				line.zoomBy(x);
 			}
@@ -867,6 +877,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				EditList.get(index).setText(str);
 			}
 		}
+		
 		public void clearText()
 		{
 			String lua = getLuagua();
@@ -933,7 +944,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		/*  一组的Edit的Info成员却是指针  */
 		
 		public void setInfo(EditListenerInfo Info){
-			EditList.get(0).setInfo(Info);
+			for(CodeEdit E:EditList)
+			    
+			    E.setInfo(Info);
 		}
 		public void setEditBuilder(EditBuilder f){
 			EditList.get(0).setEditBuilder(f);
@@ -967,19 +980,22 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			for(CodeEdit E:EditList)
 			    E.lockSelf(is);
 		}
-		public void zoomByEdit(float x){
+		public void zoomByEdit(float x)
+		{
 			for(CodeEdit E: EditList){
 				E.zoomBy(x);
 			}
 			EditLines.zoomBy(x);
 			trimToFather();
 		}
-		public void zoomByScro(float x){
+		public void zoomByScro(float x)
+		{
 			getScro().setScaleY(x);
 			getHscro().setScaleX(x);
 		}
 		
-		public void compareChroot(CodeEdit.EditChroot f){
+		public void compareChroot(CodeEdit.EditChroot f)
+		{
 			root.set(f);
 			for(CodeEdit E: EditList)    
 			    E.setChroot(f);
@@ -1335,29 +1351,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 	public static class EditGroupListenerInfo implements EditListenerInfo
 	{
-
-		@Override
-		public int size()
-		{
-			// TODO: Implement this method
-			return 0;
-		}
-
-
-		@Override
-		public void clear()
-		{
-			// TODO: Implement this method
-		}
-
-		@Override
-		public boolean contrans(EditListener li)
-		{
-			// TODO: Implement this method
-			return false;
-		}
-
-
+		
 		CodeEdit.CodeEditListenerInfo CodeInfo;
 		EditLine.EditLineListenerInfo LineInfo;
 		
@@ -1393,21 +1387,29 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 		@Override
-		public boolean addListenerTo(EditListener li, int toIndex)
-		{
+		public boolean addListenerTo(EditListener li, int toIndex){
 			return false;
 		}
-
 		@Override
-		public boolean delListenerFrom(int fromIndex)
-		{
+		public boolean delListenerFrom(int fromIndex){
 			return false;
 		}
-
 		@Override
-		public EditListener findAListener(int fromIndex)
-		{
+		public EditListener findAListener(int fromIndex){
 			return null;
+		}
+		
+		@Override
+		public int size(){
+			return 0;
+		}
+		
+		@Override
+		public void clear(){}
+		
+		@Override
+		public boolean contrans(EditListener li){
+			return false;
 		}
 		
 	}
@@ -1445,17 +1447,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//Group. EditLines = root.findViewById(R.id.EditLine);
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
-			
-			Group.EditLines = new LineGroup(Group.getContext());
-			
-			//重新设置一个不同的id，防止xml文件被多次加载，内存中有多个相同id的View
-			//Group.setId(Group.hashCode());
-			//Group.mWindow.setId(Group.mWindow.hashCode());
-			//Group.Scro.setId(Group.Scro.hashCode());
-			//Group.hScro.setId(Group.hScro.hashCode());
-			//Group.ForEdit.setId(Group.ForEdit.hashCode());
-			//Group.ForEditSon.setId(Group.ForEditSon.hashCode());
-			//Group.EditLines.setId(Group.EditLines.hashCode());
+			Group.EditLines = new LineGroup(Group.getContext());	
 		}	
 		
 	}
@@ -1499,6 +1491,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
+			//立即设置Window大小
 			int Wheight=MeasureWindowHeight(target.mWindow);
 			if(flag==Configuration.ORIENTATION_PORTRAIT){
 				WindowWidth=WindowHeight=(int)(height*0.475);
@@ -1510,22 +1503,22 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			if (Wheight < WindowHeight)
 				WindowHeight=Wheight;
 			trim(target.mWindow,WindowWidth,WindowHeight);
-			//立即设置Window大小
 		}	
 		
 		//每次change，改变我的大小，即我自己和滚动条的大小
-		public void onChange(EditGroup target,int src){
+		public void onChange(EditGroup target,int src)
+		{
 		    trim(target,width,height);
 			trim(target.Scro,width,height);
 		    trim(target.hScro,width,height);
 		}
 		
 		//测量窗口高度
-		public static int MeasureWindowHeight(ListView mWindow)
+		public static int MeasureWindowHeight(AdapterView mWindow)
 		{
 			int height=0;
 			int i;
-			ListAdapter adapter = mWindow.getAdapter();
+			Adapter adapter = mWindow.getAdapter();
 			if(adapter==null)
 				return 0;
 			for (i = 0;i < adapter.getCount();i++)
@@ -1544,11 +1537,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig)
 	{
-		/*
-		 横竖屏切换了 ，改变我的大小
-		 为什么要手动改变大小呢？
-		 因为我设置的是固定的宽高，在旋转屏幕时，屏幕坐标轴会旋转，此时原屏幕的宽变为高，原来的高变为宽，但View宽高不变！
-		*/
+	    //横竖屏切换了 ，改变我的大小，为什么要手动改变大小呢？
+		//因为我设置的是固定的宽高，在旋转屏幕时，屏幕坐标轴会旋转，此时原屏幕的宽变为高，原来的高变为宽，但View宽高不变！
 		super.onConfigurationChanged(newConfig);
 	    getConfig().change(this,newConfig.orientation);
 	}

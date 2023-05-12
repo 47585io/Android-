@@ -126,12 +126,6 @@ public class Colors
 		return "";
 	}
 	
-	public static Object ForeColorSpan(int b){
-		return new ForegroundColorSpan(b);
-	}
-	public static Object BackColorSpan(int b){
-		return new BackgroundColorSpan(b);
-	}
 	public static int vualeOf(String color){
 		return Integer.parseInt(color,16);
 	}
@@ -150,16 +144,15 @@ public class Colors
 	}
 	
 	/* 自定义您的颜色  */
-	public static interface ByteToColor{
-
+	public static interface ByteToColor
+	{
 		public int fromByteToColor(int b)
 
 		public String fromByteToColorS(int b)
-
 	}
 	
-	public static interface ByteToColor2 extends ByteToColor{
-		
+	public static interface ByteToColor2 extends ByteToColor
+	{	
 		public int getDefult()
 
 		public String getDefultS();
@@ -167,148 +160,66 @@ public class Colors
 		public int getDefultBg()
 		
 		public String getDefultBgS()
-		
 	}
 	
 	public static class myColor implements ByteToColor
 	{
-
 		@Override
-		public int fromByteToColor(int b)
-		{
+		public int fromByteToColor(int b){
 			return Colors. fromByteToColor(b);
 		}
 
 		@Override
-		public String fromByteToColorS(int b)
-		{
+		public String fromByteToColorS(int b){
 			return Colors. fromByteToColorS(b);
 		}
-		
 	}
 	
 	public static class myColor2 extends myColor implements ByteToColor2
 	{
-
 		@Override
-		public int getDefult()
-		{
+		public int getDefult(){
 			return Default;
 		}
-		
 		@Override
-		public String getDefultS()
-		{
+		public String getDefultS(){
 			return Default_;
 		}
-		
 		@Override
-		public int getDefultBg()
-		{
+		public int getDefultBg(){
 			return Bg;
 		}
-
 		@Override
-		public String getDefultBgS()
-		{
+		public String getDefultBgS(){
 			return Colors.toString(Bg);
 		}
 	}
 
-	/*
-	public static SpannableStringBuilder ForeColorText(CharSequence src,ByteToColor Colors,wordIndex... nodes){
-		SpannableStringBuilder styled = new SpannableStringBuilder(src);
-        //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-			else
-				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		}
-	    return styled;	
+	public static Object ForeColorSpan(int b){
+		return new ForegroundColorSpan(b);
 	}
-	public static void ForeColorText(Spannable editor,int start,ByteToColor Colors,wordIndex... nodes){
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-			else
-				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-		}
+	public static Object BackColorSpan(int b){
+		return new BackgroundColorSpan(b);
 	}
-	public static SpannableStringBuilder ForeColorText(CharSequence src,List<wordIndex> nodes,ByteToColor Colors){
-		SpannableStringBuilder styled = new SpannableStringBuilder(src);
-        //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        styled.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-			else
-				styled.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		}
-	    return styled;	
-	}
-	public static void ForeColorText(Spannable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        editor.setSpan(new ForegroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-			else
-				editor.setSpan(new ForegroundColorSpan(Colors. fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-		}
-	}
+	
 	public static Spanned ForeColorText(CharSequence text,String color) {
 		//返回具有样式的Spanned
 		//因效率问题，已禁用
 		return Html.fromHtml("<font color='"+color+"'>"+text+"</font>",Html.FROM_HTML_OPTION_USE_CSS_COLORS);
 	}
-	public static SpannableStringBuilder ForeColorText(CharSequence text,int color){
+	public static SpannableStringBuilder ForeColorText(CharSequence text,int color)
+	{
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		b.setSpan(new ForegroundColorSpan(color),0,text.length(),SpanFlag);
+		b.setSpan(ForeColorSpan(color),0,text.length(),SpanFlag);
+		return b;
+	}
+	public static SpannableStringBuilder BackColorText(CharSequence text,int color)
+	{
+		SpannableStringBuilder b = new SpannableStringBuilder(text);
+		b.setSpan(BackColorSpan(color),0,text.length(),SpanFlag);
 		return b;
 	}
 	
-	public static SpannableStringBuilder BackColorText(CharSequence src,ByteToColor Colors,wordIndex... nodes){
-		SpannableStringBuilder styled = new SpannableStringBuilder(src);
-        //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		    else
-				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		}
-	    return styled;	
-	}
-	public static void BackColorText(Spannable editor,int start,ByteToColor Colors,wordIndex... nodes){
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-			else
-				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-	    }
-	}
-	public static SpannableStringBuilder BackColorText(CharSequence src,List<wordIndex> nodes,ByteToColor Colors){
-		SpannableStringBuilder styled = new SpannableStringBuilder(src);
-        //i未起始字符索引，j 为结束字符索引
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        styled.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		    else
-				styled.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-		}
-	    return styled;	
-	}
-	public static void BackColorText(Spannable editor,List<wordIndex> nodes,int start,ByteToColor Colors){
-		for(wordIndex node:nodes){
-			if(Colors==null)
-		        editor.setSpan(new BackgroundColorSpan(fromByteToColor(node.b)),node.start+start,node.end+start,SpanFlag);
-			else
-				editor.setSpan(new BackgroundColorSpan(Colors. fromByteToColor(node.b)), node.start, node.end,SpanFlag);
-	    }
-	}
-	public static SpannableStringBuilder BackColorText(CharSequence text,int color){
-		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		b.setSpan(new BackgroundColorSpan(color),0,text.length(),SpanFlag);
-		return b;
-	}
-	*/
 	public static String textForeColor(String src,String fgcolor){
 		src=Replace(src);
 		return "<pre style='display:inline;color:"+fgcolor+";'>"+src+"</pre>";
@@ -321,7 +232,8 @@ public class Colors
 		src=Replace(src);
 		return "<pre style='display:inline;"+"color:"+ fgcolor+";background-color:"+bgcolor+";'>"+src+"</pre>";
 	}
-	protected static String Replace(String src){
+	protected static String Replace(String src)
+	{
 		src=src.replaceAll("<","&lt;");
 		src=src.replaceAll(">","&gt;");
 		src=src.replaceAll("\t","    ");
@@ -387,7 +299,8 @@ public class Colors
 	public static int SpanFlag = Spannable.SPAN_EXCLUSIVE_EXCLUSIVE;
 	
 	
-	public static class FG extends ForegroundColorSpan{
+	public static class FG extends ForegroundColorSpan
+	{
 		
 		FG(int color){
 			super(color);

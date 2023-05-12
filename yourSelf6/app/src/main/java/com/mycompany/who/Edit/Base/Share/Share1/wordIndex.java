@@ -50,17 +50,16 @@ public class wordIndex extends size
 		end = o.end;
 		span = o.span;
 	}
-	
-	public boolean equals2(Object other){
-		if(start>=((wordIndex)other).start && end<=((wordIndex)other).end )
-			return true;
-		return false;
-	}
 
 	public void set(int s,int e,Object span){
 		this.start=s;
 		this.end=e;
 		this.span=span;
+	}
+	public void set(wordIndex node){
+		this.start=node.start;
+		this.end=node.end;
+		this.span=node.span;
 	}
 	
 }

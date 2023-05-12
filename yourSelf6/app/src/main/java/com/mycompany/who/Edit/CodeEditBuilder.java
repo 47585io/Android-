@@ -1296,7 +1296,7 @@ ________________________________________________________________________________
 
 			@Override
 			protected void OnClearFindNodes(int start, int end, String text,Words WordLib , List<wordIndex> nodes)
-			{
+			{	
 				clearRepeatNode(nodes);	
 			}
 		}

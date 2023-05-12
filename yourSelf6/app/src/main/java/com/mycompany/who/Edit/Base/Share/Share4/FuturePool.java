@@ -7,6 +7,7 @@ import java.util.concurrent.*;
  */
 public class FuturePool
 {
+	
 	public static<T> List<T> FutureGet(Collection<Future<T>> results)
 	{
 		List<T> date = new LinkedList<>();
@@ -77,6 +78,7 @@ public class FuturePool
 		        results.add(pool.submit(total));
 		return results;
 	}
+	
 	public static List<Future> addTotals(Collection<Runnable> totals, ThreadPoolExecutor pool, int onceCount)
 	{
 		List<Future> results= new LinkedList<>();
@@ -98,6 +100,7 @@ public class FuturePool
 		results.add(f);
 		return results;
 	}
+	
 	public static List<Future> addTotalS(Collection<Callable> totals, ThreadPoolExecutor pool)
 	{
 		List<Future> results= new LinkedList<>();
@@ -108,7 +111,6 @@ public class FuturePool
 				results.add(null);
 		return results;
 	}
-
 
 	public static Runnable AndRunnable(final Runnable... run)
 	{

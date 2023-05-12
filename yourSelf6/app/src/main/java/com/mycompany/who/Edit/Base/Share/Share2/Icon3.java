@@ -3,7 +3,6 @@ import android.widget.*;
 
 public class Icon3 implements Icon
 {
-	
 	private int icon; //通过id加载图像
 	private CharSequence name;
 	
@@ -19,7 +18,6 @@ public class Icon3 implements Icon
     public void setName(CharSequence name) {
         this.name = name;
     }
-
     public int getIcon() {
         return icon;
     }
