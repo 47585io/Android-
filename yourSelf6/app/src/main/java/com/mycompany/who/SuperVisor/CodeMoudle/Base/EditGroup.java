@@ -272,6 +272,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	
 
+/*
+ ------------------------------------------------------------------------------------
+
+  实际上，EditGroup使用RCodeEdit作为内部编辑器，但返回的是CodeEdit，因为不想让人知道RCodeEdit
+  
+  为了提升效率，RCodeEdit限制自己的行，并实现了自动截取超出行到下个编辑器的功能
+  
+  另外的，RCodeEdit也会将calc以及其它部分事件直接传递至EditGroup
+  
+  为了安全，通常不建议将RCodeEdit共享，它应只绑定唯一的EditGroup，否则将导致严重后果
+  
+ ------------------------------------------------------------------------------------
+  
+*/
 	final class RCodeEdit extends CodeEdit
 	{
 
@@ -424,49 +438,55 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 			
 		}
-
+	
+		public EditGroup getEditGroup()
+		{
+			return EditGroup.this;
+		}
+		
+		/* 传递部分的关键事件到EditGroup */
 		@Override
 		public boolean performClick()
 		{
-			EditGroup.this.onClick(this);
+			getEditGroup().onClick(this);
 			return super.performClick();
 		}
 
 		@Override
 		public boolean performLongClick()
 		{
-			EditGroup.this.onLongClick(this);
+			getEditGroup().onLongClick(this);
 			return super.performLongClick();
-		}
-		
-		public EditGroup getEditGroup()
-		{
-			return EditGroup.this;
 		}
 
 		@Override
 	 	public size calc(EditText Edit)
 		{
-			size pos=Calc(((RCodeEdit)Edit), getEditGroup());
+			size pos = getEditGroup().Calc(((RCodeEdit)Edit), getEditGroup());
 			return pos;
 		}
 		
 	}
 
+
+/*-------------------  接下来让我们处理传递的事件 ------------------- */
+
+	
+	/* 如果一个Edit请求打开窗口，测量并修改Window大小 */
 	protected size Calc(RCodeEdit Edit, EditGroup self)
 	{
-		//测量并修改Window大小
 		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize)self. getConfig();
 		config.ConfigSelf(self);
-
-		//请求测量
-		self.historyId = Edit.index;
+		//修改窗口大小
+        self.historyId = Edit.index;
 		//本次窗口谁请求，单词给谁
+		
 		int offset=Edit.getSelectionStart();
 		int xlen = self.getEditManipulator().calaEditTop(Edit.index.get());
 		size pos = Edit.getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
-
 		pos.start += self.EditLines.maxWidth();
+		//计算基本位置，在之后会判断窗口超出屏幕的情况
+		
 		int WindowWidth=config.WindowWidth;
 		int WindowHeight=config.WindowHeight;
 		int selfWidth=config.width;
@@ -488,6 +508,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return pos;
 	}
 
+	/* 如果点击了编辑器，就关闭窗口 */
 	@Override
 	public void onClick(View p1)
 	{
@@ -496,10 +517,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			getWindow().setX(-9999);
 	}
 
+	/* 如果点击了Window的Item就插入单词并关闭窗口 */
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
-		//如果点击了就插入单词并关闭窗口
 		Adapter adapter = p1.getAdapter();
 		Icon icon = (Icon) adapter.getItem(p3);
 		if(historyId!=null){
@@ -509,6 +530,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		getWindow().setX(-9999);
 	}
 
+	/* 如果长按了编辑器，就执行命令 */
 	@Override
 	public boolean onLongClick(View p1)
 	{
@@ -517,6 +539,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	
+/*
+ ----------------------------------------------------------------------------------
+  
+  ClipCanvaser
+  
+  这是一个EditCanvaserListener，可以添加到CodeEdit的Info中，在创建CodeEdit时默认添加了
+  
+  它用于在绘制时裁剪一块区域，只绘制此区域的内容，以提升效率
+  
+  注意: ClipCanvaser应放在Info中编辑器列表的更前面，否则将无效
+  
+ ----------------------------------------------------------------------------------
+  
+*/
 	protected final class ClipCanvaser extends myEditCanvaserListener
 	{
 		
@@ -531,19 +567,24 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{	
 			/*关键代码*/
 			selfRect(self,rect);
-			addRect(rect,1f);  //扩大范围，以便下次滚动时可见
+			addRect(rect,1f);  
+			//扩大范围，以便下次滚动时部分可见
 			canvas.clipRect(rect);
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 
-			if(EditDrawFlag.get()==0){
-				//第一个编辑器还要遍历所有其它编辑器，并显示
-				EditDrawFlag.set(EditList.size()); //当前还有size个编辑器要显示
+			if(EditDrawFlag.get()==0)
+			{
+				//由于只有获取焦点的Edit会自动刷新，所以第一个编辑器还要遍历所有其它编辑器，并显示
+				EditDrawFlag.set(EditList.size()); 
+				//当前还有size个编辑器要显示
 				Int id = historyId;
 				historyId=((RCodeEdit)self).index;
-				for(CodeEdit e: EditList){
-					//如果是第一个编辑器，则不用重新绘制
-					if(((RCodeEdit)e).index.get()!=historyId.get())
+				for(CodeEdit e: EditList)
+				{
+					if(((RCodeEdit)e).index.get()!=historyId.get()){
+						//如果是第一个编辑器，则不用重新绘制
 						e.invalidate();
+					}
 				}
 				historyId=id;
 			}
@@ -556,9 +597,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			int index = ((RCodeEdit)self).index.get();
 			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
-			int EditTop=getEditManipulator().calaEditTop(index); //编辑器较ForEdit的顶部位置
-			int SeeTop = getScro().getScrollY(); //可视区域较ForEdit的顶部位置
-			int SeeLeft = getHscro().getScrollX();//可视区域较ForEdit的左边位置
+			
+			int EditTop=getEditManipulator().calaEditTop(index); 
+			//编辑器较ForEdit的顶部位置
+			int SeeTop = getScro().getScrollY(); 
+			//可视区域较ForEdit的顶部位置
+			int SeeLeft = getHscro().getScrollX();
+			//可视区域较ForEdit的左边位置
 
 			rect.left = SeeLeft - EditLines.maxWidth();
 			//编辑器左边是当前可视区域左边减EditLines的宽
@@ -571,7 +616,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 		/* 扩大Rect的范围 */
-		public void addRect(Rect rect,float x){
+		public void addRect(Rect rect,float x)
+		{
 			float width = rect.width()*x/2;
 			float height = rect.height()*x/2;
 			rect.left -= width;
@@ -590,7 +636,19 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return new ClipCanvaser();
 	}
 		
-	
+
+/*
+ -------------------------------------------------------------------
+
+  EditGroup对触摸和键事件的处理
+  
+  EditGroup在需要时拦截和消耗触摸事件，以进行缩放操作
+  
+  EditGroup在需要时消耗键事件，以进行回滚操作
+  
+ -------------------------------------------------------------------
+
+*/
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
 	{
@@ -650,7 +708,23 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return super.dispatchKeyEvent(event);
 	}
 	
-	
+
+/*
+ ------------------------------------------------------------------------------------
+ 
+ LineGroup
+ 
+ 此类是为了提升行数的插入效率，目前，EditLine在20000行之后的行插入非常缓慢，这是因为文本太长(20000*6 = 120000)
+ 
+ LineGroup与EditGroup类似，它将多个EditLine组合成组，并管理它们，每一个EditLine都只能有MaxLine行
+ 
+ 超出的行会让下个EditLine添加，行数只在尾部追加和删除，与EditGroup不同，LineGroup在删除行时会删除多余的EditLine
+ 
+ LineGroup和EditLine在行数变化时将自动扩展自身大小，无需额外管理，只需父元素扩展大小时加上它们的宽高即可
+ 
+ ------------------------------------------------------------------------------------
+ 
+*/	
 	final public static class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
 	{
 
@@ -666,7 +740,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			super(cont,attrs);
 			init();
 		}
-		protected void init(){
+		protected void init()
+		{
 			lineCount = 1;
 			LineList = new ArrayList<>();
 			addEditLine();
