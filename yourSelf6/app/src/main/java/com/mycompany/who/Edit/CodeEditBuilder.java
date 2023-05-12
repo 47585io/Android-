@@ -258,6 +258,7 @@ ________________________________________________________________________________
 					String text = editor.toString();
 					String_Splitor.Bindow.checkBindow(text,"{","}",indexs);
 					size s = String_Splitor.Bindow.indexInBindowRange(selEnd,indexs);
+					indexs.clear();
 					
 					st = BackColorSpan(Edit.Selected_Color);
 					en = BackColorSpan(Edit.Selected_Color);
