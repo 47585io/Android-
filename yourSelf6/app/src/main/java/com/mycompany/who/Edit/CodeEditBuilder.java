@@ -237,26 +237,33 @@ ________________________________________________________________________________
 		
 		public static class DefaultSelectionSeer extends myEditSelectionChangeListener
 		{
+			
+			Spannable lastEditor;
+			List<size> indexs = new ArrayList<>();
 			Object st,en;
 			
 			@Override
 			protected void onSelectionChange(int selStart, int selEnd)
 			{
+				if(lastEditor!=null){
+					lastEditor.removeSpan(st);
+					lastEditor.removeSpan(en);
+					lastEditor = null;
+				}
+				
 				EditText self = getEdit();
-				if(self!=null && selStart==selStart)
+				if(self!=null && selStart==selEnd)
 				{
 					Spannable editor = self.getText();
-					editor.removeSpan(st);
-					editor.removeSpan(en);
-					
 					String text = editor.toString();
-					int start = text.lastIndexOf('{',selEnd);
-					int end = String_Splitor.getAfterBindow(text,selEnd,"{","}");
+					String_Splitor.Bindow.checkBindow(text,"{","}",indexs);
+					size s = String_Splitor.Bindow.indexInBindowRange(selEnd,indexs);
 					
 					st = BackColorSpan(Edit.Selected_Color);
 					en = BackColorSpan(Edit.Selected_Color);
-					editor.setSpan(st,start,start+1,Colors.SpanFlag);
-					editor.setSpan(en,end,end+1,Colors.SpanFlag);
+					editor.setSpan(st,s.start,s.start+1,Colors.SpanFlag);
+					editor.setSpan(en,s.end,s.end+1,Colors.SpanFlag);
+					lastEditor = editor;
 				}
 			}
 			
@@ -361,7 +368,7 @@ ________________________________________________________________________________
 					if (end_bindow < nextIndex && end_bindow != -1)
 					{
 						//如果当前的nextindex出了代码块，将}设为前面的代码块中与{相同位置
-						int index= String_Splitor.getBeforeBindow(src, end_bindow , START, END);
+						int index= String_Splitor.Bindow.getBeforeBindow(src, end_bindow , START, END);
 						if (index == -1)
 							return nextIndex;
 						int linestart=CodeEdit.tryLine_Start(src, index);
@@ -507,7 +514,7 @@ ________________________________________________________________________________
 				
 				if (src.charAt(nowIndex - 1) == '<' && c=='/')
 				{
-					int index= String_Splitor.getBeforeBindow(src, nowIndex - 1, "<", "</");
+					int index= String_Splitor.Bindow.getBeforeBindow(src, nowIndex - 1, "<", "</");
 					size j = new size();
 					CodeEdit. tryWordAfter(src, index, j);
 					editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
@@ -1063,7 +1070,8 @@ ________________________________________________________________________________
 				bash.Run(stack.getNext());
 			}
 
-			public String getOther(String name){
+			public String getOther(String name)
+			{
 				for(String key:Common.keySet()){
 					String value=Common.get(key);
 					if(name.equals(key))

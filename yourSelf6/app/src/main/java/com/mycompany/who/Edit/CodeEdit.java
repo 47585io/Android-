@@ -481,6 +481,8 @@ Dreawr
 			}
 		};
 		lis.dispatchCallBack(run);
+		//这就是我要找的，能接纳任意参数，还能兼容任意EditListener的办法:
+		//创建匿名内部类对象，让它包含参数，然后让EditListener把接口分发下去，每个Listener回调接口并传递自己，在接口实现中可以使用包含的参数
 	}
 
 	/* 会修改文本，不允许直接调用 */

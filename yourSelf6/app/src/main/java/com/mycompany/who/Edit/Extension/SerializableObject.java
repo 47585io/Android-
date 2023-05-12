@@ -10,7 +10,6 @@ public abstract class SerializableObject implements Serializable
 	
 	public String Delete() throws FileNotFoundException, IOException
 	{	
-		onDestory();
 		save();
 		FileOutputStream out = new FileOutputStream(getPath());
 		ObjectOutputStream objOut = new ObjectOutputStream(out);
@@ -29,8 +28,6 @@ public abstract class SerializableObject implements Serializable
 	
 	abstract public void onInit()
 	
-	abstract protected void onDestory()
-
 	abstract public String getPath()
 	
 	abstract protected void clear()

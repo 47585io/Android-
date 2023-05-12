@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.regex.*;
+import com.mycompany.who.Edit.Base.Share.Share1.*;
 
 
 public class String_Splitor
@@ -116,7 +117,6 @@ public class String_Splitor
 		return index;
 	}
 	
-	
 	public static int calaN(CharSequence src,int index){
 		int count = 0;
 		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){
@@ -147,64 +147,179 @@ public class String_Splitor
 		return b.toString();
 	}
 	
-	public static int getBeforeBindow(String text,int index,String st,String en)
-	{
-		//用栈把前括号一个个收起来，每遇到一个后括号pop一个，直至遇到指定的前括号
-		int now=0;
-		Stack<Integer> stack=new Stack<>();
-		while(now<text.length())
-		{
-			int start = text.indexOf(st,now);
-			int end = text.indexOf(en,now);
-			now=Array_Splitor.getmin(0,text.length(),start,end);
-		    //继续向后找前括号或后括号
-			if(now==-1)
-				return -1;
-			if(now==index &&stack.size()>0){
-				//遇到指定的后括号，pop
-				return stack.pop();
-			}
-			else if(end==now&&stack.size()>0){
-				//最近的前括号已经对应一个最近的后括号，pop
-				stack.pop();
-			}
-			else if(start==now){
-				//遇到前括号，push
-				stack.push(start);
-			}
-			now++;
-		}
-		return -1;
-	}
 	
-	public static int getAfterBindow(String text,int index,String st,String en)
+	public static class Bindow
 	{
-		//用栈把后括号一个个收起来，每遇到一个前括号pop一个，直至遇到指定的后括号
-		int now=text.length();
-		Stack<Integer> stack=new Stack<>();
-		while(now>-1)
+		
+		public static int getBeforeBindow(String text,int endIndex,String st,String en)
 		{
-			int start = text.lastIndexOf(st,now);
-			int end = text.lastIndexOf(en,now);
-			now=Array_Splitor.getmax(0,text.length(),start,end);
-		    //继续向前找前括号或后括号
-			if(now==-1)
-				return -1;
-			if(now==index &&stack.size()>0){
-				//遇到指定的前括号，pop
-				return stack.pop();
+			//用栈把前括号一个个收起来，每遇到一个后括号pop一个，直至遇到指定的后括号，就返回对应前括号
+			int now=0;
+			Stack<Integer> stack=new Stack<>();
+			while(now<text.length())
+			{
+				int start = text.indexOf(st,now);
+				int end = text.indexOf(en,now);
+
+				now = start<end ? start:end;
+				//继续向后找前括号或后括号中更小的
+				now = now==-1 ? start:now; 
+				//now不等-1，则还是now，否则先假设start不为-1
+				now = now==-1 ? end:now;
+				//now不等-1，则还是now，否则now一定为start，则假设end不为-1
+
+				if(now == -1){
+					//如果它们都是-1，则返回
+					return -1;
+				}
+				else if(now==endIndex){
+					//遇到指定的后括号，返回对应前括号
+					start = stack.size()>0 ? stack.pop():-1;
+					return start;
+				}
+				else if(end==now){
+					//最近的前括号已经对应一个最近的后括号，pop
+					if(stack.size()>0){
+						stack.pop();
+					}
+					now+=en.length();
+				}
+				else if(start==now){
+					//遇到前括号，push这个前括号
+					stack.push(start);
+					now+=st.length();
+				}
+
 			}
-			else if(start==now&&stack.size()>0){
-				//最近的前括号已经对应一个最近的后括号，pop
-				stack.pop();
-			}
-			else if(end==now){
-				//遇到后括号，push
-				stack.push(start);
-			}
-			now--;
+			return -1;
 		}
-		return -1;
+
+		public static int getAfterBindow(String text,int stratIndex,String st,String en)
+		{
+			//用栈把后括号一个个收起来，每遇到一个前括号pop一个，直至遇到指定的前括号，返回对应后括号
+			int now=text.length();
+			Stack<Integer> stack=new Stack<>();
+			while(now>-1)
+			{
+				int start = text.lastIndexOf(st,now);
+				int end = text.lastIndexOf(en,now);
+				now = start<end ? end:start;
+				//继续向前找前括号或后括号最更大的
+				now = now==-1 ? start:now; 
+				//now不等-1，则还是now，否则先假设start不为-1
+				now = now==-1 ? end:now;
+				//now不等-1，则还是now，否则now一定为start，则假设end不为-1
+
+				if(now==-1){
+					//如果它们都是-1，则返回
+					return -1;
+				}
+				if(now==stratIndex){
+					//遇到指定的前括号，pop对应后括号
+					end = stack.size()>0 ? stack.pop():-1;
+					return end;
+				}
+				else if(start==now){
+					//最近的前括号已经对应一个最近的后括号，pop后括号
+					if(stack.size()>0){
+						stack.pop();
+					}
+					now-=st.length();
+				}
+				else if(end==now){
+					//遇到后括号，push
+					stack.push(start);
+					now-=en.length();
+				}
+			}
+			return -1;
+		}
+
+
+		public static void checkBindow(String text,String st,String en,List<size> stWithEn)
+		{
+			int now = 0;
+			Stack<Integer> stack=new Stack<>();
+			while(true)
+			{
+				int start = text.indexOf(st,now);
+				int end = text.indexOf(en,now);
+				now = start<end ? start:end;
+				//继续向后找前括号或后括号中更小的
+				now = now==-1 ? start:now; 
+				//now不等-1，则还是now，否则先假设start不为-1
+				now = now==-1 ? end:now;
+				//now不等-1，则还是now，否则now一定为start，则假设end不为-1
+
+				if(now == -1){
+					//如果它们都是-1，则返回
+					return;
+				}
+				else if(end==now){
+					//最近的前括号已经对应一个最近的后括号，存入这对括号
+					//如果这个括号没有对应括号，则为-1
+					start = stack.size()>0 ? stack.pop():-1;
+					stWithEn.add(new size(start,end));
+					now+=en.length();
+				}
+				else if(start==now){
+					//遇到前括号，push这个前括号
+					stack.push(start);
+					now+=st.length();
+				}
+			}
+		}
+
+		public static void checkBindow(String text,String st,String en,HashMap<Integer,Integer> stToEn)
+		{
+			int now = 0;
+			Stack<Integer> stack=new Stack<>();
+			while(true)
+			{
+				int start = text.indexOf(st,now);
+				int end = text.indexOf(en,now);
+				now = start<end ? start:end;
+				//继续向后找前括号或后括号中更小的
+				now = now==-1 ? start:now; 
+				//now不等-1，则还是now，否则先假设start不为-1
+				now = now==-1 ? end:now;
+				//now不等-1，则还是now，否则now一定为start，则假设end不为-1
+
+				if(now == -1){
+					//如果它们都是-1，则返回
+					return;
+				}
+				else if(end==now){
+					//最近的前括号已经对应一个最近的后括号，存入这对括号
+					//如果这个括号没有对应括号，则为-1
+					start = stack.size()>0 ? stack.pop():-1;
+					stToEn.put(start,end);
+					now+=en.length();
+				}
+				else if(start==now){
+					//遇到前括号，push这个前括号
+					stack.push(start);
+					now+=st.length();
+				}
+			}
+		}
+
+		/*
+		 使用checkBindow返回的一定是从内层到外层括号的正序范围
+		 如果index在几层括号重叠内，只要正序向后就可从内到外遍历
+		 如果index不在之前的括号块内，也不影响之后的括号块遍历
+		 */
+		public static size indexInBindowRange(int index,List<size> indexs)
+		{
+			for(size i:indexs)
+			{
+				if(i.start<index && i.end>=index){
+					return i;
+				}
+			}
+			return null;
+		}
+		
 	}
 	
 }

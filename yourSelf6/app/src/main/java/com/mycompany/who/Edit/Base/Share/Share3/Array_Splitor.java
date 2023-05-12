@@ -26,7 +26,7 @@ public class Array_Splitor
 
 	public static int getmin(int start, int end, int ... arr)
 	{
-		int min=2122222222;
+		int min=Integer.MAX_VALUE;
 		for (int tmp:arr)
 		{
 			if (tmp < min && tmp >= start && tmp <= end)
@@ -34,13 +34,13 @@ public class Array_Splitor
 				min = tmp;
 			}
 		}
-		if (min == 2122222222)
+		if (min == Integer.MAX_VALUE)
 			return -1;
 		return min;
 	}
 	public static int getmax(int start, int end, int ... arr)
 	{
-		int max=-2122222222;
+		int max=Integer.MIN_VALUE;
 		for (int tmp:arr)
 		{
 			if (tmp > max && tmp >= start && tmp <= end)
@@ -48,7 +48,7 @@ public class Array_Splitor
 				max = tmp;
 			}
 		}
-		if (max == -2122222222)
+		if (max == Integer.MIN_VALUE)
 			return -1;
 		return max;
 	}
