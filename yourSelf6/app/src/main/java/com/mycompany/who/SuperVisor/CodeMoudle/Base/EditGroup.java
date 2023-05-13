@@ -186,6 +186,18 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public void clearListener(){}
 	
 
+/*
+------------------------------------------------------------------------------------
+
+ EditGroup对编辑器的操作
+ 
+ EditGroup可以快速地创建并配置一个Edit，在指定位置添加一个Edit，并将所有关联的成员同步
+ 
+ reIndex是为了在调用AddEditAt后同步所有Edit内部的下标，这个下标会当作Uedo和Redo的关键数据
+
+------------------------------------------------------------------------------------
+*/
+
 	/* AddEdit只要调用一次，后面的Edit会跟随第一个的配置 */
 	public void AddEdit(String name)
 	{
@@ -194,6 +206,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		EditList.add(Edit);
 		getForEditSon().addView(Edit);
 	}
+	
 	/* 为了安全，不允许调用 */
 	final private void AddEditAt(int index)
 	{
@@ -246,6 +259,19 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 
+/*
+------------------------------------------------------------------------------------
+
+ EditGroup如何修改大小
+ 
+ EditGroup不会擅自修改自己和Scro和hScro的大小，因为无需修改，除非调用loadSize强制修改
+ 
+ EditText在文本变化时会自动测量并修改自己的大小，因此如果手动设置EditText的大小，反而会增加测量时间
+ 
+ 为EditText的父元素设置一个固定大小将节省测量时间，EditGroup在编辑器文本变化时自动扩展编辑器父元素的大小
+ 
+------------------------------------------------------------------------------------
+*/
 	/*关键代码*/
 	protected void trimToFather()
 	{
@@ -273,17 +299,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 
 /*
- ------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------------------------
 
   实际上，EditGroup使用RCodeEdit作为内部编辑器，但返回的是CodeEdit，因为不想让人知道RCodeEdit
   
+  每个RCodeEdit都存储自己在EditList中的index，这方便快速找到紧挨的编辑器，index为指针，这是因为自己的下标可能在AddEditAt后变化
+  
+  因为Edit在Uedo和Redo栈中存储了自己的index，若后续下标变化，只有通过修改指针指向的值才能快速改变所有的index
+  
   为了提升效率，RCodeEdit限制自己的行，并实现了自动截取超出行到下个编辑器的功能
   
-  另外的，RCodeEdit也会将calc以及其它部分事件直接传递至EditGroup
+  另外的，RCodeEdit也会将calc以及其它部分事件直接传递至EditGroup，重写EditGroup即可享受它们
   
   为了安全，通常不建议将RCodeEdit共享，它应只绑定唯一的EditGroup，否则将导致严重后果
   
- ------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------------------------
   
 */
 	final class RCodeEdit extends CodeEdit
@@ -744,7 +774,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			lineCount = 1;
 			LineList = new ArrayList<>();
-			addEditLine();
+			addEditLine(); 
 			setOrientation(VERTICAL);
 		}
 
@@ -752,12 +782,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return LineList;
 		}
 
+		/* 在尾部添加一个EditLine */
 		public void addEditLine()
 		{
 			EditLine Line = creatEditLine();
 			LineList.add(Line);
 			addView(Line);
 		}
+		
+		/* 创建一个EditLine */
 		protected EditLine creatEditLine()
 		{
 			EditLine Line;
@@ -766,7 +799,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				Line = LineList.get(size-1);
 				Editable editor = Line.getText();
 				Line.getText().delete(editor.length()-1,editor.length());
+				//删除最后一个EditLine尾部的换行
 				Line = new EditLine(getContext(),Line);	
+				//下个EditLine继承上个的行数，并在之后继续追加
 			}
 			else{
 				Line = new EditLine(getContext());
@@ -775,9 +810,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return Line;
 		}
 
+		/* 调整行数为指定的行 */
 		@Override
 		public void reLines(int line)
 		{
+			//计算当前行数较目标行数的差距，并增加或删除行
 			int caline= line-lineCount+1;
 			if(caline<0){
 				delLines(-caline);
@@ -787,6 +824,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 		}
 
+		/* 增加多少行 */
 		@Override
 		public void addLines(int count)
 		{
@@ -796,19 +834,24 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				EditLine Line = LineList.get(LineList.size()-1);
 				int hasLine = Edit.getLineCount(Line.getText().toString());
 				int freeLine = MaxLine - hasLine;
+				//最后一个EditLine还可以插入多少行
 				if(freeLine>count){
+					//如果行数足够，则只插入count行
 					Line.addLines(count);
 					count -= count;
 				}
 				else{
+					//如果行数不足，先插入freeLine行，添加一个EditLine接着插入
 					Line.addLines(freeLine);
 					count -= freeLine;
 					addEditLine();
 				}
 			}
 			onLineChange(lineCount-count,0,count);
+			//行变化了
 		}
 
+		/* 删除多少行 */
 		@Override
 		public void delLines(int count)
 		{
@@ -818,11 +861,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				EditLine Line = LineList.get(index);
 				int hasLine = Edit.getLineCount(Line.getText().toString());
 				int delLine = hasLine>count ? count:hasLine;
+				//最后一个EditLine可以删除多少行
 				if(hasLine==delLine){
+					//如果最后一个EditLine删除完了行数，直接删除它
 					LineList.remove(index);
 					removeViewAt(index);
 				}
 				else{
+					//否则删除指定行
 					Line.delLines(delLine);
 				}
 				count-=delLine;
@@ -885,6 +931,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			LineList.get(0).clearListener();
 		}
 
+		/* 缩放所有的EditLine，包括自己 */
 		public void zoomBy(float x)
 		{
 			for(EditLine line:LineList){
@@ -902,7 +949,39 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 	}
 	
-	
+
+/*
+---------------------------------------------------------------
+
+ 通过EditManipulator直接操作Edit
+
+
+ calaIndex  将start转换为 起始编辑器下标+起始位置
+
+ calaRange  将start～end的范围转换为 起始编辑器下标+起始位置～末尾编辑器下标+末尾位置
+
+
+ dispatchTextBlock  按行分发文本块
+
+ clearText  清空EditGroup的文本
+
+ setText  设置EditGroup的文本
+
+ append  在末尾追加文本
+
+ insert  在指定位置插入文本
+
+ delete  删除指定范围内的文本
+
+ replaca  替换指定范围内的文本
+
+
+ lockThem  所有编辑器不可输入
+
+
+
+---------------------------------------------------------------
+*/
 	//通过EditBuilder直接操作Edit
 	final public class EditManipulator
 	{
@@ -1392,14 +1471,26 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		if (manipulator == null)
 			manipulator = new EditManipulator();
 	}
+
 	
-    //创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
-	public static interface EditFactory
+/*
+---------------------------------------------------------------
+
+ EditFactory
+
+ 创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
+
+ 顶多也就是configEdit还有点用
+
+---------------------------------------------------------------
+*/
+    public static interface EditFactory
 	{
 		public CodeEdit getEdit(EditGroup self)
 		
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 	}
+	
 	//默认的工厂
 	final static class Factory implements EditGroup.EditFactory
 	{
@@ -1424,6 +1515,17 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	
 	
+/*
+---------------------------------------------------------------
+
+ EditGroupListenerInfo
+
+ 每一个EditListenerInfoUser都有自己的Info，EditGroup也一样
+
+ EditGroupListenerInfo封装了CodeInfo和LineInfo，所以实际是对CodeEdit和EditLine的操作
+
+---------------------------------------------------------------
+*/
 	public static class EditGroupListenerInfo implements EditListenerInfo
 	{
 		
@@ -1494,6 +1596,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 
+/*
+---------------------------------------------------------------
+
+ 最后，让我们正确构建一个EditGroup，主要有以下三个类:
+
+ GroupCreator  初始化EditGroup所有成员
+
+ Config_hesView   配置EditGroup的子元素和成员
+
+ Config_hesSize   锁定EditGroup的大小，在适当时候改变子元素大小
+
+---------------------------------------------------------------
+*/
+
 	//一顿操作后，EditGroup所有成员都分配好了空间
 	final static class GroupCreator extends Creator<EditGroup>
 	{
@@ -1549,8 +1665,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			target. mWindow.setBackgroundColor(Colors.Bg2);
 			target. mWindow.setDivider(null);
 			target. mWindow.setOnItemClickListener(target);
-			target. hScro.setTouchInter(true);
-			//启用横向翻页
+			target. hScro.setTouchInter(true); //启用横向翻页
 		}
 		
 	}

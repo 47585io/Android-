@@ -1606,6 +1606,7 @@ Uedo和Redo
 		public EditChroot(EditChroot o){
 			set(o);
 		}
+		
 		public void set(boolean m,boolean d,boolean f,boolean c,boolean u)
 		{
 			IsModify = m;
