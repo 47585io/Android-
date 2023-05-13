@@ -62,7 +62,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 	private Int EditFlag=new Int();
     private Int EditDrawFlag=new Int();
-	private Int ShareFlag=new Int();
 	private Int historyId;
 	private CodeEdit.EditChroot root;
 	private EditGroupListenerInfo Info;
@@ -607,16 +606,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//由于只有获取焦点的Edit会自动刷新，所以第一个编辑器还要遍历所有其它编辑器，并显示
 				EditDrawFlag.set(EditList.size()); 
 				//当前还有size个编辑器要显示
-				Int id = historyId;
-				historyId=((RCodeEdit)self).index;
+				Int id =((RCodeEdit)self).index;
 				for(CodeEdit e: EditList)
 				{
-					if(((RCodeEdit)e).index.get()!=historyId.get()){
+					if(((RCodeEdit)e).index.get()!=id.get()){
 						//如果是第一个编辑器，则不用重新绘制
 						e.invalidate();
 					}
 				}
-				historyId=id;
 			}
 			EditDrawFlag.less();
 			//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
@@ -1099,11 +1096,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void setInfo(EditListenerInfo Info){
 			for(CodeEdit E:EditList)
-			    
 			    E.setInfo(Info);
 		}
 		public void setEditBuilder(EditBuilder f){
-			EditList.get(0).setEditBuilder(f);
+			for(CodeEdit E:EditList)
+			    E.setEditBuilder(f);
 		}
 		public void setWindow(ListView Window){
 			for(CodeEdit E:EditList)
@@ -1114,7 +1111,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			    E.setPool(pool);
 		}
 		public void setWordLib(Words Lib){
-			EditList.get(0).setWordLib(Lib);
+			for(CodeEdit E:EditList)
+			    E.setWordLib(Lib);
 		}
 		
 		public String getLuagua(){
@@ -1209,6 +1207,22 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			};
 			d.dofor(start,end);
 		}
+		public CharSequence subSequence(int start,int end)
+		{
+			final SpannableStringBuilder text = new SpannableStringBuilder();
+			DoForAnyOnce d= new DoForAnyOnce(){
+
+				@Override
+				public void doOnce(int start, int end, CodeEdit Edit)
+				{
+					CharSequence tmp = Edit.getText().subSequence(start,end);
+					text.append(tmp);
+				}
+
+			};
+			d.dofor(start,end);
+			return text;
+		}
 		
 		public void reDraw(int start, int end)
 		{
@@ -1253,22 +1267,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				E.GetString(b,bu);
 			}
 		}
-		public CharSequence subSequence(int start,int end)
-		{
-			final SpannableStringBuilder text = new SpannableStringBuilder();
-			DoForAnyOnce d= new DoForAnyOnce(){
-
-				@Override
-				public void doOnce(int start, int end, CodeEdit Edit)
-				{
-				   CharSequence tmp = Edit.getText().subSequence(start,end);
-				   text.append(tmp);
-				}
-
-			};
-			d.dofor(start,end);
-			return text;
-		}
 		
 		public void Format(int start, int end)
 		{
@@ -1294,12 +1292,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 		public Stack<Int> Uedo()
 		{
-			//与顺序无关的Uedo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
+			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器下标，具体顺序由编辑器内部管理
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
 			if (stack.Usize() < 1)
 				return null;
 			Stack<Int> last= stack.getLast();
-			stack.Reput(last);
+			stack.Reput(last); //哪些编辑器Uedo的，待会还是由它们去Redo
 			for (Int l:last){
 				EditList.get(l.get()).Uedo();
 			}
@@ -1312,7 +1310,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			if (stack.Rsize() < 1)
 				return null;
 			Stack<Int> next= stack.getNext();
-			stack.put (next); //哪些编辑器Uedo的，待会还是由它们去Redo
+			stack.put (next); 
 			for (Int l:next){
 				EditList.get(l.get()).Redo();
 			}
@@ -1368,8 +1366,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 					//index已经递归到了末尾
 				}
 					
-				Runnable run = new Runnable(){
-
+				Runnable run = new Runnable()
+				{
 					@Override
 					public void run()
 					{

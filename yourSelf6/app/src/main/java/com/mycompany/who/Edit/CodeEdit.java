@@ -2021,12 +2021,16 @@ Uedo和Redo
 			{
 				if(l!=null)
 				{
-					if(l instanceof EditListenerList){
+					if(l instanceof EditListenerList)
+					{
 						if(((EditListenerList)l).remove(li)){
+							//它处于一个EditListenerList中
 							return true;
 						}
 					}
-					else if(l.equals(li)){
+					else if(l.equals(li))
+					{
+						//它是某个EditListener
 						int key = Collection_Spiltor.vualeToKey(l,mlistenerS);
 						if(mlistenerS.remove(key)!=null){
 						    return true;
@@ -2057,9 +2061,12 @@ Uedo和Redo
 			if(l!=null)
 			{
 				if(l instanceof EditListenerList){
+					//目标位置已有一个EditListenerList，就直接加入
 					((EditListenerList)l).add(li);
 				}
-				else if(l instanceof EditListener){
+				else if(l instanceof EditListener)
+				{
+					//目标位置已有一个EditListener，就将它们合并
 					EditListenerList list = new myEditListenerList();
 					list.add(l);
 					list.add(li);
@@ -2068,6 +2075,7 @@ Uedo和Redo
 				}
 			}
 			else{
+				//否则直接设置
 				mlistenerS.remove(toIndex);
 			    mlistenerS.put(toIndex,li);
 			}
