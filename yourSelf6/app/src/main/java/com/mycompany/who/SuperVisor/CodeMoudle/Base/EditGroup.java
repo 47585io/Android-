@@ -55,7 +55,7 @@ import android.view.View.OnLongClickListener;
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  
 */
-public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener
+public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener,OnItemLongClickListener
 {
 	
 	public static int MaxLine=2000,OnceSubLine=0;
@@ -540,7 +540,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 
-/*-------------------  接下来让我们处理传递的事件 ------------------- */
+/*-------------------  接下来让我们处理传递的事件或其它需要实现的事件 ------------------- */
 
 	
 	/* 如果一个Edit请求打开窗口，测量并修改Window大小 */
@@ -588,6 +588,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			getWindow().setX(-9999);
 	}
 
+	/* 如果长按了编辑器，就执行默认命令 */
+	@Override
+	public boolean onLongClick(View p1)
+	{
+		EditManipulator man = getEditManipulator();
+		String command = man.MakeCommand("DEFAULT_STATE");
+		man.RunCommand(command);
+		return true;
+	}
+	
 	/* 如果点击了Window的Item就插入单词并关闭窗口 */
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
@@ -601,14 +611,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		getWindow().setX(-9999);
 	}
 
-	/* 如果长按了编辑器，就执行命令 */
+	/* 如果长按了Window的Item就跳跃到单词位置 */
 	@Override
-	public boolean onLongClick(View p1)
+	public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
-		// TODO: Implement this method
-		return false;
+		
+		return true;
 	}
-
 	
 /*
  ----------------------------------------------------------------------------------
@@ -704,7 +713,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		//其实不安全
 		return new ClipCanvaser();
 	}
-		
+	
 /*
  -------------------------------------------------------------------
 
@@ -717,6 +726,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  -------------------------------------------------------------------
 
 */
+
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev)
 	{
@@ -1772,6 +1782,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			target. mWindow.setBackgroundColor(Colors.Bg2);
 			target. mWindow.setDivider(null);
 			target. mWindow.setOnItemClickListener(target);
+			target. mWindow.setOnItemLongClickListener(target);
 			target. hScro.setTouchInter(true); //启用横向翻页
 		}
 		

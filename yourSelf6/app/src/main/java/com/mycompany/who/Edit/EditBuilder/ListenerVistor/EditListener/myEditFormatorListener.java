@@ -29,8 +29,9 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	final public void LetMeFormat(int start, int end, Editable editor)
 	{
 		try{
-			if(Enabled())
+			if(Enabled()){
 			    Format(start,end,editor);
+			}
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("Formating Error", toString()+" "+e.toString());
@@ -51,7 +52,6 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 			//您可以在上次返回一个index，这个index决定下次传入的nowIndex
 		}
 		nowIndex =  dothing_End(editor, beforeIndex, start, end);		
-		
 	}
 	
 	/* 从起始位置开始，反向把字符串中的want替换为to */

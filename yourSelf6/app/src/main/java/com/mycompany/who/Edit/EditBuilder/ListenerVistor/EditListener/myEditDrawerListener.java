@@ -29,8 +29,9 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
 	{
 		try{
-			if (Enabled())
+			if (Enabled()){
 				Draw(start,end,nodes,editor);
+			}
 		}
 		catch (Exception e){
 			Log.e("Drawing Error", toString()+" "+e.toString());

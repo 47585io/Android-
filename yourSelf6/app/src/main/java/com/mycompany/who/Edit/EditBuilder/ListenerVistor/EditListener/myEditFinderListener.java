@@ -39,8 +39,9 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	{
 		List<wordIndex> nodes = null;
 		try{
-			if(Enabled())
+			if(Enabled()){
 		        nodes = Find(start,end,text,WordLib);
+			}
 		}
 		catch (Exception e){
 			Log.e("Finding Error", toString()+" "+e.toString());
@@ -97,7 +98,8 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 						nowIndex=index;
 						break;
 					}
-				}catch(Exception e){
+				}
+				catch(Exception e){
 					Log.e("StartFind Don't know！","The total name is"+total.toString()+"  Has Error "+e.toString());
 				}
 			}
@@ -111,14 +113,16 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 			return;
 
 		int i,j;
-		for(i=0;i<nodes.size();i++){
+		for(i=0;i<nodes.size();i++)
+	    {
 			wordIndex now = nodes.get(i);
 			if(now.start==now.end){
 				//起始位置和末尾位置重复了
 				nodes.remove(i--);
 				continue;
 			}
-			for(j=i+1;j<nodes.size();j++){
+			for(j=i+1;j<nodes.size();j++)
+		    {
 				if( nodes.get(j).equals(now)){
 					//范围相同的两个node，必然会覆盖，移除更前面的
 					nodes.remove(j--);

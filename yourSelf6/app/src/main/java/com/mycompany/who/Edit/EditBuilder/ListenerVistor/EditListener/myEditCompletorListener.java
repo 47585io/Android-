@@ -37,9 +37,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	{
 		List<Icon> Adapter = null;
 		try{
-			if(Enabled())
+			if(Enabled()){
 		        Adapter=Search(text,index,wantBefore,wantAfter,before,after,Wordlib);
-		}catch(Exception e){
+			}
+		}
+		catch(Exception e){
 			Log.e("Completing Error", toString()+" "+e.toString());
 		}
 		return Adapter;
@@ -71,9 +73,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	{
 		int selection = index+word.length();
 		try{
-			if(Enabled())
+			if(Enabled()){
 		        selection= onInsertWord(editor,index,range,word);
-		}catch(Exception e){
+			}
+		}
+		catch(Exception e){
 			Log.e("Completor InsertWord Error", toString()+" "+e.toString());
 		}
 		return selection;
@@ -84,7 +88,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	
 	  editor表示编辑器内部的文本容器，index表示编辑器的光标位置，range表示旧单词的范围，word表示插入单词
 	*/
-	protected int onInsertWord(Editable editor,int index,size range,CharSequence word){
+	protected int onInsertWord(Editable editor,int index,size range,CharSequence word)
+	{
 		editor.replace(range.start, range.end, word);
 		return range.start + word.length();
 	}

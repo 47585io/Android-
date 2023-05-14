@@ -25,6 +25,7 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	
 	public static final int AfterDraw = 1;
 	
+	
 	abstract protected void beforeDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
 	//在编辑器绘制前，进行绘制
 	abstract protected void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
@@ -35,9 +36,11 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
 		try{
-			if(Enabled())
+			if(Enabled()){
 				Canvaser(self,canvas,paint,pos,flag);
-		}catch(Exception e){
+			}
+		}
+		catch(Exception e){
 			Log.e("Canvaser Error", toString()+" "+e.toString());
 		}
 	}

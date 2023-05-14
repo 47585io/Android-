@@ -14,18 +14,25 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public abstract class myEditRunnarListener extends myEditListener implements EditRunnarListener
 {
 	
+	public static final String DEFAULT_STATE = "DEFAULT_STATE";
+	
+	public static final String DEFAULT_COMMAND = "DEFAULT_COMMAND";
+	
+	
 	abstract protected String onMakeCommand(EditText self,String state)
 	//制作命令
 	abstract protected int onRunCommand(EditText self,String command)
 	//执行命令
+	
 	
 	@Override
 	public final String LetMeMake(EditText self,String state)
 	{
 		String command = "";
 		try{
-			if(Enabled())
+			if(Enabled()){
 			    command = Make(self,state) ;
+			}
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("MakeCommand Error", toString()+" "+e.toString());
@@ -43,8 +50,9 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	{
 		int flag = 0;
 		try{
-			if(Enabled())
-			    flag = Run(self,command) ;
+			if(Enabled()){
+			    flag = Run(self,command);
+			}
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("RunCommand Error", toString()+" "+e.toString());
