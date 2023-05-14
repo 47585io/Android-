@@ -1333,9 +1333,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void Uedo()
 		{
 			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器下标，具体顺序由编辑器内部管理
+			//Uedo只负责拿出这些下标，然后调用指定下标编辑器的Uedo方法
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
-			if (stack.Usize() < 1)
+			if (stack.Usize() < 1){
 				return;
+			}
 			Stack<Int> last= stack.getLast();
 			stack.Reput(last); //哪些编辑器Uedo的，待会还是由它们去Redo
 			for (Int l:last){
@@ -1345,9 +1347,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public void Redo()
 		{
-			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
-			if (stack.Rsize() < 1)
+			//与顺序无关的Redo，它只存储一轮次的Uedo的编辑器下标，具体顺序由编辑器内部管理
+			//Redo只负责拿出这些下标，然后调用指定下标编辑器的Redo方法
+			if (stack.Rsize() < 1){
 				return;
+			}
 			Stack<Int> next= stack.getNext();
 			stack.put (next); 
 			for (Int l:next){
