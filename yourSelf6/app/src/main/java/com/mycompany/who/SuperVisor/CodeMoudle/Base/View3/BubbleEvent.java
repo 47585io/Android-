@@ -2,6 +2,8 @@ package com.mycompany.who.SuperVisor.CodeMoudle.Base.View3;
 
 import android.view.*;
 
+
+/* 事件冒泡 */
 public abstract interface BubbleEvent
 {
 

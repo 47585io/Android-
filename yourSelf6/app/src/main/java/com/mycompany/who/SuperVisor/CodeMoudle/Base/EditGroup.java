@@ -104,6 +104,34 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return false;
 	}
 	
+/*
+-----------------------------------------------------------------------------------
+
+ EditGroup视图由以下内容组成:
+ 
+ 两个能滚动内容的滚动条Scro和hScro
+ 
+ 承载编辑器列表和行列表的容器ForEdit
+ 
+ 承载编辑器列表的ForEditSon
+ 
+ 承载行列表的EditLines
+ 
+ 一个能展示信息的Window，Window不会滚动
+ 
+-----------------------------------------------------------------------------------
+ 
+ EditGroup核心部分由以下内容组成:
+ 
+ 存储每个RCodeEdit的列表EditList
+ 
+ 配置每个RCodeEdit的工厂mfactory
+ 
+ 编辑器列表的操作者manipulator
+ 
+-----------------------------------------------------------------------------------
+*/
+	
 	public View getScro(){
 		return Scro;
 	}
@@ -123,10 +151,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return mWindow;
 	}
 
-	public EditManipulator getEditManipulator()
-	{
-		return manipulator;
-	}
 	public List<CodeEdit> getEditList()
 	{
 		return EditList;
@@ -135,21 +159,29 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		return EditList.get(historyId.get());
 	}
+	public EditManipulator getEditManipulator()
+	{
+		return manipulator;
+	}
+	
 	@Override
 	public ThreadPoolExecutor getPool()
 	{
 		return pool;
 	}
-	
 	@Override
 	public void setPool(ThreadPoolExecutor pool)
 	{
+		//设置pool将显著提升效率
 		this.pool = pool;
 		getEditManipulator().setPool(pool);
 	}
+	
+	/* 设置Factory将由您完成Edit的剩余的配置 */
 	public void setEditFactory(EditFactory factory)
 	{
 		if (factory != null){
+			//为了避免Edit创建错误，factory必须不为null
 		    mfactory = factory;
 		}
 	}
@@ -158,6 +190,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public EditListenerInfo getInfo()
 	{
 		if(Info!=null){
+			//在获取Info时，包装CodeEdit与EditLine的Info
 		    Info.CodeInfo=(CodeEdit.CodeEditListenerInfo) getEditManipulator().getInfo();
 		    Info.LineInfo=(EditLine.EditLineListenerInfo) EditLines.getInfo();
 		}
@@ -166,8 +199,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	@Override
 	public void setInfo(EditListenerInfo i)
 	{
-		if(i instanceof EditGroupListenerInfo){
+		//必须传递EditGroupListenerInfo及其子类，否则无法保证安全
+		if(i instanceof EditGroupListenerInfo)
+		{
 			Info=(EditGroup.EditGroupListenerInfo) i;
+			//设置自己的Info后，插包再设置CodeEdit与EditLine的Info
 			if(Info==null){
 				getEditManipulator().setInfo(null);
 				EditLines.setInfo(null);
@@ -180,12 +216,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	@Override
-	public void trimListener(){}
+	public void trimListener(){
+		//如果删除了ClipCanvaser，也可以再加入
+		Info.CodeInfo.addAListener(getOneClipCanvaser());
+	}
 	
 	@Override
-	public void clearListener(){}
+	public void clearListener(){
+		Info.clear();
+	}
 	
-
 /*
 ------------------------------------------------------------------------------------
 
@@ -245,7 +285,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Edit.setWindow(getWindow());
 		Edit.setPool(getPool());
 		Edit.setChroot(root); //设置root
-		Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
+		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
 
@@ -1536,7 +1576,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
 	}
 	
-	//默认的工厂
+	/* 默认的工厂 */
 	final static class Factory implements EditGroup.EditFactory
 	{
 		
@@ -1553,10 +1593,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 
 	}
+	
+	/* 给予创建EditFactory及其子类的机会 */
 	protected void creatEditFactory()
 	{
-		if (mfactory == null)
-			mfactory = new Factory();
+		if (mfactory == null){
+			setEditFactory(new Factory());
+		}
 	}
 	
 /*
@@ -1608,35 +1651,56 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 		@Override
-		public boolean addListenerTo(EditListener li, int toIndex){
+		public boolean addListenerTo(EditListener li, int toIndex)
+		{
+			if(CodeInfo.addListenerTo(li,toIndex)||LineInfo.addListenerTo(li,toIndex))
+				return true;
 			return false;
 		}
+		
 		@Override
-		public boolean delListenerFrom(int fromIndex){
+		public boolean delListenerFrom(int fromIndex)
+		{
+			if(CodeInfo.delListenerFrom(fromIndex)||LineInfo.delListenerFrom(fromIndex))
+				return true;
 			return false;
 		}
+		
 		@Override
-		public EditListener findAListener(int fromIndex){
-			return null;
+		public EditListener findAListener(int fromIndex)
+		{
+			EditListener li = CodeInfo.findAListener(fromIndex);
+			EditListener li2 = LineInfo.findAListener(fromIndex);
+			return li!=null?li:li2;
 		}
 		
 		@Override
 		public int size(){
-			return 0;
+			return CodeInfo.size()+LineInfo.size();
 		}
 		
 		@Override
-		public void clear(){}
+		public void clear(){
+			CodeInfo.clear();
+			LineInfo.clear();
+		}
 		
 		@Override
-		public boolean contrans(EditListener li){
+		public boolean contrans(EditListener li)
+		{
+			if(CodeInfo.contrans(li)||LineInfo.contrans(li))
+				return true;
 			return false;
 		}
 		
 	}
-	private void creatInfo(){
-		if(Info!=null)
-			Info = new EditGroupListenerInfo();
+	
+	/* 给予创建EditGroupListenerInfo及其子类的机会 */
+	protected void creatInfo()
+	{
+		if(getInfo()!=null){
+			setInfo(new EditGroupListenerInfo());
+		}
 	}
 
 /*

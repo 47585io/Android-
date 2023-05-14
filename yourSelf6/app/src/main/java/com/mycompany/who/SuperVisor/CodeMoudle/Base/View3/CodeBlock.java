@@ -6,10 +6,10 @@ import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import android.util.*;
 
+
+/*  CodeBlock给出构建一个复杂View的核心方法和核心类  */
 public abstract interface CodeBlock
 {
-
-	public abstract void loadSize(int width, int height ,int is)
 
 	public abstract void init()
 
@@ -17,8 +17,11 @@ public abstract interface CodeBlock
 
 	public abstract void ShiftConfig(Level Configer)
 
+	public abstract void loadSize(int width, int height ,int is)
+
 	public abstract Config_Size getConfig()
 
+	
 	/* 非常好用 */
 	public static abstract class Creator<T extends ViewGroup> implements Configer<T>{
 
@@ -44,6 +47,7 @@ public abstract interface CodeBlock
 		abstract public void init(T target,View root)
 
 	}
+	
 	public static abstract interface Level<T> extends Configer<T>{
 
 		public abstract void config(T target)
@@ -51,7 +55,6 @@ public abstract interface CodeBlock
 		public abstract void clearConfig(T target)
 
 	}
-
 
 	/*
 	 Config_hesSize 
@@ -77,17 +80,13 @@ public abstract interface CodeBlock
 		
 	}
 
-
 	public static class Config_Size2<T> implements Config_Size<T>
 	{
 
 		public int width,height,flag;
 
 		@Override
-		public void ConfigSelf(T target)
-		{
-			// TODO: Implement this method
-		}
+		public void ConfigSelf(T target){}
 
 		@Override
 		public void set(int width, int height, int is, T target)
@@ -100,20 +99,17 @@ public abstract interface CodeBlock
 		}
 		
 		@Override
-		public int getWidth()
-		{
+		public int getWidth(){
 			return width;
 		}
 
 		@Override
-		public int getHeight()
-		{
+		public int getHeight(){
 			return height;
 		}
 
 		@Override
-		public int getFlag()
-		{
+		public int getFlag(){
 			return flag;
 		}
 		
@@ -154,7 +150,8 @@ public abstract interface CodeBlock
 
 		public void onLand(T target,int src){}
 
-		public int CastFlag(int flag){
+		public int CastFlag(int flag)
+		{
 			//将屏幕方向转化为排列方向
 			if(flag==Configuration.ORIENTATION_PORTRAIT){
 				return LinearLayout.VERTICAL;
