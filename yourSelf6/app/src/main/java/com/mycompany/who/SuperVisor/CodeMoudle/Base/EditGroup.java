@@ -16,6 +16,7 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
 import com.mycompany.who.Edit.CodeEdit.*;
+import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.EditBuilder.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
@@ -192,6 +193,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  
  EditGroup可以快速地创建并配置一个Edit，在指定位置添加一个Edit，并将所有关联的成员同步
  
+ EditGroup在配置时除了设置一些自己的东西，还会调用EditFactory来配置，所以可以设置EditFactory
+ 
  reIndex是为了在调用AddEditAt后同步所有Edit内部的下标，这个下标会当作Uedo和Redo的关键数据
 
 ------------------------------------------------------------------------------------
@@ -257,7 +260,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 	}
 
-
 /*
 ------------------------------------------------------------------------------------
 
@@ -271,6 +273,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  
 ------------------------------------------------------------------------------------
 */
+
 	/*关键代码*/
 	protected void trimToFather()
 	{
@@ -296,7 +299,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		trimToFather();
 	}
 	
-
 /*
  --------------------------------------------------------------------------------------------------------
 
@@ -663,7 +665,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return new ClipCanvaser();
 	}
 		
-
 /*
  -------------------------------------------------------------------
 
@@ -735,7 +736,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return super.dispatchKeyEvent(event);
 	}
 	
-
 /*
  ------------------------------------------------------------------------------------
  
@@ -946,42 +946,49 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 	}
 	
-
 /*
 ---------------------------------------------------------------
 
  通过EditManipulator直接操作Edit
 
-
  calaIndex  将start转换为 起始编辑器下标+起始位置
-
  calaRange  将start～end的范围转换为 起始编辑器下标+起始位置～末尾编辑器下标+末尾位置
-
-
+ dofor  循环执行任务
+ doRecursion  递归执行任务
+ 
  dispatchTextBlock  按行分发文本块
-
- clearText  清空EditGroup的文本
-
- setText  设置EditGroup的文本
-
+ clearText/setText  清空/设置EditGroup的文本
  append  在末尾追加文本
-
  insert  在指定位置插入文本
-
  delete  删除指定范围内的文本
-
  replaca  替换指定范围内的文本
 
-
  lockThem  所有编辑器不可输入
-
-
+ zoomByEdit/zoomByScro  缩放文本/缩放画面
+ compareChroot  为所有Edit设置权限符
+ reSAll  将指定范围内的所有want替换为to 
+ SearchWord  搜索单词 
+ setSpans  设置Span 
+ clearSpan  清除范围内的指定类型的Span
+ subSpans  截取范围内的Span
+ subSequence  截取范围内的Span文本
+ 
+ reDraw  为范围内的文本染色
+ prepare/GetString  准备文本/获取文本
+ Format  格式化范围内的文本
+ Insert  插入字符
+ MakeCommand/RunCommand  制作/运行命令
+ Uedo/Redo  撤销/恢复
+ 
+ calaEditLen/calaEditLines  计算编辑器文本长度/行数
+ calaEditTop  计算指定编辑器的顶部位置
+ maxWidth/maxHeight/WAndH  EditGroup内部编辑器列表宽高
 
 ---------------------------------------------------------------
 */
-	//通过EditBuilder直接操作Edit
-	final public class EditManipulator
+	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo
 	{
+		
 		private void calaIndex(int index,size start)
 		{
 			//将start转换为 起始编辑器下标+起始位置
@@ -1002,6 +1009,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//将start～end的范围转换为 起始编辑器下标+起始位置～末尾编辑器下标+末尾位置
 			calaIndex(start,s);
 			calaIndex(end,e);
+		}
+		public void dofor(int start,int end,DoOnce once)
+		{
+			//循环执行任务
+			new DoAnyOnce().dofor(start,end,once);
+		}
+		public void doRecursion(int start,int end,DoOnce once)
+		{
+			//递归执行任务
+			new DoAnyOnce().doRecursion(start,end,once);
 		}
 		
 		/*  只管分发文本块，不管怎样，大段文本块都可给我  */
@@ -1033,6 +1050,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			String lua = getLuagua();
 			EditList.clear();
+			stack.clear();
 			ForEditSon.removeAllViews();
 			EditLines.reLines(1);
 			AddEdit("."+lua);
@@ -1065,7 +1083,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public void delete(int start,int end)
 		{
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1073,7 +1091,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				    Edit.getText().delete(start,end);
 				}
 			};
-		    d.dofor(start,end);
+		    dofor(start,end,d);
 		}
 		public void replace(int start,int end,CharSequence str){
 			delete(start,end);
@@ -1159,7 +1177,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
 			stack.put (new Stack<Int>());
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1167,7 +1185,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				    Edit.reSAll(start,end,want,to);
 				}
 			};
-			d.dofor(start,end);
+			dofor(start,end,d);
 			refreshLineAndSize();
 		}
 		
@@ -1184,7 +1202,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			for(final wordIndex node:nodes)
 			{
-				DoForAnyOnce d= new DoForAnyOnce(){
+				DoOnce d= new DoOnce(){
 					
 					@Override
 					public void doOnce(int start, int end, CodeEdit Edit)
@@ -1192,12 +1210,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 						Edit.getText().setSpan(start,end,node.span,Colors.SpanFlag);
 					}
 				};
-				d.dofor(node.start,node.end);
+				dofor(node.start,node.end,d);
 			}
 		}
 		public<T> void clearSpan(int start,int end,final Class<T>type)
 		{
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1205,12 +1223,28 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				    Edit.clearSpan(start,end,type);
 				}
 			};
-			d.dofor(start,end);
+			dofor(start,end,d);
+		}
+		public<T> wordIndex[] subSpans(int start,int end,final Class<T>type)
+		{
+			final List<wordIndex> nodes = new ArrayList<>();
+			DoOnce d= new DoOnce(){
+
+				@Override
+				public void doOnce(int start, int end, CodeEdit Edit)
+				{
+				    wordIndex[] tmp = Edit.subSpans(start,end,type);
+					nodes.addAll(Arrays.asList(tmp));
+				}
+			};
+			dofor(start,end,d);
+			wordIndex[] nodes2 = new wordIndex[nodes.size()];
+			return nodes.toArray(nodes2);
 		}
 		public CharSequence subSequence(int start,int end)
 		{
 			final SpannableStringBuilder text = new SpannableStringBuilder();
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1220,13 +1254,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				}
 
 			};
-			d.dofor(start,end);
+			dofor(start,end,d);
 			return text;
 		}
 		
 		public void reDraw(int start, int end)
 		{
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1238,13 +1272,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 						run.run();
 				}
 			};
-			d.dofor(start,end);
+			dofor(start,end,d);
 		}
 		
 		public List<Future> prepare(int start,int end)
 		{
 			final List<Future> results = new LinkedList<>();
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1259,19 +1293,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				}
 
 			};
-		    d.dofor(start,end);
+		    dofor(start,end,d);
 			return results;
 		}
-		public void GetString(StringBuilder b,SpannableStringBuilder bu){
+		public void GetString(StringBuilder b,SpannableStringBuilder bu)
+		{
 			for(CodeEdit E : EditList){
 				E.GetString(b,bu);
 			}
 		}
 		
-		public void Format(int start, int end)
+		public int Format(int start, int end)
 		{
+			int before = calaEditLen();
 			stack.put(new Stack<Int>());
-			DoForAnyOnce d= new DoForAnyOnce(){
+			DoOnce d= new DoOnce(){
 
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
@@ -1279,48 +1315,52 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 					 Edit.Format(start, end);
 				}
 			};
-			d.dofor(start,end);
+			dofor(start,end,d);
 			refreshLineAndSize();
+			return calaEditLen()-before;
+		}
+		public int Insert(int index, int count){
+			return getFocusEdit().Insert(index,count);
 		}
 		
 		public String MakeCommand(String state){
 			return getFocusEdit().MakeCommand(state);
 		}
-		public void RunCommand(String command){
-			getFocusEdit().RunCommand(command);
+		public int RunCommand(String command){
+			return getFocusEdit().RunCommand(command);
 		}
 
-		public Stack<Int> Uedo()
+		public void Uedo()
 		{
 			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器下标，具体顺序由编辑器内部管理
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
 			if (stack.Usize() < 1)
-				return null;
+				return;
 			Stack<Int> last= stack.getLast();
 			stack.Reput(last); //哪些编辑器Uedo的，待会还是由它们去Redo
 			for (Int l:last){
 				EditList.get(l.get()).Uedo();
 			}
 			refreshLineAndSize();
-			return last;
 		}
-		public Stack<Int> Redo()
+		public void Redo()
 		{
 			//与顺序无关的Redo，它只存储一轮次的修改的编辑器下标，具体顺序由编辑器内部管理
 			if (stack.Rsize() < 1)
-				return null;
+				return;
 			Stack<Int> next= stack.getNext();
 			stack.put (next); 
 			for (Int l:next){
 				EditList.get(l.get()).Redo();
 			}
 			refreshLineAndSize();
-			return next;
 		}
 
-		public abstract class DoForAnyOnce
+		/*  DoOnce的调度类，拆分范围，并逐个调用  */
+		public class DoAnyOnce
 		{
-			public void dofor(int start,int end)
+			
+			public void dofor(int start,int end,DoOnce o)
 			{
 				size s = new size();
 				size e = new size();
@@ -1328,40 +1368,40 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				
 				//单个编辑器的情况下
 				if(s.start==e.start){
-					doOnce(s.end,e.end,EditList.get(s.start));
+				    o.doOnce(s.end,e.end,EditList.get(s.start));
 					return;
 				}
 				
 				//多个编辑器的情况下
-				doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++));
+				o.doOnce(s.end, EditList.get(s.start).getText().length(), EditList.get(s.start++));
 				//第一个编辑器的开头是s.end，结尾是它的长度
 				for (;s.start < e.start;s.start++)
 				{
-					doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start));
+					o.doOnce(0, EditList.get(s.start).getText().length(), EditList.get(s.start));
 					//中间编辑器的开头是0,结尾是它的长度
 				}
-			    doOnce(0, e.end, EditList.get(e.start));
+			    o.doOnce(0, e.end, EditList.get(e.start));
 				//最后一个编辑器的开头是0，结尾是e.end
 			}
 			
-			public void doRecursion(int start,int end)
+			public void doRecursion(int start,int end,DoOnce o)
 			{
 				size s = new size();
 				size e = new size();
 				calaRange(start, end,s,e);
 				//单个编辑器的情况下
 				if(s.start==e.start){
-					doOnce(s.end,e.end,EditList.get(s.start));
+					o.doOnce(s.end,e.end,EditList.get(s.start));
 					return;
 				}
-				Recursion(s,e,s.start);
+				Recursion(s,e,s.start,o);
 			}
 			
 			/* 递归进行post，如果单个任务需要进行长时间前台操作必须使用 */
-			private void Recursion(final size s,final size e, final int index)
+			private void Recursion(final size s,final size e, final int index,final DoOnce o)
 			{
 				if(index<s.start||index>e.start){
-					doOnce(-1,-1,null);
+					o.doOnce(-1,-1,null);
 					return;
 					//index已经递归到了末尾
 				}
@@ -1390,8 +1430,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 							//中间编辑器的开头是0,结尾是它的长度
 						}
 						
-						doOnce(start,end,Edit);
-						Recursion(s,e,index+1);
+						o.doOnce(start,end,Edit);
+						Recursion(s,e,index+1,o);
 						//执行完doOnce后再调用Recursion去post下个index的任务
 						//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
 					}
@@ -1400,8 +1440,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				post(run);
 				//递归地抛并执行任务
 			}
-			
-			public abstract void doOnce(int start, int end, CodeEdit Edit)
 			
 		}	
 
@@ -1469,8 +1507,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		if (manipulator == null)
 			manipulator = new EditManipulator();
 	}
-
 	
+	/* 每次要做的任务，在DoForAnyOnce中会计算范围，并将对应的编辑器传入 */
+	public static interface DoOnce
+	{
+		public abstract void doOnce(int start, int end, CodeEdit Edit)
+	}
+
 /*
 ---------------------------------------------------------------
 
@@ -1511,7 +1554,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		if (mfactory == null)
 			mfactory = new Factory();
 	}
-	
 	
 /*
 ---------------------------------------------------------------
@@ -1592,7 +1634,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		if(Info!=null)
 			Info = new EditGroupListenerInfo();
 	}
-
 
 /*
 ---------------------------------------------------------------
