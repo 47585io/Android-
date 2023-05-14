@@ -13,6 +13,8 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.concurrent.*;
 import android.os.Handler;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
+import java.util.*;
+import com.mycompany.who.Edit.Base.Share.Share4.*;
 
 
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
@@ -51,10 +53,11 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		loadSize(Displaywidth,Displayheight,tmp);
 	}
 	
-	public void init(){
+	public void init()
+    {
 		Code = new XCode(this);
-		RejectedExecutionHandler rejected = new RejectedExecutionHandler(){
-
+		RejectedExecutionHandler rejected = new RejectedExecutionHandler()
+		{
 			@Override
 			public void rejectedExecution(Runnable p1, ThreadPoolExecutor p2)
 			{
@@ -92,24 +95,7 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/src/com/mycompany/mygame/MainActivity.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/res/layout/main.xml");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game/src/com/mycompany/mygame/MyGdxGame.java");
-		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/AndroidManifest.xml");
-		
-		/*
-		Group = (EditGroup) Code.getPages().getView(0);
-		final EditGroup.EditBuilder b = Group.getEditBuilder();
-		final List<Future> r = b.prepare(0,b.calaEditLen());
-		pool.execute(new Runnable(){
-
-				@Override
-				public void run()
-				{
-					FuturePool.FuturePop(r);
-					StringBuilder bu = new StringBuilder();
-					b.GetString(bu,null);
-					log.e(bu.toString(),true);
-				}
-			});
-		*/
+		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/AndroidManifest.xml");	
 	}
 
 	@Override
@@ -149,8 +135,6 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		return super.onOptionsItemSelected(item);
 	}
 
-
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
@@ -174,11 +158,24 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		}
 	}
 	
+	public void PreAndOutput(int index)
+	{
+		EditGroup Group = (EditGroup) Code.getPages().getChildAt(index);
+		final EditGroup.EditManipulator b = Group.getEditManipulator();
+		final List<Future> r = b.prepare(0,b.calaEditLen());
+		pool.execute(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				FuturePool.FuturePop(r);
+				StringBuilder bu = new StringBuilder();
+				b.GetString(bu,null);
+				log.e(bu.toString(),true);
+			}
+		}); 
+	}
+	
 }
-
-
-
-
-
 
 

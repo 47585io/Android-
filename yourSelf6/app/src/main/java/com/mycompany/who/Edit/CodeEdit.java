@@ -211,6 +211,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		trimListener();
 		loadWords();
 	}
+
+	@Override
+	public Edit CreatOne()
+	{
+		return new CodeEdit(getContext());
+	}
 	
 	
 /*

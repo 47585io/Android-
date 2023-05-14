@@ -38,15 +38,17 @@ public class RotateView extends View
 		Bitmap newBit = Expand(src,angle); //旋转前根据旋转角度创建一个足够大的位图
 		int i,j;
 		//遍历原位图所有点，按指定角度旋转后的坐标，将其设置到新的位图上
-		for(i=0;i<src.getWidth();i++){
+		for(i=0;i<src.getWidth();i++)
+		{
 			//获取当前列的点
-			for(j=0;j<src.getHeight();j++){
+			for(j=0;j<src.getHeight();j++)
+			{
 				//获取当前行的点
 				pos p=new pos(i,j); //确定点在位图上的位置
 				int pixel = src.getPixel(i,j); //根据位置获取位图上的点的颜色
 				p = toDiderPos(p,src); //原图上的图像坐标转换为原图上的笛卡尔坐标
 				p = rotatePixel(p,angle); //计算此点旋转后的新的坐标
-				InsertPixel(p,angle,src,newBit);
+				InsertPixel(p,angle,src,newBit); //插值
 				p = toImagePos(p,newBit); //新的图上的笛卡尔坐标转换为新的图上的图像坐标
 				newBit.setPixel((int)p.x,(int)p.y,pixel); //将颜色设置到指定的位置
 			}
@@ -172,16 +174,18 @@ public class RotateView extends View
 		int x = (int) after.x;
 		int y = (int) after.y;
 		//当前点的近似位置
-		for(int i=x-1;i<x+2;++i){
-			for(int j = y-1;j<y+2;++j){
-				//获取当前周围一圈的点
-
+		for(int i=x-1;i<x+2;++i)
+		{
+			//获取当前周围一圈的点
+			for(int j = y-1;j<y+2;++j)
+			{
 			    pos p = beforeRotatePixel(i,j,angle);
 				//每拿到一个点，就求得此点在原图上的坐标
 				p =toImagePos(p.x,p.y,src); 
 				//然后再转化为原图上的图像坐标
 				
-				if(p.x>-1&&p.y>-1&&p.x<src.getWidth()&&p.y<src.getHeight()){
+				if(p.x>-1&&p.y>-1&&p.x<src.getWidth()&&p.y<src.getHeight())
+				{
 				    int pixel = src.getPixel((int)p.x,(int)p.y);
 					//获取点的颜色
 				    p = toImagePos(i,j,newB);

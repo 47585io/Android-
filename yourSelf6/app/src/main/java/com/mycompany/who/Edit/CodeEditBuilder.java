@@ -724,9 +724,11 @@ ________________________________________________________________________________
 					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
 				}
 				
-				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
+				public int onInsertWord(Editable editor,int index,size range,CharSequence word)
+				{
 					int selection = super.onInsertWord(editor,index,range,word);
-					editor.insert(selection++,"(");
+					if(editor.charAt(selection)!='(')
+					    editor.insert(selection++,"(");
 					return selection;
 				}	
 			};
@@ -787,7 +789,7 @@ ________________________________________________________________________________
 				
 				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
 					int selection = super.onInsertWord(editor,index,range,word);
-					if (editor.toString().charAt(range.start - 1) != '<'){
+					if (editor.charAt(range.start - 1) != '<'){
 						editor.insert(range.start, "<");
 						++selection;
 					}

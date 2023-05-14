@@ -126,5 +126,23 @@ public class FuturePool
 			}
 		};
 	}
+	
+	
+	/* 使用Runnabler，便无需担心参数值无法final */
+	public static class Runnabler implements Runnable
+	{
+		private Object[] args;
+		
+		public Runnabler(Object... args){
+			this.args = args;
+		}
+		
+		public Object[] getArags(){
+			return args;
+		}
+		
+		@Override
+		public void run(){}
+	}
 
 }

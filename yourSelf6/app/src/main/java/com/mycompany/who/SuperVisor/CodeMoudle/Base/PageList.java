@@ -27,6 +27,7 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
  */
 public class PageList extends HasAll
 {
+	
 	private int nowIndex;
 	private onTabPage mtabListener;
 	private OnTouchToMove mtouchListener;
@@ -44,45 +45,53 @@ public class PageList extends HasAll
 		super.init();
 	}
 	
+	/* 添加一个命名的页面 */
 	public boolean addView(View EditPage,String name)
 	{
-		//添加一个命名的编辑器
 		int index = contrans(EditPage);
 		if (index != -1)
 			return false;
-		//如果是同一个文件，不重复加入
+		//如果是同一个页面，不重复加入
 		//EditPage.setId(EditPage.hashCode());	
 		EditPage.setTag(name);
 	    addView(EditPage);
 
-		if(mtabListener!=null)
+		if(mtabListener!=null){
 			mtabListener.onAddPage(EditPage,name);
+		}
 		tabView(getChildCount()-1);
+		//加入页面后就切换过来
 
 		return true;
 	}
+	/* 切换页面 */
 	public void tabView(int index)
 	{
 		if (index>getChildCount()-1 || index < 0){
 			return;
 		}
-        //异常情况下，什么也不做
-		//否则把编辑器切换
-		if(mtabListener!=null)
+        //异常情况下，什么也不做，否则把页面切换
+		if(mtabListener!=null){
 			mtabListener.onTabPage(index);
+		}
 		
 		nowIndex=index;
 		gotoChild(index);
 	}
+	/* 删除页面 */
 	public void removeViewAt(int index)
 	{
-		if(mtabListener!=null)
+		if(mtabListener!=null){
 			mtabListener.onDelPage(index);
+		}
 		super. removeViewAt(index);
-		if(nowIndex==index)
+		if(nowIndex==index){
+			//如果删除了当前页面，切换到上页
 			tabView(index-1);
+		}
 	}
 
+	/* 是否已存在一个页面 */
 	public int contrans(View Page)
 	{
 		int index;
@@ -96,6 +105,7 @@ public class PageList extends HasAll
 		return -1;
 	}
 
+	/* 设置页面切换监听器 */
 	public void setonTabListener(onTabPage li){
 		mtabListener=li;
 	}
@@ -105,29 +115,44 @@ public class PageList extends HasAll
 		return nowIndex;
 	}
 
-
+	/* 滚动画布到指定孑View位置 */
 	protected void gotoChild(int index)
 	{
-		if(index>=getChildCount())
+		if(index>=getChildCount()){
 			return;
+		}
 		View v = getChildAt(index);
 		int x = v.getLeft();
 		int y = v.getTop();
 		AnimatorColletion.getScroll(this,getScrollX(),getScrollY(),x,y).start();
-		//scrollTo(left,top);
 	}
 	
+	/* 通过坐标获取子元素 */
 	protected int fromPosGetChild(int x,int y)
 	{
-		for(int i=0;i<getChildCount();++i){
+		for(int i=0;i<getChildCount();++i)
+		{
 			View v = getChildAt(i);
 		    int vl=v.getLeft(),vr=v.getRight(),vt=v.getTop(),vb=v.getBottom();
-			if(x>=vl&&x<=vr&&y>=vt&&y<=vb)
+			if(x>=vl&&x<=vr&&y>=vt&&y<=vb){
 				return i;
+			}
 		}
 		return -1;
 	}
 
+	/* PageList如何感知事件滑动自己
+	
+	   以下HanderTouch提供横向和纵向两种方向的滑动和感知
+
+	   当横向时，只有onMoveToLeft与onMoveToRight生效。当纵向时，只有onMoveToTop与onMoveToDown生效
+
+	   PageList追踪手指滑动方向来判断DownBar向哪个方向慢慢打开，具体过程是:
+
+	   保留上次的坐标，与本次坐标相比计算出差距，然后将PageList的画布滑动
+	   
+	   在手指抬起来时，会根据当前已滚动到的位置进行直接页面切换
+	*/
 	static class PageTouch extends OnTouchToMove
 	{
 
@@ -135,6 +160,7 @@ public class PageList extends HasAll
 		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
 		{
 			if(((LinearLayout)p1).getOrientation()==LinearLayout.HORIZONTAL){
+				//手指向左移动，实际要向右滚动
 			    p1.scrollBy((int)dx,0);
 			}
 		}
@@ -175,24 +201,29 @@ public class PageList extends HasAll
 				int w=p.getWidth(),h=p.getHeight();	
 				int index= p.fromPosGetChild(x,y);
 				
-				if(index<0)
+				if(index<0){
 					index=0;
+				}
 				View v = p.getChildAt(index);
 				tx = v.getRight();
 				ty = v.getBottom();
 
-				if((p.getOrientation()==HORIZONTAL&& tx-x>w*0.5)||(p.getOrientation()==VERTICAL&& ty-y>h*0.5))
+				if((p.getOrientation()==HORIZONTAL&& tx-x>w*0.5)||(p.getOrientation()==VERTICAL&& ty-y>h*0.5)){
 					;
-				else if(index<p.getChildCount()-1)
+				}
+				else if(index<p.getChildCount()-1){
+					//上一页和下一页之间，哪个占用更多，就滚动到哪个，但上一页必须大于-1，下一页必须小于getChildCount()-1
 					index+=1;
-				//上一页和下一页之间，哪个占用更多，就滚动到哪个，但上一页必须大于-1，下一页必须小于getChildCount()-1
+				}
 				p.tabView(index);
 			}
 			return true;
 		}
 	}
 	
-	public void setScroll(boolean is){
+	/* 设置滚动监听 */
+	public void setScroll(boolean is)
+	{
 		if(is){
 		    mtouchListener = new PageTouch();
 		}
@@ -205,15 +236,18 @@ public class PageList extends HasAll
 	@Override
 	public void setOnTouchListener(View.OnTouchListener l)
 	{
-		if(l instanceof PageTouch)
+		if(l instanceof PageTouch){
+			//必须是PageTouch，否则无法设置
 		    super.setOnTouchListener(l);
+		}
 	}
 
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev)
 	{
-		if(mtouchListener==null)
+		if(mtouchListener==null){
 			return super.onInterceptTouchEvent(ev);
+		}
 			
 		if(ev.getActionMasked()==MotionEvent.ACTION_DOWN){
 		    mtouchListener.calc(ev); //仍应该记录坐标
@@ -225,8 +259,9 @@ public class PageList extends HasAll
 			float x = Math.abs(mtouchListener.MoveX());
 			float y = Math.abs(mtouchListener.MoveY());
 			mtouchListener.save(ev); //仍应该记录坐标
-			if((getOrientation()==HORIZONTAL && x>y) || (getOrientation()==VERTICAL && x<y))
+			if((getOrientation()==HORIZONTAL && x>y) || (getOrientation()==VERTICAL && x<y)){
 			    return true;
+			}
 		    return false;
 			//根据子元素排列方向决定翻页所需要的事件(手指滑动方向更倾向于某轴)，如果不是我要的，就不拦截
 		}
