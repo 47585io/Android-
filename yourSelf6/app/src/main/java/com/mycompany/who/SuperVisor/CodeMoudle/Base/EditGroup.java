@@ -103,6 +103,28 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		return false;
 	}
+
+	@Override
+	public void scrollTo(int x, int y)
+	{
+		//EditGroup并不滚动自己画布，而是滚动内部Scro画布
+		hScro.scrollTo(x,hScro.getScrollY());
+		Scro.scrollTo(Scro.getScrollX(),y);
+	}
+
+	@Override
+	public void scrollBy(int x, int y)
+	{
+		hScro.scrollBy(x,0);
+		Scro.scrollBy(0,y);
+	}
+	
+	public void zoomByScro(float x)
+	{
+		//EditGroup并不缩放自己画布，而是缩放内部Scro画布
+		getScro().setScaleY(x);
+		getHscro().setScaleX(x);
+	}
 	
 /*
 -----------------------------------------------------------------------------------
@@ -277,7 +299,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			CodeEdit E = EditList.get(0);
 			Edit = new RCodeEdit(getContext(),E);
 			EditListenerInfo Info= Edit.getInfo();
-			Edit.setInfo(null);  //不允许重复添加Listener
+			Edit.setInfo(null);  
+			//不允许重复添加Listener
 			mfactory. configEdit(Edit,"."+E.getLuagua(), this);
 			Edit.setInfo(Info);
 		}
@@ -348,7 +371,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
   
   因为Edit在Uedo和Redo栈中存储了自己的index，若后续下标变化，只有通过修改指针指向的值才能快速改变所有的index
   
-  为了提升效率，RCodeEdit限制自己的行，并实现了自动截取超出行到下个编辑器的功能
+  为了提升效率，RCodeEdit限制自己的行，并实现了自动截取超出行到下个编辑器的功能，避免单个编辑器文本太多
   
   另外的，RCodeEdit也会将calc以及其它部分事件直接传递至EditGroup，重写EditGroup即可享受它们
   
@@ -575,7 +598,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		else{
 			pos.end = pos.end + Edit.getLineHeight() ;
 		}
-		
 		return pos;
 	}
 
@@ -593,7 +615,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public boolean onLongClick(View p1)
 	{
 		EditManipulator man = getEditManipulator();
-		String command = man.MakeCommand("DEFAULT_STATE");
+		String command = man.MakeCommand(myEditRunnarListener.DEFAULT_STATE);
 		man.RunCommand(command);
 		return true;
 	}
@@ -611,11 +633,37 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		getWindow().setX(-9999);
 	}
 
-	/* 如果长按了Window的Item就跳跃到单词位置 */
+	/* 如果长按了Window的Item就跳跃到最近单词位置 */
 	@Override
 	public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
+		Adapter adapter = p1.getAdapter();
+		Icon icon = (Icon) adapter.getItem(p3);
+		String name = icon.getName().toString();
 		
+		EditManipulator man = getEditManipulator();
+		String text = man.subSequence(0,man.calaEditLen()).toString();
+		CodeEdit Edit = man.getFocusEdit();
+		
+		int index = Edit.getSelectionEnd();
+		int nextIndex = text.indexOf(name,index);
+		int lastIndex = text.lastIndexOf(name,index);
+	    index = nextIndex==-1 ? lastIndex : nextIndex;
+		//默认继续向后找，后面没有就向前找
+		 
+		if(index!=-1)
+		{
+			size s = new size();
+			man.calaIndex(index,s);
+			Edit = EditList.get(s.start);
+			size pos = Edit.getCursorPos(s.end);
+			
+			int x = pos.start;
+			int y = man.calaEditTop(s.start)+pos.end;
+			scrollTo(x,y);
+			Edit.setSelection(s.end,s.end+name.length());
+			//跳跃到单词位置并选中单词
+		}
 		return true;
 	}
 	
@@ -759,16 +807,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		    float is = onTouchToZoom.Iszoom(p2);
 			float scale = hScro.getScaleX();
 		    if(is>1)
-			    getEditManipulator().zoomByScro(scale+scale*0.1f);	
+			    zoomByScro(scale+scale*0.1f);	
 		    else if(is<1)
-			    getEditManipulator().zoomByScro(scale-scale*0.1f); 
+			    zoomByScro(scale-scale*0.1f); 
 		}
 		else if(p2.getActionMasked()==MotionEvent.ACTION_UP)
 		{
 			//最后手指抬起来，把scale还原以避免坐标系缩放，并将TextSize设置为真实放大倍数
 			float scale = getHscro().getScaleX();
 			getEditManipulator().zoomByEdit(scale);
-			getEditManipulator().zoomByScro(1);
+			zoomByScro(1);
 		}
 		return true;
 	}
@@ -1133,8 +1181,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public void delete(int start,int end)
 		{
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1208,11 +1256,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			EditLines.zoomBy(x);
 			trimToFather();
 		}
-		public void zoomByScro(float x)
-		{
-			getScro().setScaleY(x);
-			getHscro().setScaleX(x);
-		}
 		
 		public void compareChroot(CodeEdit.EditChroot f)
 		{
@@ -1227,8 +1270,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
 			stack.put (new Stack<Int>());
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1243,7 +1286,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			StringBuilder b = new StringBuilder();
 			for(CodeEdit E:EditList){
-				b.append(E.getText().toString());
+				b.append(E.getText());
 			}
 			return String_Splitor.indexsOf(want,b.toString());
 		}
@@ -1252,8 +1295,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			for(final wordIndex node:nodes)
 			{
-				DoOnce d= new DoOnce(){
-					
+				DoOnce d= new DoOnce()
+				{
 					@Override
 					public void doOnce(int start, int end, CodeEdit Edit)
 					{
@@ -1265,8 +1308,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public<T> void clearSpan(int start,int end,final Class<T>type)
 		{
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1278,8 +1321,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public<T> wordIndex[] subSpans(int start,int end,final Class<T>type)
 		{
 			final List<wordIndex> nodes = new ArrayList<>();
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1294,8 +1337,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public CharSequence subSequence(int start,int end)
 		{
 			final SpannableStringBuilder text = new SpannableStringBuilder();
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1310,8 +1353,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void reDraw(int start, int end)
 		{
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1328,8 +1371,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public List<Future> prepare(int start,int end)
 		{
 			final List<Future> results = new LinkedList<>();
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1357,8 +1400,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			int before = calaEditLen();
 			stack.put(new Stack<Int>());
-			DoOnce d= new DoOnce(){
-
+			DoOnce d= new DoOnce()
+			{
 				@Override
 				public void doOnce(int start, int end, CodeEdit Edit)
 				{
@@ -1813,7 +1856,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			trim(target.mWindow,WindowWidth,WindowHeight);
 		}	
 		
-		//每次change，改变我的大小，即我自己和滚动条的大小
+		//每次屏幕，旋转我和滚动条
 		public void onChange(EditGroup target,int src)
 		{
 		    trim(target,width,height);
@@ -1842,6 +1885,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 	}
+	
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig)
 	{
@@ -1852,20 +1896,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	
 	
-	/*  告诉持有我的外部类，要使用我，您必须拥有如下这些  */
-	
+/*
+  告诉持有我的外部类，要使用我，您必须拥有如下这些  
+*/
+
     public static interface IneedFactory
 	{
-
 		public void setEditFactory(EditFactory factory)
 
 		public EditFactory getEditFactory()
-
 	}
 	
 	/*  第一次知道，interface可以继承多个interface，天哪  */
 	
-	public static interface requestWithEditGroup extends IneedFactory,IlovePool{}
+	public static interface requestByEditGroup extends IneedFactory,IlovePool{}
 
 	
 }

@@ -14,7 +14,7 @@ import java.util.concurrent.*;
 import android.text.*;
 
 
-public class PageHandler extends PageList implements EditGroup.requestWithEditGroup
+public class PageHandler extends PageList implements EditGroup.requestByEditGroup
 {
 	
 	private ThreadPoolExecutor pool;

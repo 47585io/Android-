@@ -2283,6 +2283,6 @@ Uedo和Redo
 		
 	}
 	
-	public static interface requestWithCodeEdit extends IlovePool,IneedWindow,IwantLine{}
+	public static interface requestByCodeEdit extends IlovePool,IneedWindow,IwantLine{}
 
 }
