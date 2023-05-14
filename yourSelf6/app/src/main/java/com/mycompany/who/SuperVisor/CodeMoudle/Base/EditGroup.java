@@ -105,6 +105,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	@Override
+	public String toString()
+	{
+		//返回编辑器的文本
+		return getEditManipulator().subSequence(0,getEditManipulator().calaEditLen()).toString();
+	}
+	
+	@Override
 	public void scrollTo(int x, int y)
 	{
 		//EditGroup并不滚动自己画布，而是滚动内部Scro画布
@@ -1897,9 +1904,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	
 	
 /*
-  告诉持有我的外部类，要使用我，您必须拥有如下这些  
-*/
+---------------------------------------------------------------
 
+  告诉持有我的外部类，要使用我，您必须拥有如下这些 
+  
+---------------------------------------------------------------
+*/
     public static interface IneedFactory
 	{
 		public void setEditFactory(EditFactory factory)

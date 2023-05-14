@@ -30,7 +30,8 @@ public abstract class myEditLineChangeListener extends myEditListener implements
 		}
 	}
 	
-	protected void onChange(int start,int before,int after){
+	protected void onChange(int start,int before,int after)
+	{
 		onLineChange(start,before,after);
 	}
 	

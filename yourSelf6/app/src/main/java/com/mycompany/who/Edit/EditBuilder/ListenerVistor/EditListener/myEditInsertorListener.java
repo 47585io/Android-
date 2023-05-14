@@ -36,7 +36,8 @@ public abstract class myEditInsertorListener extends myEditListener implements E
 		return newIndex;
 	}
 	
-	protected int Insert(Editable editor, int nowIndex, int count){
+	protected int Insert(Editable editor, int nowIndex, int count)
+	{
 		return dothing_insert(editor, nowIndex,count);
 	}
 	

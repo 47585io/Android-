@@ -243,7 +243,7 @@ ________________________________________________________________________________
 			Object st,en;
 			
 			@Override
-			protected void onSelectionChange(int selStart, int selEnd)
+			protected void onSelectionChange(int selStart, int selEnd, Spannable editor)
 			{
 				if(lastEditor!=null){
 					lastEditor.removeSpan(st);
@@ -251,10 +251,8 @@ ________________________________________________________________________________
 					lastEditor = null;
 				}
 				
-				EditText self = getEdit();
-				if(self!=null && selStart==selEnd)
+				if(selStart==selEnd)
 				{
-					Spannable editor = self.getText();
 					String text = editor.toString();
 					String_Splitor.Bindow.checkBindow(text,"{","}",indexs);
 					size s = String_Splitor.Bindow.indexInBindowRange(selEnd,indexs);

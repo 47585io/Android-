@@ -1064,7 +1064,7 @@ Runnar
 				public boolean run(EditListener li)
 				{
 					if(li!=null && li instanceof EditSelectionChangeListener){
-						((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd);
+						((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd,getText());
 					}
 					return false;
 				}
@@ -1728,6 +1728,12 @@ Uedo和Redo
 		return true;
 	}
 
+	/* 不用再全部测量了 */
+	@Override
+	public int getLineCount()
+	{
+		return lineCount+1;
+	}
 	
 /* 
 ------------------------------------------------------------------------------------

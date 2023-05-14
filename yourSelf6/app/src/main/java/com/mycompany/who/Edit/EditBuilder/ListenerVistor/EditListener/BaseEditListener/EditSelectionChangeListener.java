@@ -4,5 +4,5 @@ import android.text.*;
 
 public abstract interface EditSelectionChangeListener
 {
-	public abstract void SelectionChange(int selStart, int selEnd)
+	public abstract void SelectionChange(int selStart, int selEnd, Spannable editor)
 }
