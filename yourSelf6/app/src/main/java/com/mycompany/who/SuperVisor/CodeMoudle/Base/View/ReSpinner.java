@@ -31,7 +31,7 @@ public class ReSpinner extends  Spinner
 		super.setSelection(position, animate);
 		if (sameSelected) {
 			// 如果选择项是Spinner当前已选择的项,则 OnItemSelectedListener并不会触发,因此这里手动触发回调
-			getOnItemSelectedListener().onItemSelected(this, getSelectedView(), position, getSelectedItemId());
+			//getOnItemSelectedListener().onItemSelected(this, getSelectedView(), position, getSelectedItemId());
 			if(slistener!=null)
 				slistener.onRepeatSelected(position);
 		}
@@ -56,7 +56,7 @@ public class ReSpinner extends  Spinner
 		boolean sameSelected = position == getSelectedItemPosition();
 		super.setSelection(position);
 		if (sameSelected) {
-			getOnItemSelectedListener().onItemSelected(this, getSelectedView(), position, getSelectedItemId());
+			//getOnItemSelectedListener().onItemSelected(this, getSelectedView(), position, getSelectedItemId());
 			if(slistener!=null)
 				slistener.onRepeatSelected(position);
 		}
@@ -67,7 +67,7 @@ public class ReSpinner extends  Spinner
 		super.onDetachedFromWindow();
 	}
 
-	public static interface onSelectionListener
+	public static abstract interface onSelectionListener
 	{
 		public abstract void onRepeatSelected(int postion)
 	}

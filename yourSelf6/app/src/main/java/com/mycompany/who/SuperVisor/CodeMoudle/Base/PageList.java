@@ -38,12 +38,6 @@ public class PageList extends HasAll
 	public PageList(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
-
-	@Override
-	public void init()
-	{
-		super.init();
-	}
 	
 	/* 添加一个命名的页面 */
 	public boolean addView(View EditPage,String name)
@@ -197,6 +191,7 @@ public class PageList extends HasAll
 				int x,y,tx,ty;
 				x = p1.getScrollX();
 				y = p1.getScrollY();
+				
 				PageList p = (PageList) p1;
 				int w=p.getWidth(),h=p.getHeight();	
 				int index= p.fromPosGetChild(x,y);
@@ -204,6 +199,7 @@ public class PageList extends HasAll
 				if(index<0){
 					index=0;
 				}
+				
 				View v = p.getChildAt(index);
 				tx = v.getRight();
 				ty = v.getBottom();
@@ -212,10 +208,10 @@ public class PageList extends HasAll
 					;
 				}
 				else if(index<p.getChildCount()-1){
-					//上一页和下一页之间，哪个占用更多，就滚动到哪个，但上一页必须大于-1，下一页必须小于getChildCount()-1
 					index+=1;
 				}
 				p.tabView(index);
+				//上一页和下一页之间，哪个占用更多，就滚动到哪个，但上一页必须大于-1，下一页必须小于getChildCount()-1
 			}
 			return true;
 		}

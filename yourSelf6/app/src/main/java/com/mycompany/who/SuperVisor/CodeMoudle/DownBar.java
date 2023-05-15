@@ -242,7 +242,7 @@ public class DownBar extends HasAll
   
   DownBarCreator和Config_hesView很简单，这里不再赘述，
   
-  Config_hesSize不仅锁定DownBar的大小，还旋转自己和子元素
+  Config_hesSize不仅锁定DownBar的大小，还旋转自己和子元素，并重新排列子元素
   
 -----------------------------------------------------------------------------------
 */

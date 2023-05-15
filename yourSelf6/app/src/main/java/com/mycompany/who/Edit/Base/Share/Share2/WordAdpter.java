@@ -43,7 +43,7 @@ public class WordAdpter extends BaseAdapter
 		return new WordAdpter(R.layout.WordIcon);
 	}
 	
-	synchronized public void addAll(Collection<Icon> file,int flag)
+	public void addAll(Collection<Icon> file,int flag)
 	{
 		if(file!=null)
 		{
@@ -51,6 +51,10 @@ public class WordAdpter extends BaseAdapter
 			indexs.add(index);
 		    mfile.addAll(file);
 		}
+	}
+	
+	public List<Icon> getList(){
+		return mfile;
 	}
 
     @Override

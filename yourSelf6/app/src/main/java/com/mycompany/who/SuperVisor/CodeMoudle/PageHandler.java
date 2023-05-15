@@ -17,7 +17,9 @@ import android.text.*;
 /*
   页面管理者
   
-  您可以往PageHandler中加入任意一个View，PageHandler将它视为一页内容
+  PageHandler可以对页面进行增加，删除，切换，配置
+  
+  PageHandler可以感知触摸并切换页面
   
 */
 public class PageHandler extends PageList implements EditGroup.requestByEditGroup
@@ -71,7 +73,9 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 
   PageHandler继承了PageList，并拓展了一些功能
   
-  无论怎样，都会在添加View时，调用ViewBuilder
+  无论怎样，都会在添加View时，调用ViewBuilder配置
+  
+  您可以手动调用requestBuildView配置一个View
   
 -----------------------------------------------------------------------------------
 */
@@ -82,7 +86,6 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		Group.config();
 		Group.setPool(pool);
 		Group.AddEdit(name);
-		Group.setTarget(this);
 		addView(Group,name);
 	}
 	
@@ -90,13 +93,41 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	public boolean addView(View v, String name)
 	{
 		if(super.addView(v,name)){
-		    if(ViewBuilder!=null)
-			    ViewBuilder.eatView(v,name,this);
+		    requestBuildView(v,name);
+			return true;
+		}
+		return false;
+	}
+	
+	/* 添加一个带标题的页面 */
+	public boolean addATitleView(View v, String name)
+	{
+		LinearLayout l = new LinearLayout(getContext());
+		l.setOrientation(VERTICAL);
+		TextView text = new TextView(getContext());
+		text.setText(name);
+		l.addView(text);
+		l.addView(v);
+		if(super.addView(l,name)){
+		    requestBuildView(v,name);
 			return true;
 		}
 		return false;
 	}
 
+	public void requestBuildView(View v, String name)
+	{
+		if(ViewBuilder!=null){
+			ViewBuilder.eatView(v,name,this);
+		}
+	}
+	public void requestBuildView(int index)
+	{
+		View v = getChildAt(index);
+		String name = (String) v.getTag();
+		requestBuildView(v,name);
+	}
+	
 /*
 
 -------------------------------------------------------------------
@@ -115,6 +146,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		View v = getChildAt(getNowIndex());
 		return ViewBuilder.onPageTouch(v,p2,this);
 	}
+	
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event)
 	{
@@ -149,14 +181,12 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	{
 
 		@Override
-		public boolean onPageKey(int keyCode, KeyEvent p2, PageHandler self)
-		{
+		public boolean onPageKey(int keyCode, KeyEvent p2, PageHandler self){
 			return false;
 		}
 		
 		@Override
-		public boolean onPageTouch(View p1, MotionEvent p2, PageHandler self)
-		{
+		public boolean onPageTouch(View p1, MotionEvent p2, PageHandler self){
 			return true;
 		}
 		
@@ -164,6 +194,8 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		public void eatView(View v, String name,PageHandler self)
 		{
 			Config_Size2 config = (HasAll.Config_Size2)(self. getConfig());
+			if(v instanceof BubbleEvent)
+				((BubbleEvent)v).setTarget(self);
 			
 			if(v instanceof ImageView)
 				eatImageView((ImageView)v,name);

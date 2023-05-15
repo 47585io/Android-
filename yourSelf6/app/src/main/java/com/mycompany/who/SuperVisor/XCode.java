@@ -86,6 +86,15 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 	public DownBar getDownBar(){
 		return mDownBar;
 	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event)
+	{
+		
+		return super.dispatchKeyEvent(event);
+	}
+	
+	
 	
 	//一顿操作后，Code所有成员都分配好了空间
 	final static class CodeCreator extends Creator<XCode>
@@ -108,18 +117,21 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 	}
 	
 	//如何配置View
-	final static class Config_hesView implements Level<XCode>
+	final static class Config_hesView implements Level<XCode>,OnItemSelectedListener,ReSpinner.onSelectionListener,PageList.onTabPage
 	{
 	
 		ReSpinner spinner;
-		PageList pages;
 		LinearLayout ButtonBar;
+		ReSpinner More;
+		PageList pages;
 		DownBar downBar;
 		XCode target;
 		
-		public Config_hesView(XCode target){
+		public Config_hesView(XCode target)
+		{
 			spinner = target.mTitle.getReSpinner();
 			ButtonBar = target.mTitle.getButtonBar();
+			More = target.mTitle.getMore();
 			pages = target.mPages;
 			downBar = target.mDownBar;
 			this.target = target;
@@ -141,48 +153,76 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 		@Override
 		public void config(XCode target)
 		{
-			onReSpinnerSelectionChange ReSpinnerListener = new onReSpinnerSelectionChange();
-			spinner.setOnItemSelectedListener(ReSpinnerListener);
-			spinner.setonSelectionListener(ReSpinnerListener);
+			spinner.setOnItemSelectedListener(this);
+			spinner.setonSelectionListener(this);
+			pages.setonTabListener(this);
+			target.setBackgroundColor(Colors.Bg);
 			
 			onButtonBarChildClick ButtonBarListener = new onButtonBarChildClick();
 			ButtonBar.getChildAt(0).setOnClickListener(ButtonBarListener.Uedo());
 			ButtonBar.getChildAt(1).setOnClickListener(ButtonBarListener.Redo());
-			
-			onPageHandlerTabPage PageHandlerListener = new onPageHandlerTabPage();
-			pages.setonTabListener(PageHandlerListener);
-		
-			target.setBackgroundColor(Colors.Bg);
+			ButtonBar.getChildAt(2).setOnClickListener(ButtonBarListener.Read());
 		}
 		
 		@Override
-		public void clearConfig(XCode target)
-		{
-			// TODO: Implement this method
+		public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4){
+			pages.tabView(p3);
 		}
 
-		
-		class onReSpinnerSelectionChange implements OnItemSelectedListener,ReSpinner.onSelectionListener
-		{	
-			@Override
-			public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4){
-				pages.tabView(p3);
-			}
-			
-			@Override
-			public void onRepeatSelected(int postion){}
+		@Override
+		public void onRepeatSelected(int postion){}
 
-			@Override
-			public void onNothingSelected(AdapterView<?> p1){}
+		@Override
+		public void onNothingSelected(AdapterView<?> p1){}
+		
+		
+		@Override
+		public void onTabPage(int index){
+			spinner.setSelection(index);
+		}
+
+		@Override
+		public void onAddPage(View v,String name)
+		{
+			name = name.substring(name.lastIndexOf('/')+1,name.length());
+			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
+			Icon icon = new Icon3(Share.getFileIcon(name),name);
+			
+			if(adapter!=null){
+				adapter.getList().add(icon);
+				adapter.notifyDataSetChanged();	
+			}
+			else{
+				List<Icon> list = new ArrayList<>();
+				list.add(icon);
+				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
+			}
+		}
+
+		@Override
+		public void onDelPage(int index)
+		{
+			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
+			if(adapter!=null){
+				adapter.getList().remove(index);
+				adapter.notifyDataSetChanged();	
+			}
 		}
 		
 		class onButtonBarChildClick
 		{
+			
 			public OnClickListener Uedo(){
 				return new Uedo();
 			}
 			public OnClickListener Redo(){
 				return new Redo();
+			}
+			public OnClickListener Read(){
+				return new Read();
+			}
+			public OnClickListener Write(){
+				return new Write();
 			}
 			
 			public class Uedo implements OnClickListener
@@ -190,8 +230,7 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 				@Override
 				public void onClick(View p1)
 				{
-					PageHandler h = target.getPages();
-					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
+					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
 					Group.getEditManipulator().Uedo();
 				}
 			}
@@ -201,43 +240,39 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 				@Override
 				public void onClick(View p1)
 				{
-					PageHandler h = target.getPages();
-					EditGroup Group = (EditGroup) h.getChildAt(h.getNowIndex());
+					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
 					Group.getEditManipulator().Redo();
+				}
+			}
+			
+			public class Read implements OnClickListener
+			{
+				@Override
+				public void onClick(View p1)
+				{
+					p1.setBackgroundResource(R.drawable.Read);
+					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
+					Group.getEditManipulator().lockThem(true);
+					p1.setOnClickListener(Write());
+				}
+		    }
+			
+			public class Write implements OnClickListener
+			{
+				@Override
+				public void onClick(View p1)
+				{
+					p1.setBackgroundResource(R.drawable.Write);
+					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
+					Group.getEditManipulator().lockThem(false);
+					p1.setOnClickListener(Read());
 				}
 			}
 			
 		}
 		
-		class onPageHandlerTabPage implements PageList.onTabPage
-		{
-
-			@Override
-			public void onTabPage(int index){}
-
-			@Override
-			public void onAddPage(View v,String name)
-			{
-				List<Icon> list = new LinkedList<>();
-				toList(list);
-				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
-			
-			}
-
-			@Override
-			public void onDelPage(int index){}
-			
-			public void toList(List<Icon> list){
-				list.clear();
-				for(int i=0;i<pages. getChildCount();++i){
-					View v = pages.getChildAt(i);
-					String name = (String) v.getTag();
-					Icon icon = new Icon3(Share.getFileIcon(name),name);
-					list.add(icon);
-				}
-			}
-			
-		}
+		@Override
+		public void clearConfig(XCode target){}
 		
 	}
 	
@@ -249,7 +284,8 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 		public Config_Size configP;
 		public Config_Size configD;
 		
-		public Config_ChildsPos(XCode target){
+		public Config_ChildsPos(XCode target)
+		{
 			configT= target.mTitle.getConfig();
 			configP= target.mPages.getConfig();
 			configD= target.mDownBar.getConfig();
@@ -259,12 +295,14 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 		@Override
 		public void set(int width, int height, int is, XCode target)
 		{
-			if(is==Configuration.ORIENTATION_PORTRAIT){
+			if(is==Configuration.ORIENTATION_PORTRAIT)
+			{
 			    configT.set(width,(int)(height*0.1),is,target.mTitle);
 			    configP.set(width,(int)(height*0.9),is,target.mPages);
 				configD.set(width,(int)(height*0.5),is,target.mDownBar);
 			}
-			else if(is==Configuration.ORIENTATION_LANDSCAPE){
+			else if(is==Configuration.ORIENTATION_LANDSCAPE)
+			{
 				configT.set(height,(int)(width*0.1),Configuration.ORIENTATION_PORTRAIT,target.mTitle);
 				configT.change(target.mTitle,is);
 				configP.set((int)(width*0.9),height,is,target.mPages);
@@ -273,14 +311,28 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 			super.set(width,height,is,target);
 		}
 
+		/* 改变孩子们 */
 		@Override
-		public void onChange(XCode target,int src)
+		public void onChange(final XCode target,int src)
 		{
 			trim(target,width,height);
 			target.setOrientation(CastFlag(flag));
 			configT.change(target.mTitle,flag);
 			configP.change(target.mPages,flag);
 			configD.change(target.mDownBar,flag);
+			
+			target. post(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					target.mPages.tabView(target.mPages.getNowIndex());
+					//在屏幕旋转后，PageList的某页面可能会重新改变大小(例如EditGroup)，但画布滚动位置还是上次的位置，此时将画布滚动到正确位置
+				}
+			});
+			//这里为什么用post?
+			//因为每次屏幕旋转，都会从Activity开始，遍历子View的onConfigurationChanged方法，在方法中才会刷新View的数据(例如宽高)
+			//用post以延迟到本次onConfigurationChanged事件之后执行tabView，使数据已经刷新
 		}
 		
 	}

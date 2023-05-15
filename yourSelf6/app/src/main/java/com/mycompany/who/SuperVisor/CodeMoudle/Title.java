@@ -46,90 +46,12 @@ public class Title extends HasAll
 	public LinearLayout getButtonBar(){
 		return ButtonBar;
 	}
-	
-	final public static class Config_hesSize extends Config_Size2<Title>
-	{
-
-		public size getSpinnerSize(){
-			if(flag==Configuration.ORIENTATION_PORTRAIT)
-				return new size((int)(width*0.6),height);
-			else if(flag==Configuration.ORIENTATION_LANDSCAPE)
-				return new size(width,(int)(height*0.6));
-			return null;
-		}
-		public size getButtonBarSize(){
-			if(flag==Configuration.ORIENTATION_PORTRAIT)
-				return new size((int)(width*0.4),height);
-			else if(flag==Configuration.ORIENTATION_LANDSCAPE)
-				return new size(width,(int)(height*0.4));
-			return null;
-		}
-		
-		@Override
-		public void onPort(Title target, int src)
-		{
-			super.onPort(target, src);
-			trim(target.Spinner,(int)(width*0.6),height);
-			trim(target.ButtonBar,(int)(width*0.4),height);
-			trim(target,width,height);
-			//竖屏，Title大小为width和height，然后分配给两个子元素一半的宽
-			
-			src = CastFlag(src);
-			target.ButtonBar.setOrientation(src);
-			target.setOrientation(src);
-			//设置排列方向为LinearLayout.HORIZONTAL
-			
-			RotateViewFromPortToLand(target.Spinner);
-			RotateViewFromPortToLand(target.ButtonBar);
-			target.setPadding(0,0,0,20);
-		}
-
-		@Override
-		public void onLand(Title target, int src)
-		{
-			super.onLand(target, src);
-			
-			//Spinner和ButtonBar先保持原来的样子，其它的可以改变大小
-			trim(target.Spinner,(int)(height*0.6),width);
-			trim(target.ButtonBar,(int)(height*0.4),width); 
-			trim(target,width,height);
-			//横屏，Title大小为改变后的width和height，然后分配给两个子元素一半的高
-			
-			RotateViewFromLandToPort(target.Spinner,(float)(height*0.6),width,(float)(height*0.4));
-			RotateViewFromLandToPort(target.ButtonBar,(float)(height*0.4),width,-width);
-			
-			src = CastFlag(src);
-			target.setOrientation(src);
-			target.setPadding(0,0,20,0);
-			//设置排列方向为LinearLayout.VERTICAL
-		}
-		public void RotateViewFromLandToPort(View v,float width,float height,float y){
-			//绕中点旋转，这个可以画个图就好理解了，注意旋转后View的坐标轴也旋转了
-			v.setPivotX(width - height/2);
-			v.setPivotY(height/2);
-			v.setRotation(-90);
-			v.setTranslationX(-(width- height));
-			v.setTranslationY(y);
-			//将View移到左边，下面
-		}
-		public void RotateViewFromPortToLand(View v){
-			//还原位置
-			v.setRotation(0);
-			v.setTranslationX(0);
-			v.setTranslationY(0);
-		}
-		
-		 /*
-		 另一个方案
-		 target.Spinner.setPivotX(width/2);
-		 target.Spinner.setPivotY(width/2);
-		 target.Spinner. setRotation(90);
-		 target.ButtonBar.setTranslationY(height/2-width);
-		 */
-		
+	public ReSpinner getMore(){
+		return More;
 	}
 	
-	//一顿操作后，Title所有成员都分配好了空间
+	
+	/* 一顿操作后，Title所有成员都分配好了空间 */
 	final static class TitleCreator extends Creator<Title>
 	{
 
@@ -140,7 +62,7 @@ public class Title extends HasAll
 		@Override
 		public void init(Title target, View root)
 		{
-			target. Configer = new Config_Level();
+			target.Configer = new Config_Level();
 			target.config = new Config_hesSize();
 			target.Spinner = root.findViewById(R.id.ReSpinner);
 			target.ButtonBar = root.findViewById(R.id.ButtonBar);
@@ -149,21 +71,15 @@ public class Title extends HasAll
 
 	}
 
-	// 如何配置View层次结构
+	/* 如何配置View层次结构 */
 	final static class Config_Level implements Level<Title>
 	{
 
 		@Override
-		public void clearConfig(Title target)
-		{
-			// TODO: Implement this method
-		}
-
+		public void clearConfig(Title target){}
 
 		@Override
-		public void config(Title target)
-		{
-		}
+		public void config(Title target){}
 
 		@Override
 		public void ConfigSelf(Title target)
@@ -173,6 +89,105 @@ public class Title extends HasAll
 			target.More.setBackgroundResource(R.drawable.More);
 		}
 		
+	}
+	
+	/* 
+	  改变Title的大小，旋转核心逻辑
+	
+	  这里要注意，Title不支持直接横屏，必须先传一个竖屏，再change
+	*/
+	final public static class Config_hesSize extends Config_Size2<Title>
+	{
+
+		public size getSpinnerSize()
+		{
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				return new size((int)(width*0.6),height);
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				return new size(width,(int)(height*0.6));
+			}
+			return null;
+		}
+		public size getButtonBarSize()
+		{
+			if(flag==Configuration.ORIENTATION_PORTRAIT){
+				return new size((int)(width*0.4),height);
+			}
+			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
+				return new size(width,(int)(height*0.4));
+			}
+			return null;
+		}
+
+		@Override
+		public void onPort(Title target, int src)
+		{
+			super.onPort(target, src);
+			trim(target.Spinner,(int)(width*0.6),height);
+			trim(target.ButtonBar,(int)(width*0.4),height);
+			trim(target,width,height);
+			//竖屏，Title大小为width和height，然后分配给两个子元素一半的宽
+
+			src = CastFlag(src);
+			target.ButtonBar.setOrientation(src);
+			target.setOrientation(src);
+			//设置排列方向为LinearLayout.HORIZONTAL
+
+			RotateViewFromPortToLand(target.Spinner);
+			RotateViewFromPortToLand(target.ButtonBar);
+			target.setPadding(0,0,0,20);
+			//还原位置并设置底部Padding
+		}
+
+		@Override
+		public void onLand(Title target, int src)
+		{
+			super.onLand(target, src);
+
+			//Spinner和ButtonBar的宽高先反着，供之后旋转
+			trim(target.Spinner,(int)(height*0.6),width);
+			trim(target.ButtonBar,(int)(height*0.4),width); 
+			trim(target,width,height);
+			//横屏，Title大小为旋转后的width和height，然后分配给两个子元素一半的高
+
+			RotateViewFromLandToPort(target.Spinner,(float)(height*0.6),width,(float)(height*0.4));
+			RotateViewFromLandToPort(target.ButtonBar,(float)(height*0.4),width,-width);
+			//旋转后，宽高旋正
+
+			src = CastFlag(src);
+			target.setOrientation(src);
+			target.setPadding(0,0,20,0);
+			//设置排列方向为LinearLayout.VERTICAL，并设置右侧Padding
+		}
+
+		public void RotateViewFromLandToPort(View v,float width,float height,float y)
+		{
+			//绕中点旋转，这个可以画个图就好理解了，注意旋转后View的坐标轴也旋转了
+			v.setPivotX(width - height/2);
+			v.setPivotY(height/2);
+			v.setRotation(-90);
+
+			v.setTranslationX(-(width- height));
+			v.setTranslationY(y);
+			//将View移到左边，下面
+		}
+		public void RotateViewFromPortToLand(View v)
+		{
+			//还原位置
+			v.setRotation(0);
+			v.setTranslationX(0);
+			v.setTranslationY(0);
+		}
+
+		/*
+		 另一个方案，会将它们旋转且翻转
+		 target.Spinner.setPivotX(width/2);
+		 target.Spinner.setPivotY(width/2);
+		 target.Spinner. setRotation(90);
+		 target.ButtonBar.setTranslationY(height/2-width);
+		 */
+
 	}
 	
 }

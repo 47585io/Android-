@@ -13,7 +13,7 @@ public class FileList
 
 	private File nowDir;
 	private List<File> sortFilelist;
-	private String End_Path="/storage/emulated/0";
+	public String End_Path="/storage/emulated/0";
 
 	public FileList(){
 		nowDir=new File(End_Path);
