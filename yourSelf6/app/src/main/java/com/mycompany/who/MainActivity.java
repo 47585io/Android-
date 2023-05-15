@@ -20,8 +20,6 @@ import com.mycompany.who.Edit.Base.Share.Share4.*;
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
 	private XCode Code;
-	private PageHandler handler;
-	private EditGroup Group;
 	protected ThreadPoolExecutor pool;
 	private myLog log=new myLog("/storage/emulated/0/Linux/share.html");
 	

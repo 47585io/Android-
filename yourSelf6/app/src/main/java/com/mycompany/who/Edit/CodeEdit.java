@@ -84,7 +84,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 
    从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数
    
-   为了兼容外部的东西，除了EditText不作为参数传递，其它的都应尽量以参数传递，例如之后的onDrawNodes，它可以给任意的Editable进行染色
+   为了兼容外部的东西，除了EditText，Listener和Words不作为参数传递，其它的都应尽量以参数传递，例如之后的onDrawNodes，它可以给任意的Editable进行染色
 
    在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
 
@@ -213,8 +213,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 
 	@Override
-	public Edit CreatOne()
-	{
+	public Edit CreatOne(){
 		return new CodeEdit(getContext());
 	}
 	
@@ -474,6 +473,8 @@ Dreawr
 	/* FindNodes不会修改文本和启动Ep，所以可以直接调用 */
 	public void onFindNodes(final int start, final int end, final String text, final List<wordIndex> nodes)
 	{
+		//当final修饰一个基本数据类型时，表示该基本数据类型的值一旦在初始化后便不能发生变化；
+		//如果final修饰一个引用类型时，则在对其初始化之后就不可以指向其它对象了，但该引用所指向的对象的内容是可以发生变化的
 		final Words WordLib = getWordLib();
 		EditListener lis = getFinder();
 		RunLi run = new RunLi()
@@ -1736,8 +1737,7 @@ Uedo和Redo
 
 	/* 不用再全部测量了 */
 	@Override
-	public int getLineCount()
-	{
+	public int getLineCount(){
 		return lineCount+1;
 	}
 	
