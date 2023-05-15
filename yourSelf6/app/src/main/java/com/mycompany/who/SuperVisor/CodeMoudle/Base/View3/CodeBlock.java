@@ -5,6 +5,8 @@ import android.view.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import android.util.*;
+import com.mycompany.who.Edit.Base.*;
+import com.mycompany.who.Edit.Base.EditMoudle.*;
 
 
 /*  CodeBlock给出构建一个复杂View的核心方法和核心类  */

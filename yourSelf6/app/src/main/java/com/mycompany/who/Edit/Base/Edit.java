@@ -10,6 +10,7 @@ import android.view.inputmethod.*;
 import android.widget.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
+import com.mycompany.who.Edit.Base.EditMoudle.*;
 import java.util.*;
 
 
@@ -21,14 +22,14 @@ import java.util.*;
  一个bug:计算字符大小很麻烦，这里只管了纯英文字符
  
  */
-public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.Sizer
+public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 {
 
 	@Override
 	public void Creat()
 	{
 		TextSize = 14;
-		config();
+		ConfigSelf(this);
 		listener = new EditText(getContext()).getKeyListener();
 	}
 
@@ -42,14 +43,14 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 	public void CopyFrom(Edit target)
 	{
 		TextSize = target.TextSize;
-		config();
+		ConfigSelf(this);
 	}
 
 	@Override
 	public void CopyTo(Edit target)
 	{
 		target.TextSize = TextSize;
-		target.config();
+		target.ConfigSelf(target);
 	}
 
 	private static KeyListener listener;
@@ -75,8 +76,9 @@ public class Edit extends EditText implements EditMoudle.Creat<Edit>,EditMoudle.
 		CopyFrom(Edit);
 	}
 
-	public void config()
-	{	
+	@Override
+	public void ConfigSelf(Edit target)
+	{
 		setTextColor(Text_Color);
 		setBackgroundColor(Background_Color);
 		setTypeface(type);

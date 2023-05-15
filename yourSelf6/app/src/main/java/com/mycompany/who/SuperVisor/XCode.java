@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import android.view.View.OnClickListener;
+import java.io.*;
 
 
 /*
@@ -111,39 +112,22 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 			target.mPages = root.findViewById(R.id.PageHandler);
 			target.mDownBar = root.findViewById(R.id.DownBar);
 			
-			target.Configer = new Config_hesView(target);
+			target.Configer = new Config_hesView();
 			target.config = new Config_ChildsPos(target);
 		}
 	}
 	
 	//如何配置View
-	final static class Config_hesView implements Level<XCode>,OnItemSelectedListener,ReSpinner.onSelectionListener,PageList.onTabPage
+	final static class Config_hesView implements Level<XCode>
 	{
-	
-		ReSpinner spinner;
-		LinearLayout ButtonBar;
-		ReSpinner More;
-		PageList pages;
-		DownBar downBar;
-		XCode target;
-		
-		public Config_hesView(XCode target)
-		{
-			spinner = target.mTitle.getReSpinner();
-			ButtonBar = target.mTitle.getButtonBar();
-			More = target.mTitle.getMore();
-			pages = target.mPages;
-			downBar = target.mDownBar;
-			this.target = target;
-		}
-		
+			
 		@Override
 		public void ConfigSelf(XCode target)
 		{
 			//把子元素也配置一遍
-			target. mTitle.setTarget(target);
-			target. mPages.setTarget(target);
-			target. mDownBar.setTarget(target);
+			target.mTitle.setTarget(target);
+			target.mPages.setTarget(target);
+			target.mDownBar.setTarget(target);
 			target.mTitle.config();
 			target.mPages.config();
 			target.mDownBar.config();
@@ -153,122 +137,8 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 		@Override
 		public void config(XCode target)
 		{
-			spinner.setOnItemSelectedListener(this);
-			spinner.setonSelectionListener(this);
-			pages.setonTabListener(this);
 			target.setBackgroundColor(Colors.Bg);
-			
-			onButtonBarChildClick ButtonBarListener = new onButtonBarChildClick();
-			ButtonBar.getChildAt(0).setOnClickListener(ButtonBarListener.Uedo());
-			ButtonBar.getChildAt(1).setOnClickListener(ButtonBarListener.Redo());
-			ButtonBar.getChildAt(2).setOnClickListener(ButtonBarListener.Read());
-		}
-		
-		@Override
-		public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4){
-			pages.tabView(p3);
-		}
-
-		@Override
-		public void onRepeatSelected(int postion){}
-
-		@Override
-		public void onNothingSelected(AdapterView<?> p1){}
-		
-		
-		@Override
-		public void onTabPage(int index){
-			spinner.setSelection(index);
-		}
-
-		@Override
-		public void onAddPage(View v,String name)
-		{
-			name = name.substring(name.lastIndexOf('/')+1,name.length());
-			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
-			Icon icon = new Icon3(Share.getFileIcon(name),name);
-			
-			if(adapter!=null){
-				adapter.getList().add(icon);
-				adapter.notifyDataSetChanged();	
-			}
-			else{
-				List<Icon> list = new ArrayList<>();
-				list.add(icon);
-				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
-			}
-		}
-
-		@Override
-		public void onDelPage(int index)
-		{
-			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
-			if(adapter!=null){
-				adapter.getList().remove(index);
-				adapter.notifyDataSetChanged();	
-			}
-		}
-		
-		class onButtonBarChildClick
-		{
-			
-			public OnClickListener Uedo(){
-				return new Uedo();
-			}
-			public OnClickListener Redo(){
-				return new Redo();
-			}
-			public OnClickListener Read(){
-				return new Read();
-			}
-			public OnClickListener Write(){
-				return new Write();
-			}
-			
-			public class Uedo implements OnClickListener
-			{
-				@Override
-				public void onClick(View p1)
-				{
-					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
-					Group.getEditManipulator().Uedo();
-				}
-			}
-			
-			public class Redo implements OnClickListener
-			{
-				@Override
-				public void onClick(View p1)
-				{
-					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
-					Group.getEditManipulator().Redo();
-				}
-			}
-			
-			public class Read implements OnClickListener
-			{
-				@Override
-				public void onClick(View p1)
-				{
-					p1.setBackgroundResource(R.drawable.Read);
-					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
-					Group.getEditManipulator().lockThem(true);
-					p1.setOnClickListener(Write());
-				}
-		    }
-			
-			public class Write implements OnClickListener
-			{
-				@Override
-				public void onClick(View p1)
-				{
-					p1.setBackgroundResource(R.drawable.Write);
-					EditGroup Group = (EditGroup) pages.getChildAt(pages.getNowIndex());
-					Group.getEditManipulator().lockThem(false);
-					p1.setOnClickListener(Read());
-				}
-			}
-			
+			new myCodeBuilder().ConfigSelf(target);
 		}
 		
 		@Override
