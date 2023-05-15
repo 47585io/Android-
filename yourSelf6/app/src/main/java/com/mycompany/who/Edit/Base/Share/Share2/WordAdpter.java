@@ -52,11 +52,11 @@ public class WordAdpter extends BaseAdapter
 		    mfile.addAll(file);
 		}
 	}
-	
+
 	public List<Icon> getList(){
 		return mfile;
 	}
-
+	
     @Override
     public int getCount() 
 	{
