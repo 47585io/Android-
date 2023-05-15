@@ -320,19 +320,6 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 			configT.change(target.mTitle,flag);
 			configP.change(target.mPages,flag);
 			configD.change(target.mDownBar,flag);
-			
-			target. post(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					target.mPages.tabView(target.mPages.getNowIndex());
-					//在屏幕旋转后，PageList的某页面可能会重新改变大小(例如EditGroup)，但画布滚动位置还是上次的位置，此时将画布滚动到正确位置
-				}
-			});
-			//这里为什么用post?
-			//因为每次屏幕旋转，都会从Activity开始，遍历子View的onConfigurationChanged方法，在方法中才会刷新View的数据(例如宽高)
-			//用post以延迟到本次onConfigurationChanged事件之后执行tabView，使数据已经刷新
 		}
 		
 	}

@@ -92,7 +92,7 @@ public class PageList extends HasAll
 		for (index = 0;index < getChildCount();index++)
 		{
 			View p = getChildAt(index);
-			if (p.getTag().equals(Page.getTag())){
+			if ( p.getTag().equals(Page.getTag())){
 			    return index;
 			}
 		}
@@ -137,7 +137,7 @@ public class PageList extends HasAll
 
 	/* PageList如何感知事件滑动自己
 	
-	   以下HanderTouch提供横向和纵向两种方向的滑动和感知
+	   以下PageTouch提供横向和纵向两种方向的滑动和感知
 
 	   当横向时，只有onMoveToLeft与onMoveToRight生效。当纵向时，只有onMoveToTop与onMoveToDown生效
 
