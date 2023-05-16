@@ -40,6 +40,12 @@ public class myCodeBuilder implements Configer<XCode>
 		db.ConfigSelf(d);
 	}
 	
+	public EditGroup getEditGroup(int index)
+	{
+		View v = p.getChildAt(index);
+		return (v instanceof EditGroup) ? (EditGroup)v:null;
+	}
+	
 	class myTitleBuilder extends TitleBuilder
 	{
 
@@ -63,17 +69,28 @@ public class myCodeBuilder implements Configer<XCode>
 		{
 			ArrayAdapter adapter = new ArrayAdapter(v.getContext(),android.R.layout.simple_list_item_1);
 			v.setAdapter(adapter);
-			adapter.addAll(new String[]{"染色","对齐","语言","设置"});
+			adapter.addAll(new String[]{"代码染色","对齐文本","选择语言","设置"});
 		}
 
 		@Override
 		public void onMenuItemSelected(AdapterView v, int pos)
 		{
+			EditGroup Group = getEditGroup(pos);
+			if(Group==null)
+				return;
+				
+			EditGroup.EditManipulator man = Group.getEditManipulator();
 			switch(pos){
 				case 0:
+					man.reDraw(0,man.calaEditLen());
+					break;
 				case 1:
+					man.Format(0, man.calaEditLen());
+					break;
 				case 2:
+					
 				case 3:
+					
 			}
 		}
 
@@ -204,7 +221,7 @@ public class myCodeBuilder implements Configer<XCode>
 			}
 		}
 		
-		class myPageFactory implements PageFactory{
+		public class myPageFactory implements PageFactory{
 			
 			
 		}
@@ -217,6 +234,7 @@ public class myCodeBuilder implements Configer<XCode>
 		@Override
 		public void loadPages(PageList pages)
 		{
+			
 		}
 		
 	}

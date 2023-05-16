@@ -100,6 +100,7 @@ public class DownBar extends HasAll
 		}
 	}
 
+	
 /*
 -----------------------------------------------------------------------------------
  
@@ -216,6 +217,7 @@ public class DownBar extends HasAll
 			}
 			invalidate();
 			return true;
+			//消耗事件以供滑动
 		}
 
 		@Override
@@ -234,6 +236,7 @@ public class DownBar extends HasAll
 		}
 
 	}
+	
 
 /*
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -261,7 +264,8 @@ public class DownBar extends HasAll
 			target.config=new Config_hesSize();
 			target.Configer=new Config_hesView();
 			target.setHander(new View(target.getContext()));
-			target.setVector(new PageList(target.getContext()));
+			//预设一个Hander
+		    target.setVector(new PageList(target.getContext()));
 		}
 	}
 

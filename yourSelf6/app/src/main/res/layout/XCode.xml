@@ -23,4 +23,10 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
 	
+	<!-- 元素顺序很重要，ViewGroup优先遍历自己后面的子元素
+		 这里FloatWindow作为一个浮动窗口游走于XCode之间，优先级最高
+		 DownBar作为一个底部栏，需要打开和关闭，所以优先级高于PageHandler和Title
+		 最后，PageHandler和Title一般不怎么变，所以优先级较低
+    -->
+	
 </merge>

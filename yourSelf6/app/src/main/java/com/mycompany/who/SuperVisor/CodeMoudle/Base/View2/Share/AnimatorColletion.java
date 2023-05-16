@@ -76,7 +76,8 @@ public class AnimatorColletion
 		return set;
 	}
 	
-	public static Animator getScroll(final View v,int fromx,int fromy,int tox,int toy){
+	public static Animator getScroll(final View v,int fromx,int fromy,int tox,int toy)
+	{
 		ValueAnimator t = ValueAnimator.ofInt(fromx,tox);
 		ValueAnimator t2 = ValueAnimator.ofInt(fromy,toy);
 		AnimatorSet set = new AnimatorSet();

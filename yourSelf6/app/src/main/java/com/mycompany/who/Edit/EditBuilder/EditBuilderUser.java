@@ -12,4 +12,8 @@ public abstract interface EditBuilderUser extends EditListenerInfoUser,WordsUser
 	public abstract void setEditBuilder(EditBuilder builder)
 	
 	public abstract EditBuilder getEditBuilder()
+	
+	public abstract void setLuagua(String Lua)
+	
+	public abstract String getLuagua()
 }

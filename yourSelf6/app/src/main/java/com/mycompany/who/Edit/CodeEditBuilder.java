@@ -2434,7 +2434,7 @@ _________________________________________
 				"class","interface","abstract","implements","extends","new",
 				"byte","char","boolean","short","int","float","long","double","void",
 				"if","else","while","do","for","switch","case","default","break","continue","return","instanceof",
-				"Override","Deprecated","SuppressWarnings","SafeVarargs","FunctionalInterface","param"
+				"Override","Deprecated","SuppressWarnings","SafeVarargs","FunctionalInterface","param","UnsupportedAppUsage"
 			};
 			
 			public static CharSequence[] constword = new String[]{"null","true","false"};

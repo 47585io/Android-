@@ -58,6 +58,7 @@ public class PageList extends HasAll
 
 		return true;
 	}
+	
 	/* 切换页面 */
 	public void tabView(int index)
 	{
@@ -72,6 +73,7 @@ public class PageList extends HasAll
 		nowIndex=index;
 		gotoChild(index);
 	}
+	
 	/* 删除页面 */
 	public void removeViewAt(int index)
 	{
@@ -135,18 +137,23 @@ public class PageList extends HasAll
 		return -1;
 	}
 
-	/* PageList如何感知事件滑动自己
+/* 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  PageList如何感知事件滑动自己
 	
-	   以下PageTouch提供横向和纵向两种方向的滑动和感知
+  以下PageTouch提供横向和纵向两种方向的滑动和感知
 
-	   当横向时，只有onMoveToLeft与onMoveToRight生效。当纵向时，只有onMoveToTop与onMoveToDown生效
+  当横向时，只有onMoveToLeft与onMoveToRight生效。当纵向时，只有onMoveToTop与onMoveToDown生效
 
-	   PageList追踪手指滑动方向来判断DownBar向哪个方向慢慢打开，具体过程是:
+  PageList追踪手指滑动方向来判断DownBar向哪个方向慢慢打开，具体过程是:
 
-	   保留上次的坐标，与本次坐标相比计算出差距，然后将PageList的画布滑动
+  保留上次的坐标，与本次坐标相比计算出差距，然后将PageList的画布滑动
 	   
-	   在手指抬起来时，会根据当前已滚动到的位置进行直接页面切换
-	*/
+  在手指抬起来时，会根据当前已滚动到的位置进行直接页面切换
+  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
 	static class PageTouch extends OnTouchToMove
 	{
 
@@ -154,7 +161,7 @@ public class PageList extends HasAll
 		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
 		{
 			if(((LinearLayout)p1).getOrientation()==LinearLayout.HORIZONTAL){
-				//手指向左移动，实际要向右滚动
+				//手指向左移动，实际要向右滚动画面
 			    p1.scrollBy((int)dx,0);
 			}
 		}
@@ -238,6 +245,8 @@ public class PageList extends HasAll
 		}
 	}
 
+	
+   /*  PageList滚动页面的拦截方案  */
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev)
 	{

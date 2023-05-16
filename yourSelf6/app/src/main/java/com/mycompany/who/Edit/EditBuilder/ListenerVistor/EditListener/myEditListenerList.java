@@ -35,6 +35,9 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 		{
 			EditListener[] list = ((EditListenerList)li).toArray();
 			for(EditListener l:list){
+				//foreach循环比普通循环高效
+				//普通遍历手段无非是对容器进行for(;i<list.size();++i)的get操作，这样遍历的坏处是每次都要让容器重新遍历寻找指定位置的元素
+				//foreach循环将主动权交给容器本身，由容器遍历自己的所有元素，在遍历过程中将元素传递过来，这样就只要遍历一次
 				lis.add(l);
 			}
 		}
@@ -83,11 +86,13 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	@Override
 	public boolean equals(Object obj)
 	{
-		if(obj instanceof EditListenerList){
+		if(obj instanceof EditListenerList)
+		{
 			EditListener[] list = ((EditListenerList)obj).toArray();
 			if(list.length==lis.size())
 			{
-			    for(int i = 0;i<lis.size();++i){
+			    for(int i = 0;i<lis.size();++i)
+				{
 				    if(!lis.get(i).equals(list[i])){
 						return false;
 					}
@@ -119,7 +124,8 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	public boolean dispatchCallBack(EditListener.RunLi Callback)
 	{
 		//遍历孑元素，并传递Callback，当有一个子元素返回true，直接返回true
-		for(EditListener li:lis){
+		for(EditListener li:lis)
+		{
 			if(Callback.run(li)){
 				return true;
 			}
