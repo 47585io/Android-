@@ -27,7 +27,7 @@ public class myEditListener extends Object implements EditListener
 	public myEditListener()
 	{
 		name="@default";
-		flag=1;
+		flag=Share.setbitTo_1(flag,Enabled_Bit);
 	}
 	public myEditListener(String name,int flag)
 	{

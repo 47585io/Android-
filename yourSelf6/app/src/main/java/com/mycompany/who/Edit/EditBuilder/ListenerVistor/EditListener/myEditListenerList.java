@@ -25,23 +25,23 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	public myEditListenerList()
 	{
 		super();
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 	}
 	public myEditListenerList(String name,int flag)
 	{
 		super(name,flag);
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 	}
 	public myEditListenerList(EditListener li)
 	{
 		super(li);
-		lis = new ArrayList<>();
+		lis = Collection_Spiltor.EmptyList();
 		if(li instanceof EditListenerList)
 		{
 			EditListener[] list = ((EditListenerList)li).toArray();
 			for(EditListener l:list)
 			{
-				//在LinkedList中，foreach循环比普通循环高效
+				//在LinkedList或其它容器中，foreach循环比普通循环高效，并且兼容性强
 				//普通遍历手段无非是对容器进行for(;i<list.size();++i)的get操作，这样遍历的坏处是每次都要让容器重新遍历寻找指定位置的元素
 				//foreach循环本质是调用itrator对容器进行遍历，它将主动权交给容器本身，由容器遍历自己的所有元素，在遍历过程中将元素传递过来，这样就只要遍历一次
 		
@@ -55,7 +55,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	@Override
 	public boolean add(EditListener p1)
 	{
-		//对于EditListenerList来说，flag规定如何加入元素
+		//对于EditListenerList来说，flag还规定如何加入元素
 		boolean is = Share.getbit(getFlag(),Add_Bit);
 		int index = is ? 0:lis.size();
 		lis.add(index,p1);
