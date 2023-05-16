@@ -24,6 +24,7 @@ import static com.mycompany.who.Edit.EditBuilder.WordsVistor.Words.*;
 import static com.mycompany.who.Edit.Base.Colors.*;
 import static com.mycompany.who.Edit.Base.Share.Share3.Collection_Spiltor.*;
 import android.text.style.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditFinderListener.*;
 
 
 /*
@@ -1152,6 +1153,7 @@ ________________________________________________________________________________
 		{
 			Info.delListenerFrom(FinderIndex);
 			Info.addListenerTo(ToLisrener(Lua),FinderIndex);
+			//Info.addListenerTo(getBindowFinder(),FinderIndex);
 		}
 
 
@@ -1175,6 +1177,11 @@ ________________________________________________________________________________
 		{
 		    return new FinderHTML();
 	    }
+		public static EditListener getBindowFinder()
+		{
+			return new BindowFinder();
+		}
+		
 
 		public static class FinderText extends myEditFinderListener
 		{
@@ -1209,6 +1216,7 @@ ________________________________________________________________________________
 				nodes.addAll(no);*/
 			}
 		}
+		
 
 		public static class FinderXML extends myEditFinderListener
 		{
@@ -1484,6 +1492,49 @@ ________________________________________________________________________________
 				return nodes;
 			}
 
+		}
+		
+		
+		/* BindowFinder */
+		public static class BindowFinder extends myEditFinderListener
+		{
+
+			@Override
+			protected void OnFindWord(List<myEditFinderListener.DoAnyThing> totalList, Words WordLib)
+			{
+
+			}
+
+			@Override
+			protected void OnFindNodes(List<myEditFinderListener.DoAnyThing> totalList, Words WordLib)
+			{
+				// TODO: Implement this method
+			}
+
+			@Override
+			protected void OnClearFindWord(Words WordLib)
+			{
+				// TODO: Implement this method
+			}
+
+			@Override
+			protected void OnClearFindNodes(int start, int end, String text, Words WordLib, List<wordIndex> nodes)
+			{
+				List<size> tmp = new ArrayList<>();
+				List<wordIndex> tmp2 = new ArrayList<>();
+				String_Splitor.Bindow.checkBindow(text,"{","}",tmp);
+				Random rand = new Random();
+				for(size s: tmp){
+					int color = rand.nextInt();
+					wordIndex node = new wordIndex(s.start,s.start+1,ForeColorSpan(color));
+					wordIndex node2 = new wordIndex(s.end,s.end+1,ForeColorSpan(color));
+					tmp2.add(node);
+					tmp2.add(node2);
+				}
+				offsetNode(tmp2,-start);
+				nodes.addAll(tmp2);
+			}
+			
 		}
 
 	}

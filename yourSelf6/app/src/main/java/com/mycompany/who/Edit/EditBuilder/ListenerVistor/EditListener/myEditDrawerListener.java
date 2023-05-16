@@ -65,19 +65,41 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		//经典开头
 		
 		//遍历node，将范围内的文本混合颜色制作成小段HTML文本，追加在大段文本之后
-		for(wordIndex node:nodes){
+		for(wordIndex node:nodes)
+		{
+			String color = Color.getDefultS();
+			String nodeStr = text.substring(node.start,node.end);
+			
 			if(node.start>index){
 			    //如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
-				arr.append(Colors.textForeColor(text.substring(index,node.start),Color.getDefultS()));
+				arr.append(Colors.textForeColor(text.substring(index,node.start),color));
 			}
-			String color = Colors.toString(((ForegroundColorSpan)node. span).getForegroundColor());
-			arr.append(Colors.textForeColor(text.substring(node.start,node.end),color));
+			
+			if(node.span instanceof ForegroundColorSpan)
+			{
+				//如果span是一个ForegroundColorSpan，就用指定的颜色染色范围内的文本
+			    color = Colors.toString(((ForegroundColorSpan)node. span).getForegroundColor());
+			    nodeStr = Colors.textForeColor(nodeStr,color);
+			}
+			else if(node.span instanceof BackgroundColorSpan)
+			{
+				//如果span是一个BackgroundColorSpan，就用指定的颜色染色范围内的背景
+				color = Colors.toString(((BackgroundColorSpan)node. span).getBackgroundColor());
+				nodeStr = Colors.textBackColor(nodeStr,color);
+			}
+			else{
+				//否则就用默认的颜色染色范围内的文本
+				nodeStr = Colors.textForeColor(nodeStr,color);
+			}
+			
+			arr.append(nodeStr);
 			index=node.end;
 		}
 		
-		if(index<text.length())
-		//如果在最后有空缺的未染色部分，在html文本中也要用默认的颜色染色
+		if(index<text.length()){
+	    	//如果在最后有空缺的未染色部分，在html文本中也要用默认的颜色染色
 			arr.append(Colors.textForeColor(text.substring(index,text.length()),Color.getDefultS()));
+		}
 		arr.append("<br><br><br><hr><br><br></body></html>");
 		//经典结尾
 		return arr.toString();
