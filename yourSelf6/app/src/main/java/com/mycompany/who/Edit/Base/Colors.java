@@ -247,14 +247,18 @@ public class Colors
 	public static CharSequence setSpans(CharSequence text,wordIndex... nodes)
 	{
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		for(wordIndex node:nodes){
+		for(int i=0;i<nodes.length;++i)
+		{
+			wordIndex node = nodes[i];
 			b.setSpan(node.span,node.start,node.end,SpanFlag);
 		}
 		return b;
 	}
 	public static void setSpans(int start,Spannable editor,wordIndex... nodes)
 	{
-		for(wordIndex node:nodes){
+		for(int i=0;i<nodes.length;++i)
+		{
+			wordIndex node = nodes[i];
 			editor.setSpan(node.span,node.start+start,node.end+start,SpanFlag);
 		}
 	}
@@ -284,7 +288,9 @@ public class Colors
 	public static<T> void clearSpan(int start,int end,Spannable editor,Class<T> type)
 	{
 		Object[] spans = editor.getSpans(start,end,type);
-		for(Object span: spans){
+		for(int i=0;i<spans.length;++i)
+		{
+			Object span = spans[i];
 		    editor.removeSpan(span);
 		}
 	}

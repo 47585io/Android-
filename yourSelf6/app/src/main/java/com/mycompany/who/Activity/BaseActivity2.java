@@ -45,8 +45,10 @@ public class BaseActivity2 extends BaseActivity
 		//鼠标收集
 	}
 
-	public static void setOnTouchListenrS(View ... S){
-		for(View s:S){
+	public static void setOnTouchListenrS(View ... S)
+	{
+		for(View s:S)
+		{
 			s.setOnTouchListener(new TouchCollector(){
 
 					@Override

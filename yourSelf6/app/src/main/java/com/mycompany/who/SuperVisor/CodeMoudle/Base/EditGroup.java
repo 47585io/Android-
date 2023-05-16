@@ -105,8 +105,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString(){
 		//返回编辑器的文本
 		return getEditManipulator().subSequence(0,getEditManipulator().calaEditLen()).toString();
 	}
@@ -1143,7 +1142,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			int nowLine = 0;
 			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
 			//每次向后截取MaxLine，并插入到刚创建的编辑器中
-			for(index+=1;index<=toIndex;++index){
+			for(index+=1;index<=toIndex;++index)
+			{
 				AddEditAt(index);
 				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,src);
 				str = text.subSequence(s.start,s.end);
@@ -1300,8 +1300,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void setSpans(wordIndex[] nodes)
 		{
-			for(final wordIndex node:nodes)
+			for(int i = 0;i<nodes.length;++i)
 			{
+				final wordIndex node=nodes[i];
 				DoOnce d= new DoOnce()
 				{
 					@Override
@@ -1802,7 +1803,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		    Group. Scro = root.findViewById(R.id.Scro);
 			Group. hScro = root.findViewById(R.id.hScro);
 		   	Group. ForEdit = root.findViewById(R.id.ForEdit);
-			//Group. EditLines = root.findViewById(R.id.EditLine);
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
 			Group.EditLines = new LineGroup(Group.getContext());	

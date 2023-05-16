@@ -53,7 +53,8 @@ public class FileList
 			f = nowDir=nowDir.getParentFile();
 			refreshDate();
 		}
-		else{
+		else
+		{
 			f = sortFilelist.get(index);
 			if(f.isDirectory()){
 				//如果是一个目录，则获取并进入目录
@@ -100,25 +101,31 @@ public class FileList
 	{
 		Array_Splitor.quickSort(list,sorter);
 		//按首字母排列
-		List<File> tmp = new ArrayList<>();
-		//将目录放在前面
-		for(File f : list){
+		List<File> files = new ArrayList<>();
+		List<File> folders = new ArrayList<>();
+		int size = list.size();
+		
+		for(int i=0;i<size;++i)
+		{
+			//整理文件和目录
+			File f = list.get(i);
 			if(f.isDirectory()){
-				tmp.add(f);
+				folders.add(f);
+			}
+		    else if(f.isFile()){
+				files.add(f);
 			}
 		}
-		for(File f : list){
-			if(f.isFile()){
-				tmp.add(f);
-			}
-		}
-		return tmp;
+		
+		//将目录放在前面
+		folders.addAll(files);
+		return folders;
 	}
 	
 	public int findAIndex(File f)
 	{
-		int i = 0;
-		for(;i<sortFilelist.size();++i)
+		int i = 0, size = sortFilelist.size();
+		for(;i<size;++i)
 		{
 			File f2 = sortFilelist.get(i);
 			if(f.isDirectory() && f2.isFile()){
@@ -149,12 +156,16 @@ public class FileList
 		{
 			char c1=p1.getName().toLowerCase().charAt(0);
 			char c2=p2.getName().toLowerCase().charAt(0);
-			if(c1>c2||c1=='.')
+			
+			if(c1>c2||c1=='.'){
 				return 1;
-			else if(c1==c2)
+			}
+			else if(c1==c2){
 				return 0;
-			else
+			}
+			else{
 				return -1;
+			}
 		}
 	}
 	

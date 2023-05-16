@@ -28,8 +28,8 @@ public class String_Splitor
 	}
 
 	public static boolean IsNumber(CharSequence src){
-		int i;
-	    for(i=0;i<src.length();i++){
+		int i,len=src.length();
+	    for(i=0;i<len;++i){
 			if(!IsNumber(src.charAt(i)))
 				return false;
 		}
@@ -44,14 +44,14 @@ public class String_Splitor
 	}
 	public static List<Integer> indexsOf(String str,String text){
 		//查找文本中所有出现str的index
-		int index = 0;
+		int index = 0,len = str.length();
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
 		    index = text.indexOf(str,index);
 			if(index==-1)
 				break;
 			indexs.add(index);
-			index+=str.length();
+			index+=len;
 		}
 		return indexs;
 	}

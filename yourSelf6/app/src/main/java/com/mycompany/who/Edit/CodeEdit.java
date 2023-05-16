@@ -1697,15 +1697,17 @@ Uedo和Redo
 	@Override
 	public void setSelection(int index)
 	{
-		if(index>=0&&index<=getText().length())
+		if(index>=0&&index<=getText().length()){
 		    super.setSelection(index);
+		}
 	}
 	
 	@Override
 	public void setSelection(int start, int stop)
 	{
-		if(start>=0&&start<=getText().length()&&stop>=0&&stop<=getText().length())
+		if(start>=0&&start<=getText().length()&&stop>=0&&stop<=getText().length()){
 		    super.setSelection(start, stop);
+		}
 	}
 
 	/* 防止post失败，导致Ep无法停止 */
@@ -1713,8 +1715,7 @@ Uedo和Redo
 	public boolean post(Runnable action)
 	{
 		while(!super.post(action)){
-			try
-			{
+			try{
 				Thread.sleep(Delayed_Millis);
 			}
 			catch (InterruptedException e){}
@@ -1726,8 +1727,7 @@ Uedo和Redo
 	public boolean postDelayed(Runnable action, long delayMillis)
 	{
 		while(!super.postDelayed(action,delayMillis)){
-			try
-			{
+			try{
 				Thread.sleep(Delayed_Millis);
 			}
 			catch (InterruptedException e){}
@@ -1737,7 +1737,8 @@ Uedo和Redo
 
 	/* 不用再全部测量了 */
 	@Override
-	public int getLineCount(){
+	public int getLineCount()
+	{
 		return lineCount+1;
 	}
 	
@@ -1755,8 +1756,8 @@ Uedo和Redo
 
 	public final Runnable ReDraw(final int start,final int end)
 	{
-		return new Runnable(){
-
+		return new Runnable()
+		{
 			@Override
 			public void run()
 			{
@@ -1766,8 +1767,8 @@ Uedo和Redo
 	}
 	public final Runnable Prepare(final int start,final int end,final String text)
 	{
-		return new Runnable(){
-
+		return new Runnable()
+		{
 			@Override
 			public void run()
 			{
@@ -1777,8 +1778,8 @@ Uedo和Redo
 	}
 	public final Runnable OpenWindow()
 	{
-		return new Runnable(){
-
+		return new Runnable()
+		{
 			@Override
 			public void run()
 			{
@@ -1817,15 +1818,19 @@ Uedo和Redo
 	{
 		++IsModify;
 		isFormat = true;
+		
+		int len = want.length();
 		Editable editor = getText();
 		String src=getText().toString().substring(start, end);
 		int nowIndex = src.lastIndexOf(want);
+		
 		while (nowIndex != -1)
 		{
 			//从起始位置开始，反向把字符串中的want替换为to
-			editor.replace(nowIndex + start, nowIndex + start + want.length(), to);	
+			editor.replace(nowIndex + start, nowIndex + start + len, to);	
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
+		
 		isFormat = false;
 		--IsModify;
 	}
@@ -1893,14 +1898,12 @@ Uedo和Redo
 	{
 
 		@Override
-		protected void init()
-		{
+		protected void init(){
 			put(onceCount);
 		}
 		
 		@Override
-		protected wordIndex creat()
-		{
+		protected wordIndex creat(){
 			return new wordIndex();
 		}
 
@@ -1913,14 +1916,12 @@ Uedo和Redo
 	{
 
 		@Override
-		protected void init()
-		{
+		protected void init(){
 			put(250);
 		}
 		
 		@Override
-		protected IconX creat()
-		{
+		protected IconX creat(){
 			return new IconX();
 		}
 		
@@ -1929,13 +1930,11 @@ Uedo和Redo
 		
 	}
 	
-	public static wordIndex getANode()
-	{
+	public static wordIndex getANode(){
 		return Ep.get();
 	}
 	
-	public static IconX getAIcon()
-	{
+	public static IconX getAIcon(){
 		return Epp.get();
 	}
 	
@@ -2131,6 +2130,7 @@ Uedo和Redo
  */
 	public static class CodeWords implements Words
 	{
+		
 		//所有单词使用Map存储，以使index可以为任意的值
 		private Map<Integer,Collection<Character>> mchars;
 		private Map<Integer,Collection<CharSequence>> mdates;

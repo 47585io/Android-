@@ -42,7 +42,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 			for(EditListener l:list)
 			{
 				//在LinkedList或其它容器中，foreach循环比普通循环高效，并且兼容性强
-				//普通遍历手段无非是对容器进行for(;i<list.size();++i)的get操作，这样遍历的坏处是每次都要让容器重新遍历寻找指定位置的元素
+				//普通遍历手段无非是对容器进行for(;i<size;++i)的get操作，这样遍历的坏处是每次都要让容器重新遍历寻找指定位置的元素
 				//foreach循环本质是调用itrator对容器进行遍历，它将主动权交给容器本身，由容器遍历自己的所有元素，在遍历过程中将元素传递过来，这样就只要遍历一次
 		
 				//在ArrayList中，foreach循环比普通循环低效

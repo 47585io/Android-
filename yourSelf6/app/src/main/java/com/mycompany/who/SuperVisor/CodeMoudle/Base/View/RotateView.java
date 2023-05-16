@@ -38,10 +38,10 @@ public class RotateView extends View
 		Bitmap newBit = Expand(src,angle); //旋转前根据旋转角度创建一个足够大的位图
 		int i,j;
 		//遍历原位图所有点，按指定角度旋转后的坐标，将其设置到新的位图上
-		for(i=0;i<src.getWidth();i++)
+		for(i=0;i<src.getWidth();++i)
 		{
 			//获取当前列的点
-			for(j=0;j<src.getHeight();j++)
+			for(j=0;j<src.getHeight();++j)
 			{
 				//获取当前行的点
 				pos p=new pos(i,j); //确定点在位图上的位置

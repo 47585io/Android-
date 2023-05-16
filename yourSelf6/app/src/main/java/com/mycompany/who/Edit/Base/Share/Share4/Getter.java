@@ -101,7 +101,7 @@ public class Getter
 			return false;
 		if(src.length==0)
 			return true;
-		for(i=0;i<src.length;i++){
+		for(i=0;i<src.length;++i){
 			Class d = dst[i];
 			Class s = src[i];
 			if(!(Arg(d,s)||Arg(s,d)))

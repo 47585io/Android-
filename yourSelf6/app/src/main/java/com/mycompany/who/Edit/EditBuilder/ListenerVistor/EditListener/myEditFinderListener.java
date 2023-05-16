@@ -112,8 +112,8 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 		if(nodes==null)
 			return;
 
-		int i,j;
-		for(i=0;i<nodes.size();i++)
+		int i,j,size=nodes.size();
+		for(i=0;i<size;i++)
 	    {
 			wordIndex now = nodes.get(i);
 			if(now.start==now.end){
@@ -121,7 +121,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 				nodes.remove(i--);
 				continue;
 			}
-			for(j=i+1;j<nodes.size();j++)
+			for(j=i+1;j<size;j++)
 		    {
 				if( nodes.get(j).equals(now)){
 					//范围相同的两个node，必然会覆盖，移除更前面的

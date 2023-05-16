@@ -59,9 +59,9 @@ public class Backgroud extends Drawable
 		Bitmap newbit= bit.copy(Bitmap.Config.ARGB_8888,true);
 		int i,j; 
 		try{
-			for(i=0;i<newbit.getHeight();i++)
+			for(i=0;i<newbit.getHeight();++i)
 			{
-				for(j=0;j<newbit.getWidth();j++)
+				for(j=0;j<newbit.getWidth();++j)
 				{
 					int c= newbit.getPixel(j,i);
 					if(c==color)
