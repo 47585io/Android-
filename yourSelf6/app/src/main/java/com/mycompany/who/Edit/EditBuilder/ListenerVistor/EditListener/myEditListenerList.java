@@ -53,14 +53,6 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	}
 	
 	@Override
-	public int size(){
-		return lis.size();
-	}
-	@Override
-	public boolean contains(EditListener p1){
-		return lis.contains(p1);
-	}
-	@Override
 	public boolean add(EditListener p1)
 	{
 		//对于EditListenerList来说，flag规定如何加入元素
@@ -76,6 +68,14 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	@Override
 	public void clear(){
 		lis.clear();
+	}
+	@Override
+	public int size(){
+		return lis.size();
+	}
+	@Override
+	public boolean contains(EditListener p1){
+		return lis.contains(p1);
 	}
 	@Override
 	public EditListener[] toArray()

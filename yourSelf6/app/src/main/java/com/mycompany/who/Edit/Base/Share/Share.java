@@ -25,7 +25,7 @@ public class Share
 		return x&=~(1<<y);
 	}
 	public static boolean getbit(int x,byte y){
-		int tmp= ((x) >> (y)&1);
+		int tmp= (x>>y)&1;
 		return tmp==1;
 	}
 
