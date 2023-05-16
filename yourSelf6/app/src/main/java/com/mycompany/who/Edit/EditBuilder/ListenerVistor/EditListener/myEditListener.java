@@ -29,10 +29,10 @@ public class myEditListener extends Object implements EditListener
 		name="@default";
 		flag=1;
 	}
-	public myEditListener(String name,boolean e)
+	public myEditListener(String name,int flag)
 	{
 		this.name=name;
-		flag=1;
+		this.flag=flag;
 	}
 	public myEditListener(EditListener li)
 	{

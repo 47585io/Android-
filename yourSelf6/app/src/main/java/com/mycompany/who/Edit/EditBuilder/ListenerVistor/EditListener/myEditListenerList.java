@@ -27,9 +27,9 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 		super();
 		lis = new ArrayList<>();
 	}
-	public myEditListenerList(String name,boolean e)
+	public myEditListenerList(String name,int flag)
 	{
-		super(name,e);
+		super(name,flag);
 		lis = new ArrayList<>();
 	}
 	public myEditListenerList(EditListener li)
