@@ -36,7 +36,7 @@ public class Collection_Spiltor
 	}
 	
 	public static List EmptyList(){
-		return Collections.synchronizedList(new ArrayList());
+		return Collections.synchronizedList(new LinkedList());
 	}
 	public static Map EmptyMap(){
 		return Collections.synchronizedMap(new HashMap());

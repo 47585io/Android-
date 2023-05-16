@@ -16,6 +16,9 @@ import com.mycompany.who.Edit.Base.Share.*;
 public class myEditListener extends Object implements EditListener
 {
 	
+	public static final byte Enabled_Bit = 0;
+	//监听器启用位
+	
 	private int flag;
 	private String name;
 	private EditText self;
@@ -65,7 +68,8 @@ public class myEditListener extends Object implements EditListener
 	@Override
 	public boolean equals(Object obj)
 	{
-		if(obj instanceof EditListener){
+		if(obj instanceof EditListener)
+		{
 			EditListener li = (EditListener) obj;
 			if(getName().equals(li.getName()) && li.getFlag()==getFlag() && li.getEdit().equals(getEdit())){
 				return true;
@@ -75,25 +79,21 @@ public class myEditListener extends Object implements EditListener
 	}
 	
 	@Override
-	public String toString()
-	{
+	public String toString(){
 		return "监听器："+name+"  ;类型: "+getClass().getName();
 	}
 	
-	public boolean Enabled()
-	{
-		return Share.getbit(flag,(byte)0);
+	public boolean Enabled(){
+		return Share.getbit(flag,Enabled_Bit);
 	}
 	
 	@Override
-	public EditListener findListenerByName(String name)
-	{
+	public EditListener findListenerByName(String name){
 	    return this.name.equals(name) ? this:null;
 	}
 	
 	@Override
-	public boolean dispatchCallBack(EditListener.RunLi Callback)
-	{
+	public boolean dispatchCallBack(EditListener.RunLi Callback){
 		return Callback.run(this);
 	}
 	
