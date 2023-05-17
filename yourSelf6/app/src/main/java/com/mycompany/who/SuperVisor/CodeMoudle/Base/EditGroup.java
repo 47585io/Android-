@@ -478,13 +478,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			/*关键代码*/
 			int lineCount= getLineCount();
-			
 			if (lineCount > MaxLine)
 			{
 				boolean need = true;
 				Editable editor = getText();
 				int selfIndex = index.get();		
-				size j = subLines(MaxLine + 1 - OnceSubLine); 
+				int subLineStart = MaxLine + 1 - OnceSubLine;
+				size j = subLines(subLineStart); 
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				//MaxLine+1是指从MaxLine之后的一行的起始开始截
 				j.start--;
@@ -506,7 +506,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
-				if(CodeEdit.getLineCount(src.toString())>MaxLine){
+				if(lineCount-subLineStart > MaxLine){
 					//大段文本需要插入，必须使用dispatchTextBlock
 					j.set(selfIndex,editor.length());
 					getEditManipulator().dispatchTextBlock(j,src);
@@ -536,7 +536,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				//否则正常调用
 			}
-			
 		}
 	
 		public EditGroup getEditGroup()
@@ -1619,6 +1618,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public abstract void doOnce(int start, int end, CodeEdit Edit)
 	}
 
+	
 /*
 ---------------------------------------------------------------
 
