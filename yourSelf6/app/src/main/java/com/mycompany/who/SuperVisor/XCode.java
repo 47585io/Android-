@@ -15,12 +15,12 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Share.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import android.view.View.OnClickListener;
 import java.io.*;
+import com.mycompany.who.SuperVisor.Share.*;
 
 
 /*

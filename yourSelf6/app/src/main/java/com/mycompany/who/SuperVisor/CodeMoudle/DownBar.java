@@ -76,6 +76,12 @@ public class DownBar extends HasAll
 		//在父View的onTouchEvent中，如果触摸在指定的区域，都先调用hander的onTouchEvent
 		//在hander的onTouchEvent中，会先调用自己的onTouchListener的方法
 	}
+	public View getHander(){
+		return hander;
+	}
+	public View getVector(){
+		return vector;
+	}
 
 	public void open()
 	{

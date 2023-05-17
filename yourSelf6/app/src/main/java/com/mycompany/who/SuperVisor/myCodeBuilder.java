@@ -11,6 +11,11 @@ import com.mycompany.who.SuperVisor.CodeMoudleBuilder.*;
 import java.util.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import android.view.View.*;
+import com.mycompany.who.SuperVisor.CodeMoudleBuilder.CodeMoudleBuilderInterface.*;
+import com.mycompany.who.SuperVisor.Share.*;
+import android.content.*;
+import android.widget.AdapterView.*;
+import java.io.*;
 
 
 public class myCodeBuilder implements Configer<XCode>
@@ -221,19 +226,125 @@ public class myCodeBuilder implements Configer<XCode>
 			}
 		}
 		
-		public class myPageFactory implements PageFactory{
-			
-			
-		}
-		
 	}
 	
-	class myDownBarBuilder extends DownBarBuilder
+	class myDownBarBuilder extends DownBarBuilder 
 	{
+	
+		ListView fileList;
+		myPageFactory mfactory;
 
 		@Override
 		public void loadPages(PageList pages)
 		{
+			mfactory = new myPageFactory();
+			fileList = mfactory.getFileList(pages.getContext());
+			pages.addView(fileList);
+		}
+		
+		public class myPageFactory implements PageHandlerBuilderInterface.PageFactory
+		{
+			
+			public ListView getFileList(Context cont)
+			{
+				return new FileListView(cont);
+			}
+			
+			/*
+			  在ListView中，拦截点击事件，每次自己被点击，就寻找指定坐标的子View，并记录它，它的position和id
+			  
+			  如果长按了，则一定也是对记录的Item的长按
+			*/
+			public abstract class autoChangeList extends ListView implements OnItemClickListener,OnItemLongClickListener
+			{
+				
+				public autoChangeList(Context cont){
+					super(cont);
+				}
+
+				@Override
+				public boolean performItemClick(View view, int position, long id)
+				{
+					onItemClick(this,view,position,id);
+					return super.performItemClick(view, position, id);
+				}
+
+				@Override
+				public boolean performLongClick()
+				{
+					onItemLongClick(this,getSelectedView(),getSelectedItemPosition(),getSelectedItemId());
+					super.performLongClick();
+					return true;
+				}
+				
+			}
+			
+			public class FileListView extends autoChangeList implements FileList.FileChangeLisrener
+			{
+
+				FileList files = new FileList();
+				
+				public FileListView(Context cont)
+				{
+					super(cont);
+					setAdapter(WordAdpter.getDefultAdapter());
+					files.setFileChangeListener(this);
+					files.refreshDate();
+				}
+				
+				@Override
+				public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					files.getFile(p3-1);
+				}
+
+				@Override
+				public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					// TODO: Implement this method
+					return false;
+				}
+				
+				@Override
+				public void Refresh(List<File> files)
+				{
+					WordAdpter adapter = (WordAdpter) getAdapter();
+					List<Icon> list = adapter.getList();
+					toList(files,list);
+					list.add(0,new Icon3(R.drawable.folder_open,"..."));
+					adapter.notifyDataSetChanged();
+				}
+
+				@Override
+				public void addAFile(List<File> files, int index)
+				{
+					
+				}
+
+				@Override
+				public void delAFile(List<File> files, int index)
+				{
+					// TODO: Implement this method
+				}
+
+				@Override
+				public void Rename(List<File> files, int index)
+				{
+					// TODO: Implement this method
+				}
+				
+				public void toList(List<File> files, List<Icon> list)
+				{
+					list.clear();
+					for(File f:files)
+					{
+						String name = f.getName();
+						Icon icon = new Icon3(Share.getFileIcon(f),name);
+						list.add(icon);
+					}
+				}
+				
+			}
 			
 		}
 		

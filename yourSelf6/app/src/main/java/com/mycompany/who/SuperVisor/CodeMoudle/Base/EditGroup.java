@@ -1863,7 +1863,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			trim(target.mWindow,WindowWidth,WindowHeight);
 		}	
 		
-		//每次屏幕，旋转我和滚动条
+		//每次屏幕旋转，旋转我和滚动条
 		public void onChange(EditGroup target,int src)
 		{
 		    trim(target,width,height);

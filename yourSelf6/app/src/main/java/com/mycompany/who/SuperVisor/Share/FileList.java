@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.CodeMoudle.Share;
+package com.mycompany.who.SuperVisor.Share;
 
 import android.view.*;
 import android.widget.*;
@@ -39,7 +39,6 @@ public class FileList
 	public void setFileChangeListener(FileChangeLisrener li){
 		mFileListener = li;
 	}
-	
 	public int getSize(){
 		return sortFilelist.size();
 	}
@@ -70,7 +69,11 @@ public class FileList
 		File f= new File(nowDir.getPath()+Path_Spilt+name);
 		try{
 			f.createNewFile();
-			sortFilelist.add(findAIndex(f),f);
+			int index = findAIndex(f);
+			sortFilelist.add(index,f);
+			if(mFileListener!=null){
+				mFileListener.addAFile(sortFilelist,index);
+			}
 		}
 		catch (IOException e){}
 	}
@@ -78,23 +81,36 @@ public class FileList
 	{
 		sortFilelist.get(index).delete();
 		sortFilelist.remove(index);
+		if(mFileListener!=null){
+			mFileListener.delAFile(sortFilelist,index);
+		}
 	}
 	public void addAFolder(String name)
 	{
 		File f=new File(nowDir.getPath()+Path_Spilt+name);
 		f.mkdir();
-		sortFilelist.add(findAIndex(f),f);
+		int index = findAIndex(f);
+		sortFilelist.add(index,f);
+		if(mFileListener!=null){
+			mFileListener.addAFile(sortFilelist,index);
+		}
 	}
 	public void Rename(int index,String name)
 	{
 		File f=new File(nowDir.getPath()+Path_Spilt+name);
 		sortFilelist.get(index).renameTo(f);
+		if(mFileListener!=null){
+			mFileListener.Rename(sortFilelist,index);
+		}
 	}
 	
 	public void refreshDate()
 	{
 		sortFilelist = Array_Splitor.toList(nowDir.listFiles());
 		sortFilelist = sortFile(sortFilelist);
+		if(mFileListener!=null){
+			mFileListener.Refresh(sortFilelist);
+		}
 	}
 	
 	public List<File> sortFile(List<File> list)
@@ -173,11 +189,11 @@ public class FileList
 		
 		public void Refresh(List<File> files)
 		
-		public void addAFile(List<File> files,File f)
+		public void addAFile(List<File> files,int index)
 		
-		public void delAFile(List<File> files,File f)
+		public void delAFile(List<File> files,int index)
 		
-		public void Rename(File f,File f2)
+		public void Rename(List<File> files,int index)
 		
 	}
 

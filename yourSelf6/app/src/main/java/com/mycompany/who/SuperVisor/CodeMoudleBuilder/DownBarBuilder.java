@@ -9,8 +9,11 @@ public abstract class DownBarBuilder implements DownBarBuilderInterface
 	@Override
 	public void ConfigSelf(DownBar target)
 	{
-		PageList pages = new PageList(target.getContext());
-		//target.setVector(pages);
+		PageList pages = (PageList) target.getVector();
+		if(pages==null){
+			pages = new PageList(target.getContext());
+			target.setVector(pages);
+		}
 		loadPages(pages);
 	}
 	
