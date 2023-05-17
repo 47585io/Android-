@@ -42,12 +42,12 @@ public class PageList extends HasAll
 	/* 添加一个命名的页面 */
 	public boolean addView(View EditPage,String name)
 	{
+		EditPage.setTag(name);
 		int index = contrans(EditPage);
 		if (index != -1)
 			return false;
 		//如果是同一个页面，不重复加入
 		//EditPage.setId(EditPage.hashCode());	
-		EditPage.setTag(name);
 	    addView(EditPage);
 
 		if(mtabListener!=null){

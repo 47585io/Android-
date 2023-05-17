@@ -12,6 +12,8 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
 import java.util.*;
 import java.util.concurrent.*;
 import android.text.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
 
 
 /*
@@ -215,40 +217,10 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		/* 让我们大量吃掉一个EditGroup */
 		public void eatEditGroup(final EditGroup Group,final String name)
 		{
-			final Runnable run1 = new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					myRet ret = new myRet(name);
-					final String text = ret.r("UTF-8");
-					final EditGroup.EditManipulator builder = Group.getEditManipulator();	
-					CodeEdit.EditChroot root = new CodeEdit.EditChroot(true,true,true,true,true);
-					
-					builder.compareChroot(root);
-					builder.setText(text);	
-					root.set(false,false,false,false,false);
-					builder.compareChroot(root);
-					
-					List<CodeEdit> List = Group.getEditList();
-					for(CodeEdit E:List)
-					{
-						Editable editor = E.getText();
-						E.reSAll(0,editor.length(),"\t","    ");
-						E.getPool().execute(E.ReDraw(0,editor.length()));
-						E.clearStackDate();
-					}
-				}
-			};
-			final Runnable run2 = new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					
-				}
-			};
-			final Runnable run3 = new Runnable()
+			final SpannableStringBuilder spanStr = new SpannableStringBuilder();
+			
+			//可能还没找完，但并不妨碍我们调整大小
+			final Runnable refreshLineAndSize = new Runnable()
 			{
 				@Override
 				public void run()
@@ -257,17 +229,52 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 					Group.requestFocus();
 				}
 			};
-			final Runnable run4 = new Runnable()
+			//设置文本后赶紧染色，实际上正在孑线程中找nodes
+			final Runnable DrawText = new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					Group.post(run1);
-					Group.postDelayed(run2,10);
-					Group.postDelayed(run3,50);
+					List<CodeEdit> List = Group.getEditList();
+					for(CodeEdit E:List)
+					{
+						Editable editor = E.getText();
+						E.getPool().execute(E.ReDraw(0,editor.length()));
+						E.clearStackDate();
+					}
+					Group.post(refreshLineAndSize);
 				}
 			};
-			Group.post(run4);
+			//格式化后设置文本
+			final Runnable setText = new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					final EditGroup.EditManipulator builder = Group.getEditManipulator();	
+					CodeEdit.EditChroot root = new CodeEdit.EditChroot(true,true,true,true,true);
+
+					builder.compareChroot(root);
+					builder.setText(spanStr);	
+					root.set(false,false,false,false,false);
+					builder.compareChroot(root);
+					Group.post(DrawText);
+				}
+			};
+			//在子线程中读和格式化文本
+			final Runnable readAndFormatText = new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					myRet ret = new myRet(name);
+					final String text = ret.r("UTF-8");
+					spanStr.append(text);
+					myEditFormatorListener.reSAll(0,text.length(),"\t","    ",spanStr);	
+					Group.post(setText);
+				}
+			};
+			Group.getPool().execute(readAndFormatText);
 		}
 	}
 	

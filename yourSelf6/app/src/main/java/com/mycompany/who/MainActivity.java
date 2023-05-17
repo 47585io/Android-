@@ -17,6 +17,9 @@ import java.util.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
 
 
+/*
+  无论如何，都要为你的工程保存一个最稳定的版本，免得之后出bug
+*/
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
 	private XCode Code;

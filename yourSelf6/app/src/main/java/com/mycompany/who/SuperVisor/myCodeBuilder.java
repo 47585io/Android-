@@ -16,6 +16,7 @@ import com.mycompany.who.SuperVisor.Share.*;
 import android.content.*;
 import android.widget.AdapterView.*;
 import java.io.*;
+import android.os.*;
 
 
 public class myCodeBuilder implements Configer<XCode>
@@ -29,9 +30,13 @@ public class myCodeBuilder implements Configer<XCode>
 	PageHandlerBuilder pb;
 	DownBarBuilder db;
 	
+	Handler handler;
+	
 	@Override
 	public void ConfigSelf(XCode target)
 	{
+		handler = new CodeHandler();
+		
 		t = target.getTitle();
 	    p = target.getPages();
 		d = target.getDownBar();
@@ -43,6 +48,23 @@ public class myCodeBuilder implements Configer<XCode>
 		tb.ConfigSelf(t);
 		pb.ConfigSelf(p);
 		db.ConfigSelf(d);
+	}
+	
+	class CodeHandler extends Handler{
+		
+		public CodeHandler(){
+			super();
+		}
+
+		@Override
+		public void handleMessage(Message msg)
+		{
+			
+			super.handleMessage(msg);
+		}
+		
+		//dispatch get handle obtain post remove send
+		
 	}
 	
 	public EditGroup getEditGroup(int index)
@@ -268,13 +290,12 @@ public class myCodeBuilder implements Configer<XCode>
 					onItemClick(this,view,position,id);
 					return super.performItemClick(view, position, id);
 				}
-
+				
 				@Override
 				public boolean performLongClick()
 				{
 					onItemLongClick(this,getSelectedView(),getSelectedItemPosition(),getSelectedItemId());
-					super.performLongClick();
-					return true;
+					return super.performLongClick();
 				}
 				
 			}
@@ -295,14 +316,15 @@ public class myCodeBuilder implements Configer<XCode>
 				@Override
 				public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 				{
-					files.getFile(p3-1);
+					File f = files.getFile(p3-1);
+					if(f.isFile())
+					    p.addEdit(f.getPath());
 				}
 
 				@Override
 				public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
 				{
-					// TODO: Implement this method
-					return false;
+					return true;
 				}
 				
 				@Override
