@@ -57,15 +57,15 @@ public class Backgroud extends Drawable
 	public static Bitmap clearColor(int color,Bitmap bit)
 	{
 		Bitmap newbit= bit.copy(Bitmap.Config.ARGB_8888,true);
-		int i,j; 
+		int i,j,width=newbit.getWidth(),height=newbit.getHeight(); 
 		try{
-			for(i=0;i<newbit.getHeight();++i)
+			for(i=0;i<height;++i)
 			{
-				for(j=0;j<newbit.getWidth();++j)
+				for(j=0;j<width;++j)
 				{
 					int c= newbit.getPixel(j,i);
 					if(c==color)
-						newbit.setPixel(j,i,0x00000000);
+						newbit.setPixel(j,i,0);
 				}
 			}
 		}catch(Exception e){}
