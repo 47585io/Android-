@@ -506,7 +506,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
-				if(lineCount-subLineStart > MaxLine){
+				if(lineCount-subLineStart+1 > MaxLine){
 					//大段文本需要插入，必须使用dispatchTextBlock
 					j.set(selfIndex,editor.length());
 					getEditManipulator().dispatchTextBlock(j,src);
