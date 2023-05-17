@@ -454,7 +454,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			*/
 			
 			EditFlag.add();		
-			if (lengthAfter != 0 && text.toString().indexOf('\n', start) != -1 ){
+			if (lengthAfter != 0){
 				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
 				sendOutLineToNext(text, start, lengthBefore, lengthAfter);	
 			}
