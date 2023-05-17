@@ -274,6 +274,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 					Group.post(setText);
 				}
 			};
+			//第一次加载文本，可以使用线程
 			Group.getPool().execute(readAndFormatText);
 		}
 	}

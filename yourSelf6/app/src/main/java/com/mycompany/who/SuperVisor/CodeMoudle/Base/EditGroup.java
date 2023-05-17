@@ -487,7 +487,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				size j = subLines(subLineStart); 
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				//MaxLine+1是指从MaxLine之后的一行的起始开始截
-				j.start--;
+				--j.start;
 				//连带着把MaxLine行的\n也截取
 				
 				CharSequence src = editor.subSequence(j.start, j.end); 
