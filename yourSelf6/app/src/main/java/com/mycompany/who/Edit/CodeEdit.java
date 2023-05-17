@@ -1236,8 +1236,7 @@ Uedo和Redo
 
 */
 	public class DefaultText implements TextWatcher
-	{
-		
+	{	
 		/**
 		 * 输入框改变前的内容
 		 *  charSequence 输入前EditText的文本
@@ -1427,12 +1426,13 @@ Uedo和Redo
 				//是否启用自动染色		
 				String src = text.toString();
 			    size tmp=new size(start,start+lengthAfter);
+				tmp.start=tryLine_Start(src,tmp.start);
+				tmp.end=tryLine_End(src,tmp.end);	
 				
 				//试探起始行和之前之后的tryCount行，并染色
-				for(int i=0;i<tryCount;++i){
-				    tmp.start=tryLine_Start(src,tmp.start);
-				    tmp.end=tryLine_End(src,tmp.end);
-					--tmp.start; ++tmp.end;
+				for(int i=1;i<tryCount;++i){
+				    tmp.start=tryLine_Start(src,tmp.start-1);
+				    tmp.end=tryLine_End(src,tmp.end+1);	
 				}
 				
 				if(getPool()!=null){

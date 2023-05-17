@@ -229,13 +229,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 					builder.setText(text);	
 					root.set(false,false,false,false,false);
 					builder.compareChroot(root);
-				}
-			};
-			final Runnable run2 = new Runnable()
-			{
-				@Override
-				public void run()
-				{
+					
 					List<CodeEdit> List = Group.getEditList();
 					for(CodeEdit E:List)
 					{
@@ -244,6 +238,14 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 						E.getPool().execute(E.ReDraw(0,editor.length()));
 						E.clearStackDate();
 					}
+				}
+			};
+			final Runnable run2 = new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					
 				}
 			};
 			final Runnable run3 = new Runnable()

@@ -12,13 +12,13 @@ import com.mycompany.who.Edit.Base.Share.Share2.*;
    只要我出现，父元素一定不能拦截我，我必然返回true，则之后的子元素没有机会了，我便是顶级窗口
    
 */
-public class QuickListView extends ListView
+public class TopListView extends ListView
 {
 	
-	public QuickListView(Context cont){
+	public TopListView(Context cont){
 		super(cont);
 	}
-	public QuickListView(Context cont,AttributeSet attrs){
+	public TopListView(Context cont,AttributeSet attrs){
 		super(cont,attrs);
 	}
 	

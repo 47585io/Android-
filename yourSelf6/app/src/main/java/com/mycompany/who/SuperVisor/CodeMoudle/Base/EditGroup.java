@@ -711,10 +711,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//由于只有获取焦点的Edit会自动刷新，所以第一个编辑器还要遍历所有其它编辑器，并显示
 				EditDrawFlag.set(EditList.size()); 
 				//当前还有size个编辑器要显示
-				Int id =((RCodeEdit)self).index;
+				int id =((RCodeEdit)self).index.get();
 				for(CodeEdit e: EditList)
 				{
-					if(((RCodeEdit)e).index.get()!=id.get()){
+					if(((RCodeEdit)e).index.get()!=id){
 						//如果是第一个编辑器，则不用重新绘制
 						e.invalidate();
 					}
