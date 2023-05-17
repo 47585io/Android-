@@ -7,7 +7,7 @@ import android.view.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import android.widget.AdapterView.*;
 
-public abstract class TitleBuilder implements TitleBuilderInterface
+public abstract class TitleBuilder extends senderObject implements TitleBuilderInterface
 {
 
 	@Override

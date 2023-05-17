@@ -7,7 +7,7 @@ import android.widget.AdapterView.*;
 import android.widget.*;
 
 
-public interface TitleBuilderInterface extends Configer<Title>,ReSpinner.onSelectionListener,OnItemSelectedListener
+public interface TitleBuilderInterface extends Configer<Title>,ReSpinner.onSelectionListener,OnItemSelectedListener,sender
 {
 	public void loadButton(LinearLayout ButtonBar)
 	

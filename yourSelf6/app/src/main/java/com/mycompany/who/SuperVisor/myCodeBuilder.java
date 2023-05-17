@@ -45,6 +45,10 @@ public class myCodeBuilder implements Configer<XCode>
 		pb = new myPageHandlerBuilder();
 		db= new myDownBarBuilder();
 		
+		tb.setHandler(handler);
+		pb.setHandler(handler);
+		db.setHandler(handler);
+		
 		tb.ConfigSelf(t);
 		pb.ConfigSelf(p);
 		db.ConfigSelf(d);
@@ -59,18 +63,14 @@ public class myCodeBuilder implements Configer<XCode>
 		@Override
 		public void handleMessage(Message msg)
 		{
-			
+			switch(msg.what){
+				
+			}
 			super.handleMessage(msg);
 		}
 		
 		//dispatch get handle obtain post remove send
 		
-	}
-	
-	public EditGroup getEditGroup(int index)
-	{
-		View v = p.getChildAt(index);
-		return (v instanceof EditGroup) ? (EditGroup)v:null;
 	}
 	
 	class myTitleBuilder extends TitleBuilder
@@ -102,23 +102,8 @@ public class myCodeBuilder implements Configer<XCode>
 		@Override
 		public void onMenuItemSelected(AdapterView v, int pos)
 		{
-			EditGroup Group = getEditGroup(pos);
-			if(Group==null)
-				return;
-				
-			EditGroup.EditManipulator man = Group.getEditManipulator();
-			switch(pos){
-				case 0:
-					man.reDraw(0,man.calaEditLen());
-					break;
-				case 1:
-					man.Format(0, man.calaEditLen());
-					break;
-				case 2:
-					
-				case 3:
-					
-			}
+			Message msg = Message.obtain(getHandler(),pos,v);
+			
 		}
 
 		@Override

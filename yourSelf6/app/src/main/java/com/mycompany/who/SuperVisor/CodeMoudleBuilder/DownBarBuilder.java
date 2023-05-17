@@ -3,7 +3,7 @@ import com.mycompany.who.SuperVisor.CodeMoudleBuilder.CodeMoudleBuilderInterface
 import com.mycompany.who.SuperVisor.CodeMoudle.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 
-public abstract class DownBarBuilder implements DownBarBuilderInterface
+public abstract class DownBarBuilder extends senderObject implements DownBarBuilderInterface
 {
 
 	@Override

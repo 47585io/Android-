@@ -10,7 +10,7 @@ public class FuturePool
 	
 	public static<T> List<T> FutureGet(Collection<Future<T>> results)
 	{
-		List<T> date = new LinkedList<>();
+		List<T> date = new ArrayList<>();
 		try
 		{
 			for (Future<T> result:results)
@@ -30,7 +30,7 @@ public class FuturePool
 
 	public static<T> List<T> FutureGetAll(Collection<Future<List< T>>> results)
 	{
-		List<T> date = new LinkedList<>();
+		List<T> date = new ArrayList<>();
 		try
 		{
 			for (Future<List< T>> result:results)
@@ -72,7 +72,7 @@ public class FuturePool
 	*/
 	public static List<Future> addTotals(Collection<Runnable> totals, ThreadPoolExecutor pool)
 	{
-		List<Future> results= new LinkedList<>();
+		List<Future> results= new ArrayList<>();
 		for (Runnable total:totals)
 		    if (total != null)
 		        results.add(pool.submit(total));
@@ -81,7 +81,7 @@ public class FuturePool
 	
 	public static List<Future> addTotals(Collection<Runnable> totals, ThreadPoolExecutor pool, int onceCount)
 	{
-		List<Future> results= new LinkedList<>();
+		List<Future> results= new ArrayList<>();
 		Runnable[] tmp = new Runnable[onceCount];
 		int i = 0;
 		Runnable r;
@@ -103,7 +103,7 @@ public class FuturePool
 	
 	public static List<Future> addTotalS(Collection<Callable> totals, ThreadPoolExecutor pool)
 	{
-		List<Future> results= new LinkedList<>();
+		List<Future> results= new ArrayList<>();
 		for (Callable total:totals)
 		    if (total != null)
 		        results.add(pool.submit(total));

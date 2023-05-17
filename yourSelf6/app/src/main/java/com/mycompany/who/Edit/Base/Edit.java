@@ -126,7 +126,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		int width=0;
 		int last=0;
 		for(int i: indexs){
-			int w=(i-last);
+			int w=i-last;
 			if(w>width)
 				width=w;
 			last=i;
@@ -157,7 +157,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		int width=0;
 		int last=0;
 		for(int i: indexs){
-			int w=(i-last);
+			int w=i-last;
 			if(w>width)
 				width=w;
 			last=i;
