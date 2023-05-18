@@ -1866,6 +1866,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		//每次屏幕旋转，旋转我和滚动条
 		public void onChange(EditGroup target,int src)
 		{
+			//当ForEdit宽极小时，居然会发现滚动条动画的边缘缩小了，搞得还以为滚动条缩小了
+			//其实并不是真缩小了，滚动条在显示一个比自己大小还小的内容时，会将滚动条动画贴进内容边缘，只是一个动画效果
 		    trim(target,width,height);
 			trim(target.Scro,width,height);
 		    trim(target.hScro,width,height);
@@ -1923,3 +1925,4 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 	
 }
+
