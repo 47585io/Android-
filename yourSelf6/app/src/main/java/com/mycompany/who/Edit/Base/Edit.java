@@ -28,7 +28,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	@Override
 	public void Creat()
 	{
-		TextSize = 14;
+		TextSize = 13.5f;
 		ConfigSelf(this);
 		listener = new EditText(getContext()).getKeyListener();
 	}

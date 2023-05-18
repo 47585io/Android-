@@ -4,7 +4,7 @@ import android.view.*;
 
 
 /*
- getWidth()和getHeight()获取的是自己在父View画布中的画框大小，setLeft(),setRight(),setTop(),setBottom(),setX(),sety()都是将自己放在父View中的指定位置
+ getWidth()和getHeight()获取的是自己在父View画布中的画框大小，setLeft(),setRight(),setTop(),setBottom(),setX(),sety()都是将自己的一边或自己放在父View中的指定位置
  
  但自己内部的画布可以无限延伸和滚动，例如setScale(),setRotate(),setTranstion()，它们都是将自己的画布缩放，旋转，平移了
  

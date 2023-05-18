@@ -19,16 +19,20 @@ public class Share
 	}
 
 	public static int setbitTo_1(int x,byte y){
+		//一般情况下，|=可以强行把某位设置为1
 		return  x|=(1<<y);
 	}
 	public static int setbitTo_0(int x,byte y){
+		//一般情况下，&=可以强行把某位设置为0
 		return x&=~(1<<y);
 	}
 	public static boolean getbit(int x,byte y){
+		//一般情况下，&可以强行获取某位的值
 		int tmp= (x>>y)&1;
 		return tmp==1;
 	}
 
+	//一般情况下，a^b=c，c^a=b，c^b=a
 	
 	public final static byte icon_key=1;
 	public final static byte icon_villber=2;

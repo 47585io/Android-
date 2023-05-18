@@ -22,6 +22,8 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View3.*;
   
   应尽量将其设置在父View边缘，以显示出抽屉效果
   
+  注意: DownBar为了保证在每次父元素onLayout时不会将自己缩回，设置了固定大小，需要父元素将自己摆放到合适位置
+  
 */
 public class DownBar extends HasAll
 {
@@ -120,7 +122,7 @@ public class DownBar extends HasAll
   
   Handler追踪手指滑动方向来判断DownBar向哪个方向慢慢打开，具体过程是:
 	 
-  Handler保留上次的坐标，与本次坐标相比计算出差距，然后将DownBar整体扩大或缩小，演示滑动效果
+  Handler保留上次的坐标，与本次坐标相比计算出差距，然后将DownBar整体移动，演示滑动效果
   
   为了避免自己移动而导致坐标出错，Handler永远感知绝对坐标，因为它是相对于屏幕而非Handler本身
   

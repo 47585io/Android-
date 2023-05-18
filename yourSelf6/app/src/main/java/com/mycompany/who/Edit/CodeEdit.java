@@ -80,13 +80,13 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 
 /*
 
-   在基类上开一些接口，另外的，复杂的函数我都设置成了final
+   在基类上开一些接口，另外的，复杂的函数我都设置成了final，不安全的函数设为protected
 
-   从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数
+   从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数，这样各司其职，降低复杂度，便于修改(修改其中一个不影响另一个)
    
-   为了兼容外部的东西，除了EditText，Listener和Words不作为参数传递，其它的都应尽量以参数传递，例如之后的onDrawNodes，它可以给任意的Editable进行染色
+   为了兼容外部的东西，除了EditText，Listener和Words不作为参数传递，其它的都应尽量以参数传递，以使用自己，自己的行为和数据来操作，例如之后的onDrawNodes，它可以给任意的Editable进行染色，但使用的是我的方案
 
-   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份
+   在写代码时，必须保证当前的代码已经优化成最简的了，才能去继续扩展，扩展前先备份，避免之后出bug
 
 */
  
