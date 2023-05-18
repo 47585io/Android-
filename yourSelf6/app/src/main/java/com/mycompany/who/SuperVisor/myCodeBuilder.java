@@ -17,6 +17,7 @@ import android.content.*;
 import android.widget.AdapterView.*;
 import java.io.*;
 import android.os.*;
+import android.database.*;
 
 
 public class myCodeBuilder implements Configer<XCode>
@@ -127,6 +128,8 @@ public class myCodeBuilder implements Configer<XCode>
 		class myButtonClickFactory implements ButtonClickFactory
 		{
 			
+			EditGroup.EditGroupListenerInfo Info;
+			
 			public OnClickListener Uedo(){
 				return new Uedo();
 			}
@@ -169,6 +172,7 @@ public class myCodeBuilder implements Configer<XCode>
 					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
 					Group.getEditManipulator().lockThem(true);
 					p1.setOnClickListener(Write());
+					
 				}
 		    }
 
@@ -181,6 +185,7 @@ public class myCodeBuilder implements Configer<XCode>
 					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
 					Group.getEditManipulator().lockThem(false);
 					p1.setOnClickListener(Read());
+					
 				}
 			}
 		}

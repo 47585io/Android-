@@ -206,7 +206,10 @@ public class PageList extends HasAll
 				if(index<0){
 					index=0;
 				}
-				
+				// null pointer Exception in this
+				if(p.getChildCount()==0){
+					return false;
+				}
 				View v = p.getChildAt(index);
 				tx = v.getRight();
 				ty = v.getBottom();
