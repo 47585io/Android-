@@ -6,21 +6,21 @@ import android.text.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.R;
 import com.mycompany.who.Edit.Base.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.Base.Share.Share1.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.Edit.Base.Share.Share3.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
+import com.mycompany.who.Edit.EditBuilder.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
-import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.RunLi;
+import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.*;
+import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
 import java.util.*;
 import java.util.concurrent.*;
-import com.mycompany.who.Edit.EditBuilder.*;
-import com.mycompany.who.Edit.EditBuilder.WordsVistor.*;
+
 import static com.mycompany.who.Edit.CodeEditBuilder.WordsPackets.BaseWordsPacket.*;
 import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
 
@@ -739,7 +739,7 @@ Formator
 		
 		long last, now;
 		last = System.currentTimeMillis();
-		final WordAdpter adapter = WordAdpter.getDefultAdapter();
+		final WordAdapter<Icon> adapter = WordAdapter.getDefultAdapter();
 		Epp.start();//开始存储
 		
 		try{
@@ -783,7 +783,7 @@ Formator
 	}
 	
 	/* 在不同集合中找单词 */
-	public void SearchInGroup(final String src,final int index,final WordAdpter Adapter)
+	public void SearchInGroup(final String src,final int index,final WordAdapter<Icon> Adapter)
 	{
 		EditListener lis = getCompletor();
 		final Words WordLib = getWordLib();
@@ -2227,7 +2227,7 @@ Uedo和Redo
 	
 	public static interface myCompletor extends Completor{
 
-		public void SearchInGroup(String src, int index, WordAdpter Adapter)
+		public void SearchInGroup(String src, int index, WordAdapter Adapter)
 		
 		public void callOnopenWindow(View Window)
 		

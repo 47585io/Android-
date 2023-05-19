@@ -1,11 +1,11 @@
+package com.mycompany.who.Edit.Base.Share.Share2;
+
+import java.util.*;
 import android.view.*;
 import android.widget.*;
-import com.mycompany.who.*;
-import com.mycompany.who.Edit.Base.Share.Share1.*;
-import com.mycompany.who.Edit.Base.Share.Share2.*;
-import java.util.*;
-import com.mycompany.who.Edit.Base.Share.Share2.ViewHolderFactory.*;
 import android.content.*;
+import com.mycompany.who.R;
+import com.mycompany.who.Edit.Base.Share.Share2.*;
 
 
 /*
@@ -57,16 +57,7 @@ public class WordAdapter<T> extends BaseAdapter
 		    mfile.addAll(files);
 		}
 	}
-	public void addAll(int flag,T... files)
-	{
-		if(files!=null)
-		{
-			indexs.add(mfile.size());
-			flags.add(flag);
-		    mfile.addAll(Arrays.asList(files));
-		}
-	}
-	
+
 	/* 在指定位置添加一个file，内部会自行扩展flag以包含这个file */
 	public void add(int index,T file)
 	{
@@ -87,7 +78,7 @@ public class WordAdapter<T> extends BaseAdapter
 			indexs.set(i,index-1);
 		}
 	}
-	
+
 	/* 清空所有 */
 	public void clear()
 	{
@@ -104,7 +95,7 @@ public class WordAdapter<T> extends BaseAdapter
 		indexs.addAll(adapter.indexs);
 		flags.addAll(adapter.flags);
 	}
-	
+
     @Override
     public int getCount() 
 	{
@@ -127,7 +118,7 @@ public class WordAdapter<T> extends BaseAdapter
 		i = i==-1 ? i:flags.get(i);
         return i;
     }
-	
+
 	/* 获取position对应的区间起始位置 */
 	protected int getPos(int position)
 	{
@@ -140,7 +131,7 @@ public class WordAdapter<T> extends BaseAdapter
 		}
 		return -1;
 	}
-	
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) 
 	{
@@ -160,13 +151,13 @@ public class WordAdapter<T> extends BaseAdapter
 		}
 		return convertView;
     }
-	
+
 	public void setViewHolderFactory(ViewHolderFactory<T> f)
 	{
 		mfactory = f;
 	}
-	
-	
+
+
 	public static class Factory implements ViewHolderFactory<Icon>
 	{
 
@@ -175,21 +166,21 @@ public class WordAdapter<T> extends BaseAdapter
 		{
 			return new Holder();
 		}
-			
+
 		/* 
-		  默认的Holder
-		
+		 默认的Holder
+
 		 * 使用R.layout.WordIcon
-		  
+
 		 * 支持让Icon来控制如何加载TextView和ImageView  
-		 
-		*/
+
+		 */
 		public static class Holder implements ViewHolder<Icon>
 		{
-			
+
 			private TextView tvName;
 			private ImageView tvIcon;
-			
+
 			@Override
 			public View creatView(ViewGroup parent, Icon date, int position)
 			{
@@ -207,9 +198,9 @@ public class WordAdapter<T> extends BaseAdapter
 				date.loadImage(tvIcon);
 				date.loadText(tvName);
 			}
-			
+
 		}
-		
+
 	}
 
 }

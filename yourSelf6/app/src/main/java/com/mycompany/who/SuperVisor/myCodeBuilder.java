@@ -1,23 +1,24 @@
 package com.mycompany.who.SuperVisor;
+import android.content.*;
+import android.os.*;
 import android.view.*;
+import android.view.View.*;
 import android.widget.*;
+import android.widget.AdapterView.*;
 import com.mycompany.who.*;
 import com.mycompany.who.Edit.Base.EditMoudle.*;
 import com.mycompany.who.Edit.Base.Share.Share2.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
+import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudleBuilder.*;
-import java.util.*;
-import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
-import android.view.View.*;
 import com.mycompany.who.SuperVisor.CodeMoudleBuilder.CodeMoudleBuilderInterface.*;
 import com.mycompany.who.SuperVisor.Share.*;
-import android.content.*;
-import android.widget.AdapterView.*;
 import java.io.*;
-import android.os.*;
-import android.database.*;
+import java.util.*;
+
+import android.view.View.OnClickListener;
 
 
 public class myCodeBuilder implements Configer<XCode>
@@ -214,26 +215,27 @@ public class myCodeBuilder implements Configer<XCode>
 		public void onAddPage(View v, String name)
 		{
 			name = name.substring(name.lastIndexOf('/')+1,name.length());
-			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
+			WordAdapter<Icon> adapter = (WordAdapter<Icon>) spinner.getAdapter();
 			Icon icon = new Icon3(Share.getFileIcon(name),name);
 
 			if(adapter!=null){
-				adapter.getList().add(icon);
+				adapter.add(adapter.getCount(),icon);
 				adapter.notifyDataSetChanged();	
 			}
 			else{
-				List<Icon> list = new ArrayList<>();
-				list.add(icon);
-				spinner.setAdapter(new WordAdpter(list,R.layout.FileIcon,0));
+				adapter = WordAdapter.getDefultAdapter();
+				adapter.add(adapter.getCount(),icon);
+				spinner.setAdapter(adapter);
 			}
+			
 		}
 
 		@Override
 		public void onDelPage(int index)
 		{
-			WordAdpter adapter = (WordAdpter) spinner.getAdapter();
+			WordAdapter adapter = (WordAdapter) spinner.getAdapter();
 			if(adapter!=null){
-				adapter.getList().remove(index);
+				adapter.remove(index);
 				adapter.notifyDataSetChanged();	
 			}
 		}
@@ -298,7 +300,7 @@ public class myCodeBuilder implements Configer<XCode>
 				public FileListView(Context cont)
 				{
 					super(cont);
-					setAdapter(WordAdpter.getDefultAdapter());
+					setAdapter(WordAdapter.getDefultAdapter());
 					files.setFileChangeListener(this);
 					files.refreshDate();
 				}
@@ -320,11 +322,11 @@ public class myCodeBuilder implements Configer<XCode>
 				@Override
 				public void Refresh(List<File> files)
 				{
-					WordAdpter adapter = (WordAdpter) getAdapter();
-					List<Icon> list = adapter.getList();
-					toList(files,list);
+					WordAdapter adapter = WordAdapter.getDefultAdapter();
+					List<Icon> list = toList(files);
 					list.add(0,new Icon3(R.drawable.folder_open,"..."));
-					adapter.notifyDataSetChanged();
+					adapter.addAll(list,0);
+					setAdapter(adapter);
 				}
 
 				@Override
@@ -345,15 +347,16 @@ public class myCodeBuilder implements Configer<XCode>
 					// TODO: Implement this method
 				}
 				
-				public void toList(List<File> files, List<Icon> list)
+				public List<Icon> toList(List<File> files)
 				{
-					list.clear();
+					List<Icon> list = new ArrayList<>();
 					for(File f:files)
 					{
 						String name = f.getName();
 						Icon icon = new Icon3(Share.getFileIcon(f),name);
 						list.add(icon);
 					}
+					return list;
 				}
 				
 			}

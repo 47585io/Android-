@@ -140,7 +140,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 		//遍历孑元素，并传递Callback，当有一个子元素返回true，直接返回true
 		for(EditListener li:lis)
 		{
-			if(Callback.run(li)){
+			if(li.dispatchCallBack(Callback)){
 				return true;
 			}
 		}
