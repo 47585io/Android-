@@ -62,23 +62,15 @@ public class WordAdapter<T> extends BaseAdapter
 	public void add(int index,T file)
 	{
 		mfile.add(index,file);
-		int i = getPos(index);
-		for(++i;i<indexs.size();++i){
-			index = indexs.get(i);
-			indexs.set(i,index+1);
-		}
+		offsetIndex(index,1);
 	}
 	/* 在指定位置删除一个file，内部会自行缩减以填补空缺 */
 	public void remove(int index)
 	{
 		mfile.remove(index);
-		int i = getPos(index);
-		for(++i;i<indexs.size();++i){
-			index = indexs.get(i);
-			indexs.set(i,index-1);
-		}
+		offsetIndex(index,-1);
 	}
-
+	
 	/* 清空所有 */
 	public void clear()
 	{
@@ -115,11 +107,10 @@ public class WordAdapter<T> extends BaseAdapter
     public long getItemId(int position) 
 	{
 		int i = getPos(position);
-		i = i==-1 ? i:flags.get(i);
-        return i;
+		return i==-1 ? i:flags.get(i);
     }
 
-	/* 获取position对应的区间起始位置 */
+	/* 获取position对应的区间在indexs和flags中的下标 */
 	protected int getPos(int position)
 	{
 		for(int i=indexs.size()-1;i>=0;--i)
@@ -130,6 +121,15 @@ public class WordAdapter<T> extends BaseAdapter
 			}
 		}
 		return -1;
+	}
+	/* 偏移从mfile中的index所处区间之后的indexs，偏移offset */
+	protected void offsetIndex(int index,int offset)
+	{
+		int i = getPos(index);
+		for(++i;i<indexs.size();++i){
+			index = indexs.get(i);
+			indexs.set(i,index+offset);
+		}
 	}
 
     @Override
@@ -143,12 +143,11 @@ public class WordAdapter<T> extends BaseAdapter
 			convertView = holder.creatView(parent,getItem(position),position);
 			convertView.setTag(holder);
 		}
-		else
-		{
+	    else{
 			//如果要刷新一个已有的列表项，用Adpter中postion的值更新convertView
 			holder = (ViewHolderFactory.ViewHolder<T>) convertView.getTag();
-			holder.resetView(parent,convertView,getItem(position),position);
 		}
+		holder.resetView(parent,convertView,getItem(position),position);
 		return convertView;
     }
 
@@ -174,7 +173,7 @@ public class WordAdapter<T> extends BaseAdapter
 
 		 * 支持让Icon来控制如何加载TextView和ImageView  
 
-		 */
+		*/
 		public static class Holder implements ViewHolder<Icon>
 		{
 
@@ -188,7 +187,6 @@ public class WordAdapter<T> extends BaseAdapter
 				View v = layoutInflater.inflate(R.layout.WordIcon,null);
 				tvName = v.findViewById(R.id.Filename);
 				tvIcon = v.findViewById(R.id.Fileicon);
-				resetView(parent,v,date,position);
 				return v;
 			}
 
