@@ -86,15 +86,15 @@ public class WordAdpter extends BaseAdapter
     public View getView(int position, View convertView, ViewGroup parent) 
 	{
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-
         ViewHolder viewHolder = null;
+		
         if (convertView == null) {
-			//如果要创建一个新的列表项，创建并配置tag，之后在返回后ListView将tag拿出并添加到自己上
+			//如果要创建一个新的列表项，创建并配置tag，之后在返回后ListView将convertView添加到自己上
             convertView = layoutInflater.inflate(rid, null);
             viewHolder = new ViewHolder(convertView);
             convertView.setTag(viewHolder);
         }else {
-			//否则，用Adpter中postion的值更新列表项tag，之后在返回后ListView将tag拿出刷新这个列表项
+			//如果要刷新一个已有的列表项，用Adpter中postion的值更新设置的列表项tag，但其实tag为ViewHolder，其中记录了这个列表项的子元素
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
@@ -104,7 +104,7 @@ public class WordAdpter extends BaseAdapter
         return convertView;
     }
 
-
+	
     static class ViewHolder 
 	{
         protected TextView tvName;
