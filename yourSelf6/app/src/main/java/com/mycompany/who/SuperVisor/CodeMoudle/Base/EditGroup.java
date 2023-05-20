@@ -619,9 +619,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	@Override
 	public boolean onLongClick(View p1)
 	{
-		EditManipulator man = getEditManipulator();
-		String command = man.MakeCommand(myEditRunnarListener.DEFAULT_STATE);
-		man.RunCommand(command);
+		CodeEdit Edit = (CodeEdit) p1;
+		String command = Edit. MakeCommand(myEditRunnarListener.DEFAULT_STATE);
+		Edit.RunCommand(command);
 		return true;
 	}
 	
@@ -650,9 +650,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		String text = man.subSequence(0,man.calaEditLen()).toString();
 		CodeEdit Edit = man.getFocusEdit();
 		
-		int index = Edit.getSelectionEnd();
-		int nextIndex = text.indexOf(name,index);
-		int lastIndex = text.lastIndexOf(name,index);
+		int index = man.calaEditLen(((RCodeEdit)Edit).index.get());
+		int nextIndex = text.indexOf(name,index+ Edit.getSelectionEnd());
+		int lastIndex = text.lastIndexOf(name,index+ Edit.getSelectionStart()-1);
 	    index = nextIndex==-1 ? lastIndex : nextIndex;
 		//默认继续向后找，后面没有就向前找
 		 
@@ -1552,6 +1552,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			int len = 0;
 			for (Edit e:EditList)
 			    len+=e.getText().length();
+			return len;
+		}
+		public int calaEditLen(int index)
+		{
+			int len = 0;
+			for (int i=0;i < index;++i)
+			    len+=EditList.get(i).getText().length();
 			return len;
 		}
 		public int calaEditLines()
