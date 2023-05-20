@@ -21,9 +21,7 @@ public abstract class myEditSelectionChangeListener extends myEditListener imple
 	final public void SelectionChange(int selStart, int selEnd, Spannable editor)
 	{
 		try{
-			if(Enabled()){
-				onChange(selStart, selEnd, editor);
-			}
+			onChange(selStart, selEnd, editor);		
 		}
 		catch(Exception e){
 			Log.e("Selection Change Error",e.toString());

@@ -29,10 +29,8 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	public final String LetMeMake(EditText self,String state)
 	{
 		String command = "";
-		try{
-			if(Enabled()){
-			    command = Make(self,state) ;
-			}
+		try{		
+			command = Make(self,state) ;	
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("MakeCommand Error", toString()+" "+e.toString());
@@ -49,10 +47,8 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	public final int LetMeRun(EditText self,String command)
 	{
 		int flag = 0;
-		try{
-			if(Enabled()){
-			    flag = Run(self,command);
-			}
+		try{	
+			flag = Run(self,command);
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("RunCommand Error", toString()+" "+e.toString());
@@ -61,7 +57,8 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 		return flag;
 	}
 	
-	protected int Run(EditText self,String command){
+	protected int Run(EditText self,String command)
+	{
 		return onRunCommand(self,command);
 	}
 	

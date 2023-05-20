@@ -26,9 +26,7 @@ public abstract class myEditInsertorListener extends myEditListener implements E
 	{
 		int newIndex = nowIndex;
 		try{
-			if (Enabled()){
-				newIndex= Insert(editor,nowIndex,count);
-			}
+			newIndex= Insert(editor,nowIndex,count);
 		}
 		catch (IndexOutOfBoundsException e){
 			Log.e("Inserting Error", toString()+" "+e.toString());

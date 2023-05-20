@@ -1,10 +1,9 @@
 package com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener;
 
+import java.util.*;
 import android.text.*;
 import android.widget.*;
-import java.util.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
-import com.mycompany.who.Edit.Base.Share.*;
 
 
 /*
@@ -15,19 +14,22 @@ import com.mycompany.who.Edit.Base.Share.*;
 */
 public class myEditListener extends Object implements EditListener
 {
-	
-	public static final byte Enabled_Bit = 0;
-	//监听器启用位
+
+	public static final int Enabled_Mask = 1;
+	//判断或设置监听器启用状态的Mask值
+	public static final int Disbled_Mask = 0xfffffffe;
+	//判断或设置监听器禁用状态的Mask值
 	
 	private int flag;
 	private Object name;
 	private EditText self;
+	private EditListener parent;
 	//可以不以参数传递，而是设置self，但有可能为null
-	
+
 	public myEditListener()
 	{
 		name="@default";
-		flag=Share.setbitTo_1(flag,Enabled_Bit);
+		flag|=Enabled_Mask;
 	}
 	public myEditListener(Object name,int flag)
 	{
@@ -41,37 +43,56 @@ public class myEditListener extends Object implements EditListener
 	}
 
 	@Override
-	public void setFlag(int flag){
+	public void setFlag(int flag)
+	{
 		this.flag = flag;
 	}
 	@Override
-	public int getFlag(){
+	public int getFlag()
+	{
 		return flag;
 	}
 	@Override
-	public void setName(Object name){
+	public void setName(Object name)
+	{
 		this.name=name;
 	}
 	@Override
-	public Object getName(){
+	public Object getName()
+	{
 		return name;
 	}
 	@Override
-	public void setEdit(EditText t){
-		self = t;
+	public void setEdit(EditText t)
+	{
+		this.self = t;
 	}
 	@Override
-	public EditText getEdit(){
+	public EditText getEdit()
+	{
 		return self;
+	}
+	@Override
+	public EditListener getParent()
+	{
+		return parent;
+	}
+	@Override
+	public void setParent(EditListener parent)
+	{
+		this.parent=parent;
 	}
 
 	@Override
 	public boolean equals(Object obj)
 	{
-		if(obj instanceof EditListener)
+		if(obj!=null && obj instanceof EditListener)
 		{
 			EditListener li = (EditListener) obj;
-			if(getName().equals(li.getName()) && li.getFlag()==getFlag() && li.getEdit().equals(getEdit())){
+			if(getName().equals(li.getName()) 
+				&& li.getFlag()==getFlag() 
+				&& li.getEdit().equals(getEdit()) 
+				&& li.getParent().equals(getParent())){
 				return true;
 			}
 		}
@@ -79,22 +100,26 @@ public class myEditListener extends Object implements EditListener
 	}
 	
 	@Override
-	public String toString(){
+	public String toString()
+	{
 		return "监听器："+name+"  ;类型: "+getClass().getName();
 	}
 	
-	public boolean Enabled(){
-		return Share.getbit(flag,Enabled_Bit);
+	public boolean Enabled()
+	{
+		return (flag & Enabled_Mask) == Enabled_Mask;
 	}
 	
 	@Override
-	public EditListener findListenerByName(Object name){
+	public EditListener findListenerByName(Object name)
+	{
 	    return this.name.equals(name) ? this:null;
 	}
 	
 	@Override
-	public boolean dispatchCallBack(EditListener.RunLi Callback){
-		return Callback.run(this);
+	public boolean dispatchCallBack(EditListener.RunLi Callback)
+	{
+		return Enabled() ? Callback.run(this):false;
 	}
 	
 }

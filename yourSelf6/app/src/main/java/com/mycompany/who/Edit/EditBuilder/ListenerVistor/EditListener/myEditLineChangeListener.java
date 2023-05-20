@@ -21,9 +21,7 @@ public abstract class myEditLineChangeListener extends myEditListener implements
 	final public void LineChange(int start,int before,int after)
 	{
 		try{
-			if(Enabled()){
-			    onChange(start,before,after);
-			}
+			onChange(start,before,after);		
 		}
 		catch(Exception e){
 			Log.e("Line Change Error",e.toString());

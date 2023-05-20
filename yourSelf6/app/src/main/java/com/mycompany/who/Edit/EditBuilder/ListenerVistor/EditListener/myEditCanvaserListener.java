@@ -35,10 +35,8 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	@Override
 	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
-		try{
-			if(Enabled()){
-				Canvaser(self,canvas,paint,pos,flag);
-			}
+		try{	
+			Canvaser(self,canvas,paint,pos,flag);
 		}
 		catch(Exception e){
 			Log.e("Canvaser Error", toString()+" "+e.toString());
@@ -50,7 +48,7 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 		if(flag == BeforeDraw){
 		    beforeDraw(self,canvas,paint,pos);
 		}
-		else if(flag==AfterDraw){
+		else if(flag == AfterDraw){
 			afterDraw(self,canvas,paint,pos);
 		}
 	}

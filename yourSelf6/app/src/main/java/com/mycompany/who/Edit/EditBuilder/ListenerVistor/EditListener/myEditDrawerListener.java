@@ -25,30 +25,32 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 	//在这里为Editable染色
 	
+	
 	@Override
 	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
 	{
 		try{
-			if (Enabled()){
-				Draw(start,end,nodes,editor);
-			}
+		    Draw(start,end,nodes,editor);
 		}
 		catch (Exception e){
 			Log.e("Drawing Error", toString()+" "+e.toString());
 		}
 	}
 
-	protected void Draw(int start, int end, List<wordIndex> nodes,Spannable editor){
+	protected void Draw(int start, int end, List<wordIndex> nodes,Spannable editor)
+	{
 		onDrawNodes(start, end, nodes, editor);
 	}
 	
 	
 	/* 必须使用List存储nodes，否则无法制作HTML文本 */
 	@Override
-	public String getHTML(List<wordIndex> nodes,String text){
+	public String getHTML(List<wordIndex> nodes,String text)
+	{
 		return getHTML(nodes,text,null);
 	}
-	public String getHTML(Spanned b){
+	public String getHTML(Spanned b)
+	{
 		return getHTML(b,null);
 	}
 	

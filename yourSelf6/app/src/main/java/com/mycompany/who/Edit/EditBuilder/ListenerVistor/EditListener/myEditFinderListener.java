@@ -39,9 +39,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	{
 		List<wordIndex> nodes = null;
 		try{
-			if(Enabled()){
-		        nodes = Find(start,end,text,WordLib);
-			}
+		    nodes = Find(start,end,text,WordLib);
 		}
 		catch (Exception e){
 			Log.e("Finding Error", toString()+" "+e.toString());

@@ -36,10 +36,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public List<Icon> LetMeSearch(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
 	{
 		List<Icon> Adapter = null;
-		try{
-			if(Enabled()){
-		        Adapter=Search(text,index,wantBefore,wantAfter,before,after,Wordlib);
-			}
+		try{		
+		    Adapter=Search(text,index,wantBefore,wantAfter,before,after,Wordlib);
 		}
 		catch(Exception e){
 			Log.e("Completing Error", toString()+" "+e.toString());
@@ -72,10 +70,8 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	final public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
 	{
 		int selection = index+word.length();
-		try{
-			if(Enabled()){
-		        selection= onInsertWord(editor,index,range,word);
-			}
+		try{	
+		    selection= onInsertWord(editor,index,range,word);
 		}
 		catch(Exception e){
 			Log.e("Completor InsertWord Error", toString()+" "+e.toString());

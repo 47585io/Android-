@@ -23,9 +23,9 @@ public abstract interface EditListener
 	
 	public abstract EditText getEdit()
 	
-	//public abstract EditListener getParent()
+	public abstract EditListener getParent()
 	
-	//public abstract void setParent(EditListener parent)
+	public abstract void setParent(EditListener parent)
 	
 	public abstract boolean dispatchCallBack(RunLi Callback)
 	
