@@ -85,7 +85,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	}
 	
 	@Override
-	public EditListener findListenerByName(String name)
+	public EditListener findListenerByName(Object name)
 	{
 		for(EditListener li:lis)
 		{

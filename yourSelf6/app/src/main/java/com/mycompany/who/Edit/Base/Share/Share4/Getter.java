@@ -25,8 +25,7 @@ public class Getter
 				}catch(Exception e){}
 			}
 		}
-		catch (ClassNotFoundException e)
-		{}
+		catch (ClassNotFoundException e){}
 		return null;
 	}
 

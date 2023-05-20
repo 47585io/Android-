@@ -2053,7 +2053,7 @@ Uedo和Redo
 		}
 
 		@Override
-		public EditListener findAListener(String name)
+		public EditListener findAListener(Object name)
 		{	
 			for(EditListener li:mlistenerS.values())
 			{

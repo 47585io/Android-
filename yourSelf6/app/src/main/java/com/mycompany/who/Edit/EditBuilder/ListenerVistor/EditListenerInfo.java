@@ -31,7 +31,7 @@ public abstract interface EditListenerInfo
 
 	public abstract boolean delAListener(EditListener li)
 
-	public abstract EditListener findAListener(String name)
+	public abstract EditListener findAListener(Object name)
 
 	public abstract boolean addListenerTo(EditListener li,int toIndex)
 

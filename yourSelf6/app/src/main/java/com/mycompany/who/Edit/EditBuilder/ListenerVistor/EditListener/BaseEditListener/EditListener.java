@@ -13,11 +13,11 @@ public abstract interface EditListener
 	
 	public abstract void setFlag(int flag)
 		
-	public abstract void setName(String name)
+	public abstract void setName(Object name)
 		
-	public abstract String getName()
+	public abstract Object getName()
 	
-	public abstract EditListener findListenerByName(String name)
+	public abstract EditListener findListenerByName(Object name)
 	
 	public abstract void setEdit(EditText t)
 	

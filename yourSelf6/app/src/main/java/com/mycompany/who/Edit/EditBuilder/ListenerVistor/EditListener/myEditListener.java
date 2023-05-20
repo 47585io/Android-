@@ -20,7 +20,7 @@ public class myEditListener extends Object implements EditListener
 	//监听器启用位
 	
 	private int flag;
-	private String name;
+	private Object name;
 	private EditText self;
 	//可以不以参数传递，而是设置self，但有可能为null
 	
@@ -29,7 +29,7 @@ public class myEditListener extends Object implements EditListener
 		name="@default";
 		flag=Share.setbitTo_1(flag,Enabled_Bit);
 	}
-	public myEditListener(String name,int flag)
+	public myEditListener(Object name,int flag)
 	{
 		this.name=name;
 		this.flag=flag;
@@ -49,11 +49,11 @@ public class myEditListener extends Object implements EditListener
 		return flag;
 	}
 	@Override
-	public void setName(String name){
+	public void setName(Object name){
 		this.name=name;
 	}
 	@Override
-	public String getName(){
+	public Object getName(){
 		return name;
 	}
 	@Override
@@ -88,7 +88,7 @@ public class myEditListener extends Object implements EditListener
 	}
 	
 	@Override
-	public EditListener findListenerByName(String name){
+	public EditListener findListenerByName(Object name){
 	    return this.name.equals(name) ? this:null;
 	}
 	

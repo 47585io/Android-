@@ -1704,7 +1704,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 
 		@Override
-		public EditListener findAListener(String name)
+		public EditListener findAListener(Object name)
 		{
 			EditListener li = CodeInfo.findAListener(name);
 			EditListener li2 = LineInfo.findAListener(name);

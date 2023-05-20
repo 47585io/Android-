@@ -278,7 +278,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		}
 
 		@Override
-		public EditListener findAListener(String name)
+		public EditListener findAListener(Object name)
 		{
 			return null;
 		}
