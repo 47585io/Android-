@@ -115,4 +115,32 @@ public abstract interface EditMoudle
 		public abstract void Redo()
 	}
 	
+	
+	public static abstract interface EditState
+	{
+		
+		public static final int DrawMask = 1;
+
+		public static final int FormatMask = 2;
+
+		public static final int CompleteMask = 4;
+
+		public static final int CanvasMask = 8;
+
+		public static final int RunMask = 16;
+
+		public static final int LineMask = 32;
+
+		public static final int SelectionMask = 64;
+
+		public static final int URMask = 128;
+
+		public static final int ModifyMask = 256;
+		
+		
+		public int getFlags()
+		
+		public void setFlags()
+	}
+	
 }

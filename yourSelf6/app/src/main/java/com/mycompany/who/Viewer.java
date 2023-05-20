@@ -27,8 +27,10 @@ public class Viewer extends Activity
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event)
 	{
-		if(keyCode==KeyEvent.KEYCODE_BACK)
-			this.finish();
+		if(keyCode==KeyEvent.KEYCODE_BACK && web.canGoBack()){
+			web.goBack();
+			return true;
+		}
 		return super.onKeyUp(keyCode, event);
 	}
 	

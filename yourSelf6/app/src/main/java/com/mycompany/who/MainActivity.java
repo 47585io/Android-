@@ -19,6 +19,8 @@ import com.mycompany.who.Edit.Base.Share.Share4.*;
 
 /*
   无论如何，都要为你的工程保存一个最稳定的版本，免得之后出bug
+  
+  但是代码还是要大胆写的，还是那句话: bug又改不完，还不如随便写，大不了之后再改
 */
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
@@ -92,7 +94,7 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		setContentView(Code);	
 		Code.loadSize(width,height,is);
 		//Code.addEdit("/storage/emulated/0/Linux/1.java");	
-		//Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
+		Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/src/com/mycompany/mygame/MainActivity.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/res/layout/main.xml");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game/src/com/mycompany/mygame/MyGdxGame.java");

@@ -17,7 +17,7 @@ public class myEditListener extends Object implements EditListener
 
 	public static final int Enabled_Mask = 1;
 	//判断或设置监听器启用状态的Mask值
-	public static final int Disbled_Mask = 0xfffffffe;
+	public static final int Disbled_Mask = ~Enabled_Mask;
 	//判断或设置监听器禁用状态的Mask值
 	
 	private int flag;
@@ -73,14 +73,14 @@ public class myEditListener extends Object implements EditListener
 		return self;
 	}
 	@Override
-	public EditListener getParent()
-	{
-		return parent;
-	}
-	@Override
 	public void setParent(EditListener parent)
 	{
 		this.parent=parent;
+	}
+	@Override
+	public EditListener getParent()
+	{
+		return parent;
 	}
 
 	@Override

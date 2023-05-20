@@ -12,16 +12,16 @@ public abstract interface EditListener
 	public abstract int getFlag()
 	
 	public abstract void setFlag(int flag)
-		
-	public abstract void setName(Object name)
-		
+	
 	public abstract Object getName()
 	
+	public abstract void setName(Object name)
+		
 	public abstract EditListener findListenerByName(Object name)
 	
-	public abstract void setEdit(EditText t)
-	
 	public abstract EditText getEdit()
+	
+	public abstract void setEdit(EditText t)
 	
 	public abstract EditListener getParent()
 	

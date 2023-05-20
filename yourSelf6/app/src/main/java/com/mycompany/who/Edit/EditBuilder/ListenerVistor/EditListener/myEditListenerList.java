@@ -18,7 +18,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	
 	public static final int AddToHead_Mask = 2;
 	//在之后添加元素时，期待元素添加到列表头部
-	public static final int AddToTail_Mask = 0xfffffffd;
+	public static final int AddToTail_Mask = ~AddToHead_Mask;
 	//在之后添加元素时，期待元素添加到列表尾部
 	
 	private List<EditListener> lis;
