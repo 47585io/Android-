@@ -844,7 +844,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  
  LineGroup
  
- 此类是为了提升行数的插入效率，目前，EditLine在20000行之后的行插入非常缓慢，这是因为文本太长(20000*6 = 120000)
+ 此类是为了提升行数的插入效率，目前，EditLine在20000行之后的行插入非常缓慢，这是因为文本太长(20000*6 = 120000 = 120k)
  
  LineGroup与EditGroup类似，它将多个EditLine组合成组，并管理它们，每一个EditLine都只能有MaxLine行
  

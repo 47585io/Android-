@@ -30,7 +30,9 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	{
 		TextSize = 13.5f;
 		ConfigSelf(this);
-		listener = new EditText(getContext()).getKeyListener();
+		if(listener==null){
+		    listener = getKeyListener();
+		}
 	}
 
 	@Override
@@ -84,9 +86,14 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		setTypeface(type);
 		setHighlightColor(Selected_Color);
 		setTextSize(TextSize);
+		/*
+		  当设置LetterSpacing后，除最后一行以外的其它行都添加这个LetterSpacing，所以最后一行会缺失LetterSpacing，这里使用padding来补充最后一行高度
+		  但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
+		*/
+		float pad = 0;
 		setLetterSpacing(0.01f);
-		setLineSpacing(0.2f,1.2f);
-		setPadding(0,0,0,0);
+		setLineSpacing(0.3f,1.3f);
+		setPadding(0,0,0,(int)pad);
 	}
 
 	@Override
