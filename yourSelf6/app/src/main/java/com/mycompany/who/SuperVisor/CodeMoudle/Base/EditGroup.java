@@ -261,7 +261,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  
  EditGroup在配置时除了设置一些自己的东西，还会调用EditFactory来配置，所以可以设置EditFactory
  
- reIndex是为了在调用AddEditAt后同步所有Edit内部的下标，这个下标会当作Uedo和Redo的关键数据
+ reIndex是为了在调用AddEditAt后同步所有Edit内部的下标，保证它们的顺序
 
 ------------------------------------------------------------------------------------
 */
@@ -371,9 +371,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
   实际上，EditGroup使用RCodeEdit作为内部编辑器，但返回的是CodeEdit，因为不想让人知道RCodeEdit
   
-  每个RCodeEdit都存储自己在EditList中的index，这方便快速找到紧挨的编辑器，index为指针，这是因为自己的下标可能在AddEditAt后变化
+  每个RCodeEdit都存储自己在EditList中的index，这方便快速找到紧挨的编辑器
   
-  因为Edit在Uedo和Redo栈中存储了自己的index，若后续下标变化，只有通过修改指针指向的值才能快速改变所有的index
+  每次修改时，Edit都在Uedo和Redo栈中存储了自己的指针，以说明自己在本轮次中被修改了
   
   为了提升效率，RCodeEdit限制自己的行，并实现了自动截取超出行到下个编辑器的功能，避免单个编辑器文本太多
   
@@ -406,21 +406,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		protected void onPutUR(token token)
 		{
 			stack.seeLast().push(this);
-			//监听器优先调用，所以Last会先开一个空间让我push
-			//每一轮次onTextChanged执行后紧跟其后再开一个空间
+			//监听器优先调用，所以在onBeforeTextChanged中会先开一个空间让我push
+			//每一轮次中，每一次修改都存一次自己的指针，便于之后找到我并Uedo一次
 		}		
-
+			
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
 			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0)){
 				stack.put(new Stack<>());  
-			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
+			//从第一个调用onBeforeTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
 			}
 			super.onBeforeTextChanged(str, start, count, after);
 		}
-
+		
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{
@@ -1439,11 +1439,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 		public void Uedo()
 		{
-			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器下标，具体顺序由编辑器内部管理
-			//Uedo只负责拿出这些下标，然后调用指定下标编辑器的Uedo方法
+			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器指针，具体顺序由编辑器内部管理
+			//Uedo只负责拿出这些指针，然后调用指定编辑器的Uedo方法
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
 			if (stack.Usize() < 1 || getEdit().IsUR()){
-				//如果编辑器无法Uedo，则我也不能消耗我的下标
+				//如果编辑器无法Uedo，则我也不能消耗我的指针
 				return;
 			}
 			Stack<CodeEdit> last= stack.getLast();
@@ -1455,8 +1455,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		public void Redo()
 		{
-			//与顺序无关的Redo，它只存储一轮次的Uedo的编辑器下标，具体顺序由编辑器内部管理
-			//Redo只负责拿出这些下标，然后调用指定下标编辑器的Redo方法
+			//与顺序无关的Redo，它只存储一轮次的Uedo的编辑器指针，具体顺序由编辑器内部管理
+			//Redo只负责拿出这些指针，然后调用指定编辑器的Redo方法
 			if (stack.Rsize() < 1 || getEdit().IsUR()){
 				return;
 			}
