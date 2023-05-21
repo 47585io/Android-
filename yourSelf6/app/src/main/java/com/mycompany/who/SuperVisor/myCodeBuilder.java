@@ -99,7 +99,7 @@ public class myCodeBuilder implements Configer<XCode>
 		{
 			ArrayAdapter adapter = new ArrayAdapter(v.getContext(),android.R.layout.simple_list_item_1);
 			v.setAdapter(adapter);
-			adapter.addAll(new String[]{"代码染色","对齐文本","选择语言","设置"});
+			adapter.addAll(new String[]{"代码染色","对齐文本","选择语言","保存","设置"});
 		}
 
 		@Override
@@ -175,7 +175,7 @@ public class myCodeBuilder implements Configer<XCode>
 					Group.getEditManipulator().lockThem(true);
 					p1.setOnClickListener(Write());
 					mSaveFlags = CodeEdit.mPublicFlags;
-					CodeEdit.mPublicFlags = 0xffffffff;
+					CodeEdit.mPublicFlags = CodeEdit.CanvasMask;
 					Group.requestFocus();
 				}
 		    }

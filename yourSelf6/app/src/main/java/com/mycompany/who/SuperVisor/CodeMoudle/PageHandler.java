@@ -252,9 +252,9 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 				public void run()
 				{
 					EditGroup.EditManipulator builder = Group.getEditManipulator();	
-					builder.setFlags(0xffffffff);
+					builder.setEditFlags(0xffffffff);
 					builder.setText(spanStr);	
-					builder.setFlags(0);
+					builder.setEditFlags(0);
 					Group.post(DrawText);
 				}
 			};

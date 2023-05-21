@@ -49,8 +49,6 @@ import android.view.View.OnLongClickListener;
 
 /*
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
- 我的成员全部都是对象，这意味着不会随便改变它们的指向，因此我可以是final
- 
  使用装饰者模式，实现了EditListenerInfoUser接口，但返回的Info其实是内部实现了EditListenerInfoUser成员的Info
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
  
@@ -61,12 +59,18 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	
-	private Int EditFlag=new Int();
-    private Int EditDrawFlag=new Int();
-	private Int historyId;
+	private int EditFlag;
+    private int EditDrawFlag;
 	private int mEditFlags;
+	private CodeEdit historyEdit;
 	private EditGroupListenerInfo Info;
 
+	private ThreadPoolExecutor pool;
+	private TwoStack<Stack<CodeEdit>> stack;
+	private EditFactory mfactory;
+	private List<CodeEdit> EditList;
+	private EditManipulator manipulator;
+	
 	private ScrollBar Scro;
 	private HScrollBar hScro;
 	private LinearLayout ForEdit;
@@ -74,13 +78,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private LineGroup EditLines;
 	private ListView mWindow;
 
-	private EditFactory mfactory;
-	private ThreadPoolExecutor pool;
-	private List<CodeEdit> EditList;
-	private TwoStack<Stack<Int>> stack;
-	private EditManipulator manipulator;
 	
-
 	public EditGroup(Context cont)
 	{
 		super(cont);	
@@ -185,7 +183,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 	public CodeEdit getHistoryEdit()
 	{
-		return EditList.get(historyId.get());
+		return historyEdit;
 	}
 	public EditManipulator getEditManipulator()
 	{
@@ -272,7 +270,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	public void AddEdit(String name)
 	{
 		RCodeEdit Edit= creatAEdit(name);
-		Edit.index.set(EditList.size());
+		Edit.index=EditList.size();
 		EditList.add(Edit);
 		getForEditSon().addView(Edit);
 	}
@@ -281,7 +279,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	final private void AddEditAt(int index)
 	{
 		RCodeEdit Edit= creatAEdit("");
-		Edit.index.set(index);
+		Edit.index=index;
 		EditList.add(index, Edit);
 		getForEditSon().addView(Edit, index);
 		reIndex();
@@ -324,8 +322,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		for (int i=0;i < EditList.size();++i)
 		{
 			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
-			if (e.index.get() != i)
-				e.index.set(i);
+			if (e.index != i)
+				e.index=i;
 		}
 	}
 
@@ -389,7 +387,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	final class RCodeEdit extends CodeEdit
 	{
 
-		private Int index;	
+		private int index;	
 		private boolean can;
 		//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
 
@@ -397,19 +395,17 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			super(cont);
 			can = true;
-			index = new Int();
 		}
 		public RCodeEdit(Context cont, CodeEdit Edit)
 		{
 			super(cont, Edit);
 			can = true;
-			index = new Int();
 		}	
 		
 		@Override
 		protected void onPutUR(token token)
 		{
-			stack.seeLast().push(index);
+			stack.seeLast().push(this);
 			//监听器优先调用，所以Last会先开一个空间让我push
 			//每一轮次onTextChanged执行后紧跟其后再开一个空间
 		}		
@@ -417,8 +413,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag.get() == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0)){
-				stack.put(new Stack<Int>());  
+			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0)){
+				stack.put(new Stack<>());  
 			//从第一个调用onTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
 			//让第一个编辑器先开辟一个空间，待之后存储
 			}
@@ -438,9 +434,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			    //已经被修改，不允许再修改
 			}
 
-			Log.w("onTextChanged", "My index is " + index.get());
+			Log.w("onTextChanged", "My index is " + index);
 			
-			if(EditFlag.get()==0){
+			if(EditFlag==0){
 				trimToFather();  
 				//第一个编辑器扩展大小，无论文本怎么截取，但总量不变，所以宽高不变
 			}
@@ -453,7 +449,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			   在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
 			*/
 			
-			EditFlag.add();		
+			++EditFlag;		
 			if (lengthAfter != 0){
 				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
 				sendOutLineToNext(text, start, lengthBefore, lengthAfter);	
@@ -461,9 +457,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			else{
 				super.onTextChanged(text, start, lengthBefore, lengthAfter);
 			}
-			EditFlag.less();
+			--EditFlag;
 
-			if (EditFlag.get() == 0)
+			if (EditFlag == 0)
 			{
 				int line = getEditManipulator().calaEditLines();
 				EditLines. reLines(line);	
@@ -482,7 +478,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			{
 				boolean need = true;
 				Editable editor = getText();
-				int selfIndex = index.get();		
+				int selfIndex = index;		
 				int subLineStart = MaxLine + 1 - OnceSubLine;
 				size j = subLines(subLineStart); 
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
@@ -506,7 +502,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//它可能在MAX行之内，即正常染色
 				//也可能在MAX行之外，即只染色start～MAX行之间
 
-				if(lineCount-subLineStart+1 > MaxLine){
+				if(lineCount-subLineStart+1 > MaxLine)
+				{
 					//大段文本需要插入，必须使用dispatchTextBlock
 					j.set(selfIndex,editor.length());
 					getEditManipulator().dispatchTextBlock(j,src);
@@ -577,11 +574,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		EditGroup.Config_hesSize config = (EditGroup.Config_hesSize)self. getConfig();
 		config.ConfigSelf(self);
 		//修改窗口大小
-        self.historyId = Edit.index;
+        self.historyEdit = Edit;
 		//本次窗口谁请求，单词给谁
 		
 		int offset=Edit.getSelectionStart();
-		int xlen = self.getEditManipulator().calaEditTop(Edit.index.get());
+		int xlen = self.getEditManipulator().calaEditTop(Edit.index);
 		size pos = Edit.getScrollCursorPos(offset, getHscro().getScrollX(), getScro().getScrollY() - xlen);
 		pos.start += self.EditLines.maxWidth();
 		//计算基本位置，在之后会判断窗口超出屏幕的情况
@@ -610,7 +607,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	@Override
 	public void onClick(View p1)
 	{
-		historyId = ((RCodeEdit) p1).index;
+		historyEdit = (CodeEdit) p1;
 		if (getWindow() != null)
 			getWindow().setX(-9999);
 	}
@@ -631,8 +628,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		Adapter adapter = p1.getAdapter();
 		Icon icon = (Icon) adapter.getItem(p3);
-		if(historyId!=null){
-			CodeEdit Edit = getHistoryEdit();
+		CodeEdit Edit = getHistoryEdit();
+		if(Edit!=null){
 			Edit.insertWord(icon.getName(), Edit.getSelectionStart(), (int)adapter.getItemId(p3));
 		}
 		getWindow().setX(-9999);
@@ -650,7 +647,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		String text = man.subSequence(0,man.calaEditLen()).toString();
 		CodeEdit Edit = man.getFocusEdit();
 		
-		int index = man.calaEditLen(((RCodeEdit)Edit).index.get());
+		int index = man.calaEditLen(((RCodeEdit)Edit).index);
 		int nextIndex = text.indexOf(name,index+ Edit.getSelectionEnd());
 		int lastIndex = text.lastIndexOf(name,index+ Edit.getSelectionStart()-1);
 	    index = nextIndex==-1 ? lastIndex : nextIndex;
@@ -705,28 +702,28 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			canvas.clipRect(rect);
 			//clipRect可以指示一块相对于自己的矩形区域，超出区域的部分会被放弃绘制
 
-			if(EditDrawFlag.get()==0)
+			if(EditDrawFlag==0)
 			{
 				//由于只有获取焦点的Edit会自动刷新，所以第一个编辑器还要遍历所有其它编辑器，并显示
-				EditDrawFlag.set(EditList.size()); 
+				EditDrawFlag = EditList.size(); 
 				//当前还有size个编辑器要显示
-				int id =((RCodeEdit)self).index.get();
+				int id = ((RCodeEdit)self).index;
 				for(CodeEdit e: EditList)
 				{
-					if(((RCodeEdit)e).index.get()!=id){
+					if(((RCodeEdit)e).index!=id){
 						//如果是第一个编辑器，则不用重新绘制
 						e.invalidate();
 					}
 				}
 			}
-			EditDrawFlag.less();
+			--EditDrawFlag;
 			//一个编辑器绘制完成了，将Flag--，当Flag==0，则所有编辑器绘制完成了
 		}
 
 		/* 计算编辑器在可视区域中的自己的范围 */
 		public void selfRect(EditText self,Rect rect)
 		{
-			int index = ((RCodeEdit)self).index.get();
+			int index = ((RCodeEdit)self).index;
 			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
 			
 			int EditTop=getEditManipulator().calaEditTop(index); 
@@ -1068,7 +1065,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
  lockThem  所有编辑器不可输入
  zoomByEdit/zoomByScro  缩放文本/缩放画面
- compareChroot  为所有Edit设置权限符
+ setFlags/getFlags  设置状态
  reSAll  将指定范围内的所有want替换为to 
  SearchWord  搜索单词 
  setSpans  设置Span 
@@ -1089,7 +1086,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 ---------------------------------------------------------------
 */
-	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo
+	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo,EditState
 	{
 		
 		private void calaIndex(int index,size start)
@@ -1099,7 +1096,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			{
 				if (index - e.getText().length() <= 0)
 				{
-					start.start = ((RCodeEdit)e).index.get();
+					start.start = ((RCodeEdit)e).index;
 					start.end = index;
 					return;
 				}
@@ -1263,20 +1260,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			trimToFather();
 		}
 		
-		public void setFlags(int flag)
+		public void setEditFlags(int flag)
 		{
 			//在给所有Edit设置flag后，EditGroup保存flag，在之后添加新编辑器时自动设置
 			mEditFlags = flag;
 			for(CodeEdit Edit:EditList)
 			    Edit.setEditFlags(flag);
 		}
-		public int getFlags(){
+		public int getEditFlags(){
 			return mEditFlags;
 		}
 		
 		public void reSAll(int start,int end,final String want,final CharSequence to)
 		{
-			stack.put (new Stack<Int>());
+			stack.put (new Stack<>());
 			DoOnce d= new DoOnce()
 			{
 				@Override
@@ -1361,6 +1358,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void reDraw(int start, int end)
 		{
+			if(getEdit().IsDraw()){
+				return;
+			}
+			
 			DoOnce d= new DoOnce()
 			{
 				@Override
@@ -1406,8 +1407,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public int Format(int start, int end)
 		{
+			if(getEdit().IsFormat()){
+				//如果编辑器无法Format，就不要存入Stack<Int>了
+				return 0;
+			}
+			
 			int before = calaEditLen();
-			stack.put(new Stack<Int>());
+			stack.put(new Stack<>());
 			DoOnce d= new DoOnce()
 			{
 				@Override
@@ -1436,13 +1442,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器下标，具体顺序由编辑器内部管理
 			//Uedo只负责拿出这些下标，然后调用指定下标编辑器的Uedo方法
 	        //Bug: 多个编辑器之间会各自管理，因此任何一个的修改可能与另一个无关，造成单次Uedo不同步，但一直Uedo下去，结果是一样的
-			if (stack.Usize() < 1){
+			if (stack.Usize() < 1 || getEdit().IsUR()){
+				//如果编辑器无法Uedo，则我也不能消耗我的下标
 				return;
 			}
-			Stack<Int> last= stack.getLast();
+			Stack<CodeEdit> last= stack.getLast();
 			stack.Reput(last); //哪些编辑器Uedo的，待会还是由它们去Redo
-			for (Int l:last){
-				EditList.get(l.get()).Uedo();
+			for (CodeEdit Edit:last){
+				Edit.Uedo();
 			}
 			refreshLineAndSize();
 		}
@@ -1450,13 +1457,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			//与顺序无关的Redo，它只存储一轮次的Uedo的编辑器下标，具体顺序由编辑器内部管理
 			//Redo只负责拿出这些下标，然后调用指定下标编辑器的Redo方法
-			if (stack.Rsize() < 1){
+			if (stack.Rsize() < 1 || getEdit().IsUR()){
 				return;
 			}
-			Stack<Int> next= stack.getNext();
+			Stack<CodeEdit> next= stack.getNext();
 			stack.put (next); 
-			for (Int l:next){
-				EditList.get(l.get()).Redo();
+			for (CodeEdit Edit:next){
+				Edit.Redo();
 			}
 			refreshLineAndSize();
 		}
@@ -1611,6 +1618,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public CodeEdit getFocusEdit(){
 			return (CodeEdit)ForEditSon.getFocusedChild();
+		}
+		public CodeEdit getEdit(){
+			return EditList.get(0);
 		}
 
 	}
@@ -1932,4 +1942,3 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 	
 }
-

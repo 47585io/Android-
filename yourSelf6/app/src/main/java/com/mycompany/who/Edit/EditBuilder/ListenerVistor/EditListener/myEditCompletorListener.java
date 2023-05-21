@@ -90,7 +90,6 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		return range.start + word.length();
 	}
 	
-	
 	/* 在一个库中搜索单词，支持Span文本 */
 	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, CharSequence[] target, int before, int after)
 	{
