@@ -319,9 +319,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	/* 重新排列Edit的下标 */
 	final private void reIndex()
 	{
-		for (int i=0;i < EditList.size();++i)
+		for (int i=EditList.size()-1; i>=0; --i)
 		{
-			RCodeEdit e = (EditGroup.RCodeEdit) EditList.get(i);
+			RCodeEdit e = (RCodeEdit) EditList.get(i);
 			if (e.index != i)
 				e.index=i;
 		}
@@ -1408,7 +1408,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public int Format(int start, int end)
 		{
 			if(getEdit().IsFormat()){
-				//如果编辑器无法Format，就不要存入Stack<Int>了
+				//如果编辑器无法Format，就不要存入Stack<>了
 				return 0;
 			}
 			
@@ -1782,6 +1782,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 	}
 
+	
 /*
 ---------------------------------------------------------------
 
