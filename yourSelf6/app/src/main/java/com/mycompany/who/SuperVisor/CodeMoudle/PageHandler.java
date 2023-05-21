@@ -251,13 +251,10 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 				@Override
 				public void run()
 				{
-					final EditGroup.EditManipulator builder = Group.getEditManipulator();	
-					CodeEdit.EditChroot root = new CodeEdit.EditChroot(true,true,true,true,true);
-
-					builder.compareChroot(root);
+					EditGroup.EditManipulator builder = Group.getEditManipulator();	
+					builder.setFlags(0xffffffff);
 					builder.setText(spanStr);	
-					root.set(false,false,false,false,false);
-					builder.compareChroot(root);
+					builder.setFlags(0);
 					Group.post(DrawText);
 				}
 			};
@@ -268,7 +265,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 				public void run()
 				{
 					myRet ret = new myRet(name);
-					final String text = ret.r("UTF-8");
+					String text = ret.r("UTF-8");
 					spanStr.append(text);
 					myEditFormatorListener.reSAll(0,text.length(),"\t","    ",spanStr);	
 					Group.post(setText);

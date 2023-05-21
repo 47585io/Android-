@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.*;
 
 import android.view.View.OnClickListener;
+import com.mycompany.who.Edit.*;
 
 
 public class myCodeBuilder implements Configer<XCode>
@@ -129,7 +130,7 @@ public class myCodeBuilder implements Configer<XCode>
 		class myButtonClickFactory implements ButtonClickFactory
 		{
 			
-			EditGroup.EditGroupListenerInfo Info;
+			private int mSaveFlags;
 			
 			public OnClickListener Uedo(){
 				return new Uedo();
@@ -173,7 +174,9 @@ public class myCodeBuilder implements Configer<XCode>
 					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
 					Group.getEditManipulator().lockThem(true);
 					p1.setOnClickListener(Write());
-					
+					mSaveFlags = CodeEdit.mPublicFlags;
+					CodeEdit.mPublicFlags = 0xffffffff;
+					Group.requestFocus();
 				}
 		    }
 
@@ -186,7 +189,8 @@ public class myCodeBuilder implements Configer<XCode>
 					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
 					Group.getEditManipulator().lockThem(false);
 					p1.setOnClickListener(Read());
-					
+					CodeEdit.mPublicFlags = mSaveFlags;
+					Group.requestFocus();
 				}
 			}
 		}

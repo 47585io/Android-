@@ -1,26 +1,38 @@
-package com.mycompany.who.Edit.Extension;
+package com.mycompany.who.Edit.Base;
+import com.mycompany.who.Edit.Base.*;
 
-public class EditChroot
+public class EditChroot implements EditMoudle.EditState
 {
 	
-	public static final int DrawMask = 1;
+	private int mPrivateFlags;
+
+	@Override
+	public int getEditFlags()
+	{
+		return mPrivateFlags;
+	}
+	@Override
+	public void setEditFlags(int flags)
+	{
+		mPrivateFlags = flags;
+	}
 	
-	public static final int FormatMask = 2;
-	
-	public static final int CompleteMask = 4;
-	
-	public static final int CanvasMask = 8;
-	
-	public static final int RunMask = 16;
-	
-	public static final int LineMask = 32;
-	
-	public static final int SelectionMask = 64;
-	
-	public static final int URMask = 128;
-	
-	public static final int ModifyMask = 256;
-	
+	public void set(boolean isModify,boolean isUR,boolean isDraw,boolean isFormat,boolean isComplete,boolean isCanvas,boolean isRun,boolean isLine,boolean isSelection)
+	{
+	    IsModify(isModify);
+		IsUR(isUR);
+		IsDraw(isDraw);
+		IsFormat(isFormat);
+		IsComplete(isComplete);
+		IsCanvas(isCanvas);
+		IsRun(isRun);
+		IsLine(isLine);
+		IsSelection(isSelection);
+	}
+	public void set(EditMoudle.EditState s)
+	{
+		mPrivateFlags = s.getEditFlags();
+	}
 	
 	public static void IsModify(int flag,boolean is){
 		flag = is ? flag|ModifyMask : flag&~ModifyMask;
@@ -78,8 +90,6 @@ public class EditChroot
 		return (flag&LineMask) == LineMask;
 	}
 	
-	private int mPrivateFlags;
-
 	public void IsModify(boolean is){
 		mPrivateFlags = is ? mPrivateFlags|ModifyMask : mPrivateFlags&~ModifyMask;
 	}
@@ -138,6 +148,7 @@ public class EditChroot
 	
 }
 
+/*
 class tmp{
 	
 	private EditChroot root;
@@ -199,3 +210,4 @@ class tmp{
 	}
 	
 }
+*/

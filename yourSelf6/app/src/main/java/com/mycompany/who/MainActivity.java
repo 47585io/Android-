@@ -78,14 +78,12 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 	}
 	
-	public void config(){
+	public void config()
+	{
 		Code.config();
 		Code.setPool(pool);
 		getWindow().setStatusBarColor(Colors.Bg);
 		getWindow().setNavigationBarColor(Colors.Bg);
-		CodeEdit.Enabled_Drawer = true;
-		CodeEdit.Enabled_Complete = true;
-		CodeEdit.Enabled_Format = true;
 	}
 	
 	@Override

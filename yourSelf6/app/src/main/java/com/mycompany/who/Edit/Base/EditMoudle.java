@@ -138,9 +138,9 @@ public abstract interface EditMoudle
 		public static final int ModifyMask = 256;
 		
 		
-		public int getFlags()
+		public int getEditFlags()
 		
-		public void setFlags()
+		public void setEditFlags(int flags)
 	}
 	
 }

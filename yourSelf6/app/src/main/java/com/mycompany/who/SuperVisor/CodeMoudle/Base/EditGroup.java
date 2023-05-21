@@ -64,7 +64,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private Int EditFlag=new Int();
     private Int EditDrawFlag=new Int();
 	private Int historyId;
-	private CodeEdit.EditChroot root;
+	private int mEditFlags;
 	private EditGroupListenerInfo Info;
 
 	private ScrollBar Scro;
@@ -313,7 +313,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		Edit.setWindow(getWindow());
 		Edit.setPool(getPool());
-		Edit.setChroot(root); //设置root
+		Edit.setEditFlags(mEditFlags); //设置flags
 		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
@@ -1263,14 +1263,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			trimToFather();
 		}
 		
-		public void compareChroot(CodeEdit.EditChroot f)
+		public void setFlags(int flag)
 		{
-			root.set(f);
-			for(CodeEdit E: EditList)    
-			    E.setChroot(f);
+			//在给所有Edit设置flag后，EditGroup保存flag，在之后添加新编辑器时自动设置
+			mEditFlags = flag;
+			for(CodeEdit Edit:EditList)
+			    Edit.setEditFlags(flag);
 		}
-		public CodeEdit.EditChroot getRoot(){
-			return root;
+		public int getFlags(){
+			return mEditFlags;
 		}
 		
 		public void reSAll(int start,int end,final String want,final CharSequence to)
@@ -1799,7 +1800,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			Group.config = new Config_hesSize();
 			Group.EditList = new ArrayList<>();
 			Group.stack = new TwoStack<>();
-			Group.root = new CodeEdit.EditChroot();
 			Group.creatInfo();
 			Group.creatEditManipulator();
 			Group.creatEditFactory();

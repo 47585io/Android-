@@ -92,15 +92,32 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
  
 /*
 
-   Enabled_Drawer  禁用所有的自动染色
-   Enabled_Format  禁用所有的自动格式化
-   Enabled_Complete  禁用所有的自动补全
+   mPrivateFlags和mPublicFlags包含以下内容:
+
+   mPublicFlags
+   ↓
+   isDraw  禁用所有的自动染色
+   isFormat  禁用所有的自动格式化
+   isComplete  禁用所有的自动补全
+   ...
    
-   IsModify / IsModify2    当前编辑器被修改，不做任何事
+   mPrivateFlags
+   ↓
+   IsModify / IsModify2    当前编辑器被修改，不再自动做事
    isDraw                  当前编辑器已在染色，不再染色
    isFormat                当前编辑器已在格式化，不再格式化
    isComplete              当前编辑器已在自动补全，不再自动补全
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
+   ...
+   
+   我们在任何可能修改文本的函数中设置IsModify，这样在onTextChanged中判断，避免死循环
+   我们仅在一些需要供我们使用的flag时，才会在函数中设置对应的flag，例如IsDraw，IsFormat，IsUR等
+   注意: 我们不在任何主动调用的方法中判断IsModify，而是在自动调用时才需要判断，避免函数失效
+   
+   因为flag在主线程中设置，而onTextChanged也在主线程中调用，因此在默认情况下，不会死循环，并且每一时刻只有一个函数被执行，所有函数都会自动调用，即使手动调用也不会有问题
+   另外的，本人最开始的意图是只有IsModify，只有IsModify起着关键性作用，其它flag意义不大
+   如果因人为手动禁用某个flag，这个flag对应的功能将关闭，为了保证flag一直禁用，主动调用函数也是不行的，因为可能在函数中重新设置
+   
  
    tryCount          染色或其它工作检查的行数，次数或个数，tryCount的值越小，编辑器速度更快  
    Delayed_Millis    (为所有的post任务设置一个延迟时间，以及缓冲时间
@@ -109,7 +126,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 					 
 */
 
-public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,SelectionSeer,Liner,EditBuilderUser
+public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWithRedo,Canvaser,Runnar,SelectionSeer,Liner,EditBuilderUser,EditState
 {
 	//一千行代码实现代码染色，格式化，自动补全，Uedo，Redo
 	
@@ -122,16 +139,12 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  //但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
 	  //呜呜呜，对不起真的没办法了
 	
-	private boolean isDraw;
-	private boolean isFormat;
-	private boolean isComplete;
-	private boolean isUR;
+	private int mPrivateFlags;
 	private int IsModify;
-	private boolean IsModify2;
 	  //你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
 	  //IsModify管小的函数中的修改，防止从函数中跳到另一个onTextChanged事件
 	  //IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
-	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true
+	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true，这是为了避免套娃调用的问题
 
 	private int lineCount;
 	private AdapterView mWindow;
@@ -142,11 +155,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	static EPool2 Ep;
 	static EPool3 Epp;
 	
-	public static boolean Enabled_Drawer=false;
-	public static boolean Enabled_Format=false;
-	public static boolean Enabled_Complete=false;
 	public static int tryCount=1;
 	public static int Delayed_Millis = 50;
+	public static int mPublicFlags;
 	
 	static{
 		Ep=new EPool2();
@@ -426,6 +437,11 @@ Dreawr
 	@Override
 	final public void reDraw(final int start,final int end)
 	{	
+	    if(IsDraw()){
+			//flag值不可被抵消
+			return;
+		}
+	
 	    final Editable editor = getText();
 		final List<wordIndex> nodes = new ArrayList<>();
 			
@@ -451,7 +467,7 @@ Dreawr
 				long last, now;
 				last = System.currentTimeMillis();
 				++IsModify; //为保证isxxx安全，不要在子线程中使用它们
-				isDraw = true; 	
+				IsDraw(true);
 				
 				try{
 					onDrawNodes(start, end, nodes, editor); 
@@ -460,7 +476,7 @@ Dreawr
 					Log.e("DrawNodes Error", e.toString());
 				}
 
-				isDraw = false;
+				IsDraw(false);
 				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
 				Ep.stop(); //Draw完后申请回收nodes，若Ep和isxxx同时出现，它应紧贴isxxx之前或之后后，避免异常		
 				now = System.currentTimeMillis();	
@@ -608,6 +624,10 @@ Formator
 	@Override
 	public final int Format(final int start, final int end)
 	{
+		if(IsFormat()){
+			return 0;
+		}
+		
 		//为了安全，禁止重写
 		Editable editor = getText();
 		int before = editor.length();
@@ -615,7 +635,7 @@ Formator
 		last = System.currentTimeMillis();
 		
 		++IsModify;
-		isFormat = true; 	
+		IsFormat(true); 	
 		
 		try{
 			onFormat(start, end, editor);
@@ -624,7 +644,7 @@ Formator
 			Log.e("Format Error", e.toString());
 		}
 		
-		isFormat = false;
+		IsFormat(false);
 		--IsModify;
 		
 		now = System.currentTimeMillis();
@@ -651,11 +671,15 @@ Formator
     /* 在指定位置插入后续字符 */
 	@Override
 	public final int Insert(final int index,final int count)
-	{
+	{	
+		if(IsFormat()){
+			return 0;
+		}
+	
 		Editable editor = getText();
 		int before = editor.length();
 		++IsModify;
-		isFormat = true;
+		IsFormat(true);
 		
 		try{
 		    onInsert(index,count,editor);
@@ -664,7 +688,7 @@ Formator
 			Log.e("Insert Error", e.toString());
 		}
 		
-		isFormat = false;
+		IsFormat(false);
 		--IsModify;
 		return editor.length()-before;
 	}	
@@ -734,8 +758,9 @@ Formator
 	final public void openWindow()
 	{
 		final AdapterView Window = getWindow(); 
-		if(Window==null)
+		if(Window==null || IsComplete()){
 			return;
+		}
 		
 		long last, now;
 		last = System.currentTimeMillis();
@@ -759,7 +784,6 @@ Formator
 			{
 				Window.setAdapter(adapter);
 			    Epp.stop(); //将单词放入Window后回收Icons，在isxxx之前，避免异常
-			    isComplete=true;
 				++IsModify; //我害怕会在callOnopenWindow中修改文本，既然不在子线程，就也加上吧
 				
 				try{
@@ -770,7 +794,6 @@ Formator
 				}
 				
 				--IsModify;
-				isComplete=false;
 				Log.w("After OpenWindow","I'm "+hashCode()+", "+ Epp.toString());
 		    }
 		};
@@ -892,6 +915,12 @@ Formator
     @Override
 	protected void onDraw(Canvas canvas)
 	{
+		if(IsCanvas()){
+			//即使禁用了Canvas，也要进行默认绘制
+			super.onDraw(canvas);
+			return;
+		}
+		
 		//获取当前控件的画笔
         TextPaint paint = getPaint();
 		size pos = getCursorPos(getSelectionEnd());
@@ -907,6 +936,7 @@ Formator
 			super.onDraw(canvas); //即使Listener出现问题，也请继续绘制
 		}
 		--IsModify;
+		//我们并不主动进行Canvas的禁用，这没有意义
     }
 	
 	protected void DrawAndDraw(final Canvas canvas, final TextPaint paint, final size pos, final int flag)
@@ -959,14 +989,20 @@ Runnar
 	@Override
 	final public String MakeCommand(final String state)
 	{
+		if(IsRun()){
+			return "";
+		}
+		
 		String com = "";
 		++IsModify;
+		
 		try{
 			com = onMakeCommand(state);
 		}
 		catch(Exception e){
 			Log.e("onMakeCommand Error",e.toString());
 		}
+		
 		--IsModify;
 		return com;//为保证isxxx能成功配对，请不要提前返回
 	}
@@ -992,14 +1028,20 @@ Runnar
 	@Override
 	final public int RunCommand(String command)
 	{
+		if(IsRun()){
+			return 0;
+		}
+		
 		int flag = 0;
 		++IsModify;
+		
 		try{
 			flag = onRunCommand(command);
 		}
 		catch(Exception e){
 			Log.e("onRunCommand Error",e.toString());
 		}
+		
 		--IsModify;
 		return flag;
 	}
@@ -1041,6 +1083,10 @@ Runnar
     @Override
 	public void onLineChange(final int start,final int before,final int after)
 	{
+		if(IsLine()){
+			return;
+		}
+		
 		try{
 			EditListener li = getLinerChecker();
 			RunLi run = new RunLi()
@@ -1063,6 +1109,11 @@ Runnar
 	@Override
 	protected void onSelectionChanged(final int selStart, final int selEnd)
 	{
+		if(IsSelection()){
+			super.onSelectionChanged(selStart,selEnd);
+			return;
+		}
+		
 		++IsModify;
 		try{
 			EditListener li = getSelectionSeer();
@@ -1077,7 +1128,6 @@ Runnar
 				}
 			};
 			li.dispatchCallBack(run);
-			li.setEdit(this);
 		}
 		catch(Exception e){
 			Log.e("onSelectionChanged Error",e.toString());
@@ -1174,11 +1224,11 @@ Uedo和Redo
 	@Override
 	final public void Uedo()
 	{
-		if (stack.Usize()==0)
+		if (stack.Usize()==0 || IsUR())
 			return;
 
 		++IsModify;
-		isUR = true;
+		IsUR(true);
 		try{
 			int endSelection = Uedo_();
 			setSelection(endSelection);
@@ -1187,18 +1237,18 @@ Uedo和Redo
 		catch (Exception e){
 			Log.e("Uedo Error",e.toString());
 		}
-		isUR = false;
+		IsUR(false);
 		--IsModify;
 	}
 	
 	@Override
 	final public void Redo()
 	{
-		if (stack.Rsize()==0)
+		if (stack.Rsize()==0 || IsUR())
 			return;
 
 		++IsModify;
-		isUR = true;
+		IsUR(true);
 		try{
 			int endSelection = Redo_();
 			setSelection(endSelection);	
@@ -1206,7 +1256,7 @@ Uedo和Redo
 		catch (Exception e){
 			Log.e("Redo Error",e.toString());
 		}
-		isUR = false;
+		IsUR(false);
 		--IsModify;
 	}
 	
@@ -1309,7 +1359,7 @@ Uedo和Redo
 	
 	final protected void saveTokenToStack(CharSequence str, int start, int count, int after)
 	{
-		if (isUR)
+		if (IsUR())
 		{
 			return;
 			//如果它是由于Uedo本身或无需处理的（例如染色）造成的修改，则不能装入
@@ -1393,12 +1443,12 @@ Uedo和Redo
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
 		
-		if(IsModify!=0||IsModify2){
+		if(IsModify()){
 			return;
 			//如果正被修改，不允许再次修改	
 		}
 		
-		if(Enabled_Complete&&!isComplete&&lengthAfter<=tryCount&&lengthBefore<=tryCount)
+		if(!IsComplete()&&lengthAfter<=tryCount&&lengthBefore<=tryCount)
 		{
 			//是否启用自动补全
 			if(getPool()!=null){
@@ -1413,15 +1463,15 @@ Uedo和Redo
 		if (lengthAfter != 0)
 		{
 			//如果没有输入，则不用做什么
-		    IsModify2=true;	
+		    IsModify(true);	
 			
-			if (Enabled_Format&&!isFormat&&lengthAfter<=tryCount)
+			if (!IsFormat()&&lengthAfter<=tryCount)
 			{		
 				//是否启用自动format
 				Insert(start,lengthAfter);
 			}
 			
-			if(Enabled_Drawer&&!isDraw)
+			if(!IsDraw())
 			{
 				//是否启用自动染色		
 				String src = text.toString();
@@ -1443,7 +1493,7 @@ Uedo和Redo
 				}
 			}
 			
-			IsModify2=false; //双重拦截
+			IsModify(false); //双重拦截
 		}
 		
 		super.onTextChanged(text, start, lengthBefore, lengthAfter);
@@ -1593,95 +1643,84 @@ Uedo和Redo
 /*
 ------------------------------------------------------------------------------------
 
-权限类
+权限
 
-  封装了CodeEdit的所有控制权限，直接方便地设置和获取权限
+  CodeEdit的所有控制权限，直接方便地设置和获取权限
   
-  遗憾的是，CodeEdit内部不直接拥有EditChroot，但也提供了兼容函数EditChroot和getChroot
+  我们使用mPrivateFlags和mPublicFlags的相同的一位的值共同得出当前编辑器的某个状态
   
-  除此之外，也可以使用IsModify，IsDraw等函数直接设置和修改某个权限
- 
+  我们设置状态时，仅设置mPrivateFlags，这样当前编辑器的某个功能被禁用
+  
+  mPublicFlags是共享的，对其设置将对所有编辑器生效
+  
 ------------------------------------------------------------------------------------
 */
-	public static class EditChroot
-	{	
-	
-	    public EditChroot(){}
-		public EditChroot(boolean m,boolean d,boolean f,boolean c,boolean u){
-			set(m,d,f,c,u);
-		}
-		public EditChroot(EditChroot o){
-			set(o);
-		}
-		
-		public void set(boolean m,boolean d,boolean f,boolean c,boolean u)
-		{
-			IsModify = m;
-			isDraw = d;
-			isFormat = f;
-			isComplete = c;
-			isUR = u;
-		}
-		public void set(EditChroot f)
-		{
-			IsModify = f.IsModify;
-			isDraw = f.isDraw;
-			isFormat = f.isFormat;
-			isComplete = f.isComplete;
-			isUR = f.isUR;
-		}
-		public EditChroot getChroot(){
-			return new EditChroot(IsModify,isDraw,isFormat,isComplete,isUR);
-		}
-		
-		public boolean IsModify;
-		public boolean isDraw;
-		public boolean isFormat;
-		public boolean isComplete;
-		public boolean isUR;
-		
-	}
-	
-	public void setChroot(EditChroot f)
+
+	@Override
+	public void setEditFlags(int flags)
 	{
-		IsModify2 = f.IsModify;
-		isDraw = f.isDraw;
-		isFormat = f.isFormat;
-		isComplete = f.isComplete;
-		isUR = f.isUR;
+		mPrivateFlags = flags;
 	}
-	public EditChroot getChroot(){
-		return new EditChroot(IsModify2||IsModify!=0,isDraw,isFormat,isComplete,isUR);
+	@Override
+	public int getEditFlags()
+	{
+		return mPrivateFlags;
 	}
+	
 	public void IsModify(boolean is){
-		IsModify2 = is;
-	}
-	public void IsDraw(boolean is){
-		isDraw = is;
-	}
-	public void IsFormat(boolean is){
-		isFormat = is;
-	}
-	public void IsComplete(boolean is){
-		isComplete = is;
+		mPrivateFlags = is ? mPrivateFlags|ModifyMask : mPrivateFlags&~ModifyMask;
 	}
 	public void IsUR(boolean is){
-		isUR = is;
+		mPrivateFlags = is ? mPrivateFlags|URMask : mPrivateFlags&~URMask;
 	}
+	public void IsDraw(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|DrawMask : mPrivateFlags&~DrawMask;
+	}
+	public void IsFormat(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|FormatMask : mPrivateFlags&~FormatMask;
+	}
+	public void IsComplete(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|CompleteMask : mPrivateFlags&~CompleteMask;
+	}
+	public void IsCanvas(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|CanvasMask : mPrivateFlags&~CanvasMask;
+	}
+	public void IsRun(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|RunMask : mPrivateFlags&~RunMask;
+	}
+	public void IsSelection(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|SelectionMask : mPrivateFlags&~SelectionMask;
+	}
+	public void IsLine(boolean is){
+		mPrivateFlags = is ? mPrivateFlags|LineMask : mPrivateFlags&~LineMask;
+	}
+
 	public boolean IsModify(){
-		return IsModify2||IsModify!=0;
-	}
-	public boolean IsDraw(){
-		return isDraw;
-	}
-	public boolean IsFormat(){
-		return isFormat;
-	}
-	public boolean IsComplete(){
-		return isComplete;
+		return (mPrivateFlags&ModifyMask) == ModifyMask || IsModify!=0 || (mPublicFlags&ModifyMask) == ModifyMask;
 	}
 	public boolean IsUR(){
-		return isUR;
+		return (mPrivateFlags&URMask) == URMask || (mPublicFlags&URMask) == URMask ;
+	}
+	public boolean IsDraw(){
+		return (mPrivateFlags&DrawMask) == DrawMask || (mPublicFlags&DrawMask) == DrawMask;
+	}
+	public boolean IsFormat(){
+		return (mPrivateFlags&FormatMask) == FormatMask || (mPublicFlags&FormatMask) == FormatMask;
+	}
+	public boolean IsComplete(){
+		return (mPrivateFlags&CompleteMask) == CompleteMask || (mPublicFlags&CompleteMask) == CompleteMask;
+	}
+	public boolean IsCanvas(){
+		return (mPrivateFlags&CanvasMask) == CanvasMask || (mPublicFlags&CanvasMask) == CanvasMask;
+	}
+	public boolean IsRun(){
+		return (mPrivateFlags&RunMask) == RunMask || (mPublicFlags&RunMask) == RunMask;
+	}
+	public boolean IsSelection(){
+		return (mPrivateFlags&SelectionMask) == SelectionMask || (mPublicFlags&SelectionMask) == SelectionMask;
+	}
+	public boolean IsLine(){
+		return (mPrivateFlags&LineMask) == LineMask || (mPublicFlags&LineMask) == LineMask;
 	}
 	
 
@@ -1788,7 +1827,6 @@ Uedo和Redo
 		};
 	}
 
-	
 /* 
 ---------------------------------------------------------------
 
@@ -1817,8 +1855,6 @@ Uedo和Redo
 	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
 		++IsModify;
-		isFormat = true;
-		
 		int len = want.length();
 		Editable editor = getText();
 		String src=getText().toString().substring(start, end);
@@ -1830,8 +1866,6 @@ Uedo和Redo
 			editor.replace(nowIndex + start, nowIndex + start + len, to);	
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
-		
-		isFormat = false;
 		--IsModify;
 	}
 	
@@ -1879,7 +1913,6 @@ Uedo和Redo
 		return Colors.subSpans(start,end,getText(),type);
 	}
 
-	
 /*  
 ------------------------------------------------------------------------------------
 
@@ -1887,7 +1920,7 @@ Uedo和Redo
 	
     我根本无法将Epool共享，因为无法保证安全，因此外部尽量不要使用
 	
-	如果需要使用，建议只在Finder和Completor的监听器中使用
+	如果需要使用，建议只在Finder和Completor的监听器中使用，并且使用前start，使用后stop
 	
 	但我仍将保留以供默认的监听器使用，如果您使用默认的监听器，这会提升内存利用率
 	
@@ -1929,21 +1962,6 @@ Uedo和Redo
 		protected void resetE(IconX E){}
 		
 	}
-	
-	public static wordIndex getANode(){
-		return Ep.get();
-	}
-	
-	public static IconX getAIcon(){
-		return Epp.get();
-	}
-	
-	public static void DisbledEPool(boolean is, boolean is2)
-	{
-		Ep.isDisbled(is);
-		Epp.isDisbled(is2);
-	}
-	
 
 /*  
 ------------------------------------------------------------------------------------
@@ -2265,14 +2283,6 @@ Uedo和Redo
 		
 		public void onPutUR(token token)
 	
-	}
-	
-	public static interface myChroot{
-		
-		public void compareChroot(EditChroot f)
-			
-		public EditChroot getChroot()
-		
 	}
 	
 	public static interface IlovePool{
