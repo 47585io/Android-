@@ -122,7 +122,7 @@ public class DownBar extends HasAll
   
   Handler追踪手指滑动方向来判断DownBar向哪个方向慢慢打开，具体过程是:
 	 
-  Handler保留上次的坐标，与本次坐标相比计算出差距，然后将DownBar整体移动，演示滑动效果
+  Handler保留上次的坐标，与本次坐标相比计算出差距，然后将DownBar内部画布平移，演示滑动效果
   
   为了避免自己移动而导致坐标出错，Handler永远感知绝对坐标，因为它是相对于屏幕而非Handler本身
   
@@ -228,19 +228,6 @@ public class DownBar extends HasAll
 			}
 		}
 		
-		public int getEnd()
-		{
-			int end = 0;
-			Config_hesSize config = (DownBar.Config_hesSize) getConfig();
-			if(getOrientation()==VERTICAL){
-				end = config.vectorHeight;
-			}
-			else if(getOrientation()==HORIZONTAL){
-				end = config.vectorWidth;
-			}
-			return end;
-		}
-
 	}
 	
 
@@ -270,7 +257,7 @@ public class DownBar extends HasAll
 			target.config=new Config_hesSize();
 			target.Configer=new Config_hesView();
 			target.setHander(new View(target.getContext()));
-			//预设一个Hander
+			//预设一个Hander和Vector
 		    target.setVector(new PageHandler(target.getContext()));
 		}
 	}
@@ -310,18 +297,20 @@ public class DownBar extends HasAll
 			trim(target.hander,handerWidth,handerHeight);
 			trim(target.vector,vectorWidth,vectorHeight);
 			trim(target,width,height);
+			target.setOrientation(CastFlag(flag));
+			//将自己和子元素旋转，并设置排列方向
 			
 			float x = target. getTranslationX();
 			float y = target. getTranslationY();
 			target.setTranslationX(y);
 			target.setTranslationY(x);
-			target.setOrientation(CastFlag(flag));
-			//将自己和子元素旋转，并设置排列方向
+			//交换设置的x轴与y轴的平移值
 		}
 
 		@Override
 		public void onPort(DownBar target, int src)
 		{
+			//记录大小
 			handerWidth = width;
 			handerHeight = (int)(height*0.1);
 			vectorWidth = width;

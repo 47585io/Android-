@@ -195,13 +195,18 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		public void eatView(View v, String name,PageHandler self)
 		{
 			Config_Size2 config = (HasAll.Config_Size2)(self. getConfig());
+			
 			if(v instanceof BubbleEvent){
 				((BubbleEvent)v).setTarget(self);
 			}
+			
 			if(v instanceof CodeBlock){
 				CodeBlock block = (CodeBlock) v;
 				block.config();
 			    block.loadSize(config.width,config.height,config.flag);
+			}
+			else{
+				Config_Size2.trim(v,config.width,config.height);
 			}
 			
 			if(v instanceof ImageView){

@@ -313,7 +313,7 @@ public class myCodeBuilder implements Configer<XCode>
 				public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 				{
 					File f = files.getFile(p3-1);
-					if(f.isFile())
+					if(f!=null && f.isFile())
 					    p.addEdit(f.getPath());
 				}
 

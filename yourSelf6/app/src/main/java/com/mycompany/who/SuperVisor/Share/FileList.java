@@ -47,15 +47,17 @@ public class FileList
 	public File getFile(int index)
 	{
 		File f = null;
-		if (index == -1){
+		if (index == -1 && !nowDir.getPath().equals(End_Path))
+		{
 			//如果index为-1，则获取并进入父目录
 			f = nowDir=nowDir.getParentFile();
 			refreshDate();
 		}
-		else
+		else if(index>-1)
 		{
 			f = sortFilelist.get(index);
-			if(f.isDirectory()){
+			if(f.isDirectory())
+			{
 				//如果是一个目录，则获取并进入目录
 				nowDir = f;
 				refreshDate();
@@ -67,7 +69,8 @@ public class FileList
 	public void addAfile(String name)
 	{
 		File f= new File(nowDir.getPath()+Path_Spilt+name);
-		try{
+		try
+		{
 			f.createNewFile();
 			int index = findAIndex(f);
 			sortFilelist.add(index,f);
