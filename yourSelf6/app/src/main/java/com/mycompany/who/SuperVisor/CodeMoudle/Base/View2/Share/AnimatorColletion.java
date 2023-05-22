@@ -10,10 +10,16 @@ public class AnimatorColletion
 	public static final byte Right =3;
 
 
-	public static Animator getOpenAnimator(int start,int end, final View v, byte flag)
+	public static Animator getOpenAnimator(int start,int end, View v, byte... flags)
 	{
 		ValueAnimator t = ValueAnimator.ofInt(start,end);
-
+		for(int i=0;i<flags.length;++i){
+			addAOpenListener(v,t,flags[i]);
+		}
+		return t;
+	}
+	private static void addAOpenListener(final View v,ValueAnimator t,byte flag)
+	{
 		switch (flag)
 		{
 			case Top:
@@ -61,16 +67,13 @@ public class AnimatorColletion
 					});
 				break;
 		}
-		
-		return t;
 	}
-
 
 
 	public static Animator getTranstion(View v,float fromx,float fromy, float tox, float toy)
 	{
-		Animator anim1 = ObjectAnimator.ofFloat(v, "transtionX", fromx,tox);
-		Animator anim2 = ObjectAnimator.ofFloat(v, "transtionY", fromy,toy);
+		Animator anim1 = ObjectAnimator.ofFloat(v, "translationX", fromx,tox);
+		Animator anim2 = ObjectAnimator.ofFloat(v, "translationY", fromy,toy);
 		AnimatorSet set = new AnimatorSet();
 		set.playTogether(anim1,anim2);
 		return set;

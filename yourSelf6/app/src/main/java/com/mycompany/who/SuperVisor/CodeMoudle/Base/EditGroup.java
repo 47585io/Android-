@@ -423,8 +423,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
-		{
-			
+		{		
 			if (!can){
 				return;
 			    //在构造对象前，会调用一次onTextChanged
@@ -465,8 +464,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				EditLines. reLines(line);	
 				//最后一个编辑器单独计算行
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() );		
-			}
-			
+			}	
 		}
 
 		/* 在本次输入后，将自己内部超出的行截取到下个编辑器开头 */
@@ -1045,6 +1043,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 	}
+	
 	
 /*
 ---------------------------------------------------------------
@@ -1680,6 +1679,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			setEditFactory(new Factory());
 		}
 	}
+	
 	
 /*
 ---------------------------------------------------------------

@@ -85,7 +85,6 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	public void addEdit(String name)
 	{
 		EditGroup Group = new EditGroup(getContext());
-		Group.config();
 		Group.setPool(pool);
 		Group.AddEdit(name);
 		addView(Group,name);
@@ -196,13 +195,19 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		public void eatView(View v, String name,PageHandler self)
 		{
 			Config_Size2 config = (HasAll.Config_Size2)(self. getConfig());
-			if(v instanceof BubbleEvent)
+			if(v instanceof BubbleEvent){
 				((BubbleEvent)v).setTarget(self);
+			}
+			if(v instanceof CodeBlock){
+				CodeBlock block = (CodeBlock) v;
+				block.config();
+			    block.loadSize(config.width,config.height,config.flag);
+			}
 			
-			if(v instanceof ImageView)
+			if(v instanceof ImageView){
 				eatImageView((ImageView)v,name);
+			}
 			if(v instanceof EditGroup){
-				((EditGroup)v).loadSize(config.width,config.height,config.flag);
 				eatEditGroup((EditGroup)v,name);	
 			}
 		}

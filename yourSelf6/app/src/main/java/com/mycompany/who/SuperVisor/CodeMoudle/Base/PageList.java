@@ -274,8 +274,8 @@ public class PageList extends HasAll
 			//根据子元素排列方向决定翻页所需要的事件(手指滑动方向更倾向于某轴)，如果不是我要的，就不拦截
 		}
 	}
-	
 
+	
 	public static interface onTabPage{
 
 		public void onTabPage(int index);

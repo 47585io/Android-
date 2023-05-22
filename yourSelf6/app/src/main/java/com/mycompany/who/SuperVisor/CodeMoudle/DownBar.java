@@ -90,21 +90,21 @@ public class DownBar extends HasAll
 		Config_hesSize config= (DownBar.Config_hesSize) getConfig();
 		config.isOpen=true;
 		if(getOrientation()==HORIZONTAL){
-			AnimatorColletion.getOpenAnimator(getLeft(),getRight()- getConfig().getWidth(),this,AnimatorColletion.Left).start();
+			AnimatorColletion.getTranstion(this,getTranslationX(),getTranslationY(),0,getTranslationY()).start();
 		}
 		else if(getOrientation()==VERTICAL){
-			AnimatorColletion.getOpenAnimator(getTop(),getBottom()- getConfig().getHeight(),this,AnimatorColletion.Top).start();
-	    }
+			AnimatorColletion.getTranstion(this,getTranslationX(),getTranslationY(),getTranslationX(),0).start();
+		}
 	}
 	public void close()
 	{
 		Config_hesSize config= (DownBar.Config_hesSize) getConfig();
 		config.isOpen=false;
 		if(getOrientation()==HORIZONTAL){
-		    AnimatorColletion.getOpenAnimator(getLeft(),getRight()-hander.getWidth(),this,AnimatorColletion.Left).start();
+			AnimatorColletion.getTranstion(this,getTranslationX(),getTranslationY(),config.getVectorWidth(),getTranslationY()).start();
 		}
 		else if(getOrientation()==VERTICAL){
-			AnimatorColletion.getOpenAnimator(getTop(),getBottom()-hander.getHeight(),this,AnimatorColletion.Top).start();
+			AnimatorColletion.getTranstion(this,getTranslationX(),getTranslationY(),getTranslationX(),config.getVectorHeight()).start();
 		}
 	}
 
@@ -136,16 +136,11 @@ public class DownBar extends HasAll
 		@Override
 		public void onMoveToLeft(View p1, MotionEvent p2, float dx)
 		{
-			if(getOrientation()==HORIZONTAL){
-				Config_Size2 config = (CodeBlock.Config_Size2) getConfig();
-				if(getWidth()<config.width){
-					//向左放大
-				    setLeft(getLeft()-(int)dx);
-				}
-				else{
-					//Width加上滑动距离后已经大于最大大小了，只能设置为最大
-					setLeft(getRight()-config.width);
-				}
+			if(getOrientation()==HORIZONTAL)
+			{
+				float x = getTranslationX()-dx;
+				x = x<0 ? 0:x;
+				setTranslationX(x);
 			}
 		}
 
@@ -154,14 +149,10 @@ public class DownBar extends HasAll
 		{
 			if(getOrientation()==HORIZONTAL)
 			{
-				if(getWidth()>hander.getWidth()){
-					//向右缩小
-				    setLeft(getLeft()+(int)dx);
-				}
-				else{
-					//Width已经小于滑动距离了，只能再缩小为0
-					setLeft(getRight()-hander.getWidth());
-				}
+				float x = getTranslationX()+dx;
+				int width = ((Config_hesSize)config).getVectorWidth();
+				x = x>width ? width:x;
+				setTranslationX(x);
 			}
 		}
 
@@ -170,13 +161,9 @@ public class DownBar extends HasAll
 		{
 			if(getOrientation()==VERTICAL)
 			{
-				Config_Size2 config = (CodeBlock.Config_Size2) getConfig();
-				if(getHeight()<config.height){
-				    setTop(getTop()-(int)dy);
-				}
-				else{
-					setTop(getBottom()-config.height);
-				}
+				float y = getTranslationY()-dy;
+				y = y<0 ? 0:y;
+				setTranslationY(y);
 			}
 		}
 
@@ -185,12 +172,10 @@ public class DownBar extends HasAll
 		{
 			if(getOrientation()==VERTICAL)
 			{
-				if(getHeight()>hander.getHeight()){
-				    setTop(getTop()+(int)dy);
-				}
-				else{
-					setTop(getBottom()-hander.getHeight());
-				}
+				float y = getTranslationY()+dy;
+				int height = ((Config_hesSize)config).getVectorHeight();
+				y = y>height ? height :y;
+				setTranslationY(y);
 			}
 		}
 
@@ -202,7 +187,7 @@ public class DownBar extends HasAll
 				Config_hesSize config= (DownBar.Config_hesSize) getConfig();
 				if(getOrientation()==VERTICAL)
 				{
-					int height = getBottom()-getTop();
+					float height = config.getHeight()-getTranslationY();
 					if((!config.isOpen && height>config.height*0.2) || (height>config.height*0.8)){
 						open();
 					}
@@ -214,7 +199,7 @@ public class DownBar extends HasAll
 				}
 				else if(getOrientation()==HORIZONTAL)
 				{
-					int width = getRight()-getLeft();
+					float width = config.getWidth()-getTranslationX();
 					if((!config.isOpen && width>config.width*0.2) || (width>config.width*0.8)){
 						open();
 					}
@@ -241,6 +226,19 @@ public class DownBar extends HasAll
 				nowX=p2.getRawX();
 				nowY=p2.getRawY();
 			}
+		}
+		
+		public int getEnd()
+		{
+			int end = 0;
+			Config_hesSize config = (DownBar.Config_hesSize) getConfig();
+			if(getOrientation()==VERTICAL){
+				end = config.vectorHeight;
+			}
+			else if(getOrientation()==HORIZONTAL){
+				end = config.vectorWidth;
+			}
+			return end;
 		}
 
 	}
@@ -273,12 +271,12 @@ public class DownBar extends HasAll
 			target.Configer=new Config_hesView();
 			target.setHander(new View(target.getContext()));
 			//预设一个Hander
-		    target.setVector(new PageList(target.getContext()));
+		    target.setVector(new PageHandler(target.getContext()));
 		}
 	}
 
 	/* 配置我的成员 */
-	static class Config_hesView implements Level<DownBar>
+	public static class Config_hesView implements Level<DownBar>
 	{
 
 		@Override
@@ -298,18 +296,25 @@ public class DownBar extends HasAll
 	}
 
 	/* 管理我的大小和子元素 */
-	static class Config_hesSize extends Config_Size2<DownBar>
+	public static class Config_hesSize extends Config_Size2<DownBar>
 	{
 
 		public boolean isOpen;
+		public int handerWidth,handerHeight;
+		public int vectorWidth,vectorHeight;
 		
 		@Override
-		public void onChange(DownBar target, int src)
+		public void onChange(final DownBar target, int src)
 		{
 			super.onChange(target, src);
-			trim( target.hander,getHanderSize());
-			trim( target.vector,getVectorSize());
-			trim( target,getHanderSize());
+			trim(target.hander,handerWidth,handerHeight);
+			trim(target.vector,vectorWidth,vectorHeight);
+			trim(target,width,height);
+			
+			float x = target. getTranslationX();
+			float y = target. getTranslationY();
+			target.setTranslationX(y);
+			target.setTranslationY(x);
 			target.setOrientation(CastFlag(flag));
 			//将自己和子元素旋转，并设置排列方向
 		}
@@ -317,39 +322,38 @@ public class DownBar extends HasAll
 		@Override
 		public void onPort(DownBar target, int src)
 		{
+			handerWidth = width;
+			handerHeight = (int)(height*0.1);
+			vectorWidth = width;
+			vectorHeight = (int)(height*0.9);
 			super.onPort(target, src);
-			target.setTranslationX(0);
-			target.setTranslationY(-getHanderSize().end);
-			//将把手从边缘挤上来，以感知事件
 		}
 
 		@Override
 		public void onLand(DownBar target, int src)
 		{
+			handerWidth = (int)(width*0.1);
+			handerHeight = height;
+			vectorWidth = (int)(width*0.9);
+			vectorHeight = height;
 			super.onLand(target, src);
-			target.setTranslationY(0);
-			target.setTranslationX(-getHanderSize().start);
 		}
-			
-		public size getHanderSize()
+		
+		public int getHanderWidth()
 		{
-			if(flag==Configuration.ORIENTATION_PORTRAIT){
-			    return new size(width,(int)(height*0.1));
-			}
-			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
-				return new size((int)(width*0.1),height);
-			}
-			return null;
+			return handerWidth;
 		}
-		public size getVectorSize()
+		public int getHanderHeight()
 		{
-			if(flag==Configuration.ORIENTATION_PORTRAIT){
-			    return new size(width,(int)(height*0.9));
-			}
-			else if(flag==Configuration.ORIENTATION_LANDSCAPE){
-				return new size((int)(width*0.9),height);
-			}
-			return null;
+			return handerHeight;
+		}
+		public int getVectorWidth()
+		{
+			return vectorWidth;
+		}
+		public int getVectorHeight()
+		{
+			return vectorHeight;
 		}
 
 	}

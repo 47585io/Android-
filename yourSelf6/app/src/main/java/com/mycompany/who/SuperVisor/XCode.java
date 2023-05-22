@@ -21,6 +21,7 @@ import java.util.concurrent.*;
 import android.view.View.OnClickListener;
 import java.io.*;
 import com.mycompany.who.SuperVisor.Share.*;
+import android.graphics.*;
 
 
 /*
@@ -91,11 +92,138 @@ public class XCode extends HasAll implements PageHandler.requestWithPageHandler
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event)
 	{
-		
 		return super.dispatchKeyEvent(event);
+	}
+
+	
+/*
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	 
+  View的绘制流程是从ViewRoot的performTraversals开始的
+  
+  performTraversals会依次调用performMeasure，performLayout，performDraw三个方法
+  
+  他们会分别调用DecorView的measure，layout，draw方法，再由DecorView调用自己子元素的measure，layout，draw方法
+  
+  从DecorView开始，每个父元素都调用自己子元素的measure，layout，draw方法，一直分发下去
+ 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  measure()方法不可重写，但会调用onMeasure()方法
+      
+     onMeasure方法用于根据父元素传入的大小测量自己的大小，计算好后一定要调用setMeasuredDimension来记录自己的大小，之后就可以使用getMeasuredWidth和getMeasuredHeight获取测量的大小，如果是ViewGroup，则还要调用自己的子元素的measure方法并传递自己的大小
+  
+  layout()方法不可重写，但会调用onLayout()方法
+  
+	 onLayout方法用于布局自己的子元素，父元素必须调用每一个子元素的layout方法，利用子元素测量的宽高，将它们摆到合适位置，(在layout中，子元素的getLeft，getRight，getTop，getBottom方法获取的值就已经设置好了，在layout前的值是不对的)
+  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  draw（）会依次调用几个方法：
+
+     1）drawBackground()，根据在 layout 过程中设置的 View 的位置参数，来设置背景的边界，这个方法不可重写
+
+	 2）onDraw()，绘制View本身的内容，一般自定义单一view会重写这个方法，实现一些绘制逻辑
+
+	 3）dispatchDraw()，绘制子View，一般不要重写这个方法
+	 
+	 4) onDrawForeground(); 绘制装饰（前景色、滚动条）
+
+	 5) drawDefaultFocusHighlight()  绘制默认焦点突出显示
+	 
+	 6）onDrawScrollBars()，绘制装饰，如 滚动指示器、滚动条、和前景.
+ 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+
+	 MeasureSpec是由父View的MeasureSpec和子View的LayoutParams通过简单的计算得出一个针对子View的测量要求，这个测量要求就是MeasureSpec
+
+	 首先，MeasureSpec是一个大小跟模式的组合值,MeasureSpec中的值是一个整型（32位）将size和mode打包成一个int型，其中高两位是mode，后面30位存的是size
+	 
+	 // 获取测量模式
+	 int specMode = MeasureSpec.getMode(measureSpec)
+
+	 // 获取测量大小
+	 int specSize = MeasureSpec.getSize(measureSpec)
+
+	 // 通过Mode 和 Size 生成新的SpecMode
+	 int measureSpec=MeasureSpec.makeMeasureSpec(size, mode);
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  onLayout(boolean changed, int l, int t, int r, int b)
+  
+     changed: 新范围较原来是否变化了
+	 
+	 l，t，r，b: 新范围的left，top，right，bottom值，相对于父元素
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  onDraw(Canvas canvas)
+  
+     
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ViewGroup及其子类如果要想指定子View的绘制顺序只需两步:
+
+	 1，setChildrenDrawingOrderEnabled(true) 开启自定义子View的绘制顺序;
+
+	 2，用setZ(float),自定义Z值，值越大越优先绘制；
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	 
+*/
+
+    @Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+	{
+		int width = config.getWidth(),height = config.getHeight();
+		setMeasuredDimension(width,height);
+		//我的大小不变，在setMeasuredDimension中会设置测量的宽高
+		mTitle.measure(width,height);
+		mPages.measure(width,height);
+		mDownBar.measure(width,height);
+		//为三个子元素测量，并传递我的大小
+	}
+
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b)
+	{
+		// 布局我的子元素，自定义layout
+		int now = 0;
+		Config_ChildsPos config = (XCode.Config_ChildsPos) getConfig();
+		Config_Size configT = config.configT;
+		Config_Size configP = config.configP;
+		Config_Size configD = config.configD;
+		
+		if(getOrientation()==VERTICAL)
+		{
+			mTitle.layout(0,0,configT.getWidth(),now+=configT.getHeight());
+			mPages.layout(0,now,configP.getWidth(),now+=configP.getHeight());
+			mDownBar.layout(0,now-configD.getHeight(),configD.getWidth(),now);
+		}
+		else if(getOrientation()==HORIZONTAL)
+		{
+			mTitle.layout(0,0,now+=configT.getWidth(),configT.getHeight());
+			mPages.layout(now,0,now+=configP.getWidth(),configP.getHeight());
+			mDownBar.layout(now-configD.getHeight(),0,now,configD.getHeight());	
+		}
 	}
 	
 	
+/*
+ -----------------------------------------------------------------------------------
+
+ XCode之三大类
+ 
+ ----------------------------------------------------------------------------------- 
+*/
 	
 	//一顿操作后，Code所有成员都分配好了空间
 	final static class CodeCreator extends Creator<XCode>
