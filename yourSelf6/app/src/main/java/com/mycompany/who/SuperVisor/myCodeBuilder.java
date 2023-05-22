@@ -14,7 +14,7 @@ import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View2.Share.*;
 import com.mycompany.who.SuperVisor.CodeMoudleBuilder.*;
 import com.mycompany.who.SuperVisor.CodeMoudleBuilder.CodeMoudleBuilderInterface.*;
-import com.mycompany.who.SuperVisor.Share.*;
+import com.mycompany.who.SuperVisor.CodeShare.*;
 import java.io.*;
 import java.util.*;
 
@@ -54,7 +54,7 @@ public class myCodeBuilder implements Configer<XCode>
 		
 		tb.ConfigSelf(t);
 		pb.ConfigSelf(p);
-		db.ConfigSelf(d);
+		db.ConfigSelf(d);	
 	}
 	
 	class CodeHandler extends Handler{

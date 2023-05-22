@@ -1,4 +1,4 @@
-package com.mycompany.who.SuperVisor.Share;
+package com.mycompany.who.SuperVisor.CodeShare;
 
 import android.view.*;
 import android.widget.*;
