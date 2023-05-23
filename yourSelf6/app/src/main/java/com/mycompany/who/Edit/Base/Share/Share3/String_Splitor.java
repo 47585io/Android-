@@ -10,7 +10,8 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 public class String_Splitor
 {
 	
-	public static boolean IsAtoz(char ch){
+	public static boolean IsAtoz(char ch)
+	{
 		if(ch>='a' && ch <='z')
 			return true;
 		else if(ch>='A' && ch <='Z')
@@ -21,13 +22,14 @@ public class String_Splitor
 		return false;
 	}
 
-	public static boolean IsNumber(char ch){
+	public static boolean IsNumber(char ch)
+	{
 		if(ch>='0'&&ch<='9')
 			return true;
 		return false;
 	}
-
-	public static boolean IsNumber(CharSequence src){
+	public static boolean IsNumber(CharSequence src)
+	{
 		int i,len=src.length();
 	    for(i=0;i<len;++i){
 			if(!IsNumber(src.charAt(i)))
@@ -35,14 +37,18 @@ public class String_Splitor
 		}
 		return true;
 	}
-	public static CharSequence indexOfKey(String str,int nowIndex,Map<CharSequence,CharSequence> zhu_key_value){
+	
+	public static CharSequence indexOfKey(String str,int nowIndex,Map<CharSequence,CharSequence> zhu_key_value)
+	{
 		for(CharSequence key: zhu_key_value.keySet()){
 		    if(str.indexOf(key.toString(),nowIndex)==nowIndex)
 				return key;
 		}
 		return null;
 	}
-	public static List<Integer> indexsOf(String str,String text){
+	
+	public static List<Integer> indexsOf(String str,String text)
+	{
 		//查找文本中所有出现str的index
 		int index = 0,len = str.length();
 		List<Integer> indexs = new ArrayList<Integer>();
@@ -55,7 +61,8 @@ public class String_Splitor
 		}
 		return indexs;
 	}
-	public static List<Integer> indexsOf(char c,String text){
+	public static List<Integer> indexsOf(char c,String text)
+	{
 		//查找文本中所有出现str的index
 		int index = 0;
 		List<Integer> indexs = new ArrayList<Integer>();
@@ -68,6 +75,7 @@ public class String_Splitor
 		}
 		return indexs;
 	}
+	
 	public static int Count(String want,String text){
 		int count=0;
 		int index =0;
@@ -94,7 +102,8 @@ public class String_Splitor
 	}
 	
 	//字符c第n次出现的下标
-	public static int NIndex(char c,String text,int n){
+	public static int NIndex(char c,String text,int n)
+	{
 		int index = 0;
 		while(n-->0){
 		    int tmp = text.indexOf(c,index);
@@ -105,7 +114,8 @@ public class String_Splitor
 		}
 		return index;
 	}
-	public static int NIndex(String c,String text,int n){
+	public static int NIndex(String c,String text,int n)
+	{
 		int index = 0;
 		while(n-->0){
 		    int tmp = text.indexOf(c,index);
@@ -117,7 +127,8 @@ public class String_Splitor
 		return index;
 	}
 	
-	public static int calaN(CharSequence src,int index){
+	public static int calaN(CharSequence src,int index)
+	{
 		int count = 0;
 		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){
 			count++;
@@ -125,12 +136,25 @@ public class String_Splitor
 		}
 		return count;
 	}
-	public static CharSequence getNStr(CharSequence src,int n){
+	public static CharSequence getNStr(CharSequence src,int n)
+	{
 		StringBuilder arr= new StringBuilder("");
 		while(n-- >0){
 			arr.append(src);
 		}
 		return arr.toString();
+	}
+	
+	/*
+	 GB2312-80 是 1980 年制定的中国汉字编码国家标准。共收录 7445 个字符，其中汉字 6763 个。
+	 GB2312 兼容标准 ASCII码，采用扩展 ASCII 码的编码空间进行编码，一个汉字占用两个字节，每个字节的最高位为 1。
+	 具体办法是：收集了 7445 个字符组成 94*94 的方阵，每一行称为一个“区”，每一列称为一个“位”，区号位号的范围均为 01-94，区号和位号组成的代码称为“区位码”，我们分别用两个字节表示它们，范围为0x0101~0x5E5E
+	 区位输入法就是通过输入区位码实现汉字输入的。将区号和位号分别加上0x20，得到的 4 位十六进制整数称为国标码，编码范围为 0x2121～0x7E7E。
+	 为了兼容标准 ASCII 码，给国标码的每个字节加0x80，形成的编码称为机内码，简称内码，是汉字在机器中实际的存储代码GB2312-80 标准的内码范围是 0xA1A1～0xFEFE
+	*/
+	public static class Unicode
+	{
+		
 	}
 	
 	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException 

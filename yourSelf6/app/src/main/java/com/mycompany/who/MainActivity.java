@@ -91,7 +91,7 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 	{
 		setContentView(Code);	
 		Code.loadSize(width,height,is);
-		Code.addEdit("/storage/emulated/0/Linux/2.java");	
+		//Code.addEdit("/storage/emulated/0/Linux/2.java");	
 		//Code.addEdit("");
 		//Code.addEdit("/storage/emulated/0/AppProjects/教程/AIDE/tmp.java");
 		Code.addEdit("/storage/emulated/0/AppProjects/游戏/MyGame/gdx-game-android/src/com/mycompany/mygame/MainActivity.java");
