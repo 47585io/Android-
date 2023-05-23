@@ -1654,9 +1654,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
  EditFactory
 
- 创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是配置
-
- 顶多也就是configEdit和configEditLine还有点用
+ 配置Edit的工厂，当然可能没什么用
+ 
+ 需要注意，传入的Edit可能是任意类型，应该判断
 
 ---------------------------------------------------------------
 */
