@@ -39,7 +39,7 @@ import android.view.View.OnLongClickListener;
  解决办法：限制单个编辑器的行，并添加多个编辑器形成编辑器组来均分文本，使效率平衡
 
  编辑器卡顿二大原因是由于宽高过大导致与父元素分配的空间冲突，导致父元素多次测量来确定子元素大小，进而的测量时间过长
- 解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远大于子元素大小，就不会再多次测量了
+ 解决办法：文本变化时计算编辑器的宽高并手动扩展父元素大小，只要使父元素可以分配的空间永远都固定，就不会再多次测量了
  另外的，除EditText外，其它的View应尽量设置为固定大小，这可以减少测量时间(EditText会自己计算宽高)
 
  编辑器卡顿三大原因是编辑器onDraw时间过长，主要还是它的文本多，每次都要Draw全部的文本，太浪费了
@@ -56,7 +56,7 @@ import android.view.View.OnLongClickListener;
 public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener,OnItemLongClickListener
 {
 	
-	public static int MaxLine=2000,OnceSubLine=0;
+	public static int MaxLine=500,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	
 	private int EditFlag;
@@ -282,7 +282,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Edit.index=index;
 		EditList.add(index, Edit);
 		getForEditSon().addView(Edit, index);
-		reIndex();
+		reIndex(index+1);
 	}
 
 	/* 创建一个Edit */
@@ -316,9 +316,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	}
 
 	/* 重新排列Edit的下标 */
-	final private void reIndex()
+	final private void reIndex(int start)
 	{
-		for (int i=EditList.size()-1; i>=0; --i)
+		for (int i=EditList.size()-1; i>=start; --i)
 		{
 			RCodeEdit e = (RCodeEdit) EditList.get(i);
 			if (e.index != i)
@@ -434,8 +434,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 			Log.w("onTextChanged", "My index is " + index);
 			
-			if(EditFlag==0){
-				trimToFather();  
+			if(EditFlag==0)
+			{
+				refreshLineAndSize();
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
+				//第一个编辑器单独计算行，但无法保证在super.onTextChanged中对行的修改
 				//第一个编辑器扩展大小，无论文本怎么截取，但总量不变，所以宽高不变
 			}
 			/*
@@ -456,14 +459,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				super.onTextChanged(text, start, lengthBefore, lengthAfter);
 			}
 			--EditFlag;
-
-			if (EditFlag == 0)
-			{
-				int line = getEditManipulator().calaEditLines();
-				EditLines. reLines(line);	
-				//最后一个编辑器单独计算行
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height + " and reLines:" + line + " and Stack size：" + stack.Usize() );		
-			}	
 		}
 
 		/* 在本次输入后，将自己内部超出的行截取到下个编辑器开头 */
@@ -1636,6 +1631,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 
 	}
+	
 	private void creatEditManipulator()
 	{
 		if (manipulator == null)
