@@ -63,6 +63,8 @@ public abstract interface EditMoudle
 	
 	public static abstract interface LineSpiltor extends Liner{
 
+		public abstract void setLineCount(int line)
+		
 		public abstract void reLines(int line)
 
 		public abstract void addLines(int count)

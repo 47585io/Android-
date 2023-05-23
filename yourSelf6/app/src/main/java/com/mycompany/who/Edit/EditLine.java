@@ -45,7 +45,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	public void CopyFrom(Edit target)
 	{
 		super.CopyFrom(target);
-		this.LineCount = ((EditLine)target).LineCount;
+		//this.LineCount = ((EditLine)target).LineCount;
 		this.Info = ((EditLine)target).Info;
 	}
 
@@ -191,7 +191,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	public int getLineCount(){
 		return LineCount;
 	}
-	public void setLinCount(int count){
+	@Override
+	public void setLineCount(int count){
 		LineCount = count;
 	}
 	

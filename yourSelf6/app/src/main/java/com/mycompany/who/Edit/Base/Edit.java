@@ -91,7 +91,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		  但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
 		*/
 		float pad = 0;
-		setLetterSpacing(0.01f);
+		//setLetterSpacing(0.01f);
 		setLineSpacing(0.3f,1.3f);
 		setPadding(0,0,0,(int)pad);
 	}

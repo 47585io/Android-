@@ -312,7 +312,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Edit.setWindow(getWindow());
 		Edit.setPool(getPool());
 		Edit.setEditFlags(mEditFlags); //设置flags
-		//Edit.setId(Edit.hashCode());//拥有id的控件系统自动保存状态
 		return Edit;
 	}
 
@@ -890,12 +889,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			EditLine Line;
 			int size = LineList.size();
-			if(size>0){
+			if(size>0)
+			{
 				Line = LineList.get(size-1);
 				Editable editor = Line.getText();
 				Line.getText().delete(editor.length()-1,editor.length());
 				//删除最后一个EditLine尾部的换行
+				
+				int lineCount = Line.getLineCount();
 				Line = new EditLine(getContext(),Line);	
+				Line.setLineCount(lineCount);
 				//下个EditLine继承上个的行数，并在之后继续追加
 			}
 			else{
@@ -951,7 +954,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void delLines(int count)
 		{
 			lineCount-=count;
-			while(count>0){
+			while(count>0)
+			{
 				int index = LineList.size()-1;
 				EditLine Line = LineList.get(index);
 				int hasLine = Edit.getLineCount(Line.getText().toString());
@@ -975,12 +979,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public int getLineCount(){
 			return lineCount;
 		}
+		@Override
+		public void setLineCount(int line){
+			lineCount = line;
+		}
 
 		@Override
 		public void onLineChange(int start, int before, int after)
 		{
 			//行变化时，调整大小
-			CodeBlock.Config_Size2.trim(this,maxWidth(),maxHeight());
+			Config_Size2.trim(this,maxWidth(),maxHeight());
 		}
 
 		@Override

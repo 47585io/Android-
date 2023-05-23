@@ -167,13 +167,16 @@ public abstract interface CodeBlock
 		final public static void trim(View Father, int width, int height)
 		{
 			//调整空间
+			//如果大小相同，则不设置
+			//就算设置了，也不立即改变大小，而是延迟到下次onLayout时生效，以节省时间
 			ViewGroup.LayoutParams p = Father.getLayoutParams();
 			if(p.width!=width||p.height!=height){
 				p.width = width;
 				p.height = height;
-				Father.setLayoutParams(p);
+				//Father.setLayoutParams(p);
 			}
 		}
+		
 		final public static void trim(View Father, size s)
 		{
 			//调整空间
@@ -181,9 +184,18 @@ public abstract interface CodeBlock
 			if(p.width!=s.start||p.height!=s.end){
 				p.width = s.start;
 				p.height = s.end;
-				Father.setLayoutParams(p);
+				//Father.setLayoutParams(p);
 			}
 		}
+		
+		final public static void trim(View v,int left,int top,int right,int bottom)
+		{
+			//layout只设置View的范围，但并不立即改变，这或许等待到下次改变，但也许被父View重置
+			if(v.getLeft()!=left || v.getRight()!=right || v.getTop()!=top || v.getBottom()!=bottom){
+				v.layout(left,top,right,bottom);
+			}
+		}
+		
 		final public static void trimAdd(View Father, int addWidth, int addHeight)
 		{
 			if(addWidth==0&&addHeight==0)
@@ -191,8 +203,9 @@ public abstract interface CodeBlock
 			ViewGroup.LayoutParams p = Father.getLayoutParams();
 			p.width += addWidth;
 			p.height += addHeight;
-			Father.setLayoutParams(p);
+			//Father.setLayoutParams(p);
 		}
+		
 		final public static void trimXel(View Father, float WidthX, float HeightX)
 		{
 			if(WidthX==1&&HeightX==1)
@@ -200,8 +213,10 @@ public abstract interface CodeBlock
 			ViewGroup.LayoutParams p = Father.getLayoutParams();
 			p.width *= WidthX;
 			p.height *= HeightX;
-			Father.setLayoutParams(p);
+			//Father.setLayoutParams(p);
 		}
+		
+		
 
 	}
 
