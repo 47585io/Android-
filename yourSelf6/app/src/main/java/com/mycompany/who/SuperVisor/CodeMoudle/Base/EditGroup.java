@@ -56,7 +56,7 @@ import android.view.View.OnLongClickListener;
 public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener,OnItemLongClickListener
 {
 	
-	public static int MaxLine=500,OnceSubLine=0;
+	public static int MaxLine=2000,OnceSubLine=0;
 	public static int ExpandWidth=1500,ExpandHeight=2000;
 	
 	private int EditFlag;
@@ -466,12 +466,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		{
 			/*关键代码*/
 			int lineCount= getLineCount();
+			int MaxLine = EditGroup.MaxLine;
+			
 			if (lineCount > MaxLine)
 			{
 				boolean need = true;
 				Editable editor = getText();
 				int selfIndex = index;		
 				int subLineStart = MaxLine + 1 - OnceSubLine;
+				
 				size j = subLines(subLineStart); 
 				//为提升效率，若超出行数，额外截取OnceSubLine行，使当前编辑器可以有一段时间的独自编辑状态
 				//MaxLine+1是指从MaxLine之后的一行的起始开始截
@@ -1140,9 +1143,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//要插入的编辑器，从要插入的位置之后截取了文本，添加要插入的文本之后
 			//在之后创建一些编辑器，并均分文本
 			
+			int MaxLine = EditGroup.MaxLine-OnceSubLine;
+			//MaxLine是在原MaxLine减去OnceSubLine得到的
 			String src = text.toString();
 			int toIndex = CodeEdit.getLineCount(text.toString())/MaxLine+1+index;
 			int nowLine = 0;
+			
 			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
 			//每次向后截取MaxLine，并插入到刚创建的编辑器中
 			for(index+=1;index<=toIndex;++index)
