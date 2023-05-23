@@ -1654,20 +1654,32 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
  EditFactory
 
- 配置Edit的工厂，当然可能没什么用
+ 创建与配置Edit的工厂，当然可能没什么用
  
- 需要注意，传入的Edit可能是任意类型，应该判断
+ creatEdit保留至以后扩展，EditGroup不会调用它
+ 
+ 而configEdit需要注意，传入的Edit可能是任意类型，应该判断
 
 ---------------------------------------------------------------
 */
     public static interface EditFactory
 	{
+		public EditText creatEdit(EditGroup self, String name)
+		
 		public void configEdit(EditText Edit, String name, EditGroup self)
 	}
 	
 	/* 默认的工厂 */
 	final static class Factory implements EditFactory
 	{
+
+		@Override
+		public EditText creatEdit(EditGroup self, String name)
+		{
+			// TODO: Implement this method
+			return null;
+		}
+		
 		@Override
 		public void configEdit(EditText Edit, String name, EditGroup self)
 		{

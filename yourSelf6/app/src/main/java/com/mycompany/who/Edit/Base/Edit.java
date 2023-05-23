@@ -28,7 +28,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	@Override
 	public void Creat()
 	{
-		TextSize = 13.5f;
+		TextSize = 13f;
 		ConfigSelf(this);
 		if(listener==null){
 		    listener = getKeyListener();
@@ -92,7 +92,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		*/
 		float pad = 0;
 		//setLetterSpacing(0.01f);
-		setLineSpacing(0.3f,1.3f);
+		setLineSpacing(0.25f,1.25f);
 		setPadding(0,0,0,(int)pad);
 	}
 
