@@ -128,6 +128,12 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		String name = (String) v.getTag();
 		requestBuildView(v,name);
 	}
+	public void requestBuildAllView()
+	{
+		for(int i=getChildCount()-1;i>=0;--i){
+			requestBuildView(i);
+		}
+	}
 	
 /*
 
@@ -334,6 +340,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 				@Override
 				public void run()
 				{
+					//target.requestBuildAllView();
 					target.tabView(target.getNowIndex());
 					//在屏幕旋转后，PageList的某页面可能会重新改变大小(例如EditGroup)，但画布滚动位置还是上次的位置，此时将画布滚动到正确位置
 				}

@@ -313,7 +313,18 @@ public class myCodeBuilder implements Configer<XCode>
 				{
 					File f = files.getFile(p3-1);
 					if(f!=null && f.isFile())
-					    p.addEdit(f.getPath());
+					{
+						int id = Share.getFileIcon(f);
+						switch(id)
+						{
+							case R.drawable.file_type_unknown:
+								break;
+							case R.drawable.file_type_pic:
+								p.addView(new ImageView(getContext()),f.getPath());
+							default:
+							    p.addEdit(f.getPath());
+						}
+					}
 				}
 
 				@Override

@@ -1845,6 +1845,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
 			Group. creatLineGroup();
+			Group. ForEdit.addView(Group.EditLines,0);
 		}	
 		
 	}
@@ -1860,7 +1861,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public void ConfigSelf(EditGroup target)
 		{
-			target.ForEdit.addView(target.EditLines,0);
 			config(target);
 		}
 		
