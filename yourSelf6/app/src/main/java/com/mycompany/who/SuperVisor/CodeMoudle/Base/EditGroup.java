@@ -904,7 +904,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			else{
 				Line = new EditLine(getContext());
 			}
-			mfactory.configEditLine(Line,EditGroup.this);
+			mfactory.configEdit(Line,"",EditGroup.this);
 			Line.setKeyListener(null);
 			return Line;
 		}
@@ -1052,6 +1052,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 		
 	}
+	
 	private void creatLineGroup(){
 		EditLines = new LineGroup(getContext());
 	}
@@ -1661,27 +1662,22 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 */
     public static interface EditFactory
 	{
-		public void configEdit(CodeEdit Edit, String name, EditGroup self)
-		
-		public void configEditLine(EditLine EditLine, EditGroup self)
+		public void configEdit(EditText Edit, String name, EditGroup self)
 	}
 	
 	/* 默认的工厂 */
-	final static class Factory implements EditGroup.EditFactory
+	final static class Factory implements EditFactory
 	{
-
 		@Override
-		public void configEditLine(EditLine EditLine, EditGroup self)
+		public void configEdit(EditText Edit, String name, EditGroup self)
 		{
-			// TODO: Implement this method
+			if(Edit instanceof CodeEdit){
+			    Share.setEdit((CodeEdit)Edit, name);
+			}
+			else if(Edit instanceof EditLine){
+				// NoThing To Do
+			}
 		}
-
-		@Override
-		public void configEdit(CodeEdit Edit, String name, EditGroup self)
-		{
-			Share.setEdit(Edit, name);
-		}
-
 	}
 	
 	/* 给予创建EditFactory及其子类的机会 */
@@ -1691,7 +1687,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			setEditFactory(new Factory());
 		}
 	}
-	
 	
 /*
 ---------------------------------------------------------------
