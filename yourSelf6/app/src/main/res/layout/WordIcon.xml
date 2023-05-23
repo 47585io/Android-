@@ -5,7 +5,7 @@
 	android:layout_height="fill_parent"
 	android:orientation="horizontal"
 	android:paddingLeft="0px"
-	android:paddingRight="30px"
+	android:paddingRight="20px"
 	android:paddingBottom="0px"
 	android:paddingTop="0px">
 

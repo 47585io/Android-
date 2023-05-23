@@ -231,7 +231,6 @@ public class myCodeBuilder implements Configer<XCode>
 				adapter.add(adapter.getCount(),icon);
 				spinner.setAdapter(adapter);
 			}
-			
 		}
 
 		@Override
@@ -304,7 +303,7 @@ public class myCodeBuilder implements Configer<XCode>
 				public FileListView(Context cont)
 				{
 					super(cont);
-					setAdapter(WordAdapter.getDefultAdapter());
+					setDivider(null);
 					files.setFileChangeListener(this);
 					files.refreshDate();
 				}
@@ -326,7 +325,8 @@ public class myCodeBuilder implements Configer<XCode>
 				@Override
 				public void Refresh(List<File> files)
 				{
-					WordAdapter adapter = WordAdapter.getDefultAdapter();
+					WordAdapter adapter = new WordAdapter();
+					adapter.setViewHolderFactory(new WordAdapter.Factory(R.layout.FileIcon));
 					List<Icon> list = toList(files);
 					list.add(0,new Icon3(R.drawable.folder_open,"..."));
 					adapter.addAll(list,0);
@@ -336,19 +336,29 @@ public class myCodeBuilder implements Configer<XCode>
 				@Override
 				public void addAFile(List<File> files, int index)
 				{
-					
+					WordAdapter adapter = (WordAdapter) getAdapter();
+					File f = files.get(index);
+					Icon icon = new Icon3(Share.getFileIcon(f),f.getName());
+					adapter.add(index,icon);
+					adapter.notifyDataSetChanged();
 				}
 
 				@Override
 				public void delAFile(List<File> files, int index)
 				{
-					// TODO: Implement this method
+					WordAdapter adapter = (WordAdapter) getAdapter();
+					adapter.remove(index);
+					adapter.notifyDataSetChanged();
 				}
 
 				@Override
 				public void Rename(List<File> files, int index)
 				{
-					// TODO: Implement this method
+					WordAdapter adapter = (WordAdapter) getAdapter();
+					File f = files.get(index);
+					Icon3 icon = (Icon3) adapter.getItem(index);
+					icon.setName(f.getName());
+					adapter.notifyDataSetChanged();
 				}
 				
 				public List<Icon> toList(List<File> files)

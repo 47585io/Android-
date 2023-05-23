@@ -275,6 +275,29 @@ public class PageList extends HasAll
 		}
 	}
 
+	/*
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b)
+	{
+		int childCount = getChildCount();
+		int childLeft = 0,childRight;
+		int selfLeft = getScrollX();
+		int selfRight = selfLeft+r-l;
+		for(int i = 0;i<childCount-1;++i)
+		{
+			View child = getChildAt(i);
+			int width = child.getMeasuredWidth();
+			childRight = childLeft + width;
+			if(((childLeft>=selfLeft&&childLeft<=selfRight)
+			    ||(childRight>=selfLeft&&childRight<=selfRight))
+				||(childLeft<=selfLeft&&childRight>=selfRight)){
+				//child的一边或两边在我的可视范围内，或者我的一边或两边在child范围内
+				child.layout(childLeft,0,childRight,b-t);
+			}
+			childLeft = childRight;
+		}
+	}
+	*/
 	
 	public static interface onTabPage{
 

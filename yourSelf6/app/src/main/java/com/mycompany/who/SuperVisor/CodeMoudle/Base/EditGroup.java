@@ -30,6 +30,7 @@ import java.util.concurrent.*;
 
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import com.mycompany.who.Edit.Base.Share.Share2.ViewHolderFactory.*;
 
 
 /*
@@ -51,7 +52,6 @@ import android.view.View.OnLongClickListener;
  我什么也不知道，我只完善了Edit的功能，管理一组的Edit以及如何操作它们
  使用装饰者模式，实现了EditListenerInfoUser接口，但返回的Info其实是内部实现了EditListenerInfoUser成员的Info
  通常，我返回的Info是CodeEdit的，EditLine的Info默认不返回，因为您应该无需操作行
- 
 */
 public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListenerInfoUser,OnClickListener,OnLongClickListener,OnItemClickListener,OnItemLongClickListener
 {
@@ -994,7 +994,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public int maxWidth()
 		{	
 			float TextSize = getTextSize();
-			int count = String.valueOf(lineCount).length()+1;
+			int count = String.valueOf(lineCount).length()+2;
 			return (int)(count*TextSize);
 		}
 

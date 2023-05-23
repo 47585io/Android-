@@ -102,6 +102,7 @@ public class WordAdapter<T> extends BaseAdapter
 	{
 		mfile.set(position,file);
 	}
+	
 	/* 返回设置的值 */
     @Override
     public long getItemId(int position) 
@@ -157,9 +158,26 @@ public class WordAdapter<T> extends BaseAdapter
 	}
 
 
+	/*
+	  默认的工厂
+	  
+	  * 默认使用R.layout.WordIcon
+	  
+	  * 可以传另一个布局文件id，但它必须有TextView和ImageView且设置了指定id
+	  
+	*/
 	public static class Factory implements ViewHolderFactory<Icon>
 	{
 
+		private int rid;
+		
+		public Factory(){
+			rid = R.layout.WordIcon;
+		}
+		public Factory(int rid){
+			this.rid = rid;
+		}
+		
 		@Override
 		public ViewHolderFactory.ViewHolder<Icon> newViewHodler()
 		{
@@ -169,12 +187,10 @@ public class WordAdapter<T> extends BaseAdapter
 		/* 
 		 默认的Holder
 
-		 * 使用R.layout.WordIcon
-
 		 * 支持让Icon来控制如何加载TextView和ImageView  
 
 		*/
-		public static class Holder implements ViewHolder<Icon>
+		public class Holder implements ViewHolder<Icon>
 		{
 
 			private TextView tvName;
@@ -184,7 +200,7 @@ public class WordAdapter<T> extends BaseAdapter
 			public View creatView(ViewGroup parent, Icon date, int position)
 			{
 				LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-				View v = layoutInflater.inflate(R.layout.WordIcon,null);
+				View v = layoutInflater.inflate(rid,null);
 				tvName = v.findViewById(R.id.Filename);
 				tvIcon = v.findViewById(R.id.Fileicon);
 				return v;
