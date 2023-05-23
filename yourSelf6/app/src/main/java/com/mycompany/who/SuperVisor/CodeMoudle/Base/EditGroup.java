@@ -292,8 +292,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		//每个Edit都要配置，但只能内部使用的Clip让我配置给它们吧
 		if (EditList.size() == 0)
 		{
-			//第一个编辑器是get的，然后添加Clip
-	        Edit = new RCodeEdit(getContext(), mfactory.getEdit(this));
+			//第一个编辑器添加Clip
+	        Edit = new RCodeEdit(getContext());
 			mfactory.configEdit(Edit, name, this);
 			Edit.getInfo().addAListener(getOneClipCanvaser());
 		}
@@ -849,10 +849,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  ------------------------------------------------------------------------------------
  
 */	
-	final public static class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
+	final public class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
 	{
 
-		public static int MaxLine = 5000;
+		public int MaxLine = 5000;
 		private int lineCount;
 		private List<EditLine> LineList;
 
@@ -904,6 +904,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			else{
 				Line = new EditLine(getContext());
 			}
+			mfactory.configEditLine(Line,EditGroup.this);
 			Line.setKeyListener(null);
 			return Line;
 		}
@@ -1050,6 +1051,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return LineList.get(0).getLineHeight();
 		}
 		
+	}
+	private void creatLineGroup(){
+		EditLines = new LineGroup(getContext());
 	}
 	
 	
@@ -1649,27 +1653,27 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
  EditFactory
 
- 创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是复制
+ 创造Edit的工厂，当然可能没什么用，毕竟不是真创建，而是配置
 
- 顶多也就是configEdit还有点用
+ 顶多也就是configEdit和configEditLine还有点用
 
 ---------------------------------------------------------------
 */
     public static interface EditFactory
 	{
-		public CodeEdit getEdit(EditGroup self)
-		
 		public void configEdit(CodeEdit Edit, String name, EditGroup self)
+		
+		public void configEditLine(EditLine EditLine, EditGroup self)
 	}
 	
 	/* 默认的工厂 */
 	final static class Factory implements EditGroup.EditFactory
 	{
-		
+
 		@Override
-		public CodeEdit getEdit(EditGroup self)
+		public void configEditLine(EditLine EditLine, EditGroup self)
 		{
-			return new CodeEdit(self.getContext());
+			// TODO: Implement this method
 		}
 
 		@Override
@@ -1831,7 +1835,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		   	Group. ForEdit = root.findViewById(R.id.ForEdit);
 			Group. ForEditSon = root.findViewById(R.id.ForEditSon);
 			Group. mWindow = root.findViewById(R.id.mWindow);
-			Group.EditLines = new LineGroup(Group.getContext());	
+			Group. creatLineGroup();
 		}	
 		
 	}
