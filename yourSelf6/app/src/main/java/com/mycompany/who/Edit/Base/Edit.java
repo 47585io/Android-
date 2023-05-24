@@ -111,7 +111,6 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里除20f/12f后就是等宽英文字符大小
 		return super.getTextSize()/(20f/12f);
 	}
-	
 	public float getUnicodeTextSize()
 	{
 		//获取中文等宽字符大小，我的天，原来super.getTextSize()是等宽中文字符大小，因为我用的是中国手机
@@ -128,10 +127,12 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		return String_Splitor.Count('\n',src)+1;
 	}
 	
+	@Override
 	public int maxHeight()
 	{
 		return getLineHeight()*getLineCount();
 	}
+	@Override
 	public int maxWidth()
 	{
 		Editable editor = getText();
@@ -151,7 +152,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		return (int)(width*getTextSize());
 		//仍应乘以getTextSize()，以适配显示器
 	}
-	
+	@Override
     public size WAndH()
 	{
 		size s = LAndC(getText().toString());

@@ -1473,8 +1473,8 @@ Uedo和Redo
 */
 	@Override
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
-	{
-		
+	{	
+	
 		if(IsModify()){
 			return;
 			//如果正被修改，不允许再次修改	
@@ -1527,8 +1527,6 @@ Uedo和Redo
 			
 			IsModify(false); //双重拦截
 		}
-		
-		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 		
 	}
 

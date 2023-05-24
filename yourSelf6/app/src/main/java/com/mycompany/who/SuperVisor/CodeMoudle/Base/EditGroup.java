@@ -431,7 +431,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//或已经被修改，不允许再修改
 				return;
 			}
-
+			
 			Log.w("onTextChanged", "My index is " + index);
 			
 			if(EditFlag==0)
