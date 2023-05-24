@@ -87,6 +87,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		super(cont,attrs);
 	}
+	@Override
 	public void init()
 	{
 		super.init();
@@ -94,6 +95,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Creator.ConfigSelf(this);
 	}
 	
+	@Override
 	public boolean equals(Object obj)
 	{
 		if (super.equals(obj)||(obj!=null && obj instanceof EditGroup && ((View)obj).getTag().equals(getTag()))){
@@ -1096,8 +1098,20 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 ---------------------------------------------------------------
 */
-	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo,EditState
+	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo,EditState,EditFactory
 	{
+
+		@Override
+		public EditText creatEdit(EditGroup self, String name)
+		{
+			return new RCodeEdit(self.getContext());
+		}
+
+		@Override
+		public void configEdit(EditText Edit, String name, EditGroup self)
+		{
+			//默认的配置
+		}
 		
 		private void calaIndex(int index,size start)
 		{
@@ -1273,6 +1287,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			trimToFather();
 		}
 		
+		@Override
 		public void setEditFlags(int flag)
 		{
 			//在给所有Edit设置flag后，EditGroup保存flag，在之后添加新编辑器时自动设置
@@ -1280,6 +1295,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			for(CodeEdit Edit:EditList)
 			    Edit.setEditFlags(flag);
 		}
+		@Override
 		public int getEditFlags(){
 			return mEditFlags;
 		}
@@ -1369,6 +1385,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			return text;
 		}
 		
+		@Override
 		public void reDraw(int start, int end)
 		{
 			if(getEdit().IsDraw()){
@@ -1418,6 +1435,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 		}
 		
+		@Override
 		public int Format(int start, int end)
 		{
 			if(getEdit().IsFormat()){
@@ -1439,17 +1457,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			refreshLineAndSize();
 			return calaEditLen()-before;
 		}
+		@Override
 		public int Insert(int index, int count){
 			return getFocusEdit().Insert(index,count);
 		}
 		
+		@Override
 		public String MakeCommand(String state){
 			return getFocusEdit().MakeCommand(state);
 		}
+		@Override
 		public int RunCommand(String command){
 			return getFocusEdit().RunCommand(command);
 		}
 
+		@Override
 		public void Uedo()
 		{
 			//与顺序无关的Uedo，它只存储一轮次的被修改的编辑器指针，具体顺序由编辑器内部管理
@@ -1466,6 +1488,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 			refreshLineAndSize();
 		}
+		@Override
 		public void Redo()
 		{
 			//与顺序无关的Redo，它只存储一轮次的Uedo的编辑器指针，具体顺序由编辑器内部管理
@@ -1903,6 +1926,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}	
 		
 		//每次屏幕旋转，旋转我和滚动条
+		@Override
 		public void onChange(EditGroup target,int src)
 		{
 			//当ForEdit宽极小时，居然会发现滚动条动画的边缘缩小了，搞得还以为滚动条缩小了

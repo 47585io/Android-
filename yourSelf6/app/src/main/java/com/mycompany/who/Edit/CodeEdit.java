@@ -1929,7 +1929,7 @@ Uedo和Redo
 ------------------------------------------------------------------------------------
 
 */
-	public static class EPool2 extends EPool<wordIndex>
+	final public static class EPool2 extends EPool<wordIndex>
 	{
 
 		@Override
@@ -1947,7 +1947,7 @@ Uedo和Redo
 		
 	}
 	
-	public static class EPool3 extends EPool<IconX>
+	final public static class EPool3 extends EPool<IconX>
 	{
 
 		@Override
@@ -1991,7 +1991,7 @@ Uedo和Redo
 ------------------------------------------------------------------------------------
 
 */
-    public static class CodeEditListenerInfo implements EditListenerInfo
+    final public static class CodeEditListenerInfo implements EditListenerInfo
 	{
 		
 		private Map<Integer,EditListener> mlistenerS;
@@ -2148,7 +2148,7 @@ Uedo和Redo
 
  ------------------------------------------------------------------------------------
  */
-	public static class CodeWords implements Words
+	final public static class CodeWords implements Words
 	{
 		
 		//所有单词使用Map存储，以使index可以为任意的值
