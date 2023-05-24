@@ -1612,7 +1612,7 @@ _________________________________________
 					@Override
 					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
 					{
-						CharSequence key = String_Splitor.indexOfKey(src, nowIndex, get_zhu());
+						CharSequence key = String_Splitor.indexOf(src, nowIndex, get_zhu().keySet());
 						if (key != null)
 						{
 							//如果它是一个任意的注释，找到对应的另一个，并把它们之间染色

@@ -10,6 +10,7 @@ import com.mycompany.who.Edit.Base.Share.Share1.*;
 public class String_Splitor
 {
 	
+	//字符是否为A~z
 	public static boolean IsAtoz(char ch)
 	{
 		if(ch>='a' && ch <='z')
@@ -22,6 +23,7 @@ public class String_Splitor
 		return false;
 	}
 
+	//字符是否为数字
 	public static boolean IsNumber(char ch)
 	{
 		if(ch>='0'&&ch<='9')
@@ -38,18 +40,20 @@ public class String_Splitor
 		return true;
 	}
 	
-	public static CharSequence indexOfKey(String str,int nowIndex,Map<CharSequence,CharSequence> zhu_key_value)
+	//当前位置是否存在一个集合中的字符串
+	public static CharSequence indexOf(String str,int nowIndex,Collection<CharSequence> coll)
 	{
-		for(CharSequence key: zhu_key_value.keySet()){
-		    if(str.indexOf(key.toString(),nowIndex)==nowIndex)
-				return key;
+		for(CharSequence c: coll)
+		{
+		    if(str.indexOf(c.toString(),nowIndex)==nowIndex)
+				return c;
 		}
 		return null;
 	}
 	
+	//查找文本中所有出现str的index
 	public static List<Integer> indexsOf(String str,String text)
 	{
-		//查找文本中所有出现str的index
 		int index = 0,len = str.length();
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
@@ -63,7 +67,6 @@ public class String_Splitor
 	}
 	public static List<Integer> indexsOf(char c,String text)
 	{
-		//查找文本中所有出现str的index
 		int index = 0;
 		List<Integer> indexs = new ArrayList<Integer>();
 		while(true){
@@ -76,6 +79,7 @@ public class String_Splitor
 		return indexs;
 	}
 	
+	//统计字符出现次数
 	public static int Count(String want,String text){
 		int count=0;
 		int index =0;
@@ -127,6 +131,7 @@ public class String_Splitor
 		return index;
 	}
 	
+	//统计空字符
 	public static int calaN(CharSequence src,int index)
 	{
 		int count = 0;
@@ -136,6 +141,7 @@ public class String_Splitor
 		}
 		return count;
 	}
+	//获取n倍的字符串
 	public static CharSequence getNStr(CharSequence src,int n)
 	{
 		StringBuilder arr= new StringBuilder("");
@@ -144,6 +150,7 @@ public class String_Splitor
 		}
 		return arr.toString();
 	}
+	
 	
 	/*
 	 GB2312-80 是 1980 年制定的中国汉字编码国家标准。共收录 7445 个字符，其中汉字 6763 个。
@@ -155,23 +162,48 @@ public class String_Splitor
 	public static class Unicode
 	{
 		
-	}
-	
-	public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException 
-	{
-	    String zhPattern = "[\u4e00-\u9fa5]+";//正则表达式，用于匹配url里面的中文
-
-		Pattern p = Pattern.compile(zhPattern);
-		Matcher m = p.matcher(str);
-		StringBuffer b = new StringBuffer();
-		while (m.find()) {
-			m.appendReplacement(b, URLEncoder.encode(m.group(0), charset));
+		public static CharSequence encode(CharSequence str, String charset) throws UnsupportedEncodingException 
+		{
+			String zhPattern = "[\u4e00-\u9fa5]+";//正则表达式，用于匹配url里面的中文
+			Pattern p = Pattern.compile(zhPattern);
+			Matcher m = p.matcher(str);
+			StringBuffer b = new StringBuffer();
+			while (m.find()) {
+				m.appendReplacement(b, URLEncoder.encode(m.group(0), charset));
+			}
+			m.appendTail(b);
+			return b.toString();
 		}
-		m.appendTail(b);
-		return b.toString();
+		
+		public static byte[] decode(CharSequence str,String charSetName)
+		{
+			byte[] arr = null;
+			try{
+				arr = str.toString().getBytes(charSetName);
+			}catch (UnsupportedEncodingException e){}
+			return arr;
+		}
+		
+		public static int checkUnicodeCount(CharSequence str)
+		{
+			int count = 0;
+			for(int i=str.length()-1;i>=0;--i)
+			{
+				char c = str.charAt(i);
+				byte[] bytes = String.valueOf(c).getBytes();
+				if(bytes.length==3){
+					++count;
+				}
+			}
+			return count;
+		}
+		
 	}
 	
 	
+	/*
+	  对括号的处理
+	*/
 	public static class Bindow
 	{
 		
@@ -332,7 +364,7 @@ public class String_Splitor
 		 使用checkBindow返回的一定是从内层到外层括号的正序范围
 		 如果index在几层括号重叠内，只要正序向后就可从内到外遍历
 		 如果index不在之前的括号块内，也不影响之后的括号块遍历
-		 */
+		*/
 		public static size indexInBindowRange(int index,List<size> indexs)
 		{
 			for(size i:indexs)

@@ -9,7 +9,7 @@ public class Array_Splitor
 	
 	public static final Comparator<CharSequence> sortStrForLen = new sortStrForLen();
 	
-
+    
 	public static<T> void toArray(Collection<T> coll, T[] arr)
 	{
 		if (coll != null)
@@ -24,6 +24,7 @@ public class Array_Splitor
 		return coll;
 	} 
 
+	//获取一组数中最小的，但最小不小于start，最大不大于end
 	public static int getmin(int start, int end, int ... arr)
 	{
 		int min=Integer.MAX_VALUE;
@@ -38,6 +39,7 @@ public class Array_Splitor
 			return -1;
 		return min;
 	}
+	//获取一组数中最大的，但最小不小于start，最大不大于end
 	public static int getmax(int start, int end, int ... arr)
 	{
 		int max=Integer.MIN_VALUE;
@@ -53,9 +55,9 @@ public class Array_Splitor
 		return max;
 	}
 
+	//字符是否在排好序的数组
 	public static int indexOf(char ch, char[]fuhao)
 	{
-		//字符是否在排好序的数组
 		if (fuhao == null)
 			return -1;
 		int low = 0;   
@@ -72,10 +74,9 @@ public class Array_Splitor
 		}  
 		return -1;  
 	}
-
+	//字符串是否在排好序的数组
 	public static int indexOf(CharSequence str, CharSequence[] keyword)
 	{	
-		//字符串是否在排好序的数组
 	    if (str.length() == 0 || keyword == null)
 			return -1;
 		int start=0;
@@ -90,9 +91,9 @@ public class Array_Splitor
 		return -1;
 	}
 
+	//查找数组中所有出现了str的元素
 	public static List<CharSequence> indexsOf(CharSequence str, CharSequence[] keyword, int start, Idea i)
-	{	
-		//查找数组中所有出现了str的元素
+	{		
 		if (str.length() == 0 || keyword == null || keyword.length == 0)
 			return null;
 	    List<CharSequence> words = new ArrayList<>();
@@ -106,11 +107,12 @@ public class Array_Splitor
 		return words;
 	}
 
+	//按字符排序
 	public static void sortStrForChar(List<CharSequence> words)
 	{
 		quickSort(words,sortStrForChar);
 	}
-
+	//按长度排序
 	public static void sortStrForLen(List<CharSequence> words)
 	{
 		quickSort(words,sortStrForLen);

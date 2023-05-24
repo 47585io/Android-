@@ -25,36 +25,6 @@ import java.util.*;
 public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 {
 
-	@Override
-	public void Creat()
-	{
-		TextSize = 13.5f;
-		ConfigSelf(this);
-		if(listener==null){
-		    listener = getKeyListener();
-		}
-	}
-
-	@Override
-	public Edit CreatOne()
-	{
-		return new Edit(getContext());
-	}
-
-	@Override
-	public void CopyFrom(Edit target)
-	{
-		TextSize = target.TextSize;
-		ConfigSelf(this);
-	}
-
-	@Override
-	public void CopyTo(Edit target)
-	{
-		target.TextSize = TextSize;
-		target.ConfigSelf(target);
-	}
-
 	private static KeyListener listener;
 	public static int Selected_Color=0x75515a6b;
 	public static int Background_Color=0;
@@ -96,7 +66,37 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		setLineSpacing(0.2f,1.2f);
 		setPadding(0,0,0,(int)pad);
 	}
+	
+	@Override
+	public void Creat()
+	{
+		TextSize = 13.5f;
+		ConfigSelf(this);
+		if(listener==null){
+		    listener = getKeyListener();
+		}
+	}
 
+	@Override
+	public Edit CreatOne()
+	{
+		return new Edit(getContext());
+	}
+
+	@Override
+	public void CopyFrom(Edit target)
+	{
+		TextSize = target.TextSize;
+		ConfigSelf(this);
+	}
+
+	@Override
+	public void CopyTo(Edit target)
+	{
+		target.TextSize = TextSize;
+		target.ConfigSelf(target);
+	}
+	
 	@Override
 	public void setTextSize(float size)
 	{
@@ -105,12 +105,20 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		super.setTextSize(size);
 	}
 	
+	@Override
 	public float getTextSize()
 	{
-		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里/1.65f后就是等宽字符大小
-		return super.getTextSize()/1.65f;
+		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里除20f/12f后就是等宽英文字符大小
+		return super.getTextSize()/(20f/12f);
+	}
+	
+	public float getUnicodeTextSize()
+	{
+		//获取中文等宽字符大小，我的天，原来super.getTextSize()是等宽中文字符大小，因为我用的是中国手机
+		return super.getTextSize();
 	}
 
+	@Override
 	public int getLineCount()
 	{
 		return getLineCount(getText().toString());
@@ -119,7 +127,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	{
 		return String_Splitor.Count('\n',src)+1;
 	}
-
+	
 	public int maxHeight()
 	{
 		return getLineHeight()*getLineCount();

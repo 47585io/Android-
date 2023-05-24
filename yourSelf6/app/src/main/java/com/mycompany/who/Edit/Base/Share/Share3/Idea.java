@@ -11,7 +11,8 @@ abstract public interface Idea
 	public static final Idea iyes = new Iyes();
 	
 	
-	public static class INo implements Idea{
+	public static class INo implements Idea
+	{
 		@Override
 		public boolean can(CharSequence s,CharSequence want,int start)
 		{
@@ -22,7 +23,8 @@ abstract public interface Idea
 			return false;
 		}
 	}
-	public static class Iyes implements Idea{
+	public static class Iyes implements Idea
+	{
 		@Override
 		public boolean can(CharSequence s,CharSequence want,int start)
 		{

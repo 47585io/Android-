@@ -4,6 +4,7 @@ import java.util.*;
 public class Collection_Spiltor
 {
 	
+	//将src添加到target中
 	public static void addAll(Collection target,Collection src){
 		if(target!=null && src!=null)
 			target.addAll(src);
@@ -19,6 +20,8 @@ public class Collection_Spiltor
 		addAll(target,src);
 		return target;
 	}
+	
+	//拷贝一个新的集合
 	public static Map copyMap(Map src){
 		Map target = EmptyMap();
 		addAll(target,src);
@@ -35,6 +38,7 @@ public class Collection_Spiltor
 		return null;
 	}
 	
+	//安全的空集合
 	public static List EmptyList(){
 		return Collections.synchronizedList(new ArrayList());
 	}
@@ -45,6 +49,7 @@ public class Collection_Spiltor
 		return Collections.synchronizedSet(new HashSet());
 	}
 	
+	//通过value得到key
 	public static Object vualeToKey(Object v,Map map)
 	{
 		for(Object k: map.keySet())
@@ -57,8 +62,9 @@ public class Collection_Spiltor
 		return null;
 	}
 	
-	public static<T> void And_Same(Collection<T> d1,Collection<T> d2,Collection<T> end){
-		//合并相同元素
+	//合并相同元素
+	public static<T> void And_Same(Collection<T> d1,Collection<T> d2,Collection<T> end)
+	{
 		if(d1==null&&d2==null){
 			return;
 		}
@@ -67,25 +73,26 @@ public class Collection_Spiltor
 				end.add(o);
 		}
 	}
-
-	public static<T> void delSame(Collection<T> dst,Collection<T> src){
-		//删除dst中与src中相同的元素
+	//删除相同的元素
+	public static<T> void delSame(Collection<T> dst,Collection<T> src)
+	{
 		for(Object o: dst.toArray()){
 			if(src.contains(o))
 				dst.remove(o);
 		}
 	}
-	public static void delNumber(Collection<CharSequence> dst){
-		//删除数字
+	//删除数字
+	public static void delNumber(Collection<CharSequence> dst)
+	{
 		for(Object o: dst.toArray()){
 			if(String_Splitor. IsNumber(((CharSequence)o))){
 				dst.remove(o);
 			}
 		}
 	}
-	
-	public static List<CharSequence> indexsOf(CharSequence str,Collection<CharSequence> keyword,int start,Idea i) {	
-		//查找集合中所有出现了str的元素
+	//查找集合中所有出现了str的元素
+	public static List<CharSequence> indexsOf(CharSequence str,Collection<CharSequence> keyword,int start,Idea i) 
+	{	
 		if(str.length()==0 || keyword==null||keyword.size()==0)
 			return null;
 	    List<CharSequence> words = new ArrayList<>();

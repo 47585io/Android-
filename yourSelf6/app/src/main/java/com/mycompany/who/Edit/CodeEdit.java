@@ -80,7 +80,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 
 /*
 
-   在基类上开一些接口，另外的，复杂的函数我都设置成了final，不安全的函数设为protected
+   在基类上开一些接口，另外的，复杂且不安全的函数我都设置成了final，不安全的函数设为protected
 
    从现在开始，所有被调函数，例如reDraw，必须自己管理好线程和IsModify和Ep安全，然后将真正操作交给另一个函数，这样各司其职，降低复杂度，便于修改(修改其中一个不影响另一个)
    
@@ -146,7 +146,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  //IsModify2管大的onTextChanged事件中的修改，一个onTextChanged事件未执行完，不允许跳到另一个onTextChanged事件
 	  //这里IsModify是int类型，这是因为如果用boolean，一个函数中最后设置的IsModify=false会抵消上个函数开头的IsModify=true，这是为了避免套娃调用的问题
 
-	private int lineCount;
+	private int lineCount,maxWidth;
 	private AdapterView mWindow;
 	private StringBuffer laugua;
 	private String HTML;
@@ -1403,11 +1403,28 @@ Uedo和Redo
 		 if(count!=0) 
 		 { 
 		     //在删除\n前，删除行 
-		     int line=String_Splitor.Count('\n', str.toString().substring(start,start + count)); 
+			 String text = str.toString();
+		     int line=String_Splitor.Count('\n', text.substring(start,start + count)); 
 		     if(line>0){
 			     onLineChange(lineCount,line,0);
 			     lineCount-=line;
 			 }
+			 
+			 /*
+			 //如果删除了字符串，并且比当前的maxWidth还宽，就重新测量全部文本
+			 start = tryLine_Start(text,start);
+			 after = tryLine_End(text,start+count);
+			 text = text.substring(start,after);
+			 size s = LAndC(text);
+			 float width = s.start*getTextSize();
+			 if(width>=maxWidth)
+			 {
+				 StringBuilder b = new StringBuilder(text);
+				 b.delete(start,after);
+				 s = LAndC(b.toString());
+				 maxWidth = s.start;
+			 }
+			 */
 		 }
 	}
 	
@@ -1415,15 +1432,28 @@ Uedo和Redo
 	{
 		if (after != 0)
 	    {
-			//增加行
-		    int line = String_Splitor.Count('\n', str.toString().substring(start, start + after));	
+			//在插入字符串后，增加行
+			String text = str.toString();
+		    int line = String_Splitor.Count('\n', text.substring(start, start + after));	
 		    if(line>0){
 			    onLineChange(lineCount,0,line);
 			    lineCount+=line; 
 			}
+			
+			/*
+			//如果插入字符串比当前的maxWidth还宽，就将maxWidth = (int) width
+			start = tryLine_Start(text,start);
+			after = tryLine_End(text,start+ after);
+			text = text.substring(start,after);
+			size s = LAndC(text);
+			float width = s.start*getTextSize();
+			if(width>maxWidth){
+				maxWidth = (int) width;
+			}
+			*/
 	    }
 	}
-	
+
 
 /*
 ---------------------------------------------------------------
@@ -1782,6 +1812,20 @@ Uedo和Redo
 	{
 		return lineCount+1;
 	}
+    
+	/*
+	@Override
+	public int maxWidth()
+	{
+		return maxWidth;
+	}
+
+	@Override
+	public size WAndH()
+	{
+		return new size(maxWidth(),maxHeight());
+	}
+    */
 	
 /* 
 ------------------------------------------------------------------------------------
