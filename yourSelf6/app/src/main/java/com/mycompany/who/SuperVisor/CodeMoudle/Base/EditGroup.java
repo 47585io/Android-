@@ -425,13 +425,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{		
-			if (!can){
+			if (IsModify() || !can)
+			{
+				//在构造对象前，会调用一次onTextChanged，此时不允许继续
+				//或已经被修改，不允许再修改
 				return;
-			    //在构造对象前，会调用一次onTextChanged
-			}
-			if (IsModify()){
-				return ;
-			    //已经被修改，不允许再修改
 			}
 
 			Log.w("onTextChanged", "My index is " + index);
@@ -444,14 +442,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//第一个编辑器扩展大小，无论文本怎么截取，但总量不变，所以宽高不变
 			}
 			/*
-			   编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-			   因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
-			  
-			   但是，为什么我要将trimToFather交给第一个编辑器？
-			   这是因为，在下面的代码中，会调用super.onTextChanged()
-			   在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
-			*/
+			  编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
+			  因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
 			
+			  但是，为什么我要将trimToFather交给第一个编辑器？
+			  这是因为，在下面的代码中，会调用super.onTextChanged()
+			  在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
+			*/
+		
 			++EditFlag;		
 			if (lengthAfter != 0){
 				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
