@@ -6,7 +6,8 @@ import android.content.*;
 public class WebViewer extends WebView
 {
 	
-	public WebViewer(Context cont){
+	public WebViewer(Context cont)
+	{
 		super(cont);
 		WebSettings setting= getSettings();
 		setting.setJavaScriptEnabled(true);
@@ -59,7 +60,6 @@ public class WebViewer extends WebView
 
 
 		}
-
 		super.onTouchEvent(p2);
 		return true;
 	}
@@ -68,13 +68,13 @@ public class WebViewer extends WebView
 	public boolean onKeyDown(int keyCode, KeyEvent event)
 	{
 		if(keyCode==event.KEYCODE_BACK){
-			if(canGoBack())
-			    goBack();        
+			if(canGoBack()){
+			    goBack();   
+			}
 			return true;
 		}
 		
 	    return super.onKeyDown(keyCode,event);	
 	}
-	
 	
 }

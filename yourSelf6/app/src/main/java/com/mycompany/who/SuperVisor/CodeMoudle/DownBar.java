@@ -256,9 +256,9 @@ public class DownBar extends HasAll
 		{
 			target.config=new Config_hesSize();
 			target.Configer=new Config_hesView();
-			target.setHander(new View(target.getContext()));
-			//预设一个Hander和Vector
+			target.setHander(new View(target.getContext()));	
 		    target.setVector(new PageHandler(target.getContext()));
+			//预设一个Hander和Vector
 		}
 	}
 

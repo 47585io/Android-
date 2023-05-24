@@ -269,12 +269,40 @@ public class myCodeBuilder implements Configer<XCode>
 			}
 		}
 		
+		class StateBuilder implements PageHandler.ViewBuilder
+		{
+
+			boolean lockState;
+			
+			@Override
+			public void eatView(View v, String name, PageHandler self)
+			{
+				// TODO: Implement this method
+			}
+
+			@Override
+			public boolean onPageTouch(View p1, MotionEvent p2, PageHandler self)
+			{
+				// TODO: Implement this method
+				return false;
+			}
+
+			@Override
+			public boolean onPageKey(int keyCode, KeyEvent p2, PageHandler self)
+			{
+				// TODO: Implement this method
+				return false;
+			}
+		}
+		
 	}
 	
 	class myDownBarBuilder extends DownBarBuilder 
 	{
 	
 		ListView fileList;
+		ListView searchResult;
+		ListView consoleLog;
 		myPageFactory mfactory;
 
 		@Override
@@ -282,7 +310,11 @@ public class myCodeBuilder implements Configer<XCode>
 		{
 			mfactory = new myPageFactory();
 			fileList = mfactory.getFileList(pages.getContext());
+			searchResult = mfactory.getSearchResult(pages.getContext());
+			consoleLog = mfactory.getConsoleLog(pages.getContext());
 			pages.addView(fileList);
+			pages.addView(searchResult);
+			pages.addView(consoleLog);
 		}
 		
 		public class myPageFactory implements PageHandlerBuilderInterface.PageFactory
@@ -291,6 +323,16 @@ public class myCodeBuilder implements Configer<XCode>
 			public ListView getFileList(Context cont)
 			{
 				return new FileListView(cont);
+			}
+			
+			public ListView getSearchResult(Context cont)
+			{
+				return new SearchResult(cont);
+			}
+			
+			public ListView getConsoleLog(Context cont)
+			{
+				return new ConsoleLog(cont);
 			}
 			
 			/*
@@ -410,6 +452,60 @@ public class myCodeBuilder implements Configer<XCode>
 					return list;
 				}
 				
+			}
+			
+			/*
+			  每一行都是TextView
+			*/
+			public class SearchResult extends autoChangeList
+			{
+
+				public SearchResult(Context cont){
+					super(cont);
+					WordAdapter adapter = new WordAdapter();
+					adapter.setViewHolderFactory(new WordAdapter.Factory(R.layout.FileIcon));
+					Icon icon = new Icon3(R.drawable.All,"");
+					adapter.add(0,icon);
+					setAdapter(adapter);
+				}
+				
+				@Override
+				public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					// TODO: Implement this method
+				}
+
+				@Override
+				public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					// TODO: Implement this method
+					return false;
+				}
+			
+			}
+			
+			/*
+			  每一行都是EditText，此行输入后将上行lock
+			*/
+			public class ConsoleLog extends autoChangeList
+			{
+
+				public ConsoleLog(Context cont){
+					super(cont);
+				}
+				
+				@Override
+				public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					// TODO: Implement this method
+				}
+
+				@Override
+				public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
+				{
+					// TODO: Implement this method
+					return false;
+				}
 			}
 			
 		}

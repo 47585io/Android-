@@ -28,7 +28,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 {
 	
 	private ThreadPoolExecutor pool;
-	private ViewBuiler ViewBuilder;
+	private ViewBuilder ViewBuilder;
 	private EditGroup.EditFactory mfactory;
 	private List<Object> PageState;
 	
@@ -54,14 +54,14 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	public EditGroup.EditFactory getEditFactory(){
 		return mfactory;
 	}
-	public ViewBuiler getViewBuilder(){
+	public ViewBuilder getViewBuilder(){
 		return ViewBuilder;
 	}
 
 	public void setPool(ThreadPoolExecutor pool){
 		this.pool = pool;
 	}
-	public void setViewBuilder(ViewBuiler b){
+	public void setViewBuilder(ViewBuilder b){
 		ViewBuilder = b;
 	}
 	@Override
@@ -136,7 +136,6 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	}
 	
 /*
-
 -------------------------------------------------------------------
  
   EditGroup对触摸和键事件的处理
@@ -172,7 +171,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
   
 -----------------------------------------------------------------------------------
 */
-	public static interface ViewBuiler
+	public static interface ViewBuilder
 	{
 		
 		public void eatView(View v, String name, PageHandler self)
@@ -184,7 +183,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 	}
 	
 	/* 默认的ViewBuiler */
-	final static class Domean implements ViewBuiler
+	final static class Domean implements ViewBuilder
 	{
 
 		@Override
@@ -292,6 +291,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		}
 	}
 	
+	
 /*
 -----------------------------------------------------------------------------------
 
@@ -351,6 +351,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 		}
 
 	}
+	
 
 /*
 -----------------------------------------------------------------------------------
@@ -361,9 +362,9 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 */
 	public static interface IneedBuilder{
 		
-		public ViewBuiler getViewBuilder()
+		public ViewBuilder getViewBuilder()
 		
-		public void setViewBuilder(ViewBuiler b)
+		public void setViewBuilder(ViewBuilder b)
 	}
 	
 	public static interface requestWithPageHandler extends CodeEdit.IlovePool{

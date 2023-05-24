@@ -50,7 +50,8 @@ public abstract interface CodeBlock
 
 	}
 	
-	public static abstract interface Level<T> extends Configer<T>{
+	public static abstract interface Level<T> extends Configer<T>
+	{
 
 		public abstract void config(T target)
 
@@ -66,7 +67,8 @@ public abstract interface CodeBlock
 	 自动根据横竖屏改变大小
 
 	 */
-	public static interface Config_Size<T> extends Configer<T>{
+	public static interface Config_Size<T> extends Configer<T>
+	{
 
 		public void set(int width,int height,int is,T target)
 
@@ -188,14 +190,6 @@ public abstract interface CodeBlock
 			}
 		}
 		
-		final public static void trim(View v,int left,int top,int right,int bottom)
-		{
-			//layout只设置View的范围，但并不立即改变，这或许等待到下次改变，但也许被父View重置
-			if(v.getLeft()!=left || v.getRight()!=right || v.getTop()!=top || v.getBottom()!=bottom){
-				v.layout(left,top,right,bottom);
-			}
-		}
-		
 		final public static void trimAdd(View Father, int addWidth, int addHeight)
 		{
 			if(addWidth==0&&addHeight==0)
@@ -215,8 +209,6 @@ public abstract interface CodeBlock
 			p.height *= HeightX;
 			//Father.setLayoutParams(p);
 		}
-		
-		
 
 	}
 
