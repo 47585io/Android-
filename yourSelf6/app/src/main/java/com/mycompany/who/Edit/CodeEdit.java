@@ -263,6 +263,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		if(WordLib!=null)
 		    WordLib.clear();
 	}
+	@Override
 	public void setLuagua(String Lua)
 	{
 		if(builder!=null){
@@ -270,6 +271,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 			builder.SwitchLuagua(this,Lua);
 	    }
 	}
+	@Override
 	public String getLuagua()
 	{
 		return laugua.toString();

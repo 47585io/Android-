@@ -196,6 +196,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		LineCount = count;
 	}
 	
+	@Override
 	public void onLineChange(final int start,final int before,final int after)
 	{
 		EditListener lis = getLineChecker();

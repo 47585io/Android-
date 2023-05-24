@@ -57,6 +57,19 @@ public class myCodeBuilder implements Configer<XCode>
 		db.ConfigSelf(d);	
 	}
 	
+	public static void foreachPage(PageList p,APage p2)
+	{
+		for(int i = p.getChildCount()-1;i>=0;--i){
+			p2.page(p.getChildAt(i));
+		}
+	}
+	
+	public static interface APage
+	{
+		public void page(View page)
+	}
+	
+	
 	class CodeHandler extends Handler{
 		
 		public CodeHandler(){
@@ -171,12 +184,10 @@ public class myCodeBuilder implements Configer<XCode>
 				public void onClick(View p1)
 				{
 					p1.setBackgroundResource(R.drawable.Read);
-					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
-					Group.getEditManipulator().lockThem(true);
 					p1.setOnClickListener(Write());
 					mSaveFlags = CodeEdit.mPublicFlags;
 					CodeEdit.mPublicFlags = CodeEdit.CanvasMask;
-					Group.requestFocus();
+					lock(true);
 				}
 		    }
 
@@ -186,13 +197,28 @@ public class myCodeBuilder implements Configer<XCode>
 				public void onClick(View p1)
 				{
 					p1.setBackgroundResource(R.drawable.Write);
-					EditGroup Group = (EditGroup) p.getChildAt(p.getNowIndex());
-					Group.getEditManipulator().lockThem(false);
-					p1.setOnClickListener(Read());
+				    p1.setOnClickListener(Read());
 					CodeEdit.mPublicFlags = mSaveFlags;
-					Group.requestFocus();
+					lock(false);
 				}
 			}
+			
+			public void lock(final boolean is)
+			{
+				APage page = new APage(){
+
+					@Override
+					public void page(View page)
+					{
+						if(page instanceof EditGroup){
+							EditGroup.EditManipulator man = ((EditGroup)page).getEditManipulator();
+							man.lockThem(is);
+						}
+					}
+				};
+				foreachPage(p,page);
+			}
+			
 		}
 		
 	}
