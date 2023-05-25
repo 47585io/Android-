@@ -16,12 +16,12 @@ import java.util.*;
 
 /*
  不要求任何编辑器必须实现模块全部功能，这里先实现Creat
- 
+
  后续编辑器继承后，改变这个类可以方便地改变所有继承的类
 
  一个bug:计算字符大小很麻烦，这里只管了纯英文字符
- 
-*/
+
+ */
 public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 {
 
@@ -34,15 +34,17 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	private float TextSize;
 
 
-	public Edit(Context cont){
+	public Edit(Context cont)
+	{
 		super(cont);
 		Creat();
 	}
-	public Edit(Context cont,AttributeSet attrs){
-		super(cont,attrs);
+	public Edit(Context cont, AttributeSet attrs)
+	{
+		super(cont, attrs);
 		Creat();
 	}
-	public Edit(Context cont,Edit Edit)
+	public Edit(Context cont, Edit Edit)
 	{
 		super(cont);
 		CopyFrom(Edit);
@@ -57,22 +59,23 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		setHighlightColor(Selected_Color);
 		setTextSize(TextSize);
 		/*
-		  当设置LineSpacing后，除最后一行以外的其它行都添加这个LineSpacing，所以最后一行会缺失LineSpacing，这里使用padding来补充最后一行高度
-		  但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
-		  但如下的方案可以完美对齐:
-		*/
-		float pad = 0.1f*getLineHeight();
+		 当设置LineSpacing后，除最后一行以外的其它行都添加这个LineSpacing，所以最后一行会缺失LineSpacing，这里使用padding来补充最后一行高度
+		 但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
+		 但如下的方案可以完美对齐:
+		 */
+		float pad = 0.1f * getLineHeight();
 		//setLetterSpacing(0.01f);
-		setLineSpacing(0.2f,1.2f);
-		setPadding(0,0,0,(int)pad);
+		setLineSpacing(0.2f, 1.2f);
+		setPadding(0, 0, 0, (int)pad);
 	}
-	
+
 	@Override
 	public void Creat()
 	{
 		TextSize = 13.5f;
 		ConfigSelf(this);
-		if(listener==null){
+		if (listener == null)
+		{
 		    listener = getKeyListener();
 		}
 	}
@@ -96,7 +99,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		target.TextSize = TextSize;
 		target.ConfigSelf(target);
 	}
-	
+
 	@Override
 	public void setTextSize(float size)
 	{
@@ -104,12 +107,12 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		TextSize = size;
 		super.setTextSize(size);
 	}
-	
+
 	@Override
 	public float getTextSize()
 	{
 		//getTextSize获取的是指定机型显示器加权后的值，有可能不对，这里除20f/12f后就是等宽英文字符大小
-		return super.getTextSize()/(20f/12f);
+		return super.getTextSize() / (20f / 12f);
 	}
 	public float getUnicodeTextSize()
 	{
@@ -124,114 +127,124 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	}
 	public static int getLineCount(String src)
 	{
-		return String_Splitor.Count('\n',src)+1;
+		return String_Splitor.Count('\n', src,0,src.length()) + 1;
 	}
-	
+
 	@Override
 	public int maxHeight()
 	{
-		return getLineHeight()*getLineCount();
+		return (int)measureTextHeight(getText().toString());
 	}
 	@Override
 	public int maxWidth()
 	{
-		Editable editor = getText();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',editor.toString());
-		if(indexs==null||indexs.size()==0){
-			return (int)(editor.length()*getTextSize());
-		}
-		int width=0;
-		int last=0;
-		for(int i: indexs){
-			int w=i-last;
-			if(w>width)
-				width=w;
-			last=i;
-		}
-		width=(width>editor.length()-last)?width:editor.length()-last;
-		return (int)(width*getTextSize());
-		//仍应乘以getTextSize()，以适配显示器
+		return (int)measureTextWidth(getText().toString());
 	}
 	@Override
     public size WAndH()
 	{
-		size s = LAndC(getText().toString());
-		s.start=(int)(s.start*getTextSize());
-		s.end=s.end*getLineHeight();
-		return s;
+		return new size(maxWidth(),maxHeight());
 	}
-
-	public static final size LAndC(String text)
+	
+	/* 测量文本宽度 */
+	final public float measureTextWidth(String text)
 	{
-		//为外部文本测量行数与最宽的那行字符数
-		size size=new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',text);
-		if(indexs==null||indexs.size()==0){
-			size.start= (text.length());
-			size.end= 1;
-			return size;
+		CharSequence str;
+		float width = 0, w = 0;
+		int lastIndex =0, index = 0;
+		while(true)
+		{
+		    index = text.indexOf('\n',lastIndex);
+			if(index==-1)
+			{
+				//最后一行宽度
+				str = text.subSequence(lastIndex,text.length());
+				w = measureTextLen(str);
+				if(w>width){
+					width = w;
+				}
+				break;
+			}
+			str = text.subSequence(lastIndex,index);
+			w = measureTextLen(str);
+			if(w>width){
+				width = w;
+			}
+			++index;
+			lastIndex = index;
 		}
-		int width=0;
-		int last=0;
-		for(int i: indexs){
-			int w=i-last;
-			if(w>width)
-				width=w;
-			last=i;
-		}
-		width=(width>text.length()-last)?width:text.length()-last;
-		//最后一行的长度是？
-		size.start=width;
-		size.end=(indexs.size()+1);
-		return size;
+		return width;
+	}
+	/* 测量文本高度 */
+	final public float measureTextHeight(String text)
+	{
+		return getLineCount(text)*getLineHeight();
+	}
+	/* 测量文本长度，包含英文和中文，使用TextSize加权后的值 */
+	final public float measureTextLen(CharSequence text)
+	{
+		int Unicode = String_Splitor.Unicode.checkUnicodeCount(text);
+		int Ascii = text.length() - Unicode;
+		return getTextSize() * Ascii + getUnicodeTextSize() * Unicode;
 	}
 
-	final public size subLines(int startLine){
-		return subLines(startLine,getText().toString());
+	/* 截取startLine行之后的内容，返回内容的范围 */
+	final public size subLines(int startLine)
+	{
+		return subLines(startLine, getText().toString());
 	}
-	final public size subLines(int startLine,int endLine){
-		return subLines(startLine,endLine,getText().toString());
+	/* 截取startLine行和endLine行之间的内容 */
+	final public size subLines(int startLine, int endLine)
+	{
+		return subLines(startLine, endLine, getText().toString());
 	}
 
-	final public static size subLines(int startLine,int endLine,String src)
+	final public static size subLines(int startLine, int endLine, String src)
 	{
 		size j = new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
-
-		if(startLine<2)
-		    j.start=0;
-		else if(startLine-1>indexs.size())
-			j.start=src.length();
-		else
-			j.start= indexs.get(startLine-2)+1;
-
-		if(endLine<2)
-		    j.end=0;
-		else if(endLine-1>indexs.size())
-			j.end=src.length();
-		else
-		    j.end=indexs.get(endLine-2)+1;
-
+		j.start = subLines(startLine,src).start;
+		j.end = String_Splitor.NIndex('\n', src, j.start, endLine-startLine);
+		
+		//让我们用同样的方式来对待j.end
+		if(j.end==0){
+			;
+		}
+		else if (j.end < 0){
+			j.end = src.length();
+		}
+		else if(j.end < src.length()){
+			++j.end;
+		}
+		
 		return j;
 	}
-	final public static size subLines(int startLine,String src)
+	final public static size subLines(int startLine, String src)
 	{
 		size j = new size();
-		List<Integer> indexs = String_Splitor.indexsOf('\n',src);
-		if(startLine<2)
-		    j.start=0;
-		else if(startLine-1>indexs.size())
-			j.start=src.length();
-	    else
-		    j.start= indexs.get(startLine-2)+1;
-		j.end=src.length();
+		int index = String_Splitor.NIndex('\n', src, 0, startLine - 1);
+		//先走到startLine之前的'\n'位置
+		
+		if(index==0){
+			//找到的index为0，则startLine<=1
+			j.start = index;
+		}
+		else if (index < 0){
+			//没有找到startLine，一定超出范围了
+			j.start = src.length();
+		}
+		else if(index < src.length()){
+			//找到了，如果index不会超出src.length()，从当前位置加1，走到startLine的起始
+			j.start = index + 1;
+		}
+		
+		j.end = src.length();
+		//末尾永远是src.length()
 		return j;
 	}
-
 
 	final public void lockSelf(boolean is)
 	{
-		if(is)
+		if (is)
 			setKeyListener(null);
 		else
 			setKeyListener(listener);
@@ -252,7 +265,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 
 	public void zoomBy(float size)
 	{
-		TextSize*=size;
+		TextSize *= size;
 		setTextSize(TextSize);
 	}
 

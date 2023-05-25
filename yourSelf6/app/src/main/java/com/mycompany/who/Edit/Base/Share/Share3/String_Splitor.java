@@ -79,25 +79,26 @@ public class String_Splitor
 		return indexs;
 	}
 	
-	//统计字符出现次数
-	public static int Count(String want,String text){
+	//统计字符出现次数，从index开始，至endIndex，不包含endIndex
+	public static int Count(String want,String text,int index,int endIndex)
+	{
 		int count=0;
-		int index =0;
+		int len = want.length();
 		while(true){
 		    index = text.indexOf(want,index);
-			if(index==-1)
+			if(index==-1||index>=endIndex)
 				break;
 			++count;
-			index+=want.length();
+			index+=len;
 		}
 		return count;
 	}
-	public static int Count(char want,String text){
+	public static int Count(char want,String text,int index,int endIndex)
+	{
 		int count=0;
-		int index =0;
 		while(true){
 		    index = text.indexOf(want,index);
-			if(index==-1)
+			if(index==-1||index>=endIndex)
 				break;
 			++count;
 			++index;
@@ -105,28 +106,25 @@ public class String_Splitor
 		return count;
 	}
 	
-	//字符c第n次出现的下标
-	public static int NIndex(char c,String text,int n)
+	//字符c第n次出现的下标，从index开始
+	public static int NIndex(char c,String text,int index,int n)
 	{
-		int index = 0;
 		while(n-->0){
-		    int tmp = text.indexOf(c,index);
-			if(tmp==-1)
+		    index = text.indexOf(c,index);
+			if(index==-1||n<1)
 				break;
-			index = tmp;
 			++index;
 		}
 		return index;
 	}
-	public static int NIndex(String c,String text,int n)
+	public static int NIndex(String c,String text,int index,int n)
 	{
-		int index = 0;
+		int len = c.length();
 		while(n-->0){
-		    int tmp = text.indexOf(c,index);
-			if(tmp==-1)
+		    index = text.indexOf(c,index);
+			if(index==-1||n<1)
 				break;
-			index = tmp;
-			index+=c.length();
+			index+=len;
 		}
 		return index;
 	}
@@ -134,8 +132,12 @@ public class String_Splitor
 	//统计空字符
 	public static int calaN(CharSequence src,int index)
 	{
-		int count = 0;
-		while(index<src.length()&&(src.charAt(index)==' '||src.charAt(index)=='\t')){
+		int count = 0, len = src.length();
+		while(index<len)
+		{
+			char c = src.charAt(index);
+			if(c!=' '&&c!='\t')
+				break;
 			count++;
 			index++;
 		}

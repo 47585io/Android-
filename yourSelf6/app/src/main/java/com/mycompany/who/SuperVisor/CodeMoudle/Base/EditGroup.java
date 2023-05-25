@@ -847,7 +847,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  ------------------------------------------------------------------------------------
  
 */	
-	final public class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser
+	final public class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser,Configer<LineGroup>
 	{
 
 		public int MaxLine = 5000;
@@ -868,6 +868,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			LineList = new ArrayList<>();
 			addEditLine(); 
 			setOrientation(VERTICAL);
+		}
+
+		@Override
+		public void ConfigSelf(EditGroup.LineGroup target)
+		{
+			for(EditLine line:LineList){
+				line.ConfigSelf(line);
+			}
 		}
 
 		public List<EditLine> getLineList(){
@@ -1158,15 +1166,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			int MaxLine = EditGroup.MaxLine-OnceSubLine;
 			//MaxLine是在原MaxLine减去OnceSubLine得到的
 			String src = text.toString();
-			int toIndex = CodeEdit.getLineCount(text.toString())/MaxLine+1+index;
-			int nowLine = 0;
+			int toIndex = (CodeEdit.getLineCount(src)/(MaxLine-1)) +1+index;
+			int nowLine = 1;
 			
 			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
 			//每次向后截取MaxLine，并插入到刚创建的编辑器中
 			for(index+=1;index<=toIndex;++index)
 			{
 				AddEditAt(index);
-				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,src);
+				s = CodeEdit.subLines(nowLine,nowLine+=(MaxLine-1),src);
 				str = text.subSequence(s.start,s.end);
 				EditList.get(index).setText(str);
 			}
@@ -1222,6 +1230,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void replace(int start,int end,CharSequence str){
 			delete(start,end);
 			insert(start,str);
+		}
+		
+		public void config()
+		{
+			for(CodeEdit Edit:EditList)
+			    Edit.ConfigSelf(Edit);
+			EditLines.ConfigSelf(null);
 		}
 		
 		/*  一组的Edit共享Info，对于Info的操作都是内存空间的修改  */

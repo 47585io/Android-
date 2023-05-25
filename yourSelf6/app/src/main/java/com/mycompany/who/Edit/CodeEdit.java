@@ -1226,8 +1226,9 @@ Uedo和Redo
 	@Override
 	final public void Uedo()
 	{
-		if (stack.Usize()==0 || IsUR())
+		if (stack.Usize()==0 || IsUR()){
 			return;
+		}
 
 		++IsModify;
 		IsUR(true);
@@ -1246,8 +1247,9 @@ Uedo和Redo
 	@Override
 	final public void Redo()
 	{
-		if (stack.Rsize()==0 || IsUR())
+		if (stack.Rsize()==0 || IsUR()){
 			return;
+		}
 
 		++IsModify;
 		IsUR(true);
@@ -1289,6 +1291,7 @@ Uedo和Redo
 */
 	public class DefaultText implements TextWatcher
 	{	
+	
 		/**
 		 * 输入框改变前的内容
 		 *  charSequence 输入前EditText的文本
@@ -1398,60 +1401,52 @@ Uedo和Redo
 		catch (Exception e){}
 	}
 	
-	protected void countLineBefore(CharSequence str, int start, int count, int after)
+	final protected void countLineBefore(CharSequence str, int start, int count, int after)
 	{
 		 if(count!=0) 
 		 { 
 		     //在删除\n前，删除行 
 			 String text = str.toString();
-		     int line=String_Splitor.Count('\n', text.substring(start,start + count)); 
+		     int line=String_Splitor.Count('\n',text,start,start+count); 
 		     if(line>0){
 			     onLineChange(lineCount,line,0);
 			     lineCount-=line;
 			 }
-			 
-			 /*
-			 //如果删除了字符串，并且比当前的maxWidth还宽，就重新测量全部文本
-			 start = tryLine_Start(text,start);
-			 after = tryLine_End(text,start+count);
-			 text = text.substring(start,after);
-			 size s = LAndC(text);
-			 float width = s.start*getTextSize();
-			 if(width>=maxWidth)
-			 {
-				 StringBuilder b = new StringBuilder(text);
-				 b.delete(start,after);
-				 s = LAndC(b.toString());
-				 maxWidth = s.start;
-			 }
-			 */
 		 }
 	}
 	
-	protected void countLineAfter(CharSequence str, int start, int count, int after)
+	final protected void countLineAfter(CharSequence str, int start, int count, int after)
 	{
+		String text = str.toString();
+		if(count != 0)
+		{
+			//如果删除了字符串后，并且比当前的maxWidth还宽，就将maxWidth = (int) width
+			int s = tryLine_Start(text,start);
+			int t = tryLine_End(text,start+count);
+			String tmp = text.substring(s,t);
+			float width = measureTextWidth(tmp);
+			if(width>=maxWidth){
+				maxWidth = (int) width;
+			}
+		}
 		if (after != 0)
 	    {
 			//在插入字符串后，增加行
-			String text = str.toString();
-		    int line = String_Splitor.Count('\n', text.substring(start, start + after));	
+			int line = String_Splitor.Count('\n',text,start,start+after);	
 		    if(line>0){
 			    onLineChange(lineCount,0,line);
 			    lineCount+=line; 
 			}
 			
-			/*
 			//如果插入字符串比当前的maxWidth还宽，就将maxWidth = (int) width
 			start = tryLine_Start(text,start);
 			after = tryLine_End(text,start+ after);
 			text = text.substring(start,after);
-			size s = LAndC(text);
-			float width = s.start*getTextSize();
+			float width = measureTextWidth(text);
 			if(width>maxWidth){
 				maxWidth = (int) width;
 			}
-			*/
-	    }
+	    } 
 	}
 
 
@@ -1783,7 +1778,8 @@ Uedo和Redo
 	@Override
 	public boolean post(Runnable action)
 	{
-		while(!super.post(action)){
+		while(!super.post(action))
+		{
 			try{
 				Thread.sleep(Delayed_Millis);
 			}
@@ -1795,7 +1791,8 @@ Uedo和Redo
 	@Override
 	public boolean postDelayed(Runnable action, long delayMillis)
 	{
-		while(!super.postDelayed(action,delayMillis)){
+		while(!super.postDelayed(action,delayMillis))
+		{
 			try{
 				Thread.sleep(Delayed_Millis);
 			}
@@ -1811,7 +1808,6 @@ Uedo和Redo
 		return lineCount+1;
 	}
     
-	/*
 	@Override
 	public int maxWidth()
 	{
@@ -1819,11 +1815,11 @@ Uedo和Redo
 	}
 
 	@Override
-	public size WAndH()
+	public int maxHeight()
 	{
-		return new size(maxWidth(),maxHeight());
+		return getLineCount()*getLineHeight();
 	}
-    */
+
 	
 /* 
 ------------------------------------------------------------------------------------
