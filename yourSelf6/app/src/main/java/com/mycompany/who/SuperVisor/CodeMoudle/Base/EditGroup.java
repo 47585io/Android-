@@ -1163,18 +1163,21 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			//要插入的编辑器，从要插入的位置之后截取了文本，添加要插入的文本之后
 			//在之后创建一些编辑器，并均分文本
 			
-			int MaxLine = EditGroup.MaxLine-OnceSubLine;
-			//MaxLine是在原MaxLine减去OnceSubLine得到的
-			String src = text.toString();
-			int toIndex = (CodeEdit.getLineCount(src)/(MaxLine-1)) +1+index;
+			int MaxLine = EditGroup.MaxLine-OnceSubLine-1;
+			//MaxLine是在原MaxLine减去OnceSubLine+1得到的
+			//每个编辑器虽然说插入MaxLine行，但其实MaxLine-1个'\n'便可以撑满一个编辑器
 			int nowLine = 1;
+			String src = text.toString();
+			int lineCount = CodeEdit.getLineCount(src);
+			int toIndex = lineCount%MaxLine>0 ? (lineCount/MaxLine)+1+index : (lineCount/MaxLine)+index;
+			//如果刚好满了，没有余数，则只要增加lineCount/MaxLine个编辑器，否则额外多1个
 			
 			//从下个编辑器开始，一直需要插入到能承受文本溢出的那个编辑器
 			//每次向后截取MaxLine，并插入到刚创建的编辑器中
 			for(index+=1;index<=toIndex;++index)
 			{
 				AddEditAt(index);
-				s = CodeEdit.subLines(nowLine,nowLine+=(MaxLine-1),src);
+				s = CodeEdit.subLines(nowLine,nowLine+=MaxLine,src);
 				str = text.subSequence(s.start,s.end);
 				EditList.get(index).setText(str);
 			}
