@@ -1301,6 +1301,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 			EditLines.zoomBy(x);
 			trimToFather();
+			//config();
 		}
 		
 		@Override

@@ -1908,6 +1908,13 @@ Uedo和Redo
 		}
 		--IsModify;
 	}
+
+	@Override
+	public void zoomBy(float size)
+	{
+		super.zoomBy(size);
+	    maxWidth*=size;
+	}
 	
 	final public size getCursorPos(int offset)
 	{
@@ -1916,13 +1923,14 @@ Uedo和Redo
 		Rect bounds = new Rect();
 		//任何传参取值都必须new
 		size pos = new size();
+		
 		getLineBounds(lines, bounds);
 	    pos.start = bounds.centerX();
 		pos.end = bounds.centerY();
 
-		int index= tryLine_Start(getText().toString(), offset);
-		pos.start = (int)((offset - index) * getTextSize());
-
+		String src = getText().toString();
+		int index= tryLine_Start(src, offset);
+		pos.start = (int) measureTextLen( src.subSequence(index,offset));
 		return pos;
 	}
 	final public size getRawCursorPos(int offset, int width, int height)

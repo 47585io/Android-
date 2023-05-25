@@ -32,7 +32,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	public static int CursorRect_Color=0x25616263;
 	public static Typeface type=Typeface.MONOSPACE;
 	private float TextSize;
-
+	private static float FillPadding;
 
 	public Edit(Context cont)
 	{
@@ -63,21 +63,22 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		 但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
 		 但如下的方案可以完美对齐:
 		 */
-		float pad = 0.1f * getLineHeight();
-		//setLetterSpacing(0.01f);
+		float add = getLineHeight()*0.2f;
 		setLineSpacing(0.2f, 1.2f);
-		setPadding(0, 0, 0, (int)pad);
+		setPadding(0, 0, 0, (int)(add-FillPadding));
 	}
 
 	@Override
 	public void Creat()
 	{
 		TextSize = 13.5f;
-		ConfigSelf(this);
-		if (listener == null)
-		{
+		if (listener == null){
 		    listener = getKeyListener();
 		}
+		if(FillPadding==0){
+			FillPadding = getLineHeight()*0.1f;
+		}
+		ConfigSelf(this);
 	}
 
 	@Override
