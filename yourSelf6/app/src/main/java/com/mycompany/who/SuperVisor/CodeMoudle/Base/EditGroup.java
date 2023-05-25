@@ -434,22 +434,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			
 			Log.w("onTextChanged", "My index is " + index);
 			
-			if(EditFlag==0)
-			{
-				refreshLineAndSize();
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
-				//第一个编辑器单独计算行，但无法保证在super.onTextChanged中对行的修改
-				//第一个编辑器扩展大小，无论文本怎么截取，但总量不变，所以宽高不变
-			}
-			/*
-			  编辑器的大小变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
-			  因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
+			//文本变化后，编辑器的大小可能变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
+			//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
 			
-			  但是，为什么我要将trimToFather交给第一个编辑器？
-			  这是因为，在下面的代码中，会调用super.onTextChanged()
-			  在其中会调用Layout布局，若有超长的文本，会自动换行，就出现与行号对不上，显示的大小就出问题，那么通过文本计算大小就是错的了
-			*/
-		
 			++EditFlag;		
 			if (lengthAfter != 0){
 				//在某次插入后，若超出最大的行数，截取之后的部分添加到编辑器列表中的下个编辑器开头	
@@ -459,6 +446,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				super.onTextChanged(text, start, lengthBefore, lengthAfter);
 			}
 			--EditFlag;
+			
+			if(EditFlag==0)
+			{
+				refreshLineAndSize();
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
+				//最后一个编辑器单独计算行
+				//最后一个编辑器扩展大小
+			}
 		}
 
 		/* 在本次输入后，将自己内部超出的行截取到下个编辑器开头 */

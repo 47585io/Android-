@@ -1524,6 +1524,17 @@ Uedo和Redo
 		}
 		
 	}
+	
+	
+	/* 
+	  此函数用于保留super.onTextChanged的行为
+	  
+	  因为在onTextChanged中并未调用super.onTextChanged，这导致无论如何都无法再使用父类的代码
+	*/
+	protected void superOnTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
+	{
+		super.onTextChanged(text,start,lengthBefore,lengthAfter);
+	}
 
 	
 /*
