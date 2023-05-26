@@ -25,6 +25,7 @@ import static com.mycompany.who.Edit.Base.Colors.*;
 import static com.mycompany.who.Edit.Base.Share.Share3.Collection_Spiltor.*;
 import android.text.style.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditFinderListener.*;
+import android.util.*;
 
 
 /*
@@ -1611,7 +1612,7 @@ _________________________________________
 				//获取注释
 				return new DoAnyThing(){		
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						CharSequence key = String_Splitor.indexOf(src, nowIndex, get_zhu().keySet());
 						if (key != null)
@@ -1643,7 +1644,7 @@ _________________________________________
 				//获取字符串
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '"')
 						{
@@ -1691,7 +1692,7 @@ _________________________________________
 				//获取字符
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (String_Splitor. IsNumber(src.charAt(nowIndex))&&!String_Splitor.IsAtoz( src.charAt(nowIndex-1))&&!String_Splitor.IsAtoz( src.charAt(nowIndex+1)))
 						{
@@ -1727,7 +1728,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//如果后面还有英文字符，它应该不是任意单词
 						//为了节省时间，将更简单的条件放前面，触发断言机制
@@ -1823,7 +1824,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//简单的一个xml方案
 						if (src.charAt(nowIndex) == '<')
@@ -1844,7 +1845,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '='
 							|| src.charAt(nowIndex) == ':'
@@ -1876,7 +1877,7 @@ _________________________________________
 				//获取关键字和保留字
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//找到一个单词 或者 未找到单词就遇到特殊字符，就把之前累计字符串清空
 						//为了节省时间，将更简单的条件放前面，触发&&的断言机制
@@ -1897,7 +1898,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getConstword().contains(nowWord.toString()))
 						{
@@ -1920,7 +1921,7 @@ _________________________________________
 				//获取函数
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						int afterIndex=CodeEdit.tryAfterIndex(src, nowIndex + 1);
 						if (src.charAt(afterIndex) == '(')
@@ -1944,7 +1945,7 @@ _________________________________________
 				//获得变量
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getHistoryVillber().contains(nowWord.toString()))
 						{
@@ -1968,7 +1969,7 @@ _________________________________________
 				//获取对象
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getThoseObject().contains(nowWord.toString()))
 						{
@@ -1993,7 +1994,7 @@ _________________________________________
 				//获取类型
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1)) && getBeforetype().contains(nowWord.toString()))
 						{
@@ -2021,7 +2022,7 @@ _________________________________________
 				//试探函数
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '(')
 						{
@@ -2040,7 +2041,7 @@ _________________________________________
 				//试探变量和类型
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{					 
 						wordIndex node; 
 						if ((src.charAt(nowIndex) == '='))
@@ -2074,7 +2075,7 @@ _________________________________________
 				//试探对象
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '.' && !String_Splitor.IsNumber(src.charAt(nowIndex + 2)))
 						{
@@ -2092,7 +2093,7 @@ _________________________________________
 				//试探类型
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{	
 						if (!String_Splitor.IsAtoz(src.charAt(nowIndex + 1)) && getKeyword().contains(nowWord.toString()))
 						{
@@ -2140,7 +2141,7 @@ _________________________________________
 				//获取函数
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '(')
 						{
@@ -2165,7 +2166,7 @@ _________________________________________
 				//获取对象
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (src.charAt(nowIndex) == '.')
 						{
@@ -2190,7 +2191,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						wordIndex node,node2;
 						if (src.charAt(nowIndex) == '#')
@@ -2225,7 +2226,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						//为了节省时间，将更简单的条件放前面，触发&&的断言机制
 						if (String_Splitor.IsAtoz(src.charAt(nowIndex + 1)) && src.charAt(CodeEdit.tryLine_End(src, nowIndex) - 1) == '{')
@@ -2259,7 +2260,7 @@ _________________________________________
 				//获取Tag
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						if (!String_Splitor. IsAtoz(src.charAt(nowIndex + 1))
 							&& src.charAt(CodeEdit.tryLine_End(src, nowIndex) - 1) == '{'
@@ -2281,7 +2282,7 @@ _________________________________________
 				//获取属性
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						int afterIndex=CodeEdit.tryAfterIndex(src, nowIndex + 1);
 
@@ -2302,7 +2303,7 @@ _________________________________________
 			{
 				return new DoAnyThing(){
 					@Override
-					public int dothing(String src, StringBuffer nowWord, int nowIndex, List<wordIndex> nodes)
+					public int dothing(String src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 					{
 						wordIndex node;
 						if (src.charAt(nowIndex) == '='

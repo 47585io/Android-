@@ -190,6 +190,8 @@ public class String_Splitor
 		{
 			int count = 0;
 			char[] arr = str.toCharArray();
+			//如果需要遍历文本每个字符，务必先toCharArray，然后使用下标引用操作
+			//因为函数使用次数多了，会额外消耗效率，在50000字吋，它们的差距在4~6ms
 			for(int i=arr.length-1;i>=0;--i)
 			{
 				char c = arr[i];

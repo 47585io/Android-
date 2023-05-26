@@ -22,6 +22,32 @@ import com.mycompany.who.Edit.Base.Share.Share4.*;
   
   但是代码还是要大胆写的，还是那句话: bug又改不完，还不如随便写，大不了之后再改
 */
+
+/*
+ 效率优化:
+
+ 1. 锁定EditText父元素宽高，避免重复测量
+ 2. 将Edit拆分成组，截取，均分文本
+ 3. dispatchTextBlock提前计算并均分文本
+ 4. clipRect限制Edit绘制范围，使onDraw时超出范围的绘制放弃
+ 5. LineGroup将Line拆分成组，防止文本过多
+
+ 6. ReDraw和openWindow使用线程查找
+ 7. Words使用HashSet，contians非常快
+ 8. maxHeight和maxWidth和行都不需要全部测量，每次文本变化时局部测量
+ 9. 屏蔽super.onTextChanged，禁止自动测量和滚动
+ 10.Ep和Epp重复利用空间
+ 11.设置Span而不是修改文本，使用SpannableStringBuilder而不是Spanned，效率快了几十倍
+
+ 11.EditLine的大量增删操作优化
+ 12.EditGroup初始加载时利用线程时差节省时间
+ 13.checkUnicode使用编码值判断，快了10倍
+ 14.quickSort快速排序
+ 15.Finder将StringBuffer换成StringBiilder，快了100ms
+ 16.优化trim延迟layout
+
+*/
+
 public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 {
 	private XCode Code;

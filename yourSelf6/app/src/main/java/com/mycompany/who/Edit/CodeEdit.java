@@ -486,7 +486,7 @@ Dreawr
 				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
 				Ep.stop(); //Draw完后申请回收nodes，若Ep和isxxx同时出现，它应紧贴isxxx之前或之后后，避免异常		
 				now = System.currentTimeMillis();	
-				Log.w("After DrawNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
+				Log.w("After DrawNodes","I'm "+CodeEdit.this.hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
 		};
 		postDelayed(run,Delayed_Millis);//将UI任务交给主线程

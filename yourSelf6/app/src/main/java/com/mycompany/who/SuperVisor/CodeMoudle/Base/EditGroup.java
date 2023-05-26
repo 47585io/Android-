@@ -436,6 +436,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			
 			//文本变化后，编辑器的大小可能变化了，将父元素的大小扩大到比编辑器更大，方便测量与布局
 			//因此，我自己写了几个函数来测宽高，函数是通过文本来计算的，由于onTextChanged是文本变化后调用的，所以文本是对的
+			//不要调用superOnTextChanged，因为其中会额外测量，消耗时间
 			
 			++EditFlag;		
 			if (lengthAfter != 0){

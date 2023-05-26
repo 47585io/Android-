@@ -80,17 +80,21 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	*/
 	final public static void startFind(String src,List<DoAnyThing> totalList,List<wordIndex> nodes)
 	{
-		StringBuffer nowWord = new StringBuffer();
-		int nowIndex;
-		for(nowIndex=0;nowIndex<src.length();nowIndex++){
-			nowWord.append(src.charAt(nowIndex));
+		StringBuilder nowWord = new StringBuilder();
+		int nowIndex, len = src.length();
+		char[] arr = src.toCharArray();
+		for(nowIndex=0;nowIndex<len;++nowIndex)
+	    {
 			//每次追加一个字符，交给totalList中的任务过滤
-			//注意是先追加，index后++
-			
-			for(DoAnyThing total:totalList){
-				try{
-				    int index= total.dothing(src,nowWord,nowIndex,nodes);
-				    if(index>=nowIndex){
+			//注意是先追加，index后++	
+			nowWord.append(arr[nowIndex]);
+			for(DoAnyThing total:totalList)
+			{
+				try
+			    {
+				    int index = total.dothing(src,nowWord,nowIndex,nodes);
+				    if(index>=nowIndex)
+					{
 				        //单词已经找到了，不用找了
 						//如果本次想放弃totalList中的后续任务，可以返回一个大于或等于传入的nowIndex的值，并且这个值还会直接设置nowIndex
 						nowIndex=index;
@@ -114,7 +118,8 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 		for(i=0;i<nodes.size();++i)
 	    {
 			wordIndex now = nodes.get(i);
-			if(now.start==now.end){
+			if(now.start==now.end)
+			{
 				//起始位置和末尾位置重复了
 				nodes.remove(i--);
 				continue;
@@ -144,7 +149,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	/* DoAnyThing，用于找nodes */
 	public static interface DoAnyThing
 	{
-		public abstract int dothing(String src,StringBuffer nowWord,int nowIndex,List<wordIndex> nodes);
+		public abstract int dothing(String src,StringBuilder nowWord,int nowIndex,List<wordIndex> nodes);
 	}
 	
 }
