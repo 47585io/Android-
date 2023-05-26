@@ -1303,6 +1303,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public void setEditFlags(int flag)
 		{
 			//在给所有Edit设置flag后，EditGroup保存flag，在之后添加新编辑器时自动设置
+			//这样，设置的Flag对一组的Edit生效
 			mEditFlags = flag;
 			for(CodeEdit Edit:EditList)
 			    Edit.setEditFlags(flag);

@@ -188,7 +188,8 @@ public class FileList
 		}
 	}
 	
-	public static interface FileChangeLisrener{
+	public static interface FileChangeLisrener
+	{
 		
 		public void Refresh(List<File> files)
 		

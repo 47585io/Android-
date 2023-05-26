@@ -31,7 +31,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	public static int Text_Color=0xffabb2bf;
 	public static int CursorRect_Color=0x25616263;
 	public static Typeface type=Typeface.MONOSPACE;
-	private float TextSize;
+	protected float TextSize;
 	private static float FillPadding;
 
 	public Edit(Context cont)
@@ -108,7 +108,14 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		TextSize = size;
 		super.setTextSize(size);
 	}
-
+	@Override
+	public void setTextSize(int unit, float size)
+	{
+		//记录文本原始大小
+		TextSize = size;
+		super.setTextSize(unit, size);
+	}
+	
 	@Override
 	public float getTextSize()
 	{
@@ -150,24 +157,23 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	/* 测量文本宽度 */
 	final public float measureTextWidth(String text)
 	{
-		CharSequence str;
 		float width = 0, w = 0;
 		int lastIndex =0, index = 0;
+		float spacing = getLetterSpacing();
+		
 		while(true)
 		{
 		    index = text.indexOf('\n',lastIndex);
 			if(index==-1)
 			{
 				//最后一行宽度
-				str = text.subSequence(lastIndex,text.length());
-				w = measureTextLen(str);
+				w = measureTextLen(text.substring(lastIndex,text.length()));
 				if(w>width){
 					width = w;
 				}
 				break;
 			}
-			str = text.subSequence(lastIndex,index);
-			w = measureTextLen(str);
+			w = measureTextLen(text.substring(lastIndex,index));
 			if(w>width){
 				width = w;
 			}
@@ -182,7 +188,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		return getLineCount(text)*getLineHeight();
 	}
 	/* 测量文本长度，包含英文和中文，使用TextSize加权后的值 */
-	final public float measureTextLen(CharSequence text)
+	final public float measureTextLen(String text)
 	{
 		int Unicode = String_Splitor.Unicode.checkUnicodeCount(text);
 		int Ascii = text.length() - Unicode;
@@ -266,8 +272,8 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 
 	public void zoomBy(float size)
 	{
-		TextSize *= size;
-		setTextSize(TextSize);
+		float textSize = TextSize*size;
+		setTextSize(textSize);
 	}
 
 }

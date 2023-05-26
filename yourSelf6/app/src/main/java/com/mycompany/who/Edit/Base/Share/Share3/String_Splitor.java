@@ -186,14 +186,15 @@ public class String_Splitor
 			return arr;
 		}
 		
-		public static int checkUnicodeCount(CharSequence str)
+		public static int checkUnicodeCount(String str)
 		{
 			int count = 0;
-			for(int i=str.length()-1;i>=0;--i)
+			char[] arr = str.toCharArray();
+			for(int i=arr.length-1;i>=0;--i)
 			{
-				char c = str.charAt(i);
-				byte[] bytes = String.valueOf(c).getBytes();
-				if(bytes.length==3){
+				char c = arr[i];
+				if(c>=0x4E00 && c<=0x9FFF){
+					//中文字符编码范围
 					++count;
 				}
 			}

@@ -332,6 +332,7 @@ ________________________________________________________________________________
 				// TODO: Implement this method
 				return 0;
 			}
+			
 		}
 
 		public static class JavaFormator extends myEditFormatorListener

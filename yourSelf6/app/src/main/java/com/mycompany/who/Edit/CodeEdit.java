@@ -139,6 +139,7 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	  //但是我又不能直接用clone分别复制给每一个Edit新的Info，因为我要管Enable，clone的新的Listener没办法管
 	  //呜呜呜，对不起真的没办法了
 	
+	private int mOtherFlags;
 	private int mPrivateFlags;
 	private int IsModify;
 	  //你应该在所有会修改文本的函数添加设置IsModify，并在ontextChange中适当判断，避免死循环
@@ -166,12 +167,15 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	
 	public CodeEdit(Context cont){
 	 	super(cont);
+		setNowAfterFirstBuild(true);
 	}
 	public CodeEdit(Context cont,AttributeSet attrs){
 		super(cont,attrs);
+		setNowAfterFirstBuild(true);
 	}
 	public CodeEdit(Context cont,CodeEdit Edit){
 		super(cont,Edit);
+		setNowAfterFirstBuild(true);
 	}
 
     /* 将target的数据拷贝到自己身上  */
@@ -1289,7 +1293,7 @@ Uedo和Redo
 ---------------------------------------------------------------
 
 */
-	public class DefaultText implements TextWatcher
+	final private class DefaultText implements TextWatcher
 	{	
 	
 		/**
@@ -1362,7 +1366,7 @@ Uedo和Redo
 		countLineAfter(str,start,count,after);
 	}
 	
-	final protected void saveTokenToStack(CharSequence str, int start, int count, int after)
+	final private void saveTokenToStack(CharSequence str, int start, int count, int after)
 	{
 		if (IsUR())
 		{
@@ -1374,7 +1378,7 @@ Uedo和Redo
 		try
 		{
 			token token = null;
-			if(count!= 0 && after!=0)
+			if(count!=0 && after!=0)
 			{
 				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
 				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
@@ -1392,7 +1396,7 @@ Uedo和Redo
 				//删除现在start～start+after之间的字符串
 				token = new token(start, start+after, "");		
 			}	
-			if(token!=null)
+			if(token != null)
 			{
 			    stack.put(token);
 				onPutUR(token);
@@ -1401,50 +1405,62 @@ Uedo和Redo
 		catch (Exception e){}
 	}
 	
-	final protected void countLineBefore(CharSequence str, int start, int count, int after)
+	final private void countLineBefore(CharSequence str, int start, int count, int after)
 	{
 		 if(count!=0) 
 		 { 
-		     //在删除\n前，删除行 
 			 String text = str.toString();
 		     int line=String_Splitor.Count('\n',text,start,start+count); 
-		     if(line>0){
-			     onLineChange(lineCount,line,0);
-			     lineCount-=line;
+		     if(line>0)
+			 {
+				 //在删除文本前，计算删除的行
+				 lineCount-=line;
+			     onLineChange(lineCount,line,0);    
+			 }
+			 
+			 //如果删除字符串比当前的maxWidth还宽，重新测量全部文本，找到最大的
+			 float width = measureTextWidth(text.substring(tryLine_Start(text,start),tryLine_End(text,start+count)));
+			 if(width>=maxWidth){
+				 setNeedMeasureAllText(true);
 			 }
 		 }
 	}
 	
-	final protected void countLineAfter(CharSequence str, int start, int count, int after)
+	final private void countLineAfter(CharSequence str, int start, int count, int after)
 	{
-		String text = str.toString();
-		if(count != 0)
+		boolean need = true;
+		String text = str.toString();	
+		if(needMeasureAllText())
 		{
-			//如果删除了字符串后，并且比当前的maxWidth还宽，就将maxWidth = (int) width
-			int s = tryLine_Start(text,start);
-			int t = tryLine_End(text,start+count);
-			String tmp = text.substring(s,t);
-			float width = measureTextWidth(tmp);
-			if(width>=maxWidth){
+			//需要测量全部文本找到剩下的最大宽度
+			need = false;
+			setNeedMeasureAllText(false);
+			maxWidth = (int) measureTextWidth(text);
+		}
+		if(count!=0 && need)
+		{
+			//删除文本后，两行连接为一行，测量这行的宽度
+			float width = measureTextWidth(text.substring(tryLine_Start(text,start),tryLine_End(text,start)));
+			if(width>maxWidth){
 				maxWidth = (int) width;
 			}
 		}
 		if (after != 0)
 	    {
-			//在插入字符串后，增加行
 			int line = String_Splitor.Count('\n',text,start,start+after);	
-		    if(line>0){
+		    if(line>0)
+			{
+				//在插入字符串后，计算增加的行
+				lineCount+=line;
 			    onLineChange(lineCount,0,line);
-			    lineCount+=line; 
 			}
-			
-			//如果插入字符串比当前的maxWidth还宽，就将maxWidth = (int) width
-			start = tryLine_Start(text,start);
-			after = tryLine_End(text,start+ after);
-			text = text.substring(start,after);
-			float width = measureTextWidth(text);
-			if(width>maxWidth){
-				maxWidth = (int) width;
+			if(need)
+			{
+				//如果插入字符串比当前的maxWidth还宽，就将maxWidth = (int) width
+				float width = measureTextWidth(text.substring(tryLine_Start(text,start),tryLine_End(text,start+after)));
+				if(width>maxWidth){
+					maxWidth = (int) width;
+				}
 			}
 	    } 
 	}
@@ -1759,6 +1775,43 @@ Uedo和Redo
 		return (mPrivateFlags&LineMask) == LineMask || (mPublicFlags&LineMask) == LineMask;
 	}
 	
+	
+/*
+------------------------------------------
+
+  其它的状态。由mOtherFlags管理
+  
+------------------------------------------
+*/
+
+    private static final int FirstBuildMask = 1073741824;
+	
+	private static final int MeasureAllMask = 536870912;
+	
+	private static final int OtherFlagsMask = 0x00ffffff;
+	//前8位预留给我，剩下的24位的值可在子类中使用
+	
+	
+    public boolean nowAfterFirstBuild(){
+		return (mOtherFlags & FirstBuildMask) == FirstBuildMask;
+	}
+	private void setNowAfterFirstBuild(boolean is){
+		mOtherFlags = is ? mOtherFlags|FirstBuildMask : mOtherFlags&~FirstBuildMask;
+	}
+	
+	public boolean needMeasureAllText(){
+		return (mOtherFlags & MeasureAllMask) == MeasureAllMask;
+	}
+	private void setNeedMeasureAllText(boolean is){
+		mOtherFlags = is ? mOtherFlags|MeasureAllMask : mOtherFlags&~MeasureAllMask;
+	}
+	
+	public void setOtherFlags(int flags){
+		mOtherFlags = (mOtherFlags&~OtherFlagsMask) | (flags&OtherFlagsMask);
+	}
+	public int getOtherFlags(){
+		return mOtherFlags&OtherFlagsMask;
+	}
 
 /*
 ------------------------------------------
@@ -1776,7 +1829,6 @@ Uedo和Redo
 		    super.setSelection(index);
 		}
 	}
-	
 	@Override
 	public void setSelection(int start, int stop)
 	{
@@ -1798,7 +1850,6 @@ Uedo和Redo
 		}
 		return true;
 	}
-	
 	@Override
 	public boolean postDelayed(Runnable action, long delayMillis)
 	{
@@ -1818,19 +1869,37 @@ Uedo和Redo
 	{
 		return lineCount+1;
 	}
-    
 	@Override
 	public int maxWidth()
 	{
 		return maxWidth;
 	}
-
 	@Override
 	public int maxHeight()
 	{
 		return getLineCount()*getLineHeight();
 	}
 
+	/* 文本大小改变时，额外修改maxWidth */
+	@Override
+	public void setTextSize(float size)
+	{
+		maxWidth*=(size/TextSize);
+		super.setTextSize(size);
+	}
+	@Override
+	public void setTextSize(int unit, float size)
+	{
+		maxWidth*=(size/TextSize);
+		super.setTextSize(unit, size);
+	}
+	@Override
+	public void setTextScaleX(float size)
+	{
+		maxWidth*=size;
+		super.setTextScaleX(size);
+	}
+	
 	
 /* 
 ------------------------------------------------------------------------------------
@@ -1920,13 +1989,6 @@ Uedo和Redo
 		--IsModify;
 	}
 
-	@Override
-	public void zoomBy(float size)
-	{
-		super.zoomBy(size);
-	    maxWidth*=size;
-	}
-	
 	final public size getCursorPos(int offset)
 	{
 		//获取光标坐标
@@ -1941,7 +2003,7 @@ Uedo和Redo
 
 		String src = getText().toString();
 		int index= tryLine_Start(src, offset);
-		pos.start = (int) measureTextLen( src.subSequence(index,offset));
+		pos.start = (int) measureTextLen(src.substring(index,offset));
 		return pos;
 	}
 	final public size getRawCursorPos(int offset, int width, int height)
@@ -1972,6 +2034,7 @@ Uedo和Redo
 		return Colors.subSpans(start,end,getText(),type);
 	}
 
+	
 /*  
 ------------------------------------------------------------------------------------
 

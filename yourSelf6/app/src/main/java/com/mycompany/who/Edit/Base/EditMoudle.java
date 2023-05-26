@@ -52,7 +52,8 @@ public abstract interface EditMoudle
 	}
 	
 	
-	public static abstract interface Liner{
+	public static abstract interface Liner
+	{
 
 		public abstract int getLineCount()
 
@@ -61,7 +62,8 @@ public abstract interface EditMoudle
 	}
 	
 	
-	public static abstract interface LineSpiltor extends Liner{
+	public static abstract interface LineSpiltor extends Liner
+	{
 
 		public abstract void setLineCount(int line)
 		
