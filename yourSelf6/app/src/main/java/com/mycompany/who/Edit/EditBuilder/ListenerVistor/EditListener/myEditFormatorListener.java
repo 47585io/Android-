@@ -44,7 +44,6 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 		int nowIndex=start;
 		
 		nowIndex = dothing_Start(editor, nowIndex, start, end);
-		
 		for (;nowIndex < end && nowIndex != -1;)
 		{
 			beforeIndex = nowIndex;
@@ -57,11 +56,12 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	/* 从起始位置开始，反向把字符串中的want替换为to */
 	final public static void reSAll(int start, int end, String want, CharSequence to,Editable editor)
 	{
+		int len = want.length();
 		String src=editor.toString().substring(start, end);
 		int nowIndex = src.lastIndexOf(want);
 		while (nowIndex != -1)
 		{
-			editor.replace(nowIndex + start, nowIndex + start + want.length(), to);	
+			editor.replace(nowIndex + start, nowIndex + start + len, to);	
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
 	}

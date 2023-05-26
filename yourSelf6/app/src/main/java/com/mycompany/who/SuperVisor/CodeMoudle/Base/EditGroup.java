@@ -846,7 +846,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	final public class LineGroup extends LinearLayout implements EditMoudle.LineSpiltor,EditMoudle.Sizer,EditListenerInfoUser,Configer<LineGroup>
 	{
 
-		public int MaxLine = 5000;
 		private int lineCount;
 		private List<EditLine> LineList;
 

@@ -68,7 +68,8 @@ public class Collection_Spiltor
 		if(d1==null&&d2==null){
 			return;
 		}
-		for(T o: d1){
+		for(T o: d1)
+	    {
 			if(d2.contains(o))
 				end.add(o);
 		}
@@ -76,7 +77,8 @@ public class Collection_Spiltor
 	//删除相同的元素
 	public static<T> void delSame(Collection<T> dst,Collection<T> src)
 	{
-		for(Object o: dst.toArray()){
+		for(Object o: dst.toArray())
+		{
 			if(src.contains(o))
 				dst.remove(o);
 		}
@@ -84,7 +86,8 @@ public class Collection_Spiltor
 	//删除数字
 	public static void delNumber(Collection<CharSequence> dst)
 	{
-		for(Object o: dst.toArray()){
+		for(Object o: dst.toArray())
+		{
 			if(String_Splitor. IsNumber(((CharSequence)o))){
 				dst.remove(o);
 			}
@@ -96,7 +99,8 @@ public class Collection_Spiltor
 		if(str.length()==0 || keyword==null||keyword.size()==0)
 			return null;
 	    List<CharSequence> words = new ArrayList<>();
-		for(CharSequence word:keyword){
+		for(CharSequence word:keyword)
+	    {
 			if(i.can(word,str,start)){
 				words.add(word);
 			}

@@ -219,7 +219,6 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 	{
 		setWidth(maxWidth());
-		super.onTextChanged(text, start, lengthBefore, lengthAfter);
 	}
 	
 	@Override
@@ -229,16 +228,15 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		pos.end=(int) event.getY();
 		return super.onTouchEvent(event);
 	}
-	
-	
+
+	@Override
+	public int maxHeight()
+	{
+		return getLineCount()*getLineHeight();
+	}
 	@Override
 	public int maxWidth(){
 		return (int)((String.valueOf(LineCount).length()+1)*getTextSize());
-	}
-	
-	@Override
-	public size WAndH(){
-		return new size(maxWidth(),maxHeight());
 	}
 
 	@Override

@@ -19,8 +19,6 @@ import java.util.*;
 
  后续编辑器继承后，改变这个类可以方便地改变所有继承的类
 
- 一个bug:计算字符大小很麻烦，这里只管了纯英文字符
-
  */
 public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 {
@@ -32,8 +30,7 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	public static int CursorRect_Color=0x25616263;
 	public static Typeface type=Typeface.MONOSPACE;
 	protected float TextSize;
-	private static float FillPadding;
-
+	
 	public Edit(Context cont)
 	{
 		super(cont);
@@ -58,14 +55,26 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		setTypeface(type);
 		setHighlightColor(Selected_Color);
 		setTextSize(TextSize);
+		
 		/*
 		 当设置LineSpacing后，除最后一行以外的其它行都添加这个LineSpacing，所以最后一行会缺失LineSpacing，这里使用padding来补充最后一行高度
-		 但实际上，layout还会包含第一行或最后一行的填充，这个填充值无法预测
-		 但如下的方案可以完美对齐:
-		 */
-		float add = getLineHeight()*0.2f;
-		setLineSpacing(0.2f, 1.2f);
-		setPadding(0, 0, 0, (int)(add-FillPadding));
+		 但实际上，layout还会包含第一行或最后一行的填充，这个填充值可以用layout获取
+		*/
+		try{
+			float lineHeight = getLineHeight();
+			setLineSpacing(0.2f, 1.2f);
+			Layout layout = getLayout();
+			float fill = layout.getTopPadding()+layout.getBottomPadding();
+			float add = lineHeight*0.2f;
+		    add = add-fill;
+			setPadding(0, 0, 0, (int)add);
+		}
+		catch(Exception e)
+		{
+			float add = getLineHeight()*0.1f;
+			setLineSpacing(0.2f, 1.2f);
+			setPadding(0, 0, 0, (int)add);
+		}
 	}
 
 	@Override
@@ -74,9 +83,6 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		TextSize = 13.5f;
 		if (listener == null){
 		    listener = getKeyListener();
-		}
-		if(FillPadding==0){
-			FillPadding = getLineHeight()*0.1f;
 		}
 		ConfigSelf(this);
 	}
@@ -159,8 +165,6 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 	{
 		float width = 0, w = 0;
 		int lastIndex =0, index = 0;
-		float spacing = getLetterSpacing();
-		
 		while(true)
 		{
 		    index = text.indexOf('\n',lastIndex);
@@ -182,17 +186,18 @@ public class Edit extends EditText implements Creat<Edit>,Configer<Edit>,Sizer
 		}
 		return width;
 	}
-	/* 测量文本高度 */
+	/* 测量文本高度，getLineHeight包含了LineSpacing */
 	final public float measureTextHeight(String text)
 	{
 		return getLineCount(text)*getLineHeight();
 	}
-	/* 测量文本长度，包含英文和中文，使用TextSize加权后的值 */
+	/* 测量文本长度，包含英文和中文，使用TextSize加权后的值，包含LetterSpacing */
 	final public float measureTextLen(String text)
 	{
+		float spacing = getLetterSpacing()+1;
 		int Unicode = String_Splitor.Unicode.checkUnicodeCount(text);
 		int Ascii = text.length() - Unicode;
-		return getTextSize() * Ascii + getUnicodeTextSize() * Unicode;
+		return getTextSize()*Ascii*spacing + getUnicodeTextSize()*Unicode*spacing;
 	}
 
 	/* 截取startLine行之后的内容，返回内容的范围 */
