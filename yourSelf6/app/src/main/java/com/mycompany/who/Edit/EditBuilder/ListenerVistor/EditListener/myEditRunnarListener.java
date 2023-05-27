@@ -24,9 +24,9 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	
 	public static final int Warring = -2;
 	
-	public static final char AragSpilt = ' ';
+	public static final String AragSpilt = " ";
 
-	public static final char CommandSpilt = ':';
+	public static final String CommandSpilt = ":";
 	
 	
 	abstract protected String onMakeCommand(EditText self,String state)

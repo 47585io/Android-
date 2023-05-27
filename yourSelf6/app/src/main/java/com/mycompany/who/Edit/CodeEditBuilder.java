@@ -951,19 +951,19 @@ ________________________________________________________________________________
 				@Override
 				public String[] spiltArgs(String com)
 				{
-					return com.split(" ");
+					com = com.split(AragSpilt)[0];
+					return com.split(AragSpilt);
 				}
 
 				@Override
 				public Object[] decodeArags(String[] args)
 				{
 					Object[] objs = new Object[args.length];
-					for(int i=0;i<args.length;++i){
-						Object tmp = args[i];
-						if(String_Splitor.IsNumber(tmp)){
-							tmp = Integer.valueOf(tmp);
+					for(int i=0;i<args.length;++i)
+					{
+						if(String_Splitor.IsNumber(args[i])){
+							objs[i] = Integer.valueOf(args[i]);
 						}
-						objs[i]=tmp;
 					}
 					return objs;
 				}
@@ -996,7 +996,7 @@ ________________________________________________________________________________
 				Object[] objs;
 				func = block.getClass().getMethod(args[0],Object[].class);
 				args[0]="";
-				objs = getter.decodeArags( args);
+				objs = getter.decodeArags(args);
 				if(listener!=null)	
 					listener.onShellDecodeAfter(args,com);
 
