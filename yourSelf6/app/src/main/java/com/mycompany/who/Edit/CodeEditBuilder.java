@@ -899,23 +899,25 @@ ________________________________________________________________________________
 				try
 				{
 					flag = sh.Run(command);
-				}
-				catch (IllegalAccessException e)
-				{}
-				catch (InvocationTargetException e)
-				{}
-				catch (SecurityException e)
-				{}
-				catch (IllegalArgumentException e)
-				{}
-				catch (NoSuchMethodException e)
-				{}
+				}catch(Exception E){}
 				return flag;
 			}
 
 			class myRunnar implements Shell.Runnar
 			{
-				public int make(Object[] args)
+
+				@Override
+				public int Run(Object[] args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException
+				{
+					String head = (String) args[0];
+					switch(head){
+						case "make":
+							make(args);
+					}
+					return 0;
+				}
+
+				public int make(Object... args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException
 				{
 					int flag = 0;
 				    String tmp = (String) args[1];
@@ -932,14 +934,17 @@ ________________________________________________________________________________
 					for(int i=0;i<args2.length;++i){
 						args2[i]=args[i+2];
 					}
-					Method func = Getter.getFunc(tmp,getEdit(),args2);
+					Method func = Getter.getFunc(tmp,(CodeEdit)getEdit(),args2);
 					return func.invoke(getEdit(),args2);
 				}
 				
-				public int makeFuncTemplete(){
-					String FuncTemplete = "";
-					EditText self = getEdit();
-					self.getText().insert(self.getSelectionEnd(),FuncTemplete);
+				public int makeFuncTemplete() throws InvocationTargetException, IllegalAccessException, IllegalArgumentException
+				{
+					String FuncTemplete = "public void func()\n{\n}";
+					CodeEdit self = (CodeEdit) getEdit();
+					int selection = self.getSelectionEnd();
+					self.getText().insert(selection,FuncTemplete);
+					self.reDraw(selection,selection+FuncTemplete.length());
 					return 0;
 				}
 				
@@ -951,7 +956,10 @@ ________________________________________________________________________________
 				@Override
 				public String[] spiltArgs(String com)
 				{
-					com = com.split(AragSpilt)[0];
+					int index = com.indexOf(CommandSpilt);
+					if(index!=-1){
+						com = com.substring(0,index);
+					}
 					return com.split(AragSpilt);
 				}
 
@@ -961,8 +969,11 @@ ________________________________________________________________________________
 					Object[] objs = new Object[args.length];
 					for(int i=0;i<args.length;++i)
 					{
-						if(String_Splitor.IsNumber(args[i])){
+						if(args[i]!="" && String_Splitor.IsNumber(args[i])){
 							objs[i] = Integer.valueOf(args[i]);
+						}
+						else{
+							objs[i] = args[i];
 						}
 					}
 					return objs;
@@ -982,27 +993,24 @@ ________________________________________________________________________________
 				this.getter=getter;
 			}
 
-			public int Run(String com) throws SecurityException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, IllegalArgumentException
+			public int Run(String com) throws Exception
 			{
 				//解析字符串，并把参数交给函数
 				int flag=0;
 				String[] args=getter.spiltArgs(com);
-				if(listener!=null)	
+				if(listener!=null){
 					listener.onShellSpiltAfter(args,com);
-				if(args.length==0)
+				}
+				if(args.length==0){
 					return 0;
+				}
 
-				Method func;
 				Object[] objs;
-				func = block.getClass().getMethod(args[0],Object[].class);
-				args[0]="";
 				objs = getter.decodeArags(args);
-				if(listener!=null)	
-					listener.onShellDecodeAfter(args,com);
-
-				if(listener!=null)	
-					listener.onShellBeforeRunning(func,objs);
-				flag = func.invoke(block, objs);
+				if(listener!=null){
+					listener.onShellDecodeAfter(objs,com);
+				}
+				flag = block.Run(objs);
 				return flag;
 			}
 
@@ -1018,12 +1026,14 @@ ________________________________________________________________________________
 				public abstract Object[] decodeArags(String[] args)
 			}
 
-			public static abstract interface Runnar{}
+			public static abstract interface Runnar
+			{
+				public int Run(Object[] args) throws Exception
+			}
 			
-
 			public static abstract interface ShellListener
 			{
-				public abstract void onShellBeforeRunning(Method func,Object[] args);
+				public abstract void onShellBeforeRunning(Object[] args);
 
 				public abstract void onShellSpiltAfter(String[] args,String src);
 
@@ -1052,11 +1062,11 @@ ________________________________________________________________________________
 			public void putCommand(String key,String value){
 				Common.put(key,value);
 			}
-			public int Run(String com) throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+			public int Run(String com) throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException, Exception{
 				return bash.Run(com);
 			}
 
-			public void Uedo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+			public void Uedo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException, Exception{
 				isUedo=true;
 				String com = stack.getLast();
 
@@ -1070,7 +1080,7 @@ ________________________________________________________________________________
 				bash.Run(com);
 				isUedo=false;
 			}
-			public void Redo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException{
+			public void Redo() throws IllegalAccessException, InvocationTargetException, SecurityException, IllegalArgumentException, NoSuchMethodException, Exception{
 				bash.Run(stack.getNext());
 			}
 
@@ -1094,7 +1104,7 @@ ________________________________________________________________________________
 				public void onShellDecodeAfter(Object[] args, String src){}
 
 				@Override
-				public void onShellBeforeRunning(Method func, Object[] args){}
+				public void onShellBeforeRunning(Object[] args){}
 
 				@Override
 				public void onShellSpiltAfter(String[] args,String src)
