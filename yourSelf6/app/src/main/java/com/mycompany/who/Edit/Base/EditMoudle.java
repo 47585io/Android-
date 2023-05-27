@@ -57,7 +57,7 @@ public abstract interface EditMoudle
 
 		public abstract int getLineCount()
 
-		public abstract void onLineChange(int start,int before,int after)
+		public abstract void onLineChanged(int start,int before,int after)
 
 	}
 	

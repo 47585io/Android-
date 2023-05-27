@@ -145,7 +145,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	//如果需处理大量行，都应该调用addLines和delLines，因为它们更快
 	final public void addLines(int count)
 	{
-		onLineChange(LineCount,0,count);
+		onLineChanged(LineCount,0,count);
 		StringBuilder b = new StringBuilder();
 		while (count-->0)
 		{
@@ -158,7 +158,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	final public void delLines(int count)
 	{
-		onLineChange(LineCount,count,0);
+		onLineChanged(LineCount,count,0);
 		Editable e = getText();
 		int end = e.length()-1;
 		String src = e.toString();
@@ -172,14 +172,14 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	
 	final public void addALine()
 	{
-		onLineChange(LineCount,0,1);
+		onLineChanged(LineCount,0,1);
 		++LineCount;
 		append( LineCount+"\n");
 	}
 	
 	final public void delALine()
 	{
-		onLineChange(LineCount,1,0);
+		onLineChanged(LineCount,1,0);
 		--LineCount;
 		String src = getText().toString();
 		int end = src.lastIndexOf('\n', src.length() - 2);
@@ -197,7 +197,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 	}
 	
 	@Override
-	public void onLineChange(final int start,final int before,final int after)
+	public void onLineChanged(final int start,final int before,final int after)
 	{
 		EditListener lis = getLineChecker();
 		if(lis==null)

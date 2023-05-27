@@ -503,7 +503,7 @@ Dreawr
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditFinderListener){
+				if(li instanceof EditFinderListener){
 				    List<wordIndex> tmp = ((EditFinderListener)li).onFindNodes(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
@@ -523,7 +523,7 @@ Dreawr
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditDrawerListener){
+				if(li instanceof EditDrawerListener){
 				    ((EditDrawerListener)li).onDrawNodes(start, end, nodes, editor);
 				}
 				return false;
@@ -665,7 +665,7 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditFormatorListener){
+				if(li instanceof EditFormatorListener){
 				    ((EditFormatorListener)li).onFormat(start, end, editor);
 				}
 				return false;
@@ -706,7 +706,7 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditInsertorListener){
+				if(li instanceof EditInsertorListener){
 				    int selection = ((EditInsertorListener)li).onInsert(editor,index,count);
 					setSelection(selection);
 				}
@@ -826,7 +826,7 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditCompletorListener){
+				if(li instanceof EditCompletorListener){
 			        List<Icon> Icons = ((EditCompletorListener)li).onSearchWord(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
@@ -884,7 +884,7 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditCompletorListener && li.hashCode() == id)
+				if(li instanceof EditCompletorListener && li.hashCode() == id)
 				{
 				    int selection = ((EditCompletorListener)li).onInsertWord(editor,index,range,word);
 				    setSelection(selection);
@@ -954,7 +954,7 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditCanvaserListener){
+				if(li instanceof EditCanvaserListener){
 			        ((EditCanvaserListener)li).onDraw(CodeEdit.this, canvas, paint, pos, flag);
 				}
 				return false;
@@ -1023,7 +1023,7 @@ Runnar
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditRunnarListener)
+				if(li instanceof EditRunnarListener)
 				{
 				   String command = ((EditRunnarListener)li).onMakeCommand(CodeEdit.this,state);
 				   com.append(command);
@@ -1037,7 +1037,7 @@ Runnar
 	}
 	
 	@Override
-	final public int RunCommand(String command)
+	final public int RunCommand(final String command)
 	{
 		if(IsRun()){
 			return myEditRunnarListener.Default;
@@ -1066,7 +1066,7 @@ Runnar
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditRunnarListener)
+				if(li instanceof EditRunnarListener)
 				{
 				    int Return = ((EditRunnarListener)li).onRunCommand(CodeEdit.this,command);
 					if(Return==myEditRunnarListener.Error){
@@ -1103,7 +1103,7 @@ Runnar
 */
 
     @Override
-	public void onLineChange(final int start,final int before,final int after)
+	public void onLineChanged(final int start,final int before,final int after)
 	{
 		if(IsLine()){
 			return;
@@ -1115,7 +1115,7 @@ Runnar
 			{
 				public boolean run(EditListener li)
 				{
-					if(li!=null && li instanceof EditLineCheckerListener){
+					if(li instanceof EditLineCheckerListener){
 						((EditLineCheckerListener)li).onLineChanged(start,before,after);
 					}
 					return false;
@@ -1143,7 +1143,7 @@ Runnar
 			{
 				public boolean run(EditListener li)
 				{
-					if(li!=null && li instanceof EditSelectionSeerListener){
+					if(li instanceof EditSelectionSeerListener){
 						((EditSelectionSeerListener)li).onSelectionChanged(selStart,selEnd,getText());
 					}
 					return false;
@@ -1431,7 +1431,7 @@ Uedo和Redo
 			 {
 				 //在删除文本前，计算删除的行
 				 lineCount-=line;
-			     onLineChange(lineCount,line,0);    
+			     onLineChanged(lineCount,line,0);    
 			 }
 			 
 			 //如果删除字符串比当前的maxWidth还宽，重新测量全部文本，找到最大的
@@ -1468,7 +1468,7 @@ Uedo和Redo
 			{
 				//在插入字符串后，计算增加的行
 				lineCount+=line;
-			    onLineChange(lineCount,0,line);
+			    onLineChanged(lineCount,0,line);
 			}
 			if(need)
 			{

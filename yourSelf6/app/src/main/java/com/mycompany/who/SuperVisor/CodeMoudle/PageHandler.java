@@ -241,7 +241,7 @@ public class PageHandler extends PageList implements EditGroup.requestByEditGrou
 				public void run()
 				{
 					Group.refreshLineAndSize();
-					Group.requestFocus();
+					//Group.requestFocus();
 				}
 			};
 			//设置文本后赶紧染色，实际上正在孑线程中找nodes

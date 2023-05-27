@@ -80,7 +80,6 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	public void clear()
 	{
 		for(int i=size()-1;i>=0;--i){
-			//clear的顺序并不重要，无论如何都遍历每个子元素
 			remove(lis.get(i));
 		}
 	}
@@ -150,7 +149,8 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 		//遍历孑元素，并传递Callback，当有一个子元素返回true，直接返回true
 		for(int i=size()-1;i>=0;--i)
 		{
-			if(lis.get(i).dispatchCallBack(Callback)){
+			EditListener li = lis.get(i);
+			if(li!=null && li.dispatchCallBack(Callback)){
 				return true;
 			}
 		}

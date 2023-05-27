@@ -389,18 +389,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 
 		private int index;	
-		private boolean can;
 		//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
 
 		public RCodeEdit(Context cont)
 		{
-			super(cont);
-			can = true;
+			super(cont);	
 		}
 		public RCodeEdit(Context cont, CodeEdit Edit)
 		{
 			super(cont, Edit);
-			can = true;
 		}	
 		
 		@Override
@@ -414,18 +411,31 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 		{
-			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0)){
+			if (!IsDraw() && !IsUR() && !IsFormat() && EditFlag == 0 && (stack.Usize() == 0 || stack.seeLast().size() != 0))
+			{
+				//从第一个调用onBeforeTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
+			    //让第一个编辑器先开辟一个空间，待之后存储
 				stack.put(new Stack<>());  
-			//从第一个调用onBeforeTextChanged的编辑器开始，之后的一组的联动修改都存储在同一个Stack
-			//让第一个编辑器先开辟一个空间，待之后存储
-			}
+			}	
 			super.onBeforeTextChanged(str, start, count, after);
+		}
+
+		@Override
+		protected void NowTextChanged(CharSequence str, int start, int count, int after)
+		{
+			super.NowTextChanged(str, start, count, after);
+			//在这之后，已经计算好了行和宽高
+			
+			if(IsModify()){
+				//如果正被修改，则无法触发onTextChaged，此时在这里trim
+				trimToFather();
+			}
 		}
 		
 		@Override
 		protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter)
 		{		
-			if (IsModify() || !can)
+			if (IsModify() || !nowAfterFirstBuild())
 			{
 				//在构造对象前，会调用一次onTextChanged，此时不允许继续
 				//或已经被修改，不允许再修改
@@ -450,10 +460,9 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			
 			if(EditFlag==0)
 			{
-				refreshLineAndSize();
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
-				//最后一个编辑器单独计算行
+				trimToFather();
 				//最后一个编辑器扩展大小
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
 			}
 		}
 
@@ -524,6 +533,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			    super.onTextChanged(text, start, lengthBefore, lengthAfter);
 				//否则正常调用
 			}
+		}
+
+		@Override
+		public void onLineChanged(int start, int before, int after)
+		{
+			//行变化了，就刷新EditLines的行
+			EditLines.reLines(getEditManipulator(). calaEditLines());
+			super.onLineChanged(start, before, after);
 		}
 	
 		public EditGroup getEditGroup()
@@ -947,7 +964,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 					addEditLine();
 				}
 			}
-			onLineChange(lineCount-count,0,count);
+			onLineChanged(lineCount-count,0,count);
 			//行变化了
 		}
 
@@ -974,7 +991,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				}
 				count-=delLine;
 			}
-			onLineChange(lineCount+count,count,0);
+			onLineChanged(lineCount+count,count,0);
 		}
 
 		@Override
@@ -987,7 +1004,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		}
 
 		@Override
-		public void onLineChange(int start, int before, int after)
+		public void onLineChanged(int start, int before, int after)
 		{
 			//行变化时，调整大小
 			Config_Size2.trim(this,maxWidth(),maxHeight());
@@ -1042,7 +1059,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			for(EditLine line:LineList){
 				line.zoomBy(x);
 			}
-			onLineChange(lineCount,0,0);
+			onLineChanged(lineCount,0,0);
 		}
 		
 		public float getTextSize(){
