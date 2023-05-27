@@ -8,7 +8,7 @@ import java.util.*;
 
 public abstract interface EditCompletorListener extends EditListener
 {
-	public abstract List<Icon> LetMeSearch(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
+	public abstract List<Icon> onSearchWord(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
 	
-	public abstract int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
+	public abstract int onInsertWord(Editable editor,int index,size range,CharSequence word)
 }

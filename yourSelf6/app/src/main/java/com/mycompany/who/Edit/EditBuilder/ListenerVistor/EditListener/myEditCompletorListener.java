@@ -38,7 +38,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	  text表示编辑器文本，index表示光标位置，wantBefore和wantAfter分别表示光标前后的字符串，before和after表示搜索前单词和后单词的起始下标，Wordlib为单词库
 	*/
 	@Override
-	public List<Icon> LetMeSearch(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
+	public List<Icon> onSearchWord(String text,int index,CharSequence wantBefore,CharSequence wantAfter,int before,int after,Words Wordlib)
 	{
 		Collection<CharSequence> lib;
 		List<CharSequence> words = null;
@@ -60,7 +60,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	  editor表示编辑器内部的文本容器，index表示编辑器的光标位置，range表示旧单词的范围，word表示插入单词
 	*/
 	@Override
-	public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
+	public int onInsertWord(Editable editor,int index,size range,CharSequence word)
 	{
 		editor.replace(range.start, range.end, word);
 		return range.start + word.length();

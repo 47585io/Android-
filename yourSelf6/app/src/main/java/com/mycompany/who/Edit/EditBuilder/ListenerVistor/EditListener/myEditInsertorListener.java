@@ -17,14 +17,6 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 */
 public abstract class myEditInsertorListener extends myEditListener implements EditInsertorListener
 {
-	
-	abstract protected int dothing_insert(Editable editor, int nowIndex, int count)
-	//在这里检查nowIndex下标处的字符，并决定如何插入后续字符
-	
 	@Override
-	public int LetMeInsert(Editable editor, int nowIndex, int count)
-	{
-		return dothing_insert(editor, nowIndex,count);
-	}
-	
+	public abstract int onInsert(Editable editor, int nowIndex, int count)
 }

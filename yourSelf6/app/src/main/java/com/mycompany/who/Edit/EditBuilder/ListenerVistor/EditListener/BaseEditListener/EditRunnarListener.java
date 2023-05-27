@@ -4,7 +4,7 @@ import android.widget.*;
 
 public abstract interface EditRunnarListener extends EditListener
 {
-	public abstract String LetMeMake(EditText self,String state)
+	public abstract String onMakeCommand(EditText self,String state)
 
-	public abstract int LetMeRun(EditText self,String command)
+	public abstract int onRunCommand(EditText self,String command)
 }

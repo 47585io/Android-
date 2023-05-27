@@ -6,7 +6,7 @@ import java.util.*;
 
 public abstract interface EditDrawerListener extends EditListener
 {
-	 public abstract void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
+	 public abstract void onDrawNodes(int start, int end, List<wordIndex> nodes,Spannable editor)
 	
 	 public abstract String getHTML(List<wordIndex> nodes,String text)
 }

@@ -32,7 +32,7 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	
 	
 	@Override
-	public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
+	public void onDraw(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
 		if(flag == BeforeDraw){
 		    beforeDraw(self,canvas,paint,pos);

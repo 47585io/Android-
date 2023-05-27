@@ -10,17 +10,10 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
   此监听器多半用于EditLine中，测量行数时用于更新一些数据
   
   start表示原本的行数，before表示删除的行，after表示增加的行
+  
 */
-public abstract class myEditLineChangeListener extends myEditListener implements EditLineChangeListener
-{
-	
-	abstract protected void onLineChange(int start,int before,int after)
-	//行数变化了
-	
+public abstract class myEditLineChangeListener extends myEditListener implements EditLineCheckerListener
+{	
 	@Override
-	public void LineChange(int start,int before,int after)
-	{
-		onLineChange(start,before,after);
-	}
-	
+	public abstract void onLineChanged(int start,int before,int after)
 }

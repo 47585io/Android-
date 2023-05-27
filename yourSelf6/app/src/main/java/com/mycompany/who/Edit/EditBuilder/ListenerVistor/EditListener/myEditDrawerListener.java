@@ -22,20 +22,15 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 	
-	//在这里为Editable染色
-	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
-	
-	
 	@Override
-	public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor){
-		onDrawNodes(start, end, nodes, editor);
-	}
-	
+	public abstract void onDrawNodes(int start, int end, List<wordIndex> nodes,Spannable editor)
+
 	/* 必须使用List存储nodes，否则无法制作HTML文本 */
 	@Override
 	public String getHTML(List<wordIndex> nodes,String text)	{
 		return getHTML(nodes,text,null);
 	}
+	
 	public String getHTML(Spanned b){
 		return getHTML(b,null);
 	}

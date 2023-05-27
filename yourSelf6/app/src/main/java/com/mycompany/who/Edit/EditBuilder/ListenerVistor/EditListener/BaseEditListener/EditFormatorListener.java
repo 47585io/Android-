@@ -4,5 +4,5 @@ import android.text.*;
 
 public abstract interface EditFormatorListener extends EditListener
 {
-	public abstract void LetMeFormat(int start, int end, Editable editor)
+	public abstract void onFormat(int start, int end, Editable editor)
 }

@@ -35,7 +35,7 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	
 	/*  LetMeFind函数返回原生nodes，即在start~end之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的  */
 	@Override
-	public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
+	public List<wordIndex> onFindNodes(int start, int end,String text,Words WordLib)
 	{
 		String subStr = text.substring(start,end);
 		List<wordIndex> nodes=new ArrayList<>();

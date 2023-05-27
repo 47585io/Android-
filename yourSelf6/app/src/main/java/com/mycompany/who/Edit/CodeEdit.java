@@ -504,7 +504,7 @@ Dreawr
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditFinderListener){
-				    List<wordIndex> tmp = ((EditFinderListener)li).LetMeFind(start, end, text, WordLib);
+				    List<wordIndex> tmp = ((EditFinderListener)li).onFindNodes(start, end, text, WordLib);
 				    nodes.addAll(tmp);
 				}
 				return false;
@@ -524,7 +524,7 @@ Dreawr
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditDrawerListener){
-				    ((EditDrawerListener)li).LetMeDraw(start, end, nodes, editor);
+				    ((EditDrawerListener)li).onDrawNodes(start, end, nodes, editor);
 				}
 				return false;
 			}
@@ -666,7 +666,7 @@ Formator
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditFormatorListener){
-				    ((EditFormatorListener)li).LetMeFormat(start, end, editor);
+				    ((EditFormatorListener)li).onFormat(start, end, editor);
 				}
 				return false;
 			}
@@ -707,7 +707,7 @@ Formator
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditInsertorListener){
-				    int selection = ((EditInsertorListener)li).LetMeInsert(editor,index,count);
+				    int selection = ((EditInsertorListener)li).onInsert(editor,index,count);
 					setSelection(selection);
 				}
 				return false;
@@ -827,7 +827,7 @@ Formator
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditCompletorListener){
-			        List<Icon> Icons = ((EditCompletorListener)li).LetMeSearch(src,index,wantBefore,wantAfter,before,after,WordLib);
+			        List<Icon> Icons = ((EditCompletorListener)li).onSearchWord(src,index,wantBefore,wantAfter,before,after,WordLib);
 			        Adapter.addAll(Icons,li.hashCode());
 			    }
 				return false;
@@ -886,7 +886,7 @@ Formator
 			{
 				if(li!=null && li instanceof EditCompletorListener && li.hashCode() == id)
 				{
-				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
+				    int selection = ((EditCompletorListener)li).onInsertWord(editor,index,range,word);
 				    setSelection(selection);
 				    return true;
 				}
@@ -955,7 +955,7 @@ Formator
 			public boolean run(EditListener li)
 			{
 				if(li!=null && li instanceof EditCanvaserListener){
-			        ((EditCanvaserListener)li).LetMeCanvaser(CodeEdit.this, canvas, paint, pos, flag);
+			        ((EditCanvaserListener)li).onDraw(CodeEdit.this, canvas, paint, pos, flag);
 				}
 				return false;
 			}
@@ -1025,7 +1025,7 @@ Runnar
 			{
 				if(li!=null && li instanceof EditRunnarListener)
 				{
-				   String command = ((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				   String command = ((EditRunnarListener)li).onMakeCommand(CodeEdit.this,state);
 				   com.append(command);
 				   com.append(myEditRunnarListener.CommandSpilt);
 				}
@@ -1068,7 +1068,7 @@ Runnar
 			{
 				if(li!=null && li instanceof EditRunnarListener)
 				{
-				    int Return = ((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+				    int Return = ((EditRunnarListener)li).onRunCommand(CodeEdit.this,command);
 					if(Return==myEditRunnarListener.Error){
 						return true;
 					}
@@ -1115,8 +1115,8 @@ Runnar
 			{
 				public boolean run(EditListener li)
 				{
-					if(li!=null && li instanceof EditLineChangeListener){
-						((EditLineChangeListener)li).LineChange(start,before,after);
+					if(li!=null && li instanceof EditLineCheckerListener){
+						((EditLineCheckerListener)li).onLineChanged(start,before,after);
 					}
 					return false;
 				}
@@ -1143,8 +1143,8 @@ Runnar
 			{
 				public boolean run(EditListener li)
 				{
-					if(li!=null && li instanceof EditSelectionChangeListener){
-						((EditSelectionChangeListener)li).SelectionChange(selStart,selEnd,getText());
+					if(li!=null && li instanceof EditSelectionSeerListener){
+						((EditSelectionSeerListener)li).onSelectionChanged(selStart,selEnd,getText());
 					}
 					return false;
 				}
@@ -2171,10 +2171,10 @@ Uedo和Redo
 			else if(li instanceof EditRunnarListener){
 				return addListenerTo(li,RunnarIndex);
 			}
-			else if(li instanceof EditLineChangeListener){
+			else if(li instanceof EditLineCheckerListener){
 				return addListenerTo(li,LineCheckerIndex);
 			}
-			else if(li instanceof EditSelectionChangeListener){
+			else if(li instanceof EditSelectionSeerListener){
 				return addListenerTo(li,SelectionSeerIndex);
 			}
 			return false;

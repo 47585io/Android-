@@ -11,16 +11,8 @@ import android.text.*;
   selStart和selEnd表示光标变化后的位置，editor表示编辑器文本
 
 */
-public abstract class myEditSelectionChangeListener extends myEditListener implements EditSelectionChangeListener
+public abstract class myEditSelectionChangeListener extends myEditListener implements EditSelectionSeerListener
 {
-
-	abstract protected void onSelectionChange(int selStart, int selEnd, Spannable editor)
-	//光标位置变化了
-	
 	@Override
-	public void SelectionChange(int selStart, int selEnd, Spannable editor)
-	{
-		onSelectionChange(selStart,selEnd,editor);
-	}
-	
+	public abstract void onSelectionChanged(int selStart, int selEnd, Spannable editor)
 }

@@ -28,7 +28,7 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	
 	
 	@Override
-	public void LetMeFormat(int start, int end, Editable editor)
+	public void onFormat(int start, int end, Editable editor)
 	{
 		int beforeIndex = start;
 		int nowIndex=start;

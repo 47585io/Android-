@@ -29,23 +29,10 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	public static final String CommandSpilt = ":";
 	
 	
-	abstract protected String onMakeCommand(EditText self,String state)
-	//制作命令
-	
-	abstract protected int onRunCommand(EditText self,String command)
-	//执行命令
-	
+	@Override
+	public abstract String onMakeCommand(EditText self,String state)
 	
 	@Override
-	public String LetMeMake(EditText self,String state)
-	{
-		return onMakeCommand(self,state);
-	}
-	
-	@Override
-	public int LetMeRun(EditText self,String command)
-	{
-		return onRunCommand(self,command);
-	}
-	
+	public abstract int onRunCommand(EditText self,String command)
+
 }

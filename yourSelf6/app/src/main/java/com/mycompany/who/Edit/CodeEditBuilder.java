@@ -123,12 +123,13 @@ ________________________________________________________________________________
 		
 
 		public static class DefaultDrawer extends myEditDrawerListener
-		{	
+		{
+
 			@Override
-			protected void onDrawNodes(final int start, final int end, final List<wordIndex> nodes, final Spannable editor)
+			public void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 			{
 				clearSpan(start,end,editor);
-				setSpan(start,end,editor,nodes);
+				setSpan(start,end,editor,nodes);	
 				//清理旧的Span，设置新的Span
 			}
 			
@@ -245,7 +246,7 @@ ________________________________________________________________________________
 			Object st,en;
 			
 			@Override
-			protected void onSelectionChange(int selStart, int selEnd, Spannable editor)
+			public void onSelectionChanged(int selStart, int selEnd, Spannable editor)
 			{
 				if(lastEditor!=null){
 					lastEditor.removeSpan(st);
@@ -466,7 +467,7 @@ ________________________________________________________________________________
 		public static class DefaultInsertor extends myEditInsertorListener
 		{
 			@Override
-			protected int dothing_insert(Editable editor, int nowIndex, int len)
+			public int onInsert(Editable editor, int nowIndex, int len)
 			{
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
@@ -509,7 +510,7 @@ ________________________________________________________________________________
 		{
 
 			@Override
-			protected int dothing_insert(Editable editor, int nowIndex,int count)
+			public int onInsert(Editable editor, int nowIndex,int count)
 			{
 				String src=editor.toString();
 				char c = src.charAt(nowIndex);
@@ -522,7 +523,7 @@ ________________________________________________________________________________
 					editor.insert(nowIndex + 1, src.substring(j.start, j.end) + ">");					
 					return j.end + 1;
 				}
-				return super.dothing_insert(editor, nowIndex,count);
+				return super.onInsert(editor, nowIndex,count);
 			}
 			
 		}
@@ -727,9 +728,10 @@ ________________________________________________________________________________
 					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
 				}
 				
-				public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
+				@Override
+				public int onInsertWord(Editable editor,int index,size range,CharSequence word)
 				{
-					int selection = super.LetMeInsertWord(editor,index,range,word);
+					int selection = super.onInsertWord(editor,index,range,word);
 					if(editor.charAt(selection)!='(')
 					    editor.insert(selection++,"(");
 					return selection;
@@ -790,8 +792,9 @@ ________________________________________________________________________________
 					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_tag));
 				}
 				
-				public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word){
-					int selection = super.LetMeInsertWord(editor,index,range,word);
+				@Override
+				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
+					int selection = super.onInsertWord(editor,index,range,word);
 					if (editor.charAt(range.start - 1) != '<'){
 						editor.insert(range.start, "<");
 						++selection;
@@ -881,7 +884,7 @@ ________________________________________________________________________________
 			private Shell sh = new Shell(run,get);
 			
 			@Override
-			protected String onMakeCommand(EditText self, String state)
+			public String onMakeCommand(EditText self, String state)
 			{
 				StringBuilder command = new StringBuilder();
 				switch(state){
@@ -892,7 +895,7 @@ ________________________________________________________________________________
 			}
 
 			@Override
-			protected int onRunCommand(EditText self, String command)
+			public int onRunCommand(EditText self, String command)
 			{
 				setEdit(self);
 				int flag = 0;
@@ -1393,7 +1396,7 @@ ________________________________________________________________________________
 			final protected List<wordIndex> getNodes(String text, String Lua, int now, Words WordLib)
 			{
 				EditFinderListener L = (EditFinderListener) getFinderFactory().ToLisrener(Lua);
-				List<wordIndex> tmp = L.LetMeFind(0,text.length(),text,WordLib);
+				List<wordIndex> tmp = L.onFindNodes(0,text.length(),text,WordLib);
 				offsetNode(tmp, now);
 				return tmp;
 			}

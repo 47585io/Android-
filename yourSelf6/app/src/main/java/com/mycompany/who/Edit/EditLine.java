@@ -123,7 +123,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 			public boolean run(EditListener li)
 			{
 				if(li instanceof EditCanvaserListener){
-			        ((EditCanvaserListener)li).LetMeCanvaser(EditLine.this, canvas, paint, pos, flag);
+			        ((EditCanvaserListener)li).onDraw(EditLine.this, canvas, paint, pos, flag);
 				}
 				return false;
 			}
@@ -206,8 +206,8 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 		{
 			public boolean run(EditListener li)
 			{
-				if(li instanceof EditLineChangeListener){
-			        ((EditLineChangeListener)li).LineChange(start,before,after);
+				if(li instanceof EditLineCheckerListener){
+			        ((EditLineCheckerListener)li).onLineChanged(start,before,after);
 				}
 				return false;
 			}
@@ -263,7 +263,7 @@ public class EditLine extends Edit implements CodeEdit.myCanvaser,EditListenerIn
 				mlistenerVS.add(li);
 				return true;
 			}
-			else if(li instanceof EditLineChangeListener){
+			else if(li instanceof EditLineCheckerListener){
 				mlistenerLS.add(li);
 				return true;
 			}
