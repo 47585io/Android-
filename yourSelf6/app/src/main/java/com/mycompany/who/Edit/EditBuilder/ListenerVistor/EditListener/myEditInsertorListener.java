@@ -22,19 +22,7 @@ public abstract class myEditInsertorListener extends myEditListener implements E
 	//在这里检查nowIndex下标处的字符，并决定如何插入后续字符
 	
 	@Override
-	final public int LetMeInsert(Editable editor, int nowIndex, int count)
-	{
-		int newIndex = nowIndex;
-		try{
-			newIndex= Insert(editor,nowIndex,count);
-		}
-		catch (IndexOutOfBoundsException e){
-			Log.e("Inserting Error", toString()+" "+e.toString());
-		}
-		return newIndex;
-	}
-	
-	protected int Insert(Editable editor, int nowIndex, int count)
+	public int LetMeInsert(Editable editor, int nowIndex, int count)
 	{
 		return dothing_insert(editor, nowIndex,count);
 	}

@@ -31,43 +31,19 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	
 	abstract protected String onMakeCommand(EditText self,String state)
 	//制作命令
+	
 	abstract protected int onRunCommand(EditText self,String command)
 	//执行命令
 	
 	
 	@Override
-	public final String LetMeMake(EditText self,String state)
-	{
-		String command = "";
-		try{		
-			command = Make(self,state) ;	
-		}
-		catch (IndexOutOfBoundsException e){
-			Log.e("MakeCommand Error", toString()+" "+e.toString());
-		}
-		return command;
-	}
-	
-	protected String Make(EditText self,String state)
+	public String LetMeMake(EditText self,String state)
 	{
 		return onMakeCommand(self,state);
 	}
 	
 	@Override
-	public final int LetMeRun(EditText self,String command)
-	{
-		int flag = Default;
-		try{	
-			flag = Run(self,command);
-		}
-		catch (IndexOutOfBoundsException e){
-			flag = Error;
-			Log.e("RunCommand Error", toString()+" "+e.toString());
-		}
-		return flag;
-	}
-	
-	protected int Run(EditText self,String command)
+	public int LetMeRun(EditText self,String command)
 	{
 		return onRunCommand(self,command);
 	}

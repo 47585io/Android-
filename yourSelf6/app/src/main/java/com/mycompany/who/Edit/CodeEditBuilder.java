@@ -727,9 +727,9 @@ ________________________________________________________________________________
 					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_func));
 				}
 				
-				public int onInsertWord(Editable editor,int index,size range,CharSequence word)
+				public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word)
 				{
-					int selection = super.onInsertWord(editor,index,range,word);
+					int selection = super.LetMeInsertWord(editor,index,range,word);
 					if(editor.charAt(selection)!='(')
 					    editor.insert(selection++,"(");
 					return selection;
@@ -790,8 +790,8 @@ ________________________________________________________________________________
 					selfAddSomeWord(word, adpter,Share.getWordIcon(Share.icon_tag));
 				}
 				
-				public int onInsertWord(Editable editor,int index,size range,CharSequence word){
-					int selection = super.onInsertWord(editor,index,range,word);
+				public int LetMeInsertWord(Editable editor,int index,size range,CharSequence word){
+					int selection = super.LetMeInsertWord(editor,index,range,word);
 					if (editor.charAt(range.start - 1) != '<'){
 						editor.insert(range.start, "<");
 						++selection;

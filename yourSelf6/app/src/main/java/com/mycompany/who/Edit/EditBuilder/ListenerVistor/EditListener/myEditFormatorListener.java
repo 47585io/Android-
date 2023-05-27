@@ -28,21 +28,11 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	
 	
 	@Override
-	final public void LetMeFormat(int start, int end, Editable editor)
-	{
-		try{
-			Format(start,end,editor);
-		}
-		catch (IndexOutOfBoundsException e){
-			Log.e("Formating Error", toString()+" "+e.toString());
-		}
-	}
-	
-	protected void Format(int start, int end, Editable editor)
+	public void LetMeFormat(int start, int end, Editable editor)
 	{
 		int beforeIndex = start;
 		int nowIndex=start;
-		
+
 		nowIndex = dothing_Start(editor, nowIndex, start, end);
 		for (;nowIndex < end && nowIndex != -1;)
 		{
@@ -52,6 +42,7 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 		}
 		nowIndex =  dothing_End(editor, beforeIndex, start, end);		
 	}
+	
 	
 	/* 从起始位置开始，反向把字符串中的want替换为to */
 	final public static void reSAll(int start, int end, String want, CharSequence to,Editable editor)
@@ -67,4 +58,3 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	}
 	
 }
-

@@ -18,17 +18,7 @@ public abstract class myEditSelectionChangeListener extends myEditListener imple
 	//光标位置变化了
 	
 	@Override
-	final public void SelectionChange(int selStart, int selEnd, Spannable editor)
-	{
-		try{
-			onChange(selStart, selEnd, editor);		
-		}
-		catch(Exception e){
-			Log.e("Selection Change Error",e.toString());
-		}
-	}
-	
-	protected void onChange(int selStart, int selEnd, Spannable editor)
+	public void SelectionChange(int selStart, int selEnd, Spannable editor)
 	{
 		onSelectionChange(selStart,selEnd,editor);
 	}

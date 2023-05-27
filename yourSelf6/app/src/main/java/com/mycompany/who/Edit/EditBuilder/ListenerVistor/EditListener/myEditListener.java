@@ -4,6 +4,7 @@ import java.util.*;
 import android.text.*;
 import android.widget.*;
 import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import android.util.*;
 
 
 /*
@@ -89,10 +90,7 @@ public class myEditListener extends Object implements EditListener
 		if(obj!=null && obj instanceof EditListener)
 		{
 			EditListener li = (EditListener) obj;
-			if(getName().equals(li.getName()) 
-				&& li.getFlag()==getFlag() 
-				&& li.getEdit().equals(getEdit()) 
-				&& li.getParent().equals(getParent())){
+			if(getName().equals(li.getName()) && li.getFlag()==getFlag()){
 				return true;
 			}
 		}
@@ -102,7 +100,7 @@ public class myEditListener extends Object implements EditListener
 	@Override
 	public String toString()
 	{
-		return "监听器："+name+"  ;类型: "+getClass().getName();
+		return "监听器："+name+"; 类型: "+getClass().getSimpleName()+";";
 	}
 	
 	public boolean Enabled()
@@ -119,7 +117,14 @@ public class myEditListener extends Object implements EditListener
 	@Override
 	public boolean dispatchCallBack(EditListener.RunLi Callback)
 	{
-		return Enabled() ? Callback.run(this):false;
+		boolean consume = false;
+		try{
+		    consume = Enabled() ? Callback.run(this):false;
+		}
+		catch(Exception e){
+			Log.e("EditListener dispatchCallBack Error",toString()+" I make Error: "+e.toString());
+		}
+		return consume;
 	}
 	
 }

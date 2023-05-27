@@ -33,34 +33,21 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	//这是查找的第四步，您可以清除查找后nodes中的错误node
 	
 	
-	/*  所有Listener都会将繁琐的判断放在LetMeDo中，将主要执行过程写在Do函数中，LetMeDo函数不允许重写，但Do可以重写  */
+	/*  LetMeFind函数返回原生nodes，即在start~end之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的  */
 	@Override
-	final public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
+	public List<wordIndex> LetMeFind(int start, int end,String text,Words WordLib)
 	{
-		List<wordIndex> nodes = null;
-		try{
-		    nodes = Find(start,end,text,WordLib);
-		}
-		catch (Exception e){
-			Log.e("Finding Error", toString()+" "+e.toString());
-		}
-		return nodes;
-	}
-
-	/*  Find函数返回原生nodes，即在start~end之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的  */
-	protected List<wordIndex> Find(int start, int end, String text,Words WordLib)
-	{	
-	    String subStr = text.substring(start,end);
+		String subStr = text.substring(start,end);
 		List<wordIndex> nodes=new ArrayList<>();
 		List<DoAnyThing> totalList =new LinkedList<>();
 		//为每一个listener分配一个nodes和totalList
-		
+
 		OnFindWord(totalList, WordLib); 
 		startFind(subStr,totalList,nodes);
 		totalList.clear();
 		nodes.clear();
 		OnClearFindWord(WordLib);
-		
+
 		OnFindNodes(totalList,WordLib);
 		startFind(subStr,totalList,nodes);
 		OnClearFindNodes(start, end, text, WordLib, nodes);	
@@ -80,14 +67,15 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	*/
 	final public static void startFind(String src,List<DoAnyThing> totalList,List<wordIndex> nodes)
 	{
-		StringBuilder nowWord = new StringBuilder();
-		int nowIndex, len = src.length();
 		char[] arr = src.toCharArray();
+		int nowIndex, len = src.length();
+		StringBuilder nowWord = new StringBuilder();
+		
 		for(nowIndex=0;nowIndex<len;++nowIndex)
 	    {
-			//每次追加一个字符，交给totalList中的任务过滤
-			//注意是先追加，index后++	
 			nowWord.append(arr[nowIndex]);
+			//每次追加一个字符，交给totalList中的任务过滤
+			//注意是先追加，index后++		
 			for(DoAnyThing total:totalList)
 			{
 				try
@@ -111,8 +99,9 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	/* 清除优先级低且位置重复的node */
 	final public static void clearRepeatNode(List<wordIndex> nodes)
 	{		
-		if(nodes==null)
+		if(nodes==null){
 			return;
+		}
 
 		int i,j;
 		for(i=0;i<nodes.size();++i)
@@ -137,8 +126,9 @@ public abstract class myEditFinderListener extends myEditListener implements Edi
 	/* 将所有node偏移一个start */
 	final public static void offsetNode(List<wordIndex> nodes,int start)
 	{
-		if(nodes==null)
+		if(nodes==null){
 			return;
+		}
 
 		for(wordIndex node:nodes){
 			node.start+=start;

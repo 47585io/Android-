@@ -18,17 +18,7 @@ public abstract class myEditLineChangeListener extends myEditListener implements
 	//行数变化了
 	
 	@Override
-	final public void LineChange(int start,int before,int after)
-	{
-		try{
-			onChange(start,before,after);		
-		}
-		catch(Exception e){
-			Log.e("Line Change Error",e.toString());
-		}
-	}
-	
-	protected void onChange(int start,int before,int after)
+	public void LineChange(int start,int before,int after)
 	{
 		onLineChange(start,before,after);
 	}

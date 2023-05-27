@@ -22,28 +22,17 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 {
 	
 	public static final int BeforeDraw = 0;
-	
+	//在编辑器绘制前，进行绘制
 	public static final int AfterDraw = 1;
-	
+	//在编辑器绘制后，进行绘制
 	
 	abstract protected void beforeDraw(EditText self,Canvas canvas,TextPaint paint,size pos);
-	//在编辑器绘制前，进行绘制
+	
 	abstract protected void afterDraw(EditText self,Canvas canvas,TextPaint paint,size pos)
-	//在编辑器绘制后，进行绘制
 	
 	
 	@Override
-	final public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
-	{
-		try{	
-			Canvaser(self,canvas,paint,pos,flag);
-		}
-		catch(Exception e){
-			Log.e("Canvaser Error", toString()+" "+e.toString());
-		}
-	}
-	
-	protected void Canvaser(EditText self, Canvas canvas, TextPaint paint,size pos,int flag)
+	public void LetMeCanvaser(EditText self, Canvas canvas, TextPaint paint, size pos,int flag)
 	{
 		if(flag == BeforeDraw){
 		    beforeDraw(self,canvas,paint,pos);

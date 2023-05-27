@@ -22,45 +22,35 @@ import com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditLi
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 	
-	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 	//在这里为Editable染色
+	abstract protected void onDrawNodes(int start, int end, List<wordIndex> nodes, Spannable editor)
 	
 	
 	@Override
-	final public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor)
-	{
-		try{
-		    Draw(start,end,nodes,editor);
-		}
-		catch (Exception e){
-			Log.e("Drawing Error", toString()+" "+e.toString());
-		}
-	}
-
-	protected void Draw(int start, int end, List<wordIndex> nodes,Spannable editor)
-	{
+	public void LetMeDraw(int start, int end, List<wordIndex> nodes,Spannable editor){
 		onDrawNodes(start, end, nodes, editor);
 	}
 	
-	
 	/* 必须使用List存储nodes，否则无法制作HTML文本 */
 	@Override
-	public String getHTML(List<wordIndex> nodes,String text)
-	{
+	public String getHTML(List<wordIndex> nodes,String text)	{
 		return getHTML(nodes,text,null);
 	}
-	public String getHTML(Spanned b)
-	{
+	public String getHTML(Spanned b){
 		return getHTML(b,null);
 	}
+	
 	
 	/* 中间函数，通过nodes制作对应的HTML文本 */
     final public static String getHTML(List<wordIndex> nodes,String text,Colors.ByteToColor2 Color)
 	{
-		if(nodes==null||text==null)
+		if(nodes==null||text==null){
 			return "";
-		if(Color==null)
+		}
+		if(Color==null){
 			Color = new Colors.myColor2();
+		}
+		
 		StringBuilder arr = new StringBuilder();
 		int index=0;
 		arr.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Color.getDefultS()+";background-color: "+Color.getDefultBgS()+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
