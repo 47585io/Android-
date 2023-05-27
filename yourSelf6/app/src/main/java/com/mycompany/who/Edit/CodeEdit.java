@@ -884,7 +884,8 @@ Formator
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditCompletorListener && li.hashCode() == id){
+				if(li!=null && li instanceof EditCompletorListener && li.hashCode() == id)
+				{
 				    int selection = ((EditCompletorListener)li).LetMeInsertWord(editor,index,range,word);
 				    setSelection(selection);
 				    return true;
@@ -893,7 +894,8 @@ Formator
 			}
 		};
 		
-		if(!lis.dispatchCallBack(run)){
+		if(!lis.dispatchCallBack(run))
+		{
 		    //没有找到listener，就执行默认操作
 		    editor.replace(tmp.start, tmp2.end, word);
 		    setSelection(tmp.start + word.length());
@@ -1015,14 +1017,17 @@ Runnar
 
 	protected String onMakeCommand(final String state)
 	{
-		StringBuffer com = new StringBuffer();
+		final StringBuilder com = new StringBuilder();
 		EditListener li = getRunnar();
 		RunLi run = new RunLi()
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditRunnarListener){
-				    ((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				if(li!=null && li instanceof EditRunnarListener)
+				{
+				   String command = ((EditRunnarListener)li).LetMeMake(CodeEdit.this,state);
+				   com.append(command);
+				   com.append(myEditRunnarListener.CommandSpilt);
 				}
 				return false;
 			}
@@ -1035,16 +1040,17 @@ Runnar
 	final public int RunCommand(String command)
 	{
 		if(IsRun()){
-			return 0;
+			return myEditRunnarListener.Default;
 		}
 		
-		int flag = 0;
+		int flag = myEditRunnarListener.Default;
 		++IsModify;
 		
 		try{
 			flag = onRunCommand(command);
 		}
 		catch(Exception e){
+			flag = myEditRunnarListener.Error;
 			Log.e("onRunCommand Error",e.toString());
 		}
 		
@@ -1060,13 +1066,23 @@ Runnar
 		{
 			public boolean run(EditListener li)
 			{
-				if(li!=null && li instanceof EditRunnarListener){
-				    ((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+				if(li!=null && li instanceof EditRunnarListener)
+				{
+				    int Return = ((EditRunnarListener)li).LetMeRun(CodeEdit.this,command);
+					if(Return==myEditRunnarListener.Error){
+						return true;
+					}
+					else if(Return==myEditRunnarListener.Warring){
+						Log.w("Runnar With"+li.hashCode(),"Has Warring，But I Dont Know !");
+					}
 			    }
 				return false;
 			}
 		};
-		li.dispatchCallBack(run);
+		if(li.dispatchCallBack(run)){
+			//有listener提前返回，发现了一个Error
+			flag = myEditRunnarListener.Error;
+		}
 		return flag;
 	}
 	

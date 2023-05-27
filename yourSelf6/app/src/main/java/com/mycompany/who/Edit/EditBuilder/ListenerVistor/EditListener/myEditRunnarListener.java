@@ -18,6 +18,16 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	
 	public static final String DEFAULT_COMMAND = "DEFAULT_COMMAND";
 	
+	public static final int Default = 0;
+	
+	public static final int Error = -1;
+	
+	public static final int Warring = -2;
+	
+	public static final char AragSpilt = ' ';
+
+	public static final char CommandSpilt = ':';
+	
 	
 	abstract protected String onMakeCommand(EditText self,String state)
 	//制作命令
@@ -46,13 +56,13 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	@Override
 	public final int LetMeRun(EditText self,String command)
 	{
-		int flag = 0;
+		int flag = Default;
 		try{	
 			flag = Run(self,command);
 		}
 		catch (IndexOutOfBoundsException e){
+			flag = Error;
 			Log.e("RunCommand Error", toString()+" "+e.toString());
-			flag = -1;
 		}
 		return flag;
 	}
