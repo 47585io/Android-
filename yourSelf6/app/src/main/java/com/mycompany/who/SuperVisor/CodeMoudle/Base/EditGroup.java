@@ -62,14 +62,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private int EditFlag;
     private int EditDrawFlag;
 	private int mEditFlags;
+	private int mPrivateFlags;
 	private CodeEdit historyEdit;
-	private EditGroupListenerInfo Info;
-
-	private ThreadPoolExecutor pool;
-	private TwoStack<Stack<CodeEdit>> stack;
-	private EditFactory mfactory;
-	private List<CodeEdit> EditList;
-	private EditManipulator manipulator;
 	
 	private ScrollBar Scro;
 	private HScrollBar hScro;
@@ -77,7 +71,14 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private LinearLayout ForEditSon;
 	private LineGroup EditLines;
 	private ListView mWindow;
-
+	
+	private ThreadPoolExecutor pool;
+	private EditGroupListenerInfo Info;
+	private TwoStack<Stack<CodeEdit>> stack;
+	private EditFactory mfactory;
+	private List<CodeEdit> EditList;
+	private EditManipulator manipulator;
+	
 	
 	public EditGroup(Context cont)
 	{
@@ -385,18 +386,16 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
  --------------------------------------------------------------------------------------------------------
   
 */
-	final class RCodeEdit extends CodeEdit
+	final public class RCodeEdit extends CodeEdit
 	{
 
 		private int index;	
 		//如果不是无关紧要的，别直接赋值，最后其实会在构造对象时赋值，等同于在构造函数最后赋值
 
-		public RCodeEdit(Context cont)
-		{
+		public RCodeEdit(Context cont){
 			super(cont);	
 		}
-		public RCodeEdit(Context cont, CodeEdit Edit)
-		{
+		public RCodeEdit(Context cont, CodeEdit Edit){
 			super(cont, Edit);
 		}	
 		
@@ -460,8 +459,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			
 			if(EditFlag==0)
 			{
-				trimToFather();
 				//最后一个编辑器扩展大小
+				trimToFather();
 				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
 			}
 		}
@@ -543,8 +542,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			super.onLineChanged(start, before, after);
 		}
 	
-		public EditGroup getEditGroup()
-		{
+		public EditGroup getEditGroup(){
 			return EditGroup.this;
 		}
 		
@@ -559,7 +557,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public boolean performLongClick()
 		{
-			getEditGroup().onLongClick(this);
+			//getEditGroup().onLongClick(this);
 			return super.performLongClick();
 		}
 
@@ -695,6 +693,8 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		
 		private Rect rect = new Rect();
+		private Rect See = new Rect();
+		private List<CodeEdit> visibleEditList = new LinkedList<>();
 		
 		@Override
 		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
@@ -760,6 +760,26 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			rect.right += width;
 			rect.top -= height;
 			rect.bottom += height;
+		}
+		
+		/* 设置可见的编辑器列表 */
+		public void setVisibleEditList()
+		{
+			See.left=hScro.getScrollX()-EditLines.maxWidth();
+			See.top=Scro.getScrollY();
+			See.right=See.left+hScro.getWidth();
+			See.bottom=See.top+Scro.getHeight();
+			for(int i=0;i<EditList.size();++i)
+			{
+				CodeEdit Edit = EditList.get(i);
+				rect.left = Edit.getLeft();
+				rect.right = Edit.getRight();
+				rect.top = Edit.getTop();
+				rect.bottom = Edit.getBottom();
+				if(See.contains(rect)||rect.contains(See)){
+					visibleEditList.add(Edit);
+				}
+			}
 		}
 
 	}
@@ -901,6 +921,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			LineList.add(Line);
 			addView(Line);
 		}
+		/* 删除尾部的EditLine */
+		public void delEditLine()
+		{
+			int index = LineList.size()-1;
+			LineList.remove(index);
+			removeViewAt(index);
+		}
 		
 		/* 创建一个EditLine */
 		protected EditLine creatEditLine()
@@ -982,8 +1009,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//最后一个EditLine可以删除多少行
 				if(hasLine==delLine){
 					//如果最后一个EditLine删除完了行数，直接删除它
-					LineList.remove(index);
-					removeViewAt(index);
+					delEditLine();
 				}
 				else{
 					//否则删除指定行
@@ -1116,7 +1142,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 
 ---------------------------------------------------------------
 */
-	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo,EditState,EditFactory
+	final public class EditManipulator implements Drawer,Formator,Runnar,UedoWithRedo,EditState,EditFactory,Sizer
 	{
 
 		@Override

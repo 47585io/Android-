@@ -122,7 +122,7 @@ public class myEditListener extends Object implements EditListener
 		    consume = Enabled() ? Callback.run(this):false;
 		}
 		catch(Exception e){
-			Log.e("EditListener dispatchCallBack Error",toString()+" I make Error: "+e.toString());
+			Log.e("EditListener dispatchCallBack Error",toString()+"; I make Error: "+e.toString());
 		}
 		return consume;
 	}

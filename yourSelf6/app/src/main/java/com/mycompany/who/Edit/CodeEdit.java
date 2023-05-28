@@ -96,9 +96,9 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
 
    mPublicFlags
    ↓
-   isDraw  禁用所有的自动染色
-   isFormat  禁用所有的自动格式化
-   isComplete  禁用所有的自动补全
+   isDraw  禁用所有的染色
+   isFormat  禁用所有的格式化
+   isComplete  禁用所有的补全
    ...
    
    mPrivateFlags
@@ -106,7 +106,7 @@ import static com.mycompany.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo
    IsModify / IsModify2    当前编辑器被修改，不再自动做事
    isDraw                  当前编辑器已在染色，不再染色
    isFormat                当前编辑器已在格式化，不再格式化
-   isComplete              当前编辑器已在自动补全，不再自动补全
+   isComplete              当前编辑器已在自动补全，不再补全
    isUR                    当前编辑器已在Uedo或Redo，不再Uedo Redo
    ...
    
@@ -449,10 +449,9 @@ Dreawr
 		}
 	
 	    final Editable editor = getText();
-		final List<wordIndex> nodes = new ArrayList<>();
-			
-		long last, now;
-		last = System.currentTimeMillis();
+		final List<wordIndex> nodes = new ArrayList<>();	
+		
+		long last = System.currentTimeMillis();
 		Ep.start(); //开始记录
 		
 		try{
@@ -462,7 +461,7 @@ Dreawr
 			Log.e("FindNodes Error", e.toString());
 		}	
 		
-		now = System.currentTimeMillis();
+		long now = System.currentTimeMillis();
 		Log.w("After FindNodes","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
 		//经过一次寻找，nodes里装满了单词，让我们开始染色
 		
@@ -470,8 +469,7 @@ Dreawr
 		{
 			public void run()
 			{		
-				long last, now;
-				last = System.currentTimeMillis();
+				long last = System.currentTimeMillis();
 				++IsModify; //为保证isxxx安全，不要在子线程中使用它们
 				IsDraw(true);
 				
@@ -485,7 +483,8 @@ Dreawr
 				IsDraw(false);
 				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
 				Ep.stop(); //Draw完后申请回收nodes，若Ep和isxxx同时出现，它应紧贴isxxx之前或之后后，避免异常		
-				now = System.currentTimeMillis();	
+				
+				long now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+CodeEdit.this.hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());		
 			}
 		};
@@ -537,8 +536,7 @@ Dreawr
 	{
 		List<wordIndex> nodes = new ArrayList<>();
 		SpannableStringBuilder b = new SpannableStringBuilder(text);
-		long last, now;
-		last = System.currentTimeMillis();
+		long last = System.currentTimeMillis();
 		Ep.start();
 		
 		try
@@ -552,7 +550,7 @@ Dreawr
 		}
 		
 		Ep.stop(); //为保证Ep能成功配对，它们必须写在try和catch外，并贴进try和catch
-		now = System.currentTimeMillis();
+		long now = System.currentTimeMillis();
 		Log.w("After PrePare","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Ep.toString());
 		
 	}
@@ -637,8 +635,7 @@ Formator
 		//为了安全，禁止重写
 		Editable editor = getText();
 		int before = editor.length();
-		long last, now;
-		last = System.currentTimeMillis();
+		long last = System.currentTimeMillis();
 		
 		++IsModify;
 		IsFormat(true); 	
@@ -653,7 +650,7 @@ Formator
 		IsFormat(false);
 		--IsModify;
 		
-		now = System.currentTimeMillis();
+		long now = System.currentTimeMillis();
 		Log.w("After Format Replacer","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms," +"The time maybe too Loog！");
 	    return editor.length()-before;
 	}
@@ -768,8 +765,7 @@ Formator
 			return;
 		}
 		
-		long last, now;
-		last = System.currentTimeMillis();
+		long last = System.currentTimeMillis();
 		final WordAdapter<Icon> adapter = WordAdapter.getDefultAdapter();
 		Epp.start();//开始存储
 		
@@ -781,7 +777,7 @@ Formator
 		}
 		
 		//经过一次查找，Icons里装满了单词
-		now = System.currentTimeMillis();
+		long now = System.currentTimeMillis();
 		Log.w("After SearchWords","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, " + Epp.toString());
 		
 		Runnable run = new Runnable()
@@ -1547,10 +1543,10 @@ Uedo和Redo
 				}
 				
 				if(getPool()!=null){
-					getPool().execute(ReDraw(tmp.start,tmp.end));
+					getPool().execute(ReDraw(tmp.start,tmp.end+1));
 				}
 				else{
-			        reDraw(tmp.start,tmp.end);	
+			        reDraw(tmp.start,tmp.end+1);	
 				}
 			}
 			
@@ -1813,7 +1809,7 @@ Uedo和Redo
     public boolean nowAfterFirstBuild(){
 		return (mOtherFlags & FirstBuildMask) == FirstBuildMask;
 	}
-	private void setNowAfterFirstBuild(boolean is){
+	protected void setNowAfterFirstBuild(boolean is){
 		mOtherFlags = is ? mOtherFlags|FirstBuildMask : mOtherFlags&~FirstBuildMask;
 	}
 	
@@ -1896,6 +1892,11 @@ Uedo和Redo
 	public int maxHeight()
 	{
 		return getLineCount()*getLineHeight();
+	}
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+	{
+		setMeasuredDimension(maxWidth(),maxHeight());
 	}
 
 	/* 文本大小改变时，额外修改maxWidth */
@@ -2051,7 +2052,6 @@ Uedo和Redo
 	public<T> wordIndex[] subSpans(int start,int end,Class<T> type){
 		return Colors.subSpans(start,end,getText(),type);
 	}
-
 	
 /*  
 ------------------------------------------------------------------------------------
