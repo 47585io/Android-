@@ -169,19 +169,19 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 	 	super(cont);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
+		EnabledAutoMeasureTextAndCountLine_();
 	}
 	public CodeEdit(Context cont,AttributeSet attrs)
 	{
 		super(cont,attrs);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
+		EnabledAutoMeasureTextAndCountLine_();
 	}
 	public CodeEdit(Context cont,CodeEdit Edit)
 	{
 		super(cont,Edit);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
+		EnabledAutoMeasureTextAndCountLine_();
 	}
 
     /* 将target的数据拷贝到自己身上  */
@@ -1511,7 +1511,7 @@ Uedo和Redo
 			//如果正被修改，不允许再次修改	
 		}
 		
-		if(!IsComplete()&&lengthAfter<=tryCount&&lengthBefore<=tryCount)
+		if(lengthAfter<=tryCount&&lengthBefore<=tryCount)
 		{
 			//是否启用自动补全
 			if(getPool()!=null){
@@ -1528,7 +1528,7 @@ Uedo和Redo
 			//如果没有输入，则不用做什么
 		    IsModify(true);	
 			
-			if (!IsFormat()&&lengthAfter<=tryCount)
+			if (lengthAfter<=tryCount)
 			{		
 				//是否启用自动format
 				Insert(start,lengthAfter);
@@ -1536,7 +1536,7 @@ Uedo和Redo
 			
 			if(!IsDraw())
 			{
-				//是否启用自动染色		
+				//是否启用自动染色，提前判断，节省时间	
 				String src = text.toString();
 			    size tmp=new size(start,start+lengthAfter);
 				tmp.start=tryLine_Start(src,tmp.start);
@@ -1549,10 +1549,10 @@ Uedo和Redo
 				}
 				
 				if(getPool()!=null){
-					getPool().execute(ReDraw(tmp.start,tmp.end+1));
+					getPool().execute(ReDraw(tmp.start,tmp.end));
 				}
 				else{
-			        reDraw(tmp.start,tmp.end+1);	
+			        reDraw(tmp.start,tmp.end);	
 				}
 			}
 			
@@ -1830,6 +1830,9 @@ Uedo和Redo
 	
 	public void DisbledAutoMeasureTextAndCountLine(){
 		mOtherFlags &= ~EnabledAutoMeasureTextAndCountLineMask;
+	}
+	public void EnabledAutoMeasureTextAndCountLine_(){
+		mOtherFlags |= EnabledAutoMeasureTextAndCountLineMask;
 	}
 	public void EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow()
 	{

@@ -681,6 +681,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		return true;
 	}
 	
+	
 /*
  ----------------------------------------------------------------------------------
   
@@ -699,8 +700,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	{
 		
 		private Rect rect = new Rect();
-		private Rect See = new Rect();
-		private List<CodeEdit> visibleEditList = new LinkedList<>();
 		
 		@Override
 		public void afterDraw(EditText self, Canvas canvas, TextPaint paint, size pos){}
@@ -722,11 +721,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				EditDrawFlag = EditList.size(); 
 				//当前还有size个编辑器要显示
 				int id = ((RCodeEdit)self).index;
-				for(CodeEdit e: EditList)
+				for(int i=EditList.size()-1;i>=0;--i)
 				{
-					if(((RCodeEdit)e).index!=id){
+					if(i!=id){
 						//如果是第一个编辑器，则不用重新绘制
-						e.invalidate();
+						EditList.get(i).invalidate();
 					}
 				}
 			}
@@ -737,14 +736,13 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		/* 计算编辑器在可视区域中的自己的范围 */
 		public void selfRect(EditText self,Rect rect)
 		{
-			int index = ((RCodeEdit)self).index;
 			EditGroup.Config_hesSize config = (EditGroup.Config_hesSize) getConfig();
 			
-			int EditTop=getEditManipulator().calaEditTop(index); 
+			int EditTop = self.getTop();
 			//编辑器较ForEdit的顶部位置
-			int SeeTop = getScro().getScrollY(); 
+			int SeeTop = Scro.getScrollY(); 
 			//可视区域较ForEdit的顶部位置
-			int SeeLeft = getHscro().getScrollX();
+			int SeeLeft = hScro.getScrollX();
 			//可视区域较ForEdit的左边位置
 
 			rect.left = SeeLeft - EditLines.maxWidth();
@@ -768,26 +766,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			rect.bottom += height;
 		}
 		
-		/* 设置可见的编辑器列表 */
-		public void setVisibleEditList()
-		{
-			See.left=hScro.getScrollX()-EditLines.maxWidth();
-			See.top=Scro.getScrollY();
-			See.right=See.left+hScro.getWidth();
-			See.bottom=See.top+Scro.getHeight();
-			for(int i=0;i<EditList.size();++i)
-			{
-				CodeEdit Edit = EditList.get(i);
-				rect.left = Edit.getLeft();
-				rect.right = Edit.getRight();
-				rect.top = Edit.getTop();
-				rect.bottom = Edit.getBottom();
-				if(See.contains(rect)||rect.contains(See)){
-					visibleEditList.add(Edit);
-				}
-			}
-		}
-
 	}
 	protected EditCanvaserListener getOneClipCanvaser()
 	{
