@@ -1527,10 +1527,15 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				return;
 			}
 			Stack<CodeEdit> last= stack.getLast();
-			stack.Reput(last); //哪些编辑器Uedo的，待会还是由它们去Redo
+			stack.Reput(last); 
+			//哪些编辑器Uedo的，待会还是由它们去Redo
+			
+			//大量多次的Uedo，禁止多次测量，而是在之后一并测量
+			DisbledAutoMeasureTextAndCountLine();
 			for (CodeEdit Edit:last){
 				Edit.Uedo();
 			}
+			EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 			refreshLineAndSize();
 		}
 		@Override
@@ -1543,9 +1548,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 			Stack<CodeEdit> next= stack.getNext();
 			stack.put (next); 
+			
+			DisbledAutoMeasureTextAndCountLine();
 			for (CodeEdit Edit:next){
 				Edit.Redo();
 			}
+			EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 			refreshLineAndSize();
 		}
 
