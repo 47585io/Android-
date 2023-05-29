@@ -547,7 +547,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		    }
 			super.onLineChanged(start, before, after);
 		}
-	
+		
 		public EditGroup getEditGroup(){
 			return EditGroup.this;
 		}
@@ -1259,28 +1259,25 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		
 		public void config()
 		{
-			for(CodeEdit Edit:EditList)
+			for(CodeEdit Edit:EditList){
 			    Edit.ConfigSelf(Edit);
+			}
 			EditLines.ConfigSelf(null);
 		}
 		
 		/*  一组的Edit共享Info，对于Info的操作都是内存空间的修改  */
-		
 		public void setLuagua(String luagua){
 			EditList.get(0).setLuagua(luagua);
 		}
-		public void setListener(EditListener li){
-			EditList.get(0).getInfo().addAListener(li);
-		}
-		public void delListener(EditListener li){
-			EditList.get(0).getInfo().delAListener(li);
-		}
 		
 		/*  一组的Edit的Info成员却是指针  */
-		
 		public void setInfo(EditListenerInfo Info){
 			for(CodeEdit E:EditList)
 			    E.setInfo(Info);
+		}
+		public void setWordLib(Words Lib){
+			for(CodeEdit E:EditList)
+			    E.setWordLib(Lib);
 		}
 		public void setEditBuilder(EditBuilder f){
 			for(CodeEdit E:EditList)
@@ -1294,10 +1291,6 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			for(CodeEdit E:EditList)
 			    E.setPool(pool);
 		}
-		public void setWordLib(Words Lib){
-			for(CodeEdit E:EditList)
-			    E.setWordLib(Lib);
-		}
 		
 		public String getLuagua(){
 			return EditList.get(0).getLuagua();
@@ -1305,11 +1298,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		public EditListenerInfo getInfo(){
 			return EditList.get(0).getInfo();
 		}
-		public EditBuilder getEditBuilder(){
-			return EditList.get(0).getEditBuilder();
-		}
 		public Words getWordLib(){
 			return EditList.get(0).getWordLib();
+		}
+		public EditBuilder getEditBuilder(){
+			return EditList.get(0).getEditBuilder();
 		}
 		
 		public void lockThem(boolean is){
@@ -1338,6 +1331,18 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public int getEditFlags(){
 			return mEditFlags;
+		}
+		public void DisbledAutoMeasureTextAndCountLine()
+		{
+			for(CodeEdit E:EditList){
+				E.DisbledAutoMeasureTextAndCountLine();
+			}
+		}
+		public void EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow()
+		{
+			for(CodeEdit E:EditList){
+				E.EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
+			}
 		}
 		
 		public void reSAll(int start,int end,final String want,final CharSequence to)

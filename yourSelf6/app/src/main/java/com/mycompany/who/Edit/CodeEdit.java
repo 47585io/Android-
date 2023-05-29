@@ -647,6 +647,8 @@ Formator
 		
 		++IsModify;
 		IsFormat(true); 	
+		DisbledAutoMeasureTextAndCountLine();
+		//短时间多次的修改，禁止测量多次，在修改后一并测量
 		
 		try{
 			onFormat(start, end, editor);
@@ -655,6 +657,7 @@ Formator
 			Log.e("Format Error", e.toString());
 		}
 		
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 		IsFormat(false);
 		--IsModify;
 		
@@ -1805,13 +1808,13 @@ Uedo和Redo
 ------------------------------------------
 */
 
-    private static final int FirstBuildMask = 1073741824;
+    public static final int FirstBuildMask = 1073741824;
 	
-	private static final int MeasureAllMask = 536870912;
+	public static final int MeasureAllMask = 536870912;
 	
-	private static final int EnabledAutoMeasureTextAndCountLineMask = 268435456;
+	public static final int EnabledAutoMeasureTextAndCountLineMask = 268435456;
 	
-	private static final int OtherFlagsMask = 0x00ffffff;
+	public static final int OtherFlagsMask = 0x00ffffff;
 	//前8位预留给我，剩下的24位的值可在子类中使用
 	
 	
@@ -2012,6 +2015,7 @@ Uedo和Redo
 	final public void reSAll(int start, int end, String want, CharSequence to)
 	{
 		++IsModify;
+		DisbledAutoMeasureTextAndCountLine();
 		int len = want.length();
 		Editable editor = getText();
 		String src=getText().toString().substring(start, end);
@@ -2024,6 +2028,7 @@ Uedo和Redo
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
 		}
 		--IsModify;
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
 
 	final public size getCursorPos(int offset)
