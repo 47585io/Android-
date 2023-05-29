@@ -1916,11 +1916,6 @@ Uedo和Redo
 	{
 		return getLineCount()*getLineHeight();
 	}
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
-	{
-		setMeasuredDimension(maxWidth(),maxHeight());
-	}
 
 	/* 文本大小改变时，额外修改maxWidth */
 	@Override
@@ -2091,6 +2086,7 @@ Uedo和Redo
 ------------------------------------------------------------------------------------
 
 */
+
 	final public static class EPool2 extends EPool<wordIndex>
 	{
 
