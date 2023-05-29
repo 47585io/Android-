@@ -140,7 +140,7 @@ public class myEditListenerList extends myEditListener implements EditListenerLi
 	}
 	
 	@Override
-	public boolean dispatchCallBack(EditListener.RunLi Callback)
+	public boolean dispatchCallBack(RunLi Callback)
 	{
 		if(!Enabled()){
 			return false;

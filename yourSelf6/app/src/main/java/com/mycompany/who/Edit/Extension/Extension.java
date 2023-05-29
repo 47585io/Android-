@@ -16,7 +16,6 @@ public abstract class Extension extends SerializableObject
 	private String name;
 	private Settings settings;
 
-
 	public Extension()
 	{
 		super();
@@ -89,6 +88,7 @@ public abstract class Extension extends SerializableObject
 	{
 		if(Info==null)
 			return;
+			
 		List<EditListener> lis= new LinkedList<>();
 		onGetListeners(lis);
 

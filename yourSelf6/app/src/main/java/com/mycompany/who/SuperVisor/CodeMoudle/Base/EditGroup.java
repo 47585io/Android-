@@ -62,7 +62,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 	private int EditFlag;
     private int EditDrawFlag;
 	private int mEditFlags;
-	private int mPrivateFlags;
+	private int mOtherFlags;
 	private CodeEdit historyEdit;
 	
 	private ScrollBar Scro;
@@ -425,8 +425,10 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			super.NowTextChanged(str, start, count, after);
 			//在这之后，已经计算好了行和宽高
 			
-			if(IsModify()){
+			if(IsModify() && EnabledAutoMeasureTextAndCountLine())
+			{
 				//如果正被修改，则无法触发onTextChaged，此时在这里trim
+				//但如果禁用了自动测量，那么宽高错误，也不自己trim了
 				trimToFather();
 			}
 		}
@@ -457,11 +459,11 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			}
 			--EditFlag;
 			
-			if(EditFlag==0)
+			if(EditFlag==0 && EnabledAutoMeasureTextAndCountLine())
 			{
-				//最后一个编辑器扩展大小
 				trimToFather();
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).width + " " + ((Config_hesSize)config).height);
+				//最后一个编辑器扩展大小，前提是大小是对的
+				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).EditWidth + " " + ((Config_hesSize)config).EditHeight);
 			}
 		}
 
@@ -537,8 +539,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		@Override
 		public void onLineChanged(int start, int before, int after)
 		{
-			//行变化了，就刷新EditLines的行
-			EditLines.reLines(getEditManipulator(). calaEditLines());
+			if(EnabledAutoMeasureTextAndCountLine())
+			{
+			    //行变化了，就刷新EditLines的行
+				//但如果禁用了自动计算行，则行数错误，我也不能自己reLines
+			    EditLines.reLines(getEditManipulator(). calaEditLines());
+		    }
 			super.onLineChanged(start, before, after);
 		}
 	

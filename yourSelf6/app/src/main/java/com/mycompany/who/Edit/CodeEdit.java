@@ -165,17 +165,23 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		Epp=new EPool3();
 	}
 	
-	public CodeEdit(Context cont){
+	public CodeEdit(Context cont)
+	{
 	 	super(cont);
 		setNowAfterFirstBuild(true);
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
-	public CodeEdit(Context cont,AttributeSet attrs){
+	public CodeEdit(Context cont,AttributeSet attrs)
+	{
 		super(cont,attrs);
 		setNowAfterFirstBuild(true);
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
-	public CodeEdit(Context cont,CodeEdit Edit){
+	public CodeEdit(Context cont,CodeEdit Edit)
+	{
 		super(cont,Edit);
 		setNowAfterFirstBuild(true);
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
 
     /* 将target的数据拷贝到自己身上  */
@@ -228,7 +234,8 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	}
 
 	@Override
-	public Edit CreatOne(){
+	public Edit CreatOne()
+	{
 		return new CodeEdit(getContext());
 	}
 	
@@ -1369,52 +1376,51 @@ Uedo和Redo
 	
 	protected void onBeforeTextChanged(CharSequence str, int start, int count, int after)
 	{
-		countLineBefore(str,start,count,after);
-		saveTokenToStack(str,start,count,after);
+		if(EnabledAutoMeasureTextAndCountLine()){
+			//是否启用自动测量
+		    countLineBefore(str,start,count,after);
+		}
+		if(!IsUR())
+		{
+			//如果它是由于Uedo本身或无需处理的（例如染色）造成的修改，则不能装入	
+			//另一个情况是，Uedo需要保存修改时，额外插入的文本
+		    saveTokenToStack(str,start,count,after);
+		}
 	}
 
 	protected void NowTextChanged(CharSequence str, int start, int count, int after)
 	{
-		countLineAfter(str,start,count,after);
+		if(EnabledAutoMeasureTextAndCountLine()){
+		    countLineAfter(str,start,count,after);
+		}
 	}
 	
 	final private void saveTokenToStack(CharSequence str, int start, int count, int after)
 	{
-		if (IsUR())
+		token token = null;
+		if(count!=0 && after!=0)
 		{
-			return;
-			//如果它是由于Uedo本身或无需处理的（例如染色）造成的修改，则不能装入
-			//另一个情况是，Uedo需要保存格式化时，额外插入的文本
+			//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
+			//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
+			token = new token(start, start+after, str.subSequence(start, start+count));	
 		}
-
-		try
+		else if (count != 0)
 		{
-			token token = null;
-			if(count!=0 && after!=0)
-			{
-				//如果删除了字符并且插入字符，本次删除了count个字符后达到start，并且即将从start开始插入after个字符
-				//那么上次的字符串就是：替换start~start+after之间的字符串为start~start+count之间的字符串
-				token = new token(start, start+after, str.subSequence(start, start+count));	
-			}
-			else if (count != 0)
-			{
-				//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
-				//从现在start开始，插入start～start+count之间的字符串
-				token = new token(start, start, str.subSequence(start, start+count));
-			}
-			else if (after != 0)
-			{
-				//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
-				//删除现在start～start+after之间的字符串
-				token = new token(start, start+after, "");		
-			}	
-			if(token != null)
-			{
-			    stack.put(token);
-				onPutUR(token);
-			}
+			//如果删除了字符，本次删除了count个字符后达到start，那么上次的字符串就是：
+			//从现在start开始，插入start～start+count之间的字符串
+			token = new token(start, start, str.subSequence(start, start+count));
 		}
-		catch (Exception e){}
+		else if (after != 0)
+		{
+			//如果插入了字符，本次即将从start开始插入after个字符，那么上次的字符串就是：
+			//删除现在start～start+after之间的字符串
+			token = new token(start, start+after, "");		
+		}	
+		if(token != null)
+		{
+			stack.put(token);
+			onPutUR(token);
+		}	
 	}
 	
 	final private void countLineBefore(CharSequence str, int start, int count, int after)
@@ -1802,6 +1808,8 @@ Uedo和Redo
 	
 	private static final int MeasureAllMask = 536870912;
 	
+	private static final int EnabledAutoMeasureTextAndCountLineMask = 268435456;
+	
 	private static final int OtherFlagsMask = 0x00ffffff;
 	//前8位预留给我，剩下的24位的值可在子类中使用
 	
@@ -1813,11 +1821,25 @@ Uedo和Redo
 		mOtherFlags = is ? mOtherFlags|FirstBuildMask : mOtherFlags&~FirstBuildMask;
 	}
 	
-	public boolean needMeasureAllText(){
+	private boolean needMeasureAllText(){
 		return (mOtherFlags & MeasureAllMask) == MeasureAllMask;
 	}
 	private void setNeedMeasureAllText(boolean is){
 		mOtherFlags = is ? mOtherFlags|MeasureAllMask : mOtherFlags&~MeasureAllMask;
+	}
+	
+	public void DisbledAutoMeasureTextAndCountLine(){
+		mOtherFlags &= ~EnabledAutoMeasureTextAndCountLineMask;
+	}
+	public void EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow()
+	{
+		mOtherFlags |= EnabledAutoMeasureTextAndCountLineMask;
+		lineCount = super.getLineCount();
+		maxWidth = super.maxWidth();
+		//使用super的方法，测量全部文本
+	}
+	public boolean EnabledAutoMeasureTextAndCountLine(){
+		return (mOtherFlags & EnabledAutoMeasureTextAndCountLineMask) == EnabledAutoMeasureTextAndCountLineMask;
 	}
 	
 	public void setOtherFlags(int flags){
@@ -1826,6 +1848,7 @@ Uedo和Redo
 	public int getOtherFlags(){
 		return mOtherFlags&OtherFlagsMask;
 	}
+	
 
 /*
 ------------------------------------------
@@ -2052,6 +2075,7 @@ Uedo和Redo
 	public<T> wordIndex[] subSpans(int start,int end,Class<T> type){
 		return Colors.subSpans(start,end,getText(),type);
 	}
+	
 	
 /*  
 ------------------------------------------------------------------------------------

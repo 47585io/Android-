@@ -115,7 +115,7 @@ public class myEditListener extends Object implements EditListener
 	}
 	
 	@Override
-	public boolean dispatchCallBack(EditListener.RunLi Callback)
+	public boolean dispatchCallBack(RunLi Callback)
 	{
 		boolean consume = false;
 		try{
