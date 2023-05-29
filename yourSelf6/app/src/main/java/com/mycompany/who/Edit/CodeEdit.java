@@ -169,19 +169,19 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 	{
 	 	super(cont);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_();
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
 	public CodeEdit(Context cont,AttributeSet attrs)
 	{
 		super(cont,attrs);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_();
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
 	public CodeEdit(Context cont,CodeEdit Edit)
 	{
 		super(cont,Edit);
 		setNowAfterFirstBuild(true);
-		EnabledAutoMeasureTextAndCountLine_();
+		EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow();
 	}
 
     /* 将target的数据拷贝到自己身上  */
@@ -191,8 +191,9 @@ public class CodeEdit extends Edit implements Drawer,Formator,Completor,UedoWith
 		super.CopyFrom(target);
 		CodeEdit Edit = (CodeEdit) target;
 		this.WordLib=Edit.WordLib;	
-		if(stack==null)
+		if(stack==null){
 		    this.stack = new TwoStack<>();
+		}
 		this.Info = Edit.Info;	
 		this.pool = Edit.pool;
 		this.mWindow = Edit.mWindow;
@@ -1831,13 +1832,10 @@ Uedo和Redo
 	public void DisbledAutoMeasureTextAndCountLine(){
 		mOtherFlags &= ~EnabledAutoMeasureTextAndCountLineMask;
 	}
-	public void EnabledAutoMeasureTextAndCountLine_(){
-		mOtherFlags |= EnabledAutoMeasureTextAndCountLineMask;
-	}
 	public void EnabledAutoMeasureTextAndCountLine_AndMeasureOnceNow()
 	{
 		mOtherFlags |= EnabledAutoMeasureTextAndCountLineMask;
-		lineCount = super.getLineCount();
+		lineCount = super.getLineCount()-1;
 		maxWidth = super.maxWidth();
 		//使用super的方法，测量全部文本
 	}
@@ -1851,7 +1849,6 @@ Uedo和Redo
 	public int getOtherFlags(){
 		return mOtherFlags&OtherFlagsMask;
 	}
-	
 
 /*
 ------------------------------------------
