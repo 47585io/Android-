@@ -1847,10 +1847,10 @@ Uedo和Redo
 	}
 	
 	public void setOtherFlags(int flags){
-		mOtherFlags = (mOtherFlags&~OtherFlagsMask) | (flags&OtherFlagsMask);
+		mOtherFlags = flags;
 	}
 	public int getOtherFlags(){
-		return mOtherFlags&OtherFlagsMask;
+		return mOtherFlags;
 	}
 
 /*

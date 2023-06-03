@@ -315,6 +315,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 		Edit.setWindow(getWindow());
 		Edit.setPool(getPool());
 		Edit.setEditFlags(mEditFlags); //设置flags
+		Edit.setOtherFlags(mOtherFlags);
 		return Edit;
 	}
 
@@ -463,7 +464,7 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 			{
 				trimToFather();
 				//最后一个编辑器扩展大小，前提是大小是对的
-				Log.w("注意！此消息一次onTextChanged中只出现一次", "trimToFather：" + ((Config_hesSize)config).EditWidth + " " + ((Config_hesSize)config).EditHeight);
+				Log.w("注意！此消息一次onTextChanged中只出现一次", getConfig().toString());
 			}
 		}
 
@@ -2007,6 +2008,12 @@ public class EditGroup extends HasAll implements IlovePool,IneedWindow,EditListe
 				//注意，getWidth不等于getMeasuredHeight
 			}
 			return height;
+		}
+
+		@Override
+		public String toString()
+		{
+			return "trimToFather， width: "+EditWidth+"; height: "+EditHeight;
 		}
 		
 	}

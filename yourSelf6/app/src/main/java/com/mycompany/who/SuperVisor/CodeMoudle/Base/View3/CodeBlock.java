@@ -166,6 +166,12 @@ public abstract interface CodeBlock
 			return -9999;
 		}
 
+		@Override
+		public String toString()
+		{
+			return "width:"+width+"; height:"+height;
+		}
+
 		final public static void trim(View Father, int width, int height)
 		{
 			//调整空间

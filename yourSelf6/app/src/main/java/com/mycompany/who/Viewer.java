@@ -4,6 +4,7 @@ import android.content.*;
 import android.os.*;
 import android.view.*;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.View.*;
+import android.graphics.drawable.*;
 
 public class Viewer extends Activity
 {
@@ -12,7 +13,7 @@ public class Viewer extends Activity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-		
+		Drawable j;
 		super.onCreate(savedInstanceState);
 		
 		Intent date=getIntent();

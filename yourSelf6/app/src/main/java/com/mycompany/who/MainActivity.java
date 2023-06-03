@@ -15,6 +15,7 @@ import android.os.Handler;
 import com.mycompany.who.SuperVisor.CodeMoudle.Base.*;
 import java.util.*;
 import com.mycompany.who.Edit.Base.Share.Share4.*;
+import android.view.View.*;
 
 
 /*
@@ -60,6 +61,7 @@ public class MainActivity extends BaseActivity2 implements Runnable,CodeBlock
 		super.onCreate(savedInstanceState);
 		dismiss_Title(this);
 		new Handler().post(this);
+		View n;
 	}
 
 	@Override
