@@ -1847,7 +1847,7 @@ Uedo和Redo
 	}
 	
 	public void setOtherFlags(int flags){
-		mOtherFlags = flags;
+		//mOtherFlags = flags;
 	}
 	public int getOtherFlags(){
 		return mOtherFlags;
