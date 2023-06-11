@@ -542,7 +542,6 @@ _______________________________________
 			{
 				//寻找在当前位置之后，在end之前的下个区间的起始位置
 				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
-				next = next<=end ? next:end;
 				//当前区间的末尾坐标
 				xEnd = xStart + paint.measureText(spanString, i, next);
 				
@@ -560,7 +559,7 @@ _______________________________________
 						BackgroundColorSpan span = (BackgroundColorSpan) spans[j];
 						paint.setColor(span.getBackgroundColor());
 						span.updateDrawState(paint);
-						canvas.drawRect(xStart, y, xEnd, y-font.ascent, paint);
+						canvas.drawRect(xStart, y, xEnd, y-font.ascent+font.descent, paint);
 					}
 				}
 				
