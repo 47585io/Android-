@@ -118,15 +118,15 @@ public class unsafeEdit extends View implements TextWatcher
 				Canvas self = copyCanvas;	
 				
 				self.clipRect(0,0,width,height);
-				//剪切画布的范围为位图的范围
-				
+				//剪切画布的范围为位图的范围	
 				self.translate(-x,-y);
 				//当translate(-x,-y)后，原点变为(-x,-y)，所以所有的绘制坐标会偏移(-x,-y);
+				
 				float lineWidth = onDrawLine(x,y,width,height,0,getLineHeight(),self,paint);
 				//在绘制文本前，画上行
-				
 				self.translate(lineWidth,0);
 				//在上次的基础上，将文本挤到行的右侧
+				
 				try{
 				    mLayout.draw(self);
 					//最后让我们将文本绘制到画布上
