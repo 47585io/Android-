@@ -12,6 +12,7 @@ import com.who.Edit.Base.Share.Share1.*;
 import com.who.Edit.Base.Share.Share3.*;
 import com.who.Edit.Base.Share.Share4.*;
 import java.math.*;
+import java.util.*;
 
 
 public class Edit extends View implements TextWatcher
@@ -62,8 +63,8 @@ public class Edit extends View implements TextWatcher
 	private void setPaint(TextPaint paint)
 	{
 		paint.reset();
-		paint.setTextSize(44);
-		paint.setColor(0xff222222);
+		paint.setTextSize(45);
+		paint.setColor(0xffaaaaaa);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
 	public void reSetPaint(TextPaint paint){
@@ -163,9 +164,10 @@ _______________________________________
 			}
 	
 			//提交缓冲区内的文本
+			Random rand = new Random();
 			SpannableStringBuilder b = new SpannableStringBuilder(text);
-			b.setSpan(new BackgroundColorSpan(0xffffed55),0,b.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			b.setSpan(new ForegroundColorSpan(0xffccbbaa),0,b.length(),Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			b.setSpan(new BackgroundColorSpan(rand.nextInt()),0,b.length()-1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			b.setSpan(new ForegroundColorSpan(rand.nextInt()),0,b.length()-1,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 			int start = getSelectionStart();
 			int after = text.length();
 
@@ -381,16 +383,11 @@ _______________________________________
 	/* 使用Layout进行文本布局和绘制，尽可能地节省时间 */
 	final public class myLayout extends Layout
 	{
-		
 		//不安全的临时变量，谁都可以使用
 		float[] widths;
 		Rect rect = new Rect();
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
-		
-		//以下是每次draw时使用的
-		RectF See = new RectF();
-		pos start = new pos(), end = new pos();
 		
 		//记录一些属性，用于draw
 		float cursorWidth = 0.1f;
@@ -398,8 +395,7 @@ _______________________________________
 		int lineCount=1, maxWidth;
 		boolean NeddMeasureAll;
 
-		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, 
-		                int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
+		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
 			super(base,paint,width,align,spacingmult,spacingadd);
 		}
 
@@ -429,9 +425,16 @@ _______________________________________
 		public void draw(Canvas canvas)
 		{
 			//新一轮的绘制开始了
-			TextPaint paint = mPaint;
 			Spanned spanString = mText;	
+			int len = spanString.length();
+			if(len<1){
+				//新一轮的绘制结束了
+				return;
+			}
+			
+			//初始化文本和笔
 			String text = spanString.toString();
+			TextPaint paint = mPaint;
 
 			//计算可视区域
 			float x = getScrollX();
@@ -446,183 +449,146 @@ _______________________________________
 			//计算可视区域的行
 			int startLine = (int) (y/lineHeight);
 			int endLine = (int) ((y+height)/lineHeight);
-			startLine = startLine>lineCount ? lineCount:startLine;
-			endLine = endLine>lineCount ? lineCount:endLine;
+			startLine = startLine<0 ? 0 : (startLine>lineCount ? lineCount:startLine);
+			endLine = endLine<0 ? 0 : (endLine>lineCount ? lineCount:endLine);
 
 			//计算可视区域的范围
 			int start = StringSpiltor.NIndex(FN,text,0,startLine);
-			int end = StringSpiltor.NIndex(FN,text,start,(int)(height/lineHeight));
-			start = start<0 ? 0:start;
-			end = end<0 ? spanString.length():end;
-
-			//只绘制可视区域的内容
-			See.left = x;
-			See.top = y;
-			See.right = See.left+width;
-			See.bottom = See.top+height;
-			onDraw(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,paint,See);
-		}
-
-		/* 在这里完成绘制 */
-		protected void onDraw
-		(
-		    Spanned spanString, String text,
-			int start, int end,
-			int startLine,int endLine,
-		    float leftPadding, float lineHeight,
-			Canvas canvas, TextPaint paint, RectF See
-		)
-		{
-			//重新计算位置
-			pos tmp = this.start;
-			pos tmp2 = this.end;
-			getCursorPos(text,start,tmp);
-			tmp2.set(tmp);
+			int end = StringSpiltor.NIndex(FN,text,start,endLine-startLine);
+			start = startLine<1 ? 0 : (start<0 ? 0 : (start>len ? len:start+1));
+			end = end<0 ? len : (end>len ? len:end);
 			
-            //我们只能管理CharacterStyle及其子类的span，抱歉
-			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-			float ascent = fontMetrics.ascent;  //根据y坐标计算文本基线坐标
-			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
-
-			//绘制背景的Span
-			onDrawBackground(spanString,text,
-							 start,end,spans,
-							 leftPadding,lineHeight,tmp2,
-							 canvas,paint,See);
-
-			//重置画笔绘制文本
-			reSetPaint(paint);
-			drawText(text,start,end,
-					 tmp.x,tmp.y-ascent,
-					 leftPadding,lineHeight,
-					 canvas,paint,See);
-
-			//绘制行
-			onDrawLine(startLine,endLine,
-					   0,lineHeight,
-					   canvas,paint,See);
-
-			//绘制前景的Span
-			onDrawForeground(spanString,text,
-							 start,end,spans,
-							 leftPadding,lineHeight,tmp,
-							 canvas,paint,See);	
-			reSetPaint(paint);
-			//绘制完成了，重置画笔待下次绘制
+			//只绘制可视区域的内容
+			rectF.set(x,y,x+width,y+height);
+			onDraw(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,paint,rectF);
 		}
-
-		/* 在绘制文本前绘制背景 */
-		protected void onDrawBackground
-		(
-		    Spanned spanString, String text,
-		    int start, int end, Object[] spans, 
-			float leftPadding, float lineHeight, pos tmp,
-			Canvas canvas, TextPaint paint, RectF See
-		)
+		
+		/* 在这里完成绘制 */
+		protected void onDraw(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
 		{
-			int index = start;
-			//pos tmp = null;
-			int s = start, e = end;
-
-			//遍历span
-			for(int i=0;i<spans.length;++i)
+			//先将行数绘制在左侧
+			reSetPaint(paint);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,paint,See);
+			
+			float x = 0;
+			float y = startLine*lineHeight;
+			int now = start, next;
+			int len = text.length();
+			
+			//遍历可见的行
+			for(;startLine<endLine;++startLine)
 			{
-				if(spans[i] instanceof BackgroundColorSpan)
+				next = text.indexOf(FN,now);
+				next = next==-1 ? len:next;
+				//获取行的起始和末尾
+				
+				int count = next-now;
+				widths = widths==null || widths.length<count ? new float[count]:widths;
+				paint.getTextWidths(text,now,next,widths);
+				//测量并保存每个字符的宽
+				
+				int i = 0;
+				float w = x;
+				
+				//从第一个字符开始，向后遍历每个字符
+				for(;i<count;++i)
 				{
-					//只绘制背景
-					BackgroundColorSpan span = (BackgroundColorSpan) spans[i];
-					start = spanString.getSpanStart(span);
-					end = spanString.getSpanEnd(span);
+					if(w+widths[i]>See.left){
+						//如果已经到达了可视区域左边，已经可以确定这行起始下标和坐标了
+						break;
+					}
+					w += widths[i];
+					++now;
+					//每次下标都加1，坐标加上字符的宽
+				}	
+				start = now;
+				x = w;
+				//记录当前行的起始下标和坐标
+					
+				//从上次的位置开始，继续向后遍历每个字符
+				for(;i<count;++i)
+				{
+					if(w>See.right){
+						//如果已经到达了可视区域右边，已经可以确定这行末尾下标和坐标了
+						break;
+					}
+					w += widths[i];
+					++now;
+					//每次下标都加1，坐标加上字符的宽
+				}	
+				end = now;
+				//记录当前行的末尾下标
+				
+				drawSingleLineText(spanString,start,end,x,y,canvas,paint,copyPaint);
+				//绘制这行的可见范围内的文本
+				
+				now = next+1;
+				x = 0;
+				y += lineHeight;
+				//之后继续下行
+			}
+		}
+	
+		/* 从(x,y)处开始绘制start和end之间的字符串，并附带Span，但start和end必须在同一行 */
+		protected void drawSingleLineText(Spanned spanString, int start, int end, float x, float y, Canvas canvas, TextPaint paint, TextPaint textPaint)
+		{
+			int next;
+			float xStart = x;
+			float xEnd;
+			Paint.FontMetrics font = textPaint.getFontMetrics();
 
-					//如果span在可视范围内，或其跨越了整个可视范围，就绘制它
-					if(!(start>e || end<s))
+			//正序遍历start~end范围内的区间，并获取区间的Span，计算坐标后绘制它们
+			for (int i = start; i < end; i = next) 
+			{
+				//寻找在当前位置之后，在end之前的下个区间的起始位置
+				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
+				next = next<=end ? next:end;
+				//当前区间的末尾坐标
+				xEnd = xStart + paint.measureText(spanString, i, next);
+				
+				int j;
+				boolean isDrawText = false;
+				//获取当前区间内的Span，抱歉，我们只能管理CharacterStyle类型的Span
+				CharacterStyle[] spans = spanString.getSpans(i,next,CharacterStyle.class);		
+				
+				//遍历Span，首先绘制背景
+				for(j = 0; j < spans.length; ++j)
+				{
+					if(spans[j] instanceof BackgroundColorSpan)
 					{
-						//计算光标坐标
-						if(tmp==null){
-							//第一次获取坐标
-							tmp = new pos();
-							getCursorPos(text,start,tmp);
-						}
-						else{
-							//如果已有一个坐标，我们尝试直接使用它
-							nearOffsetPos(text,index,tmp.x,tmp.y,start,tmp);
-						}
-						index = start;
-						//记录坐标对应的光标
-
+						//如果有背景的Span，刷新画笔状态后画上矩形
+						BackgroundColorSpan span = (BackgroundColorSpan) spans[j];
 						paint.setColor(span.getBackgroundColor());
 						span.updateDrawState(paint);
-						//刷新画笔状态
-						drawBlock(text,start,end,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint,See);
-						//绘制span范围内的文本的背景
+						canvas.drawRect(xStart, y, xEnd, y-font.ascent, paint);
 					}
 				}
-		   	}
-		}
-
-		/* 在绘制文本后绘制前景 */
-		protected void onDrawForeground
-		(
-		    Spanned spanString, String text, 
-		    int start, int end, Object[] spans,
-			float leftPadding, float lineHeight, pos tmp,
-			Canvas canvas, TextPaint paint, RectF See
-		)
-		{
-			int index = start;
-			//pos tmp = null;
-			int s = start, e = end;
-			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-			float ascent = fontMetrics.ascent;  //根据y坐标计算文本基线坐标
-
-			//遍历span
-			for(int i=0;i<spans.length;++i)
-			{
-				if(!(spans[i] instanceof BackgroundColorSpan) && spans[i] instanceof CharacterStyle)
+				
+				//然后遍历Span，只绘制前景
+				for(j = 0; j < spans.length; ++j)
 				{
-					//不绘制背景
-					CharacterStyle span = (CharacterStyle) spans[i];
-					start = spanString.getSpanStart(span);
-					end = spanString.getSpanEnd(span);
-
-					//如果span在可视范围内，或其跨越了整个可视范围，就绘制它
-					if(!(start>e || end<s))
+					if(!(spans[j] instanceof BackgroundColorSpan))
 					{
-						//计算光标坐标
-						if(tmp==null){
-							tmp = new pos();
-							getCursorPos(text,start,tmp);
-						}
-						else{
-							//如果已有一个坐标，我们尝试直接使用它
-							nearOffsetPos(text,index,tmp.x,tmp.y,start,tmp);
-						}
-						index = start;
-						//记录坐标对应的光标
-
-						//刷新画笔状态
+						//如果有前景的Span，使用Span的颜色绘制文本
+						CharacterStyle span = spans[j];
 						span.updateDrawState(paint);
-						if(span instanceof ReplacementSpan){
-							//对于ReplacementSpan，进行特殊处理
-							ReplacementSpan re = (ReplacementSpan) span;
-							re.draw(canvas,spanString,start,end,tmp.x+leftPadding,(int)tmp.y,0,(int)(tmp.y+lineHeight),paint);
-						}
-						else{
-							//覆盖绘制span范围内的文本
-							drawText(text,start,end,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint,See);
-						}
+						canvas.drawText(spanString, i, next, xStart, y-font.ascent, paint);
+						isDrawText = true; 
 					}
 				}
-		   	}
+				
+				if(!isDrawText){
+					//如果没有绘制前景，则使用默认颜色绘制
+					canvas.drawText(spanString, i, next, xStart, y-font.ascent, textPaint);
+				}
+				
+				//继续寻找下个区间
+				xStart = xEnd;
+			}
 		}
-
+		
 		/* 在绘制文本后绘制行 */
-		protected void onDrawLine
-		(
-		    int startLine, int endLine,
-			float leftPadding, float lineHeight, 
-			Canvas canvas, TextPaint paint, RectF See
-		)
+		protected void onDrawLine(int startLine, int endLine,float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = measureText(line,0,line.length(),paint);
@@ -630,7 +596,7 @@ _______________________________________
 				//如果x位置已经超出了行的宽度，就不用绘制了
 				return ;
 			}
-			
+
 			float y = startLine*lineHeight;
 			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
 			y -= fontMetrics.ascent;  //根据y坐标计算文本基线坐标
@@ -643,16 +609,9 @@ _______________________________________
 				y+=lineHeight;
 			}
 		}
-
+		
 		/* 可以方便地调用我绘制Span，返回start指示下次文本应该从哪里开始，为了效率，暂不使用 */
-		protected int onDrawSpan
-		(
-			Spanned spanString, String text, 
-		    int start, int end, Object span,
-			float x, float y, pos tmp,
-			float leftPadding, float lineHeight,
-			Canvas canvas, TextPaint paint, RectF See
-		)
+		protected int onDrawSpan(Spanned spanString, String text, int start, int end, Object span, float x, float y, float leftPadding, float lineHeight,Canvas canvas, TextPaint paint, RectF See)
 		{
 			if(span instanceof CharacterStyle){
 				//刷新画笔
@@ -925,11 +884,10 @@ _______________________________________
 			RectF r = rectF;
 			pos p = tmp;
 			float lineHeight = getLineHeight();
-			float leftPadding = getLeftPadding();
 			float width = cursorWidth*mPaint.getTextSize();
 			getCursorPos(editingBuffer.toString(),point,p);
 			
-			r.left=p.x+leftPadding;
+			r.left=p.x;
 			r.top=p.y;
 			r.right=r.left+width;
 			r.bottom=r.top+lineHeight;
@@ -943,7 +901,6 @@ _______________________________________
 		{
 			String text = mText.toString();
 			float lineHeight = getLineHeight();
-			float leftPadding = getLeftPadding();
 			RectF rf = rectF;
 			pos s = tmp;
 			pos e = tmp2;
@@ -954,7 +911,7 @@ _______________________________________
 			if(s.y == e.y)
 			{
 				//单行的情况
-				rf.left = s.x+leftPadding;
+				rf.left = s.x;
 				rf.top = s.y;
 				rf.right = rf.left+w;
 				rf.bottom = rf.top+lineHeight;
@@ -966,7 +923,7 @@ _______________________________________
 			float sw = measureText(text,start,tryLine_End(text,start),mPaint);
 			//float ew = measureText(text,tryLine_Start(text,end),end,mPaint);
 			
-			rf.left = s.x+leftPadding;
+			rf.left = s.x;
 			rf.top = s.y;
 			rf.right = rf.left+sw;
 			rf.bottom = rf.top+lineHeight;
@@ -975,7 +932,7 @@ _______________________________________
 			
 			if((e.y-s.y)/lineHeight > 1){
 				//如果行数超过2
-			    rf.left = leftPadding;
+			    rf.left = 0;
 			    rf.top = rf.top+lineHeight;
 			    rf.right = rf.left+w;
 			    rf.bottom = e.y;
@@ -983,7 +940,7 @@ _______________________________________
 			    //添加中间所有行的Rect
 			}
 			
-			rf.left = leftPadding;
+			rf.left = 0;
 			rf.top = rf.bottom;
 			rf.right = rf.left+ e.x;
 			rf.bottom = rf.top+lineHeight;
@@ -1031,64 +988,62 @@ _______________________________________
 			return 0;
 		}
 
+		final private void getCursorPos(String str,int offset,pos pos)
+		{
+			int lines = StringSpiltor.Count(FN,str,0,offset);
+			int start = str.lastIndexOf('\n',offset-1);
+			start = start == -1 ? 0:start+1;
+			pos. x = measureText(str,start,offset,mPaint);
+			pos. y = lines*getLineHeight();
+		}
+		
+		/* 获取临近光标坐标，可能会更快 */
+		final private void nearOffsetPos(String text, int oldOffset, float x, float y, int newOffset, pos target)
+		{
+			if(oldOffset<newOffset)
+			{
+				int line = StringSpiltor.Count(FN,text,oldOffset,newOffset);
+				int index = text.lastIndexOf(FN,newOffset-1);
+				index = index<0 ? 0:index+1;
+				index = index>text.length() ? text.length():index;
+				target.x = measureText(text,index,newOffset,mPaint);
+				target.y = y+getLineHeight()*line;
+			}
+			else if(oldOffset>newOffset)
+			{
+				int line = StringSpiltor.Count(FN,text,newOffset,oldOffset);
+				int index = text.lastIndexOf(FN,newOffset-1);
+				index = index<0 ? 0:index+1;
+				index = index>text.length() ? text.length():index;
+				target.x = measureText(text,index,newOffset,mPaint);
+				target.y = y-getLineHeight()*line;
+			}
+		}
 	}
-
-
-	/*试探当前下标所在行的起始*/
+	
 	final public static int tryLine_Start(String src,int index)
 	{
+		//试探当前下标所在行的起始
 		int start= src.lastIndexOf('\n',index-1);	
 		start = start==-1 ? 0:start+1;
 		return start;
 	}
-    /*试探当前下标所在行的末尾*/
+
 	final public static int tryLine_End(String src,int index)
 	{
+		//试探当前下标所在行的末尾
 		int end=src.indexOf('\n',index);
 		end = end==-1 ? src.length():end;
 		return end;
 	}
 
-	/*试探当前下标所在行的起始*/
-	final public static int tryLine_Start(CharSequence src,int index)
-	{
-		index -=1;
-		int len = src.length();
-		while(index<len && index>0 && src.charAt(index)!=FN){
-			--index;
-		}
-		return index;
-	}
-    /*试探当前下标所在行的末尾*/
-	final public static int tryLine_End(CharSequence src,int index)
-	{
-		int len = src.length();
-		while(index<len && index>0 && src.charAt(index)!=FN){
-			++index;
-		}
-		return index;
-	}
-
 	/* 获取光标坐标 */
 	final public pos getCursorPos(int offset)
 	{
-		String str = mText.toString();
-		int lines = StringSpiltor.Count(FN,str,0,offset);
-		int start = str.lastIndexOf('\n',offset-1);
-		start = start == -1 ? 0:start+1;
-		float x = mLayout.measureText(str,start,offset,mPaint);
-		float y = lines*getLineHeight();
-		return new pos(x,y);
+		pos pos = new pos();
+		mLayout.getCursorPos(mText.toString(),offset,pos);
+		return pos;
 	}
-	final private void getCursorPos(String str,int offset,pos pos)
-	{
-		int lines = StringSpiltor.Count(FN,str,0,offset);
-		int start = str.lastIndexOf('\n',offset-1);
-		start = start == -1 ? 0:start+1;
-		pos. x = mLayout.measureText(str,start,offset,mPaint);
-		pos. y = lines*getLineHeight();
-	}
-	
 	/* 从坐标获取光标 */
 	final public int getOffsetForPosition(float x,float y)
 	{
@@ -1097,29 +1052,6 @@ _______________________________________
 		int count = mLayout.getOffsetForHorizontal(lines,x);
 		int start = mLayout.getLineStart(lines);
 		return start+count;
-	}
-	
-	/* 获取临近光标坐标，可能会更快 */
-	final private void nearOffsetPos(String text, int oldOffset, float x, float y, int newOffset, pos target)
-	{
-		if(oldOffset<newOffset)
-		{
-			int line = StringSpiltor.Count(FN,text,oldOffset,newOffset);
-			int index = text.lastIndexOf(FN,newOffset-1);
-			index = index<0 ? 0:index+1;
-			index = index>text.length() ? text.length():index;
-			target.x = mLayout.measureText(text,index,newOffset,mPaint);
-			target.y = y+getLineHeight()*line;
-		}
-		else if(oldOffset>newOffset)
-		{
-			int line = StringSpiltor.Count(FN,text,newOffset,oldOffset);
-			int index = text.lastIndexOf(FN,newOffset-1);
-			index = index<0 ? 0:index+1;
-			index = index>text.length() ? text.length():index;
-			target.x = mLayout.measureText(text,index,newOffset,mPaint);
-			target.y = y-getLineHeight()*line;
-		}
 	}
 
 
@@ -1170,7 +1102,7 @@ ________________________________________
 		{
 			@Override
 			public void draw(Canvas p1){
-				p1.drawColor(0x25222222);
+				p1.drawColor(0x50dddddd);
 			}
 
 			@Override
@@ -1243,24 +1175,11 @@ _______________________________________
 		@Override
 		public boolean sendMovePos(View v, MotionEvent event, float dx, float dy)
 		{
-			float x = Math.abs(dx);
-			float y = Math.abs(dy);
-			if(x>Min_Slop && slopX<Max_Slop){
-				slopX+=x/10;		
-			}
-			if(y>Min_Slop && slopY<Max_Slop){
-				slopY+=y/10;	
-			}
-
-			//dx+=slopX;
-			//dy+=slopY;
-
-			if(event.getHistorySize()==0){
-				slopX=0;
-				slopY=0;
-			}
-			else{
-				v.scrollBy((int)-dx,(int)-dy);
+			float x = getScrollX();
+			float y = getScrollY();
+			
+			if(event.getHistorySize()!=0){
+			    v.scrollBy((int)-dx,(int)-dy);
 			}
 			return true;
 		}
@@ -1293,8 +1212,6 @@ _______________________________________
 			return true;
 		}	
 	}
-
-	/*InputConnectionWrapper是一个装饰器，指在于在一个已有的InputConnection的基础上扩展功能，该类需要一个InputConnection，并默认就是调用它的实现，可以重写以扩展功能*/
 
 }
 

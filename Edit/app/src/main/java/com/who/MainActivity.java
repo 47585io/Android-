@@ -15,12 +15,12 @@ public class MainActivity extends Activity
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
       
 		View e = new Edit(this);
-		e.setBackgroundColor(0xffdddddd);
+		e.setBackgroundColor(0xff222222);
 		setContentView(e);
 		Edit.openInputor(this, e);
 		ViewGroup.LayoutParams pa = e.getLayoutParams();
 		pa.width = 1080;
-		pa.height = 2560;
+		pa.height = 2408;
     }
 }
 
