@@ -256,6 +256,7 @@ _______________________________________
 		}
 		setSelection(index,index);
 	}
+	
 	@Override
 	public void beforeTextChanged(CharSequence p1, int start, int lenghtBefore, int lengthAfter){}
 	
@@ -264,11 +265,98 @@ _______________________________________
 
 
 /*
-_______________________________________
+ _______________________________________
 
-每次onDraw时会调用Layout绘制文本和光标
+ 对文本容器进行修改，也会触发onTextChanged事件
 
-_______________________________________
+ _______________________________________
+
+*/
+
+    final private class myText extends SpannableStringBuilder
+	{
+		public myText(){
+			super();
+		}
+		public myText(CharSequence text){
+			super(text);
+		}
+		public myText(CharSequence text, int start, int end){
+			super(text,start,end);
+		}
+
+		@Override
+		public SpannableStringBuilder append(CharSequence text)
+		{
+			// TODO: Implement this method
+			return super.append(text);
+		}
+
+		@Override
+		public SpannableStringBuilder append(CharSequence text, int start, int end)
+		{
+			// TODO: Implement this method
+			return super.append(text, start, end);
+		}
+
+		@Override
+		public SpannableStringBuilder append(CharSequence text, Object what, int flags)
+		{
+			// TODO: Implement this method
+			return super.append(text, what, flags);
+		}
+
+		@Override
+		public SpannableStringBuilder append(char text)
+		{
+			// TODO: Implement this method
+			return super.append(text);
+		}
+
+		@Override
+		public SpannableStringBuilder insert(int where, CharSequence tb)
+		{
+			// TODO: Implement this method
+			return super.insert(where, tb);
+		}
+
+		@Override
+		public SpannableStringBuilder insert(int where, CharSequence tb, int start, int end)
+		{
+			// TODO: Implement this method
+			return super.insert(where, tb, start, end);
+		}
+
+		@Override
+		public SpannableStringBuilder delete(int start, int end)
+		{
+			// TODO: Implement this method
+			return super.delete(start, end);
+		}
+
+		@Override
+		public SpannableStringBuilder replace(int start, int end, CharSequence tb)
+		{
+			// TODO: Implement this method
+			return super.replace(start, end, tb);
+		}
+
+		@Override
+		public SpannableStringBuilder replace(int start, int end, CharSequence tb, int tbstart, int tbend)
+		{
+			// TODO: Implement this method
+			return super.replace(start, end, tb, tbstart, tbend);
+		}
+	
+	}
+
+	
+/*
+ _______________________________________
+
+ 每次onDraw时会调用Layout绘制文本和光标
+
+ _______________________________________
 */
 
     /* onDraw是View绘制的第二步，第一步是drawBackground，但无法重写 */
@@ -394,7 +482,7 @@ _______________________________________
             //我们只能管理CharacterStyle及其子类的span，抱歉
 			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
 			float ascent = fontMetrics.ascent;  //根据y坐标计算文本基线坐标
-			Object[] spans = spanString.getSpans(0,spanString.length(),CharacterStyle.class);
+			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
 
 			//绘制背景的Span
 			onDrawBackground(spanString,text,
