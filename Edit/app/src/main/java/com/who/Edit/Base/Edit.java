@@ -14,6 +14,7 @@ import com.who.Edit.Base.Share.Share4.*;
 import java.math.*;
 import java.util.*;
 import android.util.*;
+import android.os.*;
 
 
 public class Edit extends View implements TextWatcher
@@ -106,7 +107,7 @@ public class Edit extends View implements TextWatcher
 /*
 _______________________________________
 
-当输入事件到来，我们修改文本，并回调onTextChanged
+当输入事件到来，我们修改文本
 _______________________________________ 
 */
 
@@ -116,11 +117,99 @@ _______________________________________
 	}
 	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs){
+		//返回与输入法建立连接的InputConnection
 		return mInput;
 	}
 
-	public void setTextChangeListener(TextWatcher li){
-		mTextListener = li;
+	
+	/* 获取输入，并自动修改文本，当文本变化时会触发onTextChanged */
+	final private class myInput extends BaseInputConnection
+	{
+
+		private boolean Enabled = true;
+
+		public myInput(View v,boolean is){
+			super(v,is);
+		}
+
+		@Override
+		public boolean sendKeyEvent(KeyEvent event)
+		{
+			//如果输入法要主动输入或删除，不应该调用此方法
+			int keyCode = event.getKeyCode();
+			int action = event.getAction();
+			
+			//手指抬起
+			if(action==KeyEvent.ACTION_UP)
+			{
+				switch(keyCode)
+				{
+					//如果是一个换行键，无论如何都提交换行
+					case KeyEvent.KEYCODE_ENTER:
+						commitText(String.valueOf(FN),0);
+						break;
+					//如果是一个删除键，无论如何都删除字符
+					case KeyEvent.KEYCODE_DEL:
+						deleteSurroundingText(1,0);
+						break;
+				}	
+			}
+			return true;
+		}
+
+		@Override
+		public boolean commitText(CharSequence text, int newCursorPosition)
+		{
+			if(!Enabled){
+				//没有启用输入，直接返回
+				return true;
+			}
+			
+			//提交缓冲区内的文本
+			int start = getSelectionStart();
+			int end = getSelectionEnd();
+			mText.replace(start,end,text);
+			return true;
+		}
+
+		@Override
+		public boolean deleteSurroundingText(int beforeLength, int afterLength)
+		{
+			if(!Enabled){
+				//没有启用输入，直接返回
+				return true;
+			}
+			
+			//准备删除字符
+			int len = mText.length();
+			int start = getSelectionEnd();
+			int end = getSelectionEnd();
+			
+			//删除范围内的字符
+			beforeLength = beforeLength>start ? start:beforeLength;
+			afterLength = end+afterLength>len ? len-end:afterLength;
+			mText.delete(start-beforeLength,end+afterLength);
+			return true;
+		}
+
+		@Override
+		public boolean commitCompletion(CompletionInfo text)
+		{
+			//用户选择了输入法的提示栏的一个单词，我们需要获取并插入
+			return commitText(text.getText(),0);
+		}
+
+		@Override
+		public Editable getEditable()
+		{
+			return mText;
+		}
+
+	}
+	
+	
+	public void setInputEnabled(boolean Enabled){
+		mInput.Enabled = Enabled;
 	}
 
 	final public static void openInputor(final Context context, final View editText)
@@ -137,114 +226,7 @@ _______________________________________
 		InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
 	}
-
-
-	/* 获取输入，并自动修改文本，当文本变化时会触发onTextChanged */
-	final private class myInput extends BaseInputConnection
-	{
-
-		private boolean Enabled = true;
-
-		public myInput(View v,boolean is){
-			super(v,is);
-		}
-
-		@Override
-		public boolean sendKeyEvent(KeyEvent event)
-		{
-			//手指抬起
-			return true;
-		}
-
-		@Override
-		public boolean commitText(CharSequence text, int newCursorPosition)
-		{
-			if(!Enabled){
-				//没有启用输入，直接返回
-				return true;
-			}
-			
-			//提交缓冲区内的文本
-			int start = getSelectionStart();
-			mText.insert(start,text);
-			return true;
-		}
-
-		@Override
-		public boolean deleteSurroundingText(int beforeLength, int afterLength)
-		{
-
-			if(!Enabled){
-				//没有启用输入，直接返回
-				return true;
-			}
-			
-			//准备删除字符
-			/*
-			int start = getSelectionStart();
-			if(start-beforeLength<0){
-				beforeLength = start;
-				start = 0;
-			}
-			mText.delete(start,start+beforeLength);
-			*/
-			return true;
-		}
-
-		@Override
-		public boolean finishComposingText()
-		{
-			//组合文本
-			return true;
-		}
-
-	}
-
 	
-	protected void sendBeforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
-		if(mTextListener!=null){
-			mTextListener.beforeTextChanged(text,start,lenghtBefore,lengthAfter);
-		}
-		beforeTextChanged(text,start,lenghtBefore,lengthAfter);
-	}
-	protected void sendOnTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
-		if(mTextListener!=null){
-			mTextListener.onTextChanged(text,start,lenghtBefore,lengthAfter);
-		}
-		onTextChanged(text,start,lenghtBefore,lengthAfter);
-	}
-	protected void sendAfterTextChanged(Editable p1)
-	{
-		if(mTextListener!=null){
-			mTextListener.afterTextChanged(p1);
-		}
-		afterTextChanged(p1);
-	}
-
-	@Override
-	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		//文本变化了，设置光标位置
-		int index = 0;
-		if(lenghtBefore!=0){
-			index = start-lenghtBefore;
-		}
-		if(lengthAfter!=0){
-			index = start+lengthAfter;
-		}
-		setSelection(index,index);
-	}
-	
-	@Override
-	public void beforeTextChanged(CharSequence p1, int start, int lenghtBefore, int lengthAfter){}
-	
-	@Override
-	public void afterTextChanged(Editable p1){}
-
 
 /*
  ______________________________________________________________________________
@@ -292,7 +274,6 @@ _______________________________________
 		{
 			int before = end-start;
 			int after = tbend-tbstart;
-			Log.w("replace(start,end,tb,tstart,tend)","文本即将变化");
 			
 			//文本变化前
 			sendBeforeTextChanged(this,start,before,after);
@@ -316,7 +297,6 @@ _______________________________________
 				invalidate();
 			}
 		}
-
 		@Override
 		public void removeSpan(Object what)
 		{
@@ -325,7 +305,6 @@ _______________________________________
 				invalidate();
 			}
 		}
-
 		@Override
 		public void clearSpans()
 		{
@@ -337,6 +316,7 @@ _______________________________________
 	
 	}
 	
+	
 	public void beginBatchEdit(){
 		mText.beginBatchEdit=true;
 	}
@@ -344,6 +324,51 @@ _______________________________________
 		mText.beginBatchEdit=false;
 		invalidate();
 	}
+	
+	public void setTextChangeListener(TextWatcher li){
+		mTextListener = li;
+	}
+	
+	protected void sendBeforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
+		if(mTextListener!=null){
+			mTextListener.beforeTextChanged(text,start,lenghtBefore,lengthAfter);
+		}
+		beforeTextChanged(text,start,lenghtBefore,lengthAfter);
+	}
+	protected void sendOnTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
+		if(mTextListener!=null){
+			mTextListener.onTextChanged(text,start,lenghtBefore,lengthAfter);
+		}
+		onTextChanged(text,start,lenghtBefore,lengthAfter);
+	}
+	protected void sendAfterTextChanged(Editable p1)
+	{
+		if(mTextListener!=null){
+			mTextListener.afterTextChanged(p1);
+		}
+		afterTextChanged(p1);
+	}
+
+	@Override
+	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		//文本变化了，设置光标位置
+		int index = start;
+		if(lengthAfter!=0){
+			index = start+lengthAfter;
+		}
+		setSelection(index,index);
+	}
+
+	@Override
+	public void beforeTextChanged(CharSequence p1, int start, int lenghtBefore, int lengthAfter){}
+
+	@Override
+	public void afterTextChanged(Editable p1){}
 
 	
 /*
@@ -381,14 +406,16 @@ _______________________________________
 		Rect rect = new Rect();
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
-		range[] spanRanges;
+		int[] spanStarts, spanEnds;
 		
 		//记录一些属性，用于draw
+		Paint.FontMetrics font = new Paint.FontMetrics();
 		float cursorWidth = 0.1f;
-		float lineSpacing = 1.2f;
+		float lineSpacing = 1.1f;
 		int lineCount=1, maxWidth;
 		boolean NeddMeasureAll;
 	
+		
 		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
 			super(base,paint,width,align,spacingmult,spacingadd);
 		}
@@ -477,24 +504,21 @@ _______________________________________
 			tmp2.set(tmp);
 
 			//我们只能管理CharacterStyle及其子类的span，抱歉
-			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-			float ascent = fontMetrics.ascent;  //根据y坐标计算文本基线坐标
+			paint.getFontMetrics(font);
+			float ascent = font.ascent;  //根据y坐标计算文本基线坐标
 			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
 
 			//getSpans的Span不保证顺序，因此需要获取每个Span的范围
-			spanRanges = spanRanges==null||spanRanges.length<spans.length ? new range[spans.length] : spanRanges;
+			spanStarts = spanStarts==null||spanStarts.length<spans.length ? new int[spans.length] : spanStarts;
+			spanEnds = spanEnds==null||spanEnds.length<spans.length ? new int[spans.length] : spanEnds;
 			for(int i=0;i<spans.length;++i)
 			{
-				if(spanRanges[i]==null){
-					spanRanges[i] = new range();
-				}
-				range range = spanRanges[i];
-				range.start = spanString.getSpanStart(spans[i]);
-				range.end = spanString.getSpanEnd(spans[i]);
+				spanStarts[i] = spanString.getSpanStart(spans[i]);
+				spanEnds[i] = spanString.getSpanEnd(spans[i]);
 			}
 
 			//绘制背景的Span
-			onDrawBackground(spanString,text,start,end,spans,spanRanges,0,lineHeight,tmp2,canvas,paint,See);
+			onDrawBackground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp2,canvas,paint,See);
 
 			//重置画笔绘制文本
 			reSetPaint(paint);
@@ -504,13 +528,13 @@ _______________________________________
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,paint,See);
 
 			//绘制前景的Span
-			onDrawForeground(spanString,text,start,end,spans,spanRanges,0,lineHeight,tmp,canvas,paint,See);	
+			onDrawForeground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp,canvas,paint,See);	
 			reSetPaint(paint);
 			//绘制完成了，重置画笔待下次绘制
 		}
 
 		/* 在绘制文本前绘制背景 */
-		protected void onDrawBackground(Spanned spanString, String text,int start, int end, Object[] spans, range[] spanRanges, float leftPadding, float lineHeight, pos tmp,Canvas canvas, TextPaint paint, RectF See)
+		protected void onDrawBackground(Spanned spanString, String text,int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp,Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
 			//pos tmp = null;
@@ -523,8 +547,8 @@ _______________________________________
 				{
 					//只绘制背景
 					BackgroundColorSpan span = (BackgroundColorSpan) spans[i];
-					start = spanRanges[i].start;
-					end = spanRanges[i].end;
+					start = spanStarts[i];
+					end = spanEnds[i];
 					start = start<s ? s:start;
 					end = end>e ? e:end;
 					//超出范围的内容不绘制
@@ -552,7 +576,7 @@ _______________________________________
 		}
 
 		/* 在绘制文本后绘制前景 */
-		protected void onDrawForeground(Spanned spanString, String text, int start, int end, Object[] spans, range[] spanRanges, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
+		protected void onDrawForeground(Spanned spanString, String text, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
 			//pos tmp = null;
@@ -567,8 +591,8 @@ _______________________________________
 				{
 					//不绘制背景
 					CharacterStyle span = (CharacterStyle) spans[i];
-					start = spanRanges[i].start;
-					end = spanRanges[i].end;
+					start = spanStarts[i];
+					end = spanEnds[i];
 					start = start<s ? s:start;
 					end = end>e ? e:end;
 					//超出范围的内容不绘制
@@ -989,7 +1013,7 @@ _______________________________________
 			int start = getLineStart(line);
 			int end = tryLine_End(mText.toString(),start);
 			float width = 0;
-			measureText(mText,start,end,mPaint);
+			mPaint.getTextWidths(mText,start,end,widths);
 			for(;start<end;++start)
 			{
 				if(width>=horiz){
@@ -1008,7 +1032,9 @@ _______________________________________
 		/* 获取行高 */
 		public float getLineHeight()
 		{
-			return mPaint.getTextSize()*lineSpacing;
+			mPaint.getFontMetrics(font);
+			float height = font.bottom-font.top;
+			return height*lineSpacing;
 		}
 		/* 获取指定行的起始下标 */
 		@Override
@@ -1203,8 +1229,7 @@ _______________________________________
 	{
 		int lines = mLayout.getLineForVertical((int)y);
 		int count = mLayout.getOffsetForHorizontal(lines,x);
-		int start = mLayout.getLineStart(lines);
-		return start+count;
+		return count;
 	}
 
 
@@ -1265,8 +1290,13 @@ ________________________________________
 		class DefaultDrawable extends Drawable
 		{
 			@Override
-			public void draw(Canvas p1){
-				p1.drawColor(0x50dddddd);
+			public void draw(Canvas p1)
+			{
+				if(mCursorGlintTime==0){
+					mCursorGlintTime = 5;
+				}
+				p1.drawColor(0x50ffffff);
+				--mCursorGlintTime;
 			}
 
 			@Override
@@ -1284,7 +1314,7 @@ ________________________________________
 
 	public void setSelection(int start, int end){
 		mCursor.setSelection(start,end);
-		mInput.setSelection(start,end);
+		//mInput.setSelection(start,end);
 	}
 	public int getSelectionStart(){
 		return mCursor.selectionStart;
@@ -1319,9 +1349,10 @@ _______________________________________
 	@Override
 	public boolean performClick()
 	{
-		//int offset = getOffsetForPosition((int)mTouch.lastX,(int)mTouch.lastY);
-		//setselection(offset,offset);
-		//openInputor(getContext(),this);
+		int offset = getOffsetForPosition((int)mTouch.nowX,(int)mTouch.nowY);
+		setSelection(offset,offset);
+		openInputor(getContext(),this);
+		invalidate();
 		return true;
 	}
 
