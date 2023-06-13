@@ -168,9 +168,10 @@ _______________________________________
 			}
 			
 			//根据要输入的文本，进行输入
-			int start = getSelectionStart();
-			int end = getSelectionEnd();
-			mText.replace(start,end,text);
+			mCursor.sendInputText(text,newCursorPosition,0,0);
+			//int start = getSelectionStart();
+			//int end = getSelectionEnd();
+			//mText.replace(start,end,text);
 			return true;
 		}
 
@@ -183,14 +184,15 @@ _______________________________________
 			}
 			
 			//准备删除字符
-			int len = mText.length();
-			int start = getSelectionStart();
-			int end = getSelectionEnd();
+			mCursor.sendInputText(null,0,beforeLength,afterLength);
+			//int len = mText.length();
+			//int start = getSelectionStart();
+			//int end = getSelectionEnd();
 			
 			//删除范围内的字符
-			beforeLength = beforeLength>start ? start:beforeLength;
-			afterLength = end+afterLength>len ? len-end:afterLength;
-			mText.delete(start-beforeLength,end+afterLength);
+			//beforeLength = beforeLength>start ? start:beforeLength;
+			//afterLength = end+afterLength>len ? len-end:afterLength;
+			//mText.delete(start-beforeLength,end+afterLength);
 			return true;
 		}
 
@@ -345,7 +347,8 @@ _______________________________________
 	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		//如果没有启用批量编辑
-		if(mText.beginBatchEdit==0){
+		if(mText.beginBatchEdit==0)
+		{
 			//然后我们计算大小
 		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
 		}
@@ -1263,7 +1266,7 @@ _______________________________________
 /*
 ________________________________________
 
- 将所有操作交还光标自己，以便实现多光标，但我太懒了
+ 将所有操作交还光标自己，以便实现多光标，但我太懒了，所以就这样吧
  
 ________________________________________
 */
@@ -1271,23 +1274,38 @@ ________________________________________
 	/* 光标 */
 	final private class Cursor 
 	{
-		public float x,y;
 		public int mCursorGlintTime = 5;
+		public pos startPos, endPos;
 		public int selectionStart,selectionEnd;
 		public Drawable mDrawable;
 		public Path mCursorPath;
 		public Cursor next;
 
-		Cursor(){
+		Cursor()
+		{
 			mDrawable = new DefaultDrawable();
 			mCursorPath = new Path();
+			startPos = new pos();
+			endPos = new pos();
 		}
 
 		public void setSelection(int start,int end)
 		{
+			//String text = mText.toString();
+			//mLayout.nearOffsetPos(text,selectionStart,startPos.x,startPos.y,start,startPos);
+			//mLayout.nearOffsetPos(text,selectionEnd,endPos.x,endPos.y,start,endPos);
 			selectionStart = start;
 			selectionEnd = end;
 			onSelectionChanged(start,end);
+		}
+		public void setPos(float x, float y, float x2, float y2)
+		{
+			//String text = mText.toString();
+			//selectionStart = mLayout.nearPosOffset(text,selectionStart,startPos.x,startPos.y,x,y);
+			//selectionEnd = mLayout.nearPosOffset(text,selectionEnd,endPos.x,endPos.y,x2,y2);
+			startPos.set(x,y);
+			endPos.set(x2,y2);
+			onSelectionChanged(selectionStart,selectionEnd);
 		}
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
@@ -1300,6 +1318,29 @@ ________________________________________
 				next.sendInputText(text,start,before,after);
 			}
 			next = save;
+			if(text!=null){
+				mText.replace(selectionStart,selectionEnd,text);
+			}
+			else if(before>0 || after>0)
+			{
+				int len = mText.length();
+				before = before>selectionStart ? selectionStart:before;
+				after = selectionEnd+after>len ? len-selectionEnd:after;
+				mText.delete(selectionStart-before,selectionEnd+after);
+			}
+		}
+		
+		public int getSelectionStart(){
+			return selectionStart;
+		}
+		public int getSelectionEnd(){
+			return selectionEnd;
+		}
+		public pos getStartPos(){
+			return startPos;
+		}
+		public pos getEndPos(){
+			return endPos;
 		}
 		
 		public void draw(Canvas canvas){
@@ -1325,7 +1366,12 @@ ________________________________________
 				if(mCursorGlintTime==0){
 					mCursorGlintTime = 5;
 				}
-				p1.drawColor(0x50ffffff);
+				if(selectionStart==selectionEnd){
+				    p1.drawColor(0xea99c8ea);
+				}
+				else{
+					p1.drawColor(0x5099c8ea);
+				}
 				--mCursorGlintTime;
 			}
 
@@ -1337,7 +1383,7 @@ ________________________________________
 
 			@Override
 			public int getOpacity(){
-				return 0;
+				return 1;
 			}
 		}
 	}
@@ -1360,7 +1406,32 @@ ________________________________________
 	public void removeCursor(){}
 	
 	
-	protected void onSelectionChanged(int start, int end){}
+	protected void onSelectionChanged(int start, int end)
+	{
+		//光标移动到超出范围的地方，需要滚动视图
+		int x = getScrollX();
+		int y = getScrollY();
+		int width = getWidth();
+		int height = getHeight();
+		pos s = getCursorPos(start);
+		pos e = getCursorPos(end);
+		int tox = x;
+		int toy = y;
+		
+		if(s.x<x){
+			tox = (int) s.x;
+		}
+		if(s.y<y){
+			toy = (int) s.y;
+		}
+		if(e.x>x+width){
+			tox = (int) e.x-width;
+		}
+		if(e.y>y+height){
+			toy = (int) e.y-height;
+		}
+		scrollTo(tox,toy);
+	}
 	
 
 /*
@@ -1379,6 +1450,7 @@ _______________________________________
 	/* 第二个指针的id和坐标 */
 	private int id2;
 	private float lastX2,lastY2,nowX2,nowY2;
+	private static final int MaxSlop = 15;
 	
 	/* 指示下次干什么 */
 	private byte flag;
@@ -1403,7 +1475,7 @@ _______________________________________
 			id = event.getPointerId(0);
 			lastX=event.getX(0);
 			lastY=event.getY(0);
-			useFlag = 0;
+			useFlag = 0; //清除flag
 			return super.dispatchTouchEvent(event);	
 		}
 		else
@@ -1435,12 +1507,12 @@ _______________________________________
 		    float y = nowY-lastY;
 			
 			if ( (Math.abs(x) > Math.abs(y) 
-				  && ((h == Left && x > 15) 
-				  || (h == Right && x < -15)))
+				  && ((h == Left && x > MaxSlop) 
+				  || (h == Right && x < -MaxSlop)))
 			   || 
 				 (Math.abs(x) < Math.abs(y) 
-				  && ((v == Top && y > 15) 
-				  || (v == Bottom && y < -15)))){
+				  && ((v == Top && y > MaxSlop) 
+				  || (v == Bottom && y < -MaxSlop)))){
 				getParent().requestDisallowInterceptTouchEvent(false);
 			}
 			else{
@@ -1449,7 +1521,7 @@ _______________________________________
 			//手指倾向于x或y轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动
 			
 			consume = super.dispatchTouchEvent(event);
-			if(x>15 || x<-15 || y>15 || y<-15){
+			if(x>MaxSlop || x<-MaxSlop || y>MaxSlop || y<-MaxSlop){
 				//太大幅度的触摸应该判定为滑动，而不是点击或长按
 				useFlag = notClick;
 			}
@@ -1472,7 +1544,7 @@ _______________________________________
 				pos cursor = getCursorPos(getSelectionStart());
 				dx = Math.abs(lastX-cursor.x);
 				dy = Math.abs(lastY-cursor.y);
-				if(dx<15 || dy<15){
+				if(dx<MaxSlop || dy<MaxSlop){
 					//手指选中了光标
 					flag = MoveCursor;
 				}
@@ -1482,9 +1554,13 @@ _______________________________________
 				}
 				break;
 			case MotionEvent.ACTION_MOVE:	
-				if(event.getPointerCount()==2){
+				if(event.getPointerCount()==2)
+				{
 					//缩放自己
-					float scale = 0;
+					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
+					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
+					float scale = len/hlen;
+					// do thing
 					break;
 				}
 				dx = (nowX-lastX);
