@@ -397,7 +397,16 @@ _______________________________________
 		Rect rect = new Rect();
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
+		
+		//留给绘制Span的临时变量
+		//RectF See;
+		//Paint spanPaint;	
+		//float[] spanWidths;	
 		int[] spanStarts, spanEnds;
+		
+		//记录旧的光标位置，用于快速获取新的位置
+		//int cursorStart = 0, cursorEnd = 0;
+		//pos cursorStartPos = new pos(), cursorEndPos = new pos();
 		
 		//记录一些属性，用于draw
 		Paint.FontMetrics font = new Paint.FontMetrics();

@@ -17,31 +17,6 @@ public class StringSpiltor
 		}
 		return index;
 	}
-	public static int NIndex(String text,char c,int n,int hasCount)
-	{
-		int index=0;
-		if(n<hasCount/2)
-		{
-			while(n-->0){
-				index = text.indexOf(c,index);
-				if(index==-1||n<1)
-					break;
-				++index;
-			}
-		}
-		else
-		{
-			n = hasCount-n;
-			index = text.length()-1;
-			while(n-->0){
-				index = text.lastIndexOf(c,index);
-				if(index==-1||n<1)
-					break;
-				--index;
-			}
-		}
-		return index;
-	}
 	public static int Count(char want,String text,int index,int endIndex)
 	{
 		int count=0;
