@@ -420,10 +420,6 @@ _______________________________________
 		//float[] spanWidths;	
 		int[] spanStarts, spanEnds;
 		
-		//记录旧的光标位置，用于快速获取新的位置
-		//int cursorStart = 0, cursorEnd = 0;
-		//pos cursorStartPos = new pos(), cursorEndPos = new pos();
-		
 		//记录一些属性，用于draw
 		Paint.FontMetrics font = new Paint.FontMetrics();
 		float cursorWidth = 0.1f;
@@ -1043,7 +1039,10 @@ _______________________________________
 		@Override
 		public float getLineWidth(int line)
 		{
-			return measureText(mText.toString(),getLineStart(line),getLineEnd(line),mPaint);
+			String str = mText.toString();
+			int start = getLineStart(line); 
+			int end = tryLine_End(str,start);
+			return measureText(str,start,end,mPaint);
 		}
 		/* 获取行高 */
 		public float getLineHeight()
@@ -1215,6 +1214,18 @@ _______________________________________
 			}
 		}
 		
+		final private int nearPosOffset(String text,int oldOffset,float oldx, float oldy, float x, float y)
+		{
+			float dy = y - oldy;
+			if(dy<0){
+				
+			}
+			else if(dy>0){
+				
+			}
+			return 0;
+		}
+		
 	}
 	
 	
@@ -1252,7 +1263,7 @@ _______________________________________
 /*
 ________________________________________
 
- 将所有操作交还光标自己，以便实现多光标
+ 将所有操作交还光标自己，以便实现多光标，但我太懒了
  
 ________________________________________
 */
@@ -1260,6 +1271,7 @@ ________________________________________
 	/* 光标 */
 	final private class Cursor 
 	{
+		public float x,y;
 		public int mCursorGlintTime = 5;
 		public int selectionStart,selectionEnd;
 		public Drawable mDrawable;
@@ -1275,6 +1287,7 @@ ________________________________________
 		{
 			selectionStart = start;
 			selectionEnd = end;
+			onSelectionChanged(start,end);
 		}
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
@@ -1331,7 +1344,6 @@ ________________________________________
 
 	public void setSelection(int start, int end){
 		mCursor.setSelection(start,end);
-		//mInput.setSelection(start,end);
 	}
 	public int getSelectionStart(){
 		return mCursor.selectionStart;
@@ -1342,12 +1354,13 @@ ________________________________________
 	public void setCursorDrawable(Drawable draw){
 		mCursor.setDrawable(draw);
 	}
-	public void addCursor(){
-		
-	}
-	public void removeCursor(){
-		
-	}
+	
+	public void addCursor(){}
+	
+	public void removeCursor(){}
+	
+	
+	protected void onSelectionChanged(int start, int end){}
 	
 
 /*
@@ -1363,6 +1376,10 @@ _______________________________________
 	private float lastX,lastY,nowX,nowY;
 	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
+	/* 第二个指针的id和坐标 */
+	private int id2;
+	private float lastX2,lastY2,nowX2,nowY2;
+	
 	/* 指示下次干什么 */
 	private byte flag;
 	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
@@ -1370,6 +1387,9 @@ _______________________________________
 	/* 指示能做什么事 */
 	private byte useFlag;
 	private static final byte notClick = 1;
+	
+	/* 长按产生的锚点 */
+	private int cursorStart;
 	
 	
 	/* 分发事件，根据情况舎弃事件 */
@@ -1400,6 +1420,12 @@ _______________________________________
 			{
 				//缩放手势，父元素一定不能拦截我
 				getParent().requestDisallowInterceptTouchEvent(true);
+				//开始记录第二个手指的坐标
+				index = index==0 ? 1:0;
+				lastX2=nowX2;
+				lastY2=nowY2;
+				nowX2=event.getX(index);
+			    nowY2=event.getY(index);
 				return super.dispatchTouchEvent(event);	
 			}
 			
@@ -1458,6 +1484,7 @@ _______________________________________
 			case MotionEvent.ACTION_MOVE:	
 				if(event.getPointerCount()==2){
 					//缩放自己
+					float scale = 0;
 					break;
 				}
 				dx = (nowX-lastX);
@@ -1476,13 +1503,13 @@ _______________________________________
 					//开始选择
 					case Selected:
 						offset = getOffsetForPosition(nowX,nowY);
-						int start = getSelectionStart();
-						int end = getSelectionEnd();
-						if(offset>start){
-						    setSelection(start,offset);
+						if(offset>cursorStart){
+							//手指滑动到锚点后
+						    setSelection(cursorStart,offset);
 						}
-						else{
-							setSelection(offset,end);
+						else if(offset<cursorStart){
+							//手指滑动到锚点前
+							setSelection(offset,cursorStart);
 						}
 						break;
 				}
@@ -1504,9 +1531,11 @@ _______________________________________
 		{
 		    int offset = getOffsetForPosition(nowX,nowY);
 			if(offset>=getSelectionStart()&&offset<=getSelectionEnd()){
+				//如果点击了被选择的区域，我们认为用户要删除这块文本
 				openInputor(getContext(),this);
 			}
 			else{
+				//否则设置光标位置
 		        setSelection(offset,offset);
 			}
 		}
@@ -1519,6 +1548,8 @@ _______________________________________
 		//长按触发选择
 		if(useFlag!=notClick){
 	        flag = Selected;
+			cursorStart = getOffsetForPosition(nowX,nowY);
+			//记录锚点
 		}
 		return super.performLongClick();
 	}

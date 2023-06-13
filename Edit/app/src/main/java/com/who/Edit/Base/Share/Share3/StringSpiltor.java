@@ -17,6 +17,16 @@ public class StringSpiltor
 		}
 		return index;
 	}
+	public static int lastNIndex(char c,String text,int index,int n)
+	{
+		while(n-->0){
+		    index = text.lastIndexOf(c,index);
+			if(index==-1||n<1)
+				break;
+			--index;
+		}
+		return index;
+	}
 	public static int Count(char want,String text,int index,int endIndex)
 	{
 		int count=0;
