@@ -6,7 +6,7 @@ import android.view.View.*;
 public abstract class onTouchToZoom implements OnTouchListener 
 {
 
-	public int id1,id2,index1,index2;
+	public int id1,id2;
 	public float hp1x,hp1y,hp2x,hp2y;
 	public float p1x,p1y,p2x,p2y;
 	public float len,hlen;
@@ -19,7 +19,8 @@ public abstract class onTouchToZoom implements OnTouchListener
 		float bili = 1;
 	    if (p2.getPointerCount() == 2)
 		{
-			if(p2.getHistorySize()==0){
+			if(p2.getHistorySize()==0)
+			{
 				//初始化
 				id1=p2.getPointerId(0);
 				id2=p2.getPointerId(1);
@@ -30,7 +31,9 @@ public abstract class onTouchToZoom implements OnTouchListener
 				hlen = (float)(Math.pow(hp1x-hp2x,2)+Math.pow(hp1y-hp2y,2));
 				//原两点间的距离
 			}
-			else{
+			else
+			{
+				int index1,index2;
 				index1=p2.findPointerIndex(id1);
 				index2=p2.findPointerIndex(id2);
 				//原来的手指上升了，切换为新的手指
@@ -63,6 +66,22 @@ public abstract class onTouchToZoom implements OnTouchListener
 
 	public float Iszoom(){
 		return len/hlen;
+	}
+	
+	public void clear()
+	{
+		hp1x=1;
+		hp1y=1;
+		hp2x=1;
+		hp2y=1;
+		p1x=1;
+		p1y=1;
+		p2x=1;
+		p2y=1;
+		len=1;
+		hlen=1;
+		id1=0;
+		id2=0;
 	}
 
 	/* 未预料的缩放，在多个手指时下标会出现异常 */

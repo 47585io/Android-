@@ -34,6 +34,7 @@ public class Edit extends View implements TextWatcher
 	private EditTouch mTouch;
 	private EditZoom mZoom;
 
+	
 	public Edit(Context cont)
 	{
 		super(cont);
@@ -108,6 +109,7 @@ public class Edit extends View implements TextWatcher
 _______________________________________
 
 当输入事件到来，我们修改文本
+
 _______________________________________ 
 */
 
@@ -202,12 +204,14 @@ _______________________________________
 		@Override
 		public Editable getEditable()
 		{
-			return mText;
+			//不允许输入法修改我们的mText(即使会损失某些功能)
+			return null;
 		}
 
 	}
 	
 	
+	/* 是否启用输入 */
 	public void setInputEnabled(boolean Enabled){
 		mInput.Enabled = Enabled;
 	}
@@ -245,7 +249,7 @@ _______________________________________
 	 
  ______________________________________________________________________________
  
- 对文本容器的Span进行修改，会立即刷新，设置beginBatchEdit可以控制刷新
+ 对文本容器的Span进行修改，不会立即刷新，您可以调用invalidate手动刷新
  
  setSpan，removeSpan，clearSpans都是各自独立的，不会互相调用
  
@@ -256,7 +260,7 @@ _______________________________________
     final private class myText extends SpannableStringBuilder
 	{
 		
-		private boolean beginBatchEdit;
+		private int beginBatchEdit=0;
 		
 		public myText(){
 			super();
@@ -280,7 +284,7 @@ _______________________________________
 			SpannableStringBuilder b = super.replace(start, end, tb, tbstart, tbend);
 			//文本变化后
 			sendOnTextChanged(this,start,before,after);
-			if(!beginBatchEdit){
+			if(beginBatchEdit==0){
 				//没有批量编辑，默认刷新
 				invalidate();
 			}
@@ -288,40 +292,21 @@ _______________________________________
 			sendAfterTextChanged(this);
 			return b;
 		}
-
-		@Override
-		public void setSpan(Object what, int start, int end, int flags)
-		{
-			super.setSpan(what, start, end, flags);
-			if(!beginBatchEdit){
-				invalidate();
-			}
-		}
-		@Override
-		public void removeSpan(Object what)
-		{
-			super.removeSpan(what);
-			if(!beginBatchEdit){
-				invalidate();
-			}
-		}
-		@Override
-		public void clearSpans()
-		{
-			super.clearSpans();
-			if(!beginBatchEdit){
-				invalidate();
-			}
-		}
 	
 	}
 	
 	
-	public void beginBatchEdit(){
-		mText.beginBatchEdit=true;
+	/* 开启一次批量编辑以指示暂时不要刷新 */
+	public void beginBatchEdit()
+	{
+		++mText.beginBatchEdit;
 	}
-	public void endBatchEdit(){
-		mText.beginBatchEdit=false;
+	/* 关闭上次的批量编辑并立即刷新一次 */
+	public void endBatchEdit()
+	{
+		if(mText.beginBatchEdit>0){
+		    --mText.beginBatchEdit;
+		}
 		invalidate();
 	}
 	
@@ -329,6 +314,7 @@ _______________________________________
 		mTextListener = li;
 	}
 	
+	/* 发送文本事件 */
 	protected void sendBeforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
@@ -375,21 +361,26 @@ _______________________________________
  _______________________________________
 
  每次onDraw时会调用Layout绘制文本和光标
+ 
  _______________________________________
 */
 
-    /* onDraw是View绘制的第二步，第一步是drawBackground，但无法重写 */
 	@Override
-	protected void onDraw(Canvas canvas)
+	public void draw(Canvas canvas)
 	{
-		//在第二步的绘制时，就使用clipRect放弃绘制可视范围外的内容，节省绘制时间
+		//在开始绘制时，就使用clipRect放弃绘制可视范围外的内容，节省绘制时间
 		float left = getScrollX();
 		float top = getScrollY();
 		float right = left+getWidth();
 		float bottom = top+getHeight();
 		canvas.clipRect(left,top,right,bottom);
-		//在clipRect后，进行之后的绘制，并且之后绘制的第三，四，五，六步也会生效
-
+		//在clipRect后，进行之后的绘制
+		super.draw(canvas);
+	}
+	
+	@Override
+	protected void onDraw(Canvas canvas)
+	{
 		Path path = mCursor.getCursorPath();
 		//获取光标或选择范围的路径
 		mLayout.draw(canvas,path,mPaint,0);	
@@ -500,7 +491,7 @@ _______________________________________
 			//重新计算位置
 			pos tmp = this.tmp;
 			pos tmp2 = this.tmp2;
-			getCursorPos(text,start,tmp);
+			tmp.set(0,startLine*lineHeight);
 			tmp2.set(tmp);
 
 			//我们只能管理CharacterStyle及其子类的span，抱歉
@@ -692,7 +683,7 @@ _______________________________________
 				//从上次的位置开始，继续向后遍历每个字符
 				for(;i<count;++i)
 				{
-					if(w>See.right){
+					if(w>=See.right){
 						//如果已经到达了可视区域右边，已经可以确定这行末尾下标和坐标了
 						break;
 					}
@@ -885,7 +876,7 @@ _______________________________________
 				}
 
 				//如果删除字符串比当前的maxWidth还宽，重新测量全部文本，找到最大的
-				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+count),getPaint());
+				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+count),mPaint);
 				if(width>=maxWidth){
 					setNeedMeasureAllText(true);
 				}
@@ -897,7 +888,7 @@ _______________________________________
 		{
 			boolean need = true;
 			String text = str.toString();	
-			TextPaint paint = getPaint();
+			TextPaint paint = mPaint;
 			if(needMeasureAllText())
 			{
 				//需要测量全部文本找到剩下的最大宽度
@@ -1237,6 +1228,7 @@ _______________________________________
 ________________________________________
 
  将所有操作交还光标自己，以便实现多光标
+ 
 ________________________________________
 */
 
@@ -1336,6 +1328,7 @@ ________________________________________
 _______________________________________
 
  当视图被触摸，我们尝试滚动它，当双指触摸，尝试缩放它
+ 
 _______________________________________
 */
 
@@ -1349,10 +1342,10 @@ _______________________________________
 	@Override
 	public boolean performClick()
 	{
-		int offset = getOffsetForPosition((int)mTouch.nowX,(int)mTouch.nowY);
-		setSelection(offset,offset);
-		openInputor(getContext(),this);
-		invalidate();
+		//int offset = getOffsetForPosition((int)mTouch.nowX,(int)mTouch.nowY);
+		//setSelection(offset,offset);
+		//openInputor(getContext(),this);
+		//invalidate();
 		return true;
 	}
 
@@ -1408,7 +1401,7 @@ _______________________________________
 				scaleX*=0.98;
 				scaleY*=0.98;
 			}
-			//mPaint.setTextSize(mPaint.getTextSize()*scaleX);
+			copyPaint.setTextSize(copyPaint.getTextSize()*scaleX);
 			return true;
 		}	
 	}
