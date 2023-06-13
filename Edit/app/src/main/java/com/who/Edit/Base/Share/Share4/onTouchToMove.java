@@ -15,34 +15,27 @@ public abstract class onTouchToMove implements OnTouchListener
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
 		boolean consume = true;
-		calc(p2);
-		consume = sendMovePos(p1,p2,nowX-lastX,nowY-lastY);
-		save(p2);
-		return consume;
-	}
-	
-	public void calc(MotionEvent p2)
-	{
-		if(p2.getActionMasked()==MotionEvent.ACTION_DOWN){
+		int action = p2.getActionMasked();
+		if(action==MotionEvent.ACTION_DOWN)
+		{
 			id = p2.getPointerId(0);
 			lastX=p2.getX(0);
 			lastY=p2.getY(0);
 		}
-		else if(p2.getHistorySize()>0){
+		else
+		{
 			int index = p2.findPointerIndex(id);
-			if(index!=-1){
+			if(index!=-1)
+			{
 			    nowX=p2.getX(index);
 			    nowY=p2.getY(index);
+				consume = sendMovePos(p1,p2,nowX-lastX,nowY-lastY);
+				lastX=nowX;
+				lastY=nowY;
 			}
 			//手指上升了，就不能移动了
 		}
-	}
-	public void save(MotionEvent p2)
-	{
-		if(p2.getHistorySize()>0){	
-		    lastX=nowX;
-		    lastY=nowY;
-		}
+		return consume;
 	}
 
 	public float MoveX(){

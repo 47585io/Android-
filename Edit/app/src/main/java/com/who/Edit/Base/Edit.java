@@ -260,7 +260,7 @@ _______________________________________
     final private class myText extends SpannableStringBuilder
 	{
 		
-		private int beginBatchEdit=0;
+		private int beginBatchEdit = 0;
 		
 		public myText(){
 			super();
@@ -342,6 +342,16 @@ _______________________________________
 	}
 
 	@Override
+	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		//如果没有启用批量编辑
+		if(mText.beginBatchEdit==0){
+			//然后我们计算大小
+		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
+		}
+	}
+	
+	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		//如果没有启用批量编辑
@@ -356,16 +366,6 @@ _______________________________________
 			
 			//然后我们计算大小
 			mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
-		}
-	}
-
-	@Override
-	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		//如果没有启用批量编辑
-		if(mText.beginBatchEdit==0){
-			//然后我们计算大小
-		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
 		}
 	}
 
@@ -954,11 +954,11 @@ _______________________________________
 			lineCount = StringSpiltor.Count(FN,mText.toString(),0,mText.length());
 			maxWidth = (int) getDesiredWidth(mText,mPaint);
 		}
-		public void setNeedMeasureAllText(boolean is)
+		private void setNeedMeasureAllText(boolean is)
 		{
 			NeddMeasureAll = is;
 		}
-		public boolean needMeasureAllText()
+		private boolean needMeasureAllText()
 		{
 			return NeddMeasureAll;
 		}
@@ -1348,6 +1348,7 @@ ________________________________________
 	public void removeCursor(){
 		
 	}
+	
 
 /*
 _______________________________________
@@ -1357,21 +1358,174 @@ _______________________________________
 _______________________________________
 */
 
+    /* 关键指针的id和坐标 */
+    private int id;
+	private float lastX,lastY,nowX,nowY;
+	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
+	
+	/* 指示下次干什么 */
+	private byte flag;
+	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
+
+	
+	/* 分发事件，根据情况舎弃事件 */
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent event)
+	{
+		boolean consume = true;
+		if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
+		{
+			//第一次还需要记录id
+			id = event.getPointerId(0);
+			lastX=event.getX(0);
+			lastY=event.getY(0);
+			return super.dispatchTouchEvent(event);	
+		}
+		else
+		{
+			//获取坐标，手指上升了，就不能移动了
+			int index = event.findPointerIndex(id);
+			if(index!=-1)
+			{
+			    nowX=event.getX(index);
+			    nowY=event.getY(index);
+			}
+			
+			if(event.getPointerCount()==2)
+			{
+				//缩放手势，父元素一定不能拦截我
+				getParent().requestDisallowInterceptTouchEvent(true);
+				return super.dispatchTouchEvent(event);	
+			}
+			
+		    int h = isScrollToEdgeH();
+			int v = isScrollToEdgeV();
+		    float x = nowX-lastX;
+		    float y = nowY-lastY;
+			
+			if ( (Math.abs(x) > Math.abs(y) 
+				  && ((h == Left && x > 15) 
+				  || (h == Right && x < -15)))
+			   || 
+				 (Math.abs(x) < Math.abs(y) 
+				  && ((v == Top && y > 15) 
+				  || (v == Bottom && y < -15)))){
+				getParent().requestDisallowInterceptTouchEvent(false);
+			}
+			else{
+				getParent().requestDisallowInterceptTouchEvent(true);
+			}
+			//手指倾向于x或y轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动
+			
+			consume = super.dispatchTouchEvent(event);
+			lastX=nowX;
+			lastY=nowY;
+			//在执行完操作后保存坐标
+		}
+		return consume;
+	}
+	
+	/* 消耗事件，根据flag来做事 */
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{
-		super.onTouchEvent(event);
-		return mTouch.onTouch(this,event) && mZoom.onTouch(this,event);
+		float dx, dy;
+		int action = event.getActionMasked();
+		switch(action)
+		{
+			case MotionEvent.ACTION_DOWN:	
+				pos cursor = getCursorPos(0);
+				dx = Math.abs(lastX-cursor.x);
+				dy = Math.abs(lastY-cursor.y);
+				if(dx<15 || dy<15){
+					//手指选中了光标
+					flag = MoveCursor;
+				}
+				else{
+					//手指选中了自己
+					flag = MoveSelf;
+				}
+				break;
+			case MotionEvent.ACTION_MOVE:	
+				if(event.getPointerCount()==2){
+					//缩放自己
+					break;
+				}
+				dx = (nowX-lastX);
+				dy = (nowY-lastY);
+				switch(flag)
+				{
+					//滚动自己
+					case MoveSelf:			
+						scrollBy(-(int)dx,-(int)dy);
+						break;
+					//移动光标
+					case MoveCursor:
+						int offset = getOffsetForPosition(nowX,nowY);
+						setSelection(offset,offset);
+						break;
+					//开始选择
+					case Selected:
+						offset = getOffsetForPosition(nowX,nowY);
+						setSelection(getSelectionStart(),offset);
+						break;
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				flag = -1;
+				//清除flag
+				break;
+		}
+		return super.onTouchEvent(event);
 	}
-
+	
 	@Override
 	public boolean performClick()
 	{
-		//int offset = getOffsetForPosition((int)mTouch.nowX,(int)mTouch.nowY);
-		//setSelection(offset,offset);
+		//点击移动光标
+		int offset = getOffsetForPosition(nowX,nowY);
+		setSelection(offset,offset);
 		//openInputor(getContext(),this);
-		//invalidate();
+		invalidate();
 		return true;
+	}
+	
+	@Override
+	public boolean performLongClick()
+	{
+		//长按触发选择
+	    //flag = Selected;
+		return super.performLongClick();
+	}
+
+	
+	public int isScrollToEdgeH()
+	{
+		int x = getScrollX();
+		int r = mLayout.maxWidth;
+		int w = getWidth();
+		
+		if (x == 0){
+			return Left;
+		}
+		else if (x + w >= r){
+			return Right;
+		}
+		return -1;
+	}
+	public int isScrollToEdgeV()
+	{
+		int y = getScrollY();
+		int b = mLayout.getHeight();
+		int h = getHeight();
+
+		if(y == 0){
+			return Top;
+		}
+		else if(y + h >= b){
+			return Bottom;
+		}
+		return -1;
 	}
 
 	@Override
@@ -1393,12 +1547,7 @@ _______________________________________
 		@Override
 		public boolean sendMovePos(View v, MotionEvent event, float dx, float dy)
 		{
-			float x = getScrollX();
-			float y = getScrollY();
-			
-			if(event.getHistorySize()!=0){
-			    v.scrollBy((int)-dx,(int)-dy);
-			}
+			v.scrollBy((int)-dx,(int)-dy);
 			return true;
 		}
 
@@ -1426,7 +1575,7 @@ _______________________________________
 				scaleX*=0.98;
 				scaleY*=0.98;
 			}
-			copyPaint.setTextSize(copyPaint.getTextSize()*scaleX);
+			//copyPaint.setTextSize(copyPaint.getTextSize()*scaleX);
 			return true;
 		}	
 	}
