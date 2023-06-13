@@ -1366,7 +1366,11 @@ _______________________________________
 	/* 指示下次干什么 */
 	private byte flag;
 	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
-
+	
+	/* 指示能做什么事 */
+	private byte useFlag;
+	private static final byte notClick = 1;
+	
 	
 	/* 分发事件，根据情况舎弃事件 */
 	@Override
@@ -1379,6 +1383,7 @@ _______________________________________
 			id = event.getPointerId(0);
 			lastX=event.getX(0);
 			lastY=event.getY(0);
+			useFlag = 0;
 			return super.dispatchTouchEvent(event);	
 		}
 		else
@@ -1418,6 +1423,10 @@ _______________________________________
 			//手指倾向于x或y轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动
 			
 			consume = super.dispatchTouchEvent(event);
+			if(x>15 || x<-15 || y>15 || y<-15){
+				//太大幅度的触摸应该判定为滑动，而不是点击或长按
+				useFlag = notClick;
+			}
 			lastX=nowX;
 			lastY=nowY;
 			//在执行完操作后保存坐标
@@ -1434,7 +1443,7 @@ _______________________________________
 		switch(action)
 		{
 			case MotionEvent.ACTION_DOWN:	
-				pos cursor = getCursorPos(0);
+				pos cursor = getCursorPos(getSelectionStart());
 				dx = Math.abs(lastX-cursor.x);
 				dy = Math.abs(lastY-cursor.y);
 				if(dx<15 || dy<15){
@@ -1467,7 +1476,14 @@ _______________________________________
 					//开始选择
 					case Selected:
 						offset = getOffsetForPosition(nowX,nowY);
-						setSelection(getSelectionStart(),offset);
+						int start = getSelectionStart();
+						int end = getSelectionEnd();
+						if(offset>start){
+						    setSelection(start,offset);
+						}
+						else{
+							setSelection(offset,end);
+						}
 						break;
 				}
 				break;
@@ -1476,6 +1492,7 @@ _______________________________________
 				//清除flag
 				break;
 		}
+		invalidate();
 		return super.onTouchEvent(event);
 	}
 	
@@ -1483,10 +1500,12 @@ _______________________________________
 	public boolean performClick()
 	{
 		//点击移动光标
-		int offset = getOffsetForPosition(nowX,nowY);
-		setSelection(offset,offset);
-		//openInputor(getContext(),this);
-		invalidate();
+		if(useFlag!=notClick){
+		    int offset = getOffsetForPosition(nowX,nowY);
+		    setSelection(offset,offset);
+		    //openInputor(getContext(),this);
+		    invalidate();
+		}
 		return true;
 	}
 	
@@ -1494,7 +1513,9 @@ _______________________________________
 	public boolean performLongClick()
 	{
 		//长按触发选择
-	    //flag = Selected;
+		if(useFlag!=notClick){
+	        flag = Selected;
+		}
 		return super.performLongClick();
 	}
 
