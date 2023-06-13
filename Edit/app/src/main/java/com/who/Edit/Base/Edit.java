@@ -124,7 +124,7 @@ _______________________________________
 	}
 
 	
-	/* 获取输入，并自动修改文本，当文本变化时会触发onTextChanged */
+	/* 输入法想要输入时，会调用我们的某些方法，此时我们自动修改文本 */
 	final private class myInput extends BaseInputConnection
 	{
 
@@ -167,7 +167,7 @@ _______________________________________
 				return true;
 			}
 			
-			//提交缓冲区内的文本
+			//根据要输入的文本，进行输入
 			int start = getSelectionStart();
 			int end = getSelectionEnd();
 			mText.replace(start,end,text);
@@ -282,12 +282,15 @@ _______________________________________
 			//文本变化前
 			sendBeforeTextChanged(this,start,before,after);
 			SpannableStringBuilder b = super.replace(start, end, tb, tbstart, tbend);
+			
 			//文本变化后
 			sendOnTextChanged(this,start,before,after);
+		
 			if(beginBatchEdit==0){
 				//没有批量编辑，默认刷新
 				invalidate();
 			}
+			
 			//文本已经显示了
 			sendAfterTextChanged(this);
 			return b;
@@ -307,6 +310,7 @@ _______________________________________
 		if(mText.beginBatchEdit>0){
 		    --mText.beginBatchEdit;
 		}
+		mLayout.measureAllText();
 		invalidate();
 	}
 	
@@ -317,7 +321,6 @@ _______________________________________
 	/* 发送文本事件 */
 	protected void sendBeforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
 		if(mTextListener!=null){
 			mTextListener.beforeTextChanged(text,start,lenghtBefore,lengthAfter);
 		}
@@ -325,7 +328,6 @@ _______________________________________
 	}
 	protected void sendOnTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
 		if(mTextListener!=null){
 			mTextListener.onTextChanged(text,start,lenghtBefore,lengthAfter);
 		}
@@ -342,16 +344,30 @@ _______________________________________
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		//文本变化了，设置光标位置
-		int index = start;
-		if(lengthAfter!=0){
-			index = start+lengthAfter;
+		//如果没有启用批量编辑
+		if(mText.beginBatchEdit==0)
+		{
+			//文本变化了，设置光标位置
+			int index = start;
+			if(lengthAfter!=0){
+				index = start+lengthAfter;
+			}
+			setSelection(index,index);
+			
+			//然后我们计算大小
+			mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
 		}
-		setSelection(index,index);
 	}
 
 	@Override
-	public void beforeTextChanged(CharSequence p1, int start, int lenghtBefore, int lengthAfter){}
+	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		//如果没有启用批量编辑
+		if(mText.beginBatchEdit==0){
+			//然后我们计算大小
+		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
+		}
+	}
 
 	@Override
 	public void afterTextChanged(Editable p1){}
