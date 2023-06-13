@@ -184,7 +184,7 @@ _______________________________________
 			
 			//准备删除字符
 			int len = mText.length();
-			int start = getSelectionEnd();
+			int start = getSelectionStart();
 			int end = getSelectionEnd();
 			
 			//删除范围内的字符
@@ -1500,11 +1500,15 @@ _______________________________________
 	public boolean performClick()
 	{
 		//点击移动光标
-		if(useFlag!=notClick){
+		if(useFlag!=notClick)
+		{
 		    int offset = getOffsetForPosition(nowX,nowY);
-		    setSelection(offset,offset);
-		    //openInputor(getContext(),this);
-		    invalidate();
+			if(offset>=getSelectionStart()&&offset<=getSelectionEnd()){
+				openInputor(getContext(),this);
+			}
+			else{
+		        setSelection(offset,offset);
+			}
 		}
 		return true;
 	}
