@@ -417,10 +417,11 @@ _______________________________________
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
 		
-		//留给绘制Span的临时变量
-		//RectF See;
-		//Paint spanPaint;	
+		//留给绘制Span的临时变量，其它函数不可使用
+		//RectF See = new RectF();
+		//Paint spanPaint = new TextPaint();	
 		//float[] spanWidths;	
+		//pos start = new pos(), end = new pos();
 		int[] spanStarts, spanEnds;
 		
 		//记录一些属性，用于draw
@@ -1028,13 +1029,17 @@ _______________________________________
 			int start = getLineStart(line);
 			int end = tryLine_End(mText.toString(),start);
 			float width = 0;
+			int count = end-start;
+			
+			widths = widths==null || widths.length<count ? new float[count]:widths;
 			mPaint.getTextWidths(mText,start,end,widths);
-			for(;start<end;++start)
+			for(int i=0;i<count;++i)
 			{
 				if(width>=horiz){
 					break;
 				}
-				width+=widths[start];
+				++start;
+				width+=widths[i];
 			}
 			return start;
 		}
@@ -1058,19 +1063,22 @@ _______________________________________
 		@Override
 		public int getLineStart(int p1)
 		{
-			return StringSpiltor.NIndex(FN,mText.toString(),0,p1-1);
+			String text = mText.toString();
+			int start = StringSpiltor.NIndex(FN,text,0,p1);
+			start = start==-1 ? text.length():start+1;
+			return start;
 		}
 		/* 获取指定行的顶部位置 */
 		@Override
 		public int getLineTop(int p1)
 		{
-			return (int)((p1-1)*getLineHeight());
+			return (int)((p1)*getLineHeight());
 		}
 		/* 获取指定行的底部位置 */
 		@Override
 		public int getLineDescent(int p1)
 		{
-			return (int)(p1*getLineHeight());
+			return (int)((p1+1)*getLineHeight());
 		}
 		
 		/* 获取光标的路径 */
@@ -1294,9 +1302,11 @@ ________________________________________
 			//String text = mText.toString();
 			//mLayout.nearOffsetPos(text,selectionStart,startPos.x,startPos.y,start,startPos);
 			//mLayout.nearOffsetPos(text,selectionEnd,endPos.x,endPos.y,start,endPos);
+			if(start!=selectionStart || end!=selectionEnd){
+			    onSelectionChanged(start,end);
+			}
 			selectionStart = start;
 			selectionEnd = end;
-			onSelectionChanged(start,end);
 		}
 		public void setPos(float x, float y, float x2, float y2)
 		{
@@ -1318,6 +1328,7 @@ ________________________________________
 				next.sendInputText(text,start,before,after);
 			}
 			next = save;
+			
 			if(text!=null){
 				mText.replace(selectionStart,selectionEnd,text);
 			}
@@ -1411,24 +1422,46 @@ ________________________________________
 		//光标移动到超出范围的地方，需要滚动视图
 		int x = getScrollX();
 		int y = getScrollY();
-		int width = getWidth();
-		int height = getHeight();
-		pos s = getCursorPos(start);
-		pos e = getCursorPos(end);
 		int tox = x;
 		int toy = y;
+		int width = getWidth();
+		int height = getHeight();
 		
-		if(s.x<x){
-			tox = (int) s.x;
+		if(start==end || nowX+x<cursorX || nowY+y<cursorY)
+		{
+			//文本被修改或滑动光标导致的位置移动
+			//或者，手指向上选择，因此我们只要判断前面的光标
+			pos s = getCursorPos(start);
+			if(s.x<x){
+				tox = (int) s.x;
+			}
+			else if(s.x>x+width){
+				tox = (int) s.x-width;
+			}
+			if(s.y<y){
+				toy = (int) s.y;
+			}
+			else if(s.y>y+height){
+				toy = (int) s.y-height;
+			}	
 		}
-		if(s.y<y){
-			toy = (int) s.y;
-		}
-		if(e.x>x+width){
-			tox = (int) e.x-width;
-		}
-		if(e.y>y+height){
-			toy = (int) e.y-height;
+		else
+		{
+			//文本向后选择导致的光标移动	
+			pos e = getCursorPos(end);
+			if(e.x<x){
+				tox = (int) e.x;
+			}
+			else if(e.x>x+width){
+				tox = (int) e.x-width;
+			}
+			if(e.y<y){
+				toy = (int) e.y;
+			}
+			else if(e.y>y+height){
+				toy = (int) e.y-height;
+			}
+			scrollTo(tox,toy);
 		}
 		scrollTo(tox,toy);
 	}
@@ -1462,6 +1495,7 @@ _______________________________________
 	
 	/* 长按产生的锚点 */
 	private int cursorStart;
+	private float cursorX,cursorY;
 	
 	
 	/* 分发事件，根据情况舎弃事件 */
@@ -1541,10 +1575,12 @@ _______________________________________
 		switch(action)
 		{
 			case MotionEvent.ACTION_DOWN:	
+				float lineHeight = mLayout.getLineHeight();
+				float textSize = mPaint.getTextSize();
 				pos cursor = getCursorPos(getSelectionStart());
-				dx = Math.abs(lastX-cursor.x);
-				dy = Math.abs(lastY-cursor.y);
-				if(dx<MaxSlop || dy<MaxSlop){
+				dx = Math.abs(lastX-(cursor.x-getScrollX()));
+				dy = Math.abs(lastY-(cursor.y-getScrollY()));
+				if(dx<textSize && dy<lineHeight){
 					//手指选中了光标
 					flag = MoveCursor;
 				}
@@ -1573,12 +1609,12 @@ _______________________________________
 						break;
 					//移动光标
 					case MoveCursor:
-						int offset = getOffsetForPosition(nowX,nowY);
+						int offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
 						setSelection(offset,offset);
 						break;
 					//开始选择
 					case Selected:
-						offset = getOffsetForPosition(nowX,nowY);
+						offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
 						if(offset>cursorStart){
 							//手指滑动到锚点后
 						    setSelection(cursorStart,offset);
@@ -1605,7 +1641,7 @@ _______________________________________
 		//点击移动光标
 		if(useFlag!=notClick)
 		{
-		    int offset = getOffsetForPosition(nowX,nowY);
+		    int offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
 			if(offset>=getSelectionStart()&&offset<=getSelectionEnd()){
 				//如果点击了被选择的区域，我们认为用户要删除这块文本
 				openInputor(getContext(),this);
@@ -1614,6 +1650,7 @@ _______________________________________
 				//否则设置光标位置
 		        setSelection(offset,offset);
 			}
+			invalidate();
 		}
 		return true;
 	}
@@ -1624,12 +1661,13 @@ _______________________________________
 		//长按触发选择
 		if(useFlag!=notClick){
 	        flag = Selected;
-			cursorStart = getOffsetForPosition(nowX,nowY);
+			cursorX = nowX+getScrollX();
+			cursorY = nowY+getScrollY();
+			cursorStart = getOffsetForPosition(cursorX,cursorY);
 			//记录锚点
 		}
 		return super.performLongClick();
 	}
-
 	
 	public int isScrollToEdgeH()
 	{
