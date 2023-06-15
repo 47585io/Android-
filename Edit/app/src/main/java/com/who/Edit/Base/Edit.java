@@ -525,15 +525,10 @@ _______________________________________
 		
 		//临时变量，免得每次都要重新new
 		float[] widths;
-		Rect rect = new Rect();
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
-		
-		//留给绘制Span的临时变量，其它函数不可使用
-		RectF See = new RectF();
+		Paint.FontMetrics font = new Paint.FontMetrics();
 		TextPaint spanPaint = new TextPaint();	
-		float[] spanWidths;	
-		pos start = new pos(), end = new pos();
 		
 		//记录本次展示的Span和它们的位置，便于之后使用，在方案2中废弃
 		//它的用处是: 用于扩展一些互动性的Span，例如ClickableSpan，具体操作是:
@@ -542,7 +537,6 @@ _______________________________________
 		int[] spanStarts, spanEnds;
 		
 		//记录一些属性，用于draw
-		Paint.FontMetrics font = new Paint.FontMetrics();
 		float cursorWidth = 0.1f;
 		float lineSpacing = 1.1f;
 		int lineCount=1, maxWidth;
@@ -588,7 +582,8 @@ _______________________________________
 			
 			//初始化文本和笔
 			String text = spanString.toString();
-			TextPaint paint = mPaint;
+			TextPaint textPaint = mPaint;
+			TextPaint spanPaint = this.spanPaint;
 
 			//计算可视区域
 			float x = getScrollX();
@@ -613,8 +608,9 @@ _______________________________________
 			end = end<0 ? len : (end>len ? len:(end<start ? start:end));
 			
 			//只绘制可视区域的内容
+			RectF See = rectF;
 			See.set(x,y,x+width,y+height);
-			onDraw2(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,paint,See);
+			onDraw2(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
 		}
 		
 		/* 
@@ -628,11 +624,11 @@ _______________________________________
 		*/
 		
 		/* 方案1，会调用onDrawBackground，onDrawForeground，onDrawLine */
-		protected void onDraw1(Spanned spanString, String text,int start, int end,int startLine,int endLine,float leftPadding, float lineHeight,Canvas canvas, TextPaint textPaint, RectF See)
+		protected void onDraw1(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint textPaint, TextPaint spanPaint, RectF See)
 		{
 			//重新计算位置
-			pos tmp = this.start;
-			pos tmp2 = this.end;
+			pos tmp = this.tmp;
+			pos tmp2 = this.tmp2;
 			tmp.set(0,startLine*lineHeight);
 			tmp2.set(tmp);
 
@@ -668,7 +664,7 @@ _______________________________________
 		}
 
 		/* 在绘制文本前绘制背景 */
-		protected void onDrawBackground(Spanned spanString, String text,int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp,Canvas canvas, TextPaint paint, RectF See)
+		protected void onDrawBackground(Spanned spanString, String text,int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
 			//pos tmp = null;
@@ -715,8 +711,8 @@ _______________________________________
 			int index = start;
 			//pos tmp = null;
 			int s = start, e = end;
-			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-			float ascent = fontMetrics.ascent;  //根据y坐标计算文本基线坐标
+			paint.getFontMetrics(font);
+			float ascent = font.ascent;  //根据y坐标计算文本基线坐标
 
 			//遍历span
 			for(int i=0;i<spans.length;++i)
@@ -759,7 +755,7 @@ _______________________________________
 		}
 		
 		/* 在绘制文本后绘制行 */
-		protected void onDrawLine(int startLine, int endLine,float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		protected void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = measureText(line,0,line.length(),paint);
@@ -769,8 +765,8 @@ _______________________________________
 			}
 
 			float y = startLine*lineHeight;
-			Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-			y -= fontMetrics.ascent;  //根据y坐标计算文本基线坐标
+			paint.getFontMetrics(font);
+			y -= font.ascent;  //根据y坐标计算文本基线坐标
 
 			//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
 			for(;startLine<endLine;++startLine)
@@ -782,7 +778,7 @@ _______________________________________
 		}
 		
 		/* 方案2，会调用drawSingleLineText，onDrawLine */
-		protected void onDraw2(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint textPaint, RectF See)
+		protected void onDraw2(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
 		{
 			//先将行数绘制在左侧
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
@@ -800,8 +796,8 @@ _______________________________________
 				//获取行的起始和末尾
 				
 				int count = next-now;
-				spanWidths = spanWidths==null || spanWidths.length<count ? new float[count]:spanWidths;
-				textPaint.getTextWidths(text,now,next,spanWidths);
+				widths = widths==null || widths.length<count ? new float[count]:widths;
+				textPaint.getTextWidths(text,now,next,widths);
 				//测量并保存每个字符的宽
 				
 				int i = 0;
@@ -810,11 +806,11 @@ _______________________________________
 				//从第一个字符开始，向后遍历每个字符
 				for(;i<count;++i)
 				{
-					if(w+spanWidths[i]>See.left){
+					if(w+widths[i]>See.left){
 						//如果已经到达了可视区域左边，已经可以确定这行起始下标和坐标了
 						break;
 					}
-					w += spanWidths[i];
+					w += widths[i];
 					++now;
 					//每次下标都加1，坐标加上字符的宽
 				}	
@@ -829,7 +825,7 @@ _______________________________________
 						//如果已经到达了可视区域右边，已经可以确定这行末尾下标和坐标了
 						break;
 					}
-					w += spanWidths[i];
+					w += widths[i];
 					++now;
 					//每次下标都加1，坐标加上字符的宽
 				}	
@@ -855,7 +851,7 @@ _______________________________________
 			int next;
 			float xStart = x;
 			float xEnd;
-			Paint.FontMetrics font = textPaint.getFontMetrics();
+			textPaint.getFontMetrics(font);
 
 			//正序遍历start~end范围内的区间，并获取区间的Span，计算坐标后绘制它们
 			for (int i = start; i < end; i = next) 
@@ -907,7 +903,7 @@ _______________________________________
 		}
 		
 		/* 可以方便地调用我绘制Span，返回start指示下次文本应该从哪里开始，为了效率，暂不使用 */
-		protected int onDrawSpan(Spanned spanString, String text, int start, int end, Object span, float x, float y, float leftPadding, float lineHeight,Canvas canvas, TextPaint paint, RectF See)
+		protected int onDrawSpan(Spanned spanString, String text, int start, int end, Object span, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
 		{
 			if(span instanceof CharacterStyle){
 				//刷新画笔
@@ -1834,7 +1830,20 @@ _______________________________________
 		//视图被触摸后，就慢慢地停止滚动
 		//scrollBy(dx,dy);
 		super.computeScroll();
+	}
 
+	@Override
+	public void scrollTo(int x, int y)
+	{
+		// TODO: Implement this method
+		super.scrollTo(x, y);
+	}
+
+	@Override
+	public void scrollBy(int x, int y)
+	{
+		// TODO: Implement this method
+		super.scrollBy(x, y);
 	}
 
 }
