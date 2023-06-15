@@ -863,7 +863,7 @@ _______________________________________
 				//寻找在当前位置之后，在end之前的下个区间的起始位置
 				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
 				//当前区间的末尾坐标
-				xEnd = xStart + spanPaint.measureText(spanString, i, next);
+				xEnd = xStart + textPaint.measureText(spanString, i, next);
 				
 				int j;
 				boolean isDrawText = false;
