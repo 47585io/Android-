@@ -539,7 +539,7 @@ _______________________________________
 		//记录一些属性，用于draw
 		float cursorWidth = 0.1f;
 		float lineSpacing = 1.1f;
-		int lineCount=1, maxWidth;
+		int lineCount, maxWidth;
 		boolean NeddMeasureAll;
 		
 		
@@ -601,8 +601,8 @@ _______________________________________
 			endLine = endLine<0 ? 0 : (endLine>lineCount ? lineCount:endLine);
 
 			//计算可视区域的范围
-			int start = StringSpiltor.NIndex(FN,text,0,startLine);
-			int end = StringSpiltor.NIndex(FN,text,start+1,endLine-startLine);
+			int start = startLine<lineCount-startLine ? StringSpiltor.NIndex(FN,text,0,startLine):StringSpiltor.lastNIndex(FN,text,len-1,lineCount-startLine+1);
+			int end = StringSpiltor.NIndex(FN,text,start+1,endLine-startLine+1);
 			start = startLine<1 ? 0 : (start<0 ? 0 : (start>len ? len: (start+1>len ? len:start+1)));
 			end = end<0 ? len : (end>len ? len:(end<start ? start:end));
 			
@@ -623,7 +623,7 @@ _______________________________________
 		*/
 		
 		/* 方案1，会调用onDrawBackground，onDrawForeground，onDrawLine */
-		protected void onDraw1(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint textPaint, TextPaint spanPaint, RectF See)
+		protected void onDraw1(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
 		{
 			//重新计算位置
 			pos tmp = this.tmp;
@@ -739,15 +739,8 @@ _______________________________________
 
 					//刷新画笔状态
 					span.updateDrawState(paint);
-					if(span instanceof ReplacementSpan){
-						//对于ReplacementSpan，进行特殊处理
-						ReplacementSpan re = (ReplacementSpan) span;
-						re.draw(canvas,spanString,start,end,tmp.x+leftPadding,(int)tmp.y,0,(int)(tmp.y+lineHeight),paint);
-					}
-					else{
-						//覆盖绘制span范围内的文本
-						drawText(text,start,end,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint,See);
-					}
+					//覆盖绘制span范围内的文本
+					drawText(text,start,end,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint,See);
 				}
 		   	}
 		}
@@ -767,7 +760,7 @@ _______________________________________
 			y -= font.ascent;  //根据y坐标计算文本基线坐标
 
 			//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
-			for(;startLine<endLine;++startLine)
+			for(;startLine<=endLine;++startLine)
 			{
 				line = String.valueOf(startLine);
 				canvas.drawText(line,leftPadding,y,paint);
@@ -788,7 +781,7 @@ _______________________________________
 			int len = text.length();
 			
 			//遍历可见的行
-			for(;startLine<endLine;++startLine)
+			for(;startLine<=endLine;++startLine)
 			{
 				next = text.indexOf(FN,now);
 				next = next==-1 ? len:next;
@@ -1141,7 +1134,7 @@ _______________________________________
 		public int getOffsetForHorizontal(int line, float horiz)
 		{
 			int start = getLineStart(line);
-			int end = tryLine_End(mText.toString(),start);
+			int end = tryLine_End(mText,start);
 			float width = 0;
 			int count = end-start;
 			
@@ -1161,10 +1154,9 @@ _______________________________________
 		@Override
 		public float getLineWidth(int line)
 		{
-			String str = mText.toString();
 			int start = getLineStart(line); 
-			int end = tryLine_End(str,start);
-			return measureText(str,start,end,mPaint);
+			int end = tryLine_End(mText,start);
+			return measureText(mText,start,end,mPaint);
 		}
 		/* 获取行高 */
 		public float getLineHeight()
@@ -1356,18 +1348,32 @@ _______________________________________
 	
 	
 	//试探当前下标所在行的起始
-	final public static int tryLine_Start(String src,int index)
+	final public static int tryLine_Start(CharSequence src,int index)
 	{
-		int start= src.lastIndexOf('\n',index-1);	
-		start = start==-1 ? 0:start+1;
-		return start;
+		--index;
+		int len = src.length();
+		while(index>-1 && index<len)
+		{
+			if(src.charAt(index)==FN){
+				++index;
+				break;
+			}
+			--index;
+		}
+		return index<0 || index>len ? 0:index;
 	}
 	//试探当前下标所在行的末尾
-	final public static int tryLine_End(String src,int index)
+	final public static int tryLine_End(CharSequence src,int index)
 	{
-		int end=src.indexOf('\n',index);
-		end = end==-1 ? src.length():end;
-		return end;
+		int len = src.length();
+		while(index>-1 && index<len)
+		{
+			if(src.charAt(index)==FN){
+				break;
+			}
+			++index;
+		}
+		return index<0 || index>len ? len:index;
 	}
 
 	/* 获取光标坐标 */
