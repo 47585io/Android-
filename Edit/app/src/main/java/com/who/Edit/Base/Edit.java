@@ -26,9 +26,8 @@ public class Edit extends View implements TextWatcher
 	private myInput mInput;
 	private myText mText;
 	private myLayout mLayout;
-
 	private TextPaint mPaint;
-	private TextPaint copyPaint;
+
 	private TextWatcher mTextListener;
 	private int mPrivateFlags;
 	
@@ -43,49 +42,50 @@ public class Edit extends View implements TextWatcher
 	{
 		mCursor = new Cursor();
 		mPaint = new TextPaint();
-		copyPaint = new TextPaint();
-		
-		mInput = new myInput(this,true);
+		mInput = new myInput();
 		mText = new myText();
 		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f);
 	}
 	protected void config()
 	{
-		setPaint(mPaint);
-		setPaint(copyPaint);
+		configPaint(mPaint);
 		setClickable(true);
 		setLongClickable(true);
 		setDefaultFocusHighlightEnabled(false);
 		//设置在获取焦点时不用额外绘制高亮的矩形区域
 	}
-	private void setPaint(TextPaint paint)
+	public void configPaint(TextPaint paint)
 	{
 		paint.reset();
 		paint.setTextSize(45);
 		paint.setColor(0xffaaaaaa);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
-	public void reSetPaint(TextPaint paint){
-		paint.set(copyPaint);
-	}
 
 	public void setTextColor(int color){
 		mPaint.setColor(color);
-		copyPaint.setColor(color);
 	}
 	public void setTextSize(int size){
 		mPaint.setTextSize(size);
-		copyPaint.setTextSize(size);
 	}
 	public void setLineSpacing(float spacing){
 		mLayout.lineSpacing=spacing;
+	}
+	public void setLetterSpacing(float spacing){
+		mPaint.setLetterSpacing(spacing);
 	}
 	public void setText(CharSequence text){
 		mText = new myText(text);
 	}
 	
+	public int getTextColor(){
+		return mPaint.getColor();
+	}
 	public float getTextSize(){
-		return copyPaint.getTextSize()/1.65f;
+		return mPaint.getTextSize()/1.65f;
+	}
+	public float getLineHeight(){
+		return mLayout.getLineHeight();
 	}
 	public float getLetterSpacing(){
 		return mPaint.getLetterSpacing();
@@ -94,7 +94,7 @@ public class Edit extends View implements TextWatcher
 		return mLayout;
 	}
 	public TextPaint getTextPaint(){
-		return copyPaint;
+		return mPaint;
 	}
 	public Editable getText(){
 		return mText;
@@ -118,16 +118,13 @@ _______________________________________
 		return mInput;
 	}
 
+	private boolean InputEnabled = true;
 	
 	/* 输入法想要输入时，会调用我们的某些方法，此时我们自动修改文本 */
-	final private class myInput extends BaseInputConnection
+	final private class myInput implements InputConnection
 	{
-
-		private boolean Enabled = true;
-
-		public myInput(View v,boolean is){
-			super(v,is);
-		}
+			
+		public myInput(){}
 
 		@Override
 		public boolean sendKeyEvent(KeyEvent event)
@@ -157,7 +154,7 @@ _______________________________________
 		@Override
 		public boolean commitText(CharSequence text, int newCursorPosition)
 		{
-			if(!Enabled){
+			if(!InputEnabled){
 				//没有启用输入，直接返回
 				return true;
 			}
@@ -173,7 +170,7 @@ _______________________________________
 		@Override
 		public boolean deleteSurroundingText(int beforeLength, int afterLength)
 		{
-			if(!Enabled){
+			if(!InputEnabled){
 				//没有启用输入，直接返回
 				return true;
 			}
@@ -197,12 +194,134 @@ _______________________________________
 			//用户选择了输入法的提示栏的一个单词，我们需要获取并插入
 			return commitText(text.getText(),0);
 		}
+		
+		@Override
+		public CharSequence getTextBeforeCursor(int p1, int p2)
+		{
+			return null;
+		}
 
 		@Override
-		public Editable getEditable()
+		public CharSequence getTextAfterCursor(int p1, int p2)
 		{
-			//不允许输入法修改我们的mText(即使会损失某些功能)
 			return null;
+		}
+
+		@Override
+		public CharSequence getSelectedText(int p1)
+		{
+			return null;
+		}
+
+		@Override
+		public int getCursorCapsMode(int p1)
+		{
+			return 0;
+		}
+
+		@Override
+		public ExtractedText getExtractedText(ExtractedTextRequest p1, int p2)
+		{
+			return null;
+		}
+
+		@Override
+		public boolean deleteSurroundingTextInCodePoints(int p1, int p2)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean setComposingText(CharSequence p1, int p2)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean setComposingRegion(int p1, int p2)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean finishComposingText()
+		{
+			return false;
+		}
+
+		@Override
+		public boolean commitCorrection(CorrectionInfo p1)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean setSelection(int p1, int p2)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean performEditorAction(int p1)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean performContextMenuAction(int p1)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean beginBatchEdit()
+		{
+			return false;
+		}
+
+		@Override
+		public boolean endBatchEdit()
+		{
+			return false;
+		}
+
+		@Override
+		public boolean clearMetaKeyStates(int p1)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean reportFullscreenMode(boolean p1)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean performPrivateCommand(String p1, Bundle p2)
+		{
+			return false;
+		}
+
+		@Override
+		public boolean requestCursorUpdates(int p1)
+		{
+			return false;
+		}
+
+		@Override
+		public Handler getHandler()
+		{
+			return Edit.this.getHandler();
+		}
+
+		@Override
+		public void closeConnection(){}
+
+		@Override
+		public boolean commitContent(InputContentInfo p1, int p2, Bundle p3)
+		{
+			return true;
 		}
 
 	}
@@ -210,7 +329,7 @@ _______________________________________
 	
 	/* 是否启用输入 */
 	public void setInputEnabled(boolean Enabled){
-		mInput.Enabled = Enabled;
+		InputEnabled = Enabled;
 	}
 
 	final public static void openInputor(final Context context, final View editText)
@@ -254,11 +373,10 @@ _______________________________________
 
 */
 
+	private int beginBatchEdit = 0;
+
     final private class myText extends SpannableStringBuilder
 	{
-		
-		private int beginBatchEdit = 0;
-		
 		public myText(){
 			super();
 		}
@@ -292,20 +410,19 @@ _______________________________________
 			sendAfterTextChanged(this);
 			return b;
 		}
-	
 	}
 	
 	
 	/* 开启一次批量编辑以指示暂时不要刷新 */
 	public void beginBatchEdit()
 	{
-		++mText.beginBatchEdit;
+		++beginBatchEdit;
 	}
 	/* 关闭上次的批量编辑并立即刷新一次 */
 	public void endBatchEdit()
 	{
-		if(mText.beginBatchEdit>0){
-		    --mText.beginBatchEdit;
+		if(beginBatchEdit>0){
+		    --beginBatchEdit;
 		}
 		mLayout.measureAllText();
 		invalidate();
@@ -342,7 +459,7 @@ _______________________________________
 	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		//如果没有启用批量编辑
-		if(mText.beginBatchEdit==0)
+		if(beginBatchEdit==0)
 		{
 			//然后我们计算大小
 		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
@@ -353,7 +470,7 @@ _______________________________________
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		//如果没有启用批量编辑
-		if(mText.beginBatchEdit==0)
+		if(beginBatchEdit==0)
 		{
 			//文本变化了，设置光标位置
 			int index = start;
@@ -413,10 +530,10 @@ _______________________________________
 		pos tmp = new pos(), tmp2 = new pos();
 		
 		//留给绘制Span的临时变量，其它函数不可使用
-		//RectF See = new RectF();
-		//Paint spanPaint = new TextPaint();	
-		//float[] spanWidths;	
-		//pos start = new pos(), end = new pos();
+		RectF See = new RectF();
+		TextPaint spanPaint = new TextPaint();	
+		float[] spanWidths;	
+		pos start = new pos(), end = new pos();
 		
 		//记录本次展示的Span和它们的位置，便于之后使用，在方案2中废弃
 		//它的用处是: 用于扩展一些互动性的Span，例如ClickableSpan，具体操作是:
@@ -430,12 +547,12 @@ _______________________________________
 		float lineSpacing = 1.1f;
 		int lineCount=1, maxWidth;
 		boolean NeddMeasureAll;
-	
+		
 		
 		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
 			super(base,paint,width,align,spacingmult,spacingadd);
 		}
-
+		
 		/* 开始绘制文本和光标 */
 		@Override
 		public void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
@@ -496,8 +613,8 @@ _______________________________________
 			end = end<0 ? len : (end>len ? len:(end<start ? start:end));
 			
 			//只绘制可视区域的内容
-			rectF.set(x,y,x+width,y+height);
-			onDraw2(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,paint,rectF);
+			See.set(x,y,x+width,y+height);
+			onDraw2(spanString,text,start,end,startLine,endLine,leftPadding,lineHeight,canvas,paint,See);
 		}
 		
 		/* 
@@ -511,16 +628,16 @@ _______________________________________
 		*/
 		
 		/* 方案1，会调用onDrawBackground，onDrawForeground，onDrawLine */
-		protected void onDraw1(Spanned spanString, String text,int start, int end,int startLine,int endLine,float leftPadding, float lineHeight,Canvas canvas, TextPaint paint, RectF See)
+		protected void onDraw1(Spanned spanString, String text,int start, int end,int startLine,int endLine,float leftPadding, float lineHeight,Canvas canvas, TextPaint textPaint, RectF See)
 		{
 			//重新计算位置
-			pos tmp = this.tmp;
-			pos tmp2 = this.tmp2;
+			pos tmp = this.start;
+			pos tmp2 = this.end;
 			tmp.set(0,startLine*lineHeight);
 			tmp2.set(tmp);
 
 			//我们只能管理CharacterStyle及其子类的span，抱歉
-			paint.getFontMetrics(font);
+			textPaint.getFontMetrics(font);
 			float ascent = font.ascent; 
 			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
 			mSpans = spans; //保存本次展示的Span
@@ -535,18 +652,18 @@ _______________________________________
 			}
 
 			//绘制背景的Span
-			onDrawBackground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp2,canvas,paint,See);
+			onDrawBackground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp2,canvas,spanPaint,See);
 
 			//重置画笔绘制文本
-			reSetPaint(paint);
-			drawText(text,start,end,tmp.x,tmp.y-ascent,0,lineHeight,canvas,paint,See);
+			spanPaint.set(textPaint);
+			drawText(text,start,end,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint,See);
 
 			//绘制行
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,paint,See);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
 
 			//绘制前景的Span
-			onDrawForeground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp,canvas,paint,See);	
-			reSetPaint(paint);
+			onDrawForeground(spanString,text,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp,canvas,spanPaint,See);	
+			spanPaint.set(textPaint);
 			//绘制完成了，重置画笔待下次绘制
 		}
 
@@ -665,11 +782,10 @@ _______________________________________
 		}
 		
 		/* 方案2，会调用drawSingleLineText，onDrawLine */
-		protected void onDraw2(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		protected void onDraw2(Spanned spanString, String text, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint textPaint, RectF See)
 		{
 			//先将行数绘制在左侧
-			reSetPaint(paint);
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,paint,See);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
 			
 			float x = 0;
 			float y = startLine*lineHeight;
@@ -684,8 +800,8 @@ _______________________________________
 				//获取行的起始和末尾
 				
 				int count = next-now;
-				widths = widths==null || widths.length<count ? new float[count]:widths;
-				paint.getTextWidths(text,now,next,widths);
+				spanWidths = spanWidths==null || spanWidths.length<count ? new float[count]:spanWidths;
+				textPaint.getTextWidths(text,now,next,spanWidths);
 				//测量并保存每个字符的宽
 				
 				int i = 0;
@@ -694,11 +810,11 @@ _______________________________________
 				//从第一个字符开始，向后遍历每个字符
 				for(;i<count;++i)
 				{
-					if(w+widths[i]>See.left){
+					if(w+spanWidths[i]>See.left){
 						//如果已经到达了可视区域左边，已经可以确定这行起始下标和坐标了
 						break;
 					}
-					w += widths[i];
+					w += spanWidths[i];
 					++now;
 					//每次下标都加1，坐标加上字符的宽
 				}	
@@ -713,14 +829,14 @@ _______________________________________
 						//如果已经到达了可视区域右边，已经可以确定这行末尾下标和坐标了
 						break;
 					}
-					w += widths[i];
+					w += spanWidths[i];
 					++now;
 					//每次下标都加1，坐标加上字符的宽
 				}	
 				end = now;
 				//记录当前行的末尾下标
 				
-				drawSingleLineText(spanString,start,end,x,y,lineHeight,canvas,paint,copyPaint);
+				drawSingleLineText(spanString,start,end,x,y,lineHeight,canvas,spanPaint,textPaint);
 				//绘制这行的可见范围内的文本
 				
 				now = next+1;
@@ -728,10 +844,13 @@ _______________________________________
 				y += lineHeight;
 				//之后继续下行
 			}
+			
+			spanPaint.set(textPaint);
+			//绘制完成了，重置画笔
 		}
 	
 		/* 从(x,y)处开始绘制start和end之间的字符串，并附带Span，但start和end必须在同一行 */
-		protected void drawSingleLineText(Spanned spanString, int start, int end, float x, float y,float lineHeight, Canvas canvas, TextPaint paint, TextPaint textPaint)
+		protected void drawSingleLineText(Spanned spanString, int start, int end, float x, float y, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint)
 		{
 			int next;
 			float xStart = x;
@@ -744,7 +863,7 @@ _______________________________________
 				//寻找在当前位置之后，在end之前的下个区间的起始位置
 				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
 				//当前区间的末尾坐标
-				xEnd = xStart + paint.measureText(spanString, i, next);
+				xEnd = xStart + spanPaint.measureText(spanString, i, next);
 				
 				int j;
 				boolean isDrawText = false;
@@ -758,9 +877,9 @@ _______________________________________
 					{
 						//如果有背景的Span，刷新画笔状态后画上矩形
 						BackgroundColorSpan span = (BackgroundColorSpan) spans[j];
-						paint.setColor(span.getBackgroundColor());
-						span.updateDrawState(paint);
-						canvas.drawRect(xStart, y, xEnd, y+lineHeight, paint);
+						spanPaint.setColor(span.getBackgroundColor());
+						span.updateDrawState(spanPaint);
+						canvas.drawRect(xStart, y, xEnd, y+lineHeight, spanPaint);
 					}
 				}
 				
@@ -771,8 +890,8 @@ _______________________________________
 					{
 						//如果有前景的Span，使用Span的颜色绘制文本
 						CharacterStyle span = spans[j];
-						span.updateDrawState(paint);
-						canvas.drawText(spanString, i, next, xStart, y-font.ascent, paint);
+						span.updateDrawState(spanPaint);
+						canvas.drawText(spanString, i, next, xStart, y-font.ascent, spanPaint);
 						isDrawText = true; 
 					}
 				}
