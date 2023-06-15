@@ -29,11 +29,9 @@ public class Edit extends View implements TextWatcher
 
 	private TextPaint mPaint;
 	private TextPaint copyPaint;
-
 	private TextWatcher mTextListener;
-	private EditTouch mTouch;
-	private EditZoom mZoom;
-
+	private int mPrivateFlags;
+	
 	
 	public Edit(Context cont)
 	{
@@ -43,9 +41,6 @@ public class Edit extends View implements TextWatcher
 	}
 	protected void init()
 	{
-		mZoom = new EditZoom();
-		mTouch = new EditTouch();
-
 		mCursor = new Cursor();
 		mPaint = new TextPaint();
 		copyPaint = new TextPaint();
@@ -247,7 +242,7 @@ _______________________________________
  
      append(char text)会先调用append(str)，再由append(str)调用replace
  
-	 append(CharSequence text, Object what, int flags)会调用先append(str)
+     append(CharSequence text, Object what, int flags)会调用先append(str)
 	 
  ______________________________________________________________________________
  
@@ -422,6 +417,11 @@ _______________________________________
 		//Paint spanPaint = new TextPaint();	
 		//float[] spanWidths;	
 		//pos start = new pos(), end = new pos();
+		
+		//记录本次展示的Span和它们的位置，便于之后使用，在方案2中废弃
+		//它的用处是: 用于扩展一些互动性的Span，例如ClickableSpan，具体操作是:
+		//在点击编辑器时，在performClick中计算点击位置，遍历spanStarts, spanEnds，确定它在mSpans中的下标，拿出来并回调Click方法
+		Object[] mSpans;
 		int[] spanStarts, spanEnds;
 		
 		//记录一些属性，用于draw
@@ -521,8 +521,9 @@ _______________________________________
 
 			//我们只能管理CharacterStyle及其子类的span，抱歉
 			paint.getFontMetrics(font);
-			float ascent = font.ascent;  //根据y坐标计算文本基线坐标
+			float ascent = font.ascent; 
 			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
+			mSpans = spans; //保存本次展示的Span
 
 			//getSpans的Span不保证顺序，因此需要获取每个Span的范围
 			spanStarts = spanStarts==null||spanStarts.length<spans.length ? new int[spans.length] : spanStarts;
@@ -655,7 +656,7 @@ _______________________________________
 			y -= fontMetrics.ascent;  //根据y坐标计算文本基线坐标
 
 			//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
-			for(;startLine<=endLine;++startLine)
+			for(;startLine<endLine;++startLine)
 			{
 				line = String.valueOf(startLine);
 				canvas.drawText(line,leftPadding,y,paint);
@@ -967,7 +968,7 @@ _______________________________________
 		@Override
 		public int getLineCount()
 		{
-			return lineCount+1;
+			return lineCount;
 		}
 		/* 获取高度 */
 		@Override
@@ -1064,8 +1065,9 @@ _______________________________________
 		public int getLineStart(int p1)
 		{
 			String text = mText.toString();
+			int len = text.length();
 			int start = StringSpiltor.NIndex(FN,text,0,p1);
-			start = start==-1 ? text.length():start+1;
+			start = p1<1 ? 0 : (start<0 ? len : (start+1>len ? len:start+1));
 			return start;
 		}
 		/* 获取指定行的顶部位置 */
@@ -1280,11 +1282,12 @@ ________________________________________
 */
 
 	/* 光标 */
-	final private class Cursor 
+	final private class Cursor
 	{
 		public int mCursorGlintTime = 5;
 		public pos startPos, endPos;
 		public int selectionStart,selectionEnd;
+		public int mCacheStart, mCacheEnd;
 		public Drawable mDrawable;
 		public Path mCursorPath;
 		public Cursor next;
@@ -1299,9 +1302,6 @@ ________________________________________
 
 		public void setSelection(int start,int end)
 		{
-			//String text = mText.toString();
-			//mLayout.nearOffsetPos(text,selectionStart,startPos.x,startPos.y,start,startPos);
-			//mLayout.nearOffsetPos(text,selectionEnd,endPos.x,endPos.y,start,endPos);
 			if(start!=selectionStart || end!=selectionEnd){
 			    onSelectionChanged(start,end);
 			}
@@ -1310,16 +1310,24 @@ ________________________________________
 		}
 		public void setPos(float x, float y, float x2, float y2)
 		{
-			//String text = mText.toString();
-			//selectionStart = mLayout.nearPosOffset(text,selectionStart,startPos.x,startPos.y,x,y);
-			//selectionEnd = mLayout.nearPosOffset(text,selectionEnd,endPos.x,endPos.y,x2,y2);
 			startPos.set(x,y);
 			endPos.set(x2,y2);
-			onSelectionChanged(selectionStart,selectionEnd);
+			int start = getOffsetForPosition(x,y);
+			int end = getOffsetForPosition(x2,y2);
+			if(start!=selectionStart || end!=selectionEnd){
+			    onSelectionChanged(start,end);
+			}
+			selectionStart = start;
+			selectionEnd = end;
+		}
+		public void refresh()
+		{
+			
 		}
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
 		}
+		
 		/* input不应该自己修改文本，而是交给光标修改 */
 		public void sendInputText(CharSequence text,int start,int before,int after)
 		{
@@ -1359,7 +1367,14 @@ ________________________________________
 		}
 		public Path getCursorPath()
 		{
+			if(mCacheStart==selectionStart && mCacheEnd==selectionEnd){	
+				return mCursorPath;
+			}
+			
+			mCacheStart = selectionStart;
+			mCacheEnd = selectionEnd;
 			mCursorPath.rewind();
+			
 			if(selectionStart==selectionEnd){
 				mLayout.getCursorPath(selectionStart,mCursorPath,mText);
 			}
@@ -1374,16 +1389,12 @@ ________________________________________
 			@Override
 			public void draw(Canvas p1)
 			{
-				if(mCursorGlintTime==0){
-					mCursorGlintTime = 5;
-				}
 				if(selectionStart==selectionEnd){
 				    p1.drawColor(0xea99c8ea);
 				}
 				else{
 					p1.drawColor(0x5099c8ea);
 				}
-				--mCursorGlintTime;
 			}
 
 			@Override
@@ -1414,8 +1425,8 @@ ________________________________________
 	
 	public void addCursor(){}
 	
-	public void removeCursor(){}
-	
+	public void removeCursor()
+	{}
 	
 	protected void onSelectionChanged(int start, int end)
 	{
@@ -1702,52 +1713,9 @@ _______________________________________
 	public void computeScroll()
 	{
 		//视图被触摸后，就慢慢地停止滚动
-		float dx = mTouch.getSlopX();
-		float dy = mTouch.getSlopY();
 		//scrollBy(dx,dy);
 		super.computeScroll();
 
-	}
-
-	final private class EditTouch extends onTouchToMove
-	{
-		public float slopX,slopY;
-		public static final float Max_Slop=500,Min_Slop=10,Once_Slop=5;
-
-		@Override
-		public boolean sendMovePos(View v, MotionEvent event, float dx, float dy)
-		{
-			v.scrollBy((int)-dx,(int)-dy);
-			return true;
-		}
-
-		public float getSlopX(){
-			float nowSlopX = slopX-=Once_Slop;
-			return nowSlopX;
-		}
-		public float getSlopY(){
-			return slopY-=Once_Slop;
-		}	
-	}
-
-	final private class EditZoom extends onTouchToZoom
-	{	
-	    public float scaleX=1,scaleY=1;
-
-		@Override
-		public boolean onzoom(View p1, MotionEvent p2, float bili)
-		{
-			if(bili>1.02){
-				scaleX*=1.02;
-				scaleY*=1.02;
-			}
-			else if(bili<0.98){
-				scaleX*=0.98;
-				scaleY*=0.98;
-			}
-			//copyPaint.setTextSize(copyPaint.getTextSize()*scaleX);
-			return true;
-		}	
 	}
 
 }
