@@ -1772,7 +1772,8 @@ public class Edit extends View implements TextWatcher
 				//清除flag
 				break;
 		}
-		invalidate();
+		postInvalidate();
+		//期待将来刷新，至少在super.onTouchEvent(event)之后
 		return super.onTouchEvent(event);
 	}
 	
@@ -1785,13 +1786,12 @@ public class Edit extends View implements TextWatcher
 		    int offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
 			if(offset>=getSelectionStart()&&offset<=getSelectionEnd()){
 				//如果点击了被选择的区域，我们认为用户要删除这块文本
-				openInputor(getContext(),this);
 			}
 			else{
 				//否则设置光标位置
 		        setSelection(offset,offset);
 			}
-			invalidate();
+			openInputor(getContext(),this);
 		}
 		return true;
 	}
