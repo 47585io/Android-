@@ -59,7 +59,7 @@ public class Edit extends View implements TextWatcher
 	public void configPaint(TextPaint paint)
 	{
 		paint.reset();
-		paint.setTextSize(45);
+		paint.setTextSize(40);
 		paint.setColor(0xffaaaaaa);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
@@ -67,7 +67,7 @@ public class Edit extends View implements TextWatcher
 	public void setTextColor(int color){
 		mPaint.setColor(color);
 	}
-	public void setTextSize(int size){
+	public void setTextSize(float size){
 		mPaint.setTextSize(size);
 	}
 	public void setLineSpacing(float spacing){
@@ -84,7 +84,7 @@ public class Edit extends View implements TextWatcher
 		return mPaint.getColor();
 	}
 	public float getTextSize(){
-		return mPaint.getTextSize()/1.65f;
+		return mPaint.getTextSize();
 	}
 	public float getLineHeight(){
 		return mLayout.getLineHeight();
@@ -1587,6 +1587,7 @@ public class Edit extends View implements TextWatcher
  
 */
 
+    /* 用于手指离开屏幕后做惯性滚动 */
     private Scroller mScroller = new Scroller(getContext());
 	private VelocityTracker mVelocityTracker;
 
@@ -1688,16 +1689,29 @@ public class Edit extends View implements TextWatcher
 	public boolean onTouchEvent(MotionEvent event)
 	{
 		float dx, dy;
+		int sx = getScrollX(), sy = getScrollY();
 		int action = event.getActionMasked();
+		
+		if (mVelocityTracker == null) {
+			//每次都在事件开始时创建一个计速器
+			mVelocityTracker = VelocityTracker.obtain();
+		}
+		//每次将事件传递过去计算手指速度
+        mVelocityTracker.addMovement(event);
+		
 		switch(action)
 		{
 			case MotionEvent.ACTION_DOWN:	
-				float lineHeight = mLayout.getLineHeight();
-				float textSize = mPaint.getTextSize();
+				if (!mScroller.isFinished()) {
+					//上次的滑行是否结束，如果没有那么强制结束
+					mScroller.abortAnimation();
+				}
+				
+				//计算光标的位置
 				pos cursor = getCursorPos(getSelectionStart());
-				dx = Math.abs(lastX-(cursor.x-getScrollX()));
-				dy = Math.abs(lastY-(cursor.y-getScrollY()));
-				if(dx<textSize && dy<lineHeight){
+				dx = Math.abs(lastX-(cursor.x-sx));
+				dy = Math.abs(lastY-(cursor.y-sy));
+				if(dx<getTextSize() && dy<getLineHeight()){
 					//手指选中了光标
 					flag = MoveCursor;
 				}
@@ -1706,32 +1720,36 @@ public class Edit extends View implements TextWatcher
 					flag = MoveSelf;
 				}
 				break;
-			case MotionEvent.ACTION_MOVE:	
+			case MotionEvent.ACTION_MOVE:
 				if(event.getPointerCount()==2)
 				{
-					//缩放自己
+					//双指缩放自己
 					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
 					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					float scale = len/hlen;
-					// do thing
+					setTextSize(getTextSize()*scale);
+					//根据手指间的距离计算缩放倍数，将textSize缩放
+					useFlag = notClick;
+					//缩放不是点击或长按
 					break;
 				}
-				dx = (nowX-lastX);
-				dy = (nowY-lastY);
+				
 				switch(flag)
 				{
 					//滚动自己
 					case MoveSelf:			
+						dx = nowX-lastX;
+						dy = nowY-lastY;
 						scrollBy(-(int)dx,-(int)dy);
 						break;
 					//移动光标
 					case MoveCursor:
-						int offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
+						int offset = getOffsetForPosition(nowX+sx,nowY+sy);
 						setSelection(offset,offset);
 						break;
 					//开始选择
 					case Selected:
-						offset = getOffsetForPosition(nowX+getScrollX(),nowY+getScrollY());
+						offset = getOffsetForPosition(nowX+sx,nowY+sy);
 						if(offset>cursorStart){
 							//手指滑动到锚点后
 						    setSelection(cursorStart,offset);
@@ -1744,13 +1762,56 @@ public class Edit extends View implements TextWatcher
 				}
 				break;
 			case MotionEvent.ACTION_UP:
-				flag = -1;
+				if(flag==MoveSelf){
+				    //计算速度并获取应该在x和y轴上滑行的距离
+				    mVelocityTracker.computeCurrentVelocity(1000);
+				    dx = -mVelocityTracker.getXVelocity(id);
+				    dy = -mVelocityTracker.getYVelocity(id);
+				    //存储值，并准备开始滑行
+				    mScroller.fling(sx,sy,(int)dx,(int)dy,(int)-mLayout.getLeftPadding(),mLayout.maxWidth-getWidth()+ExpandWidth,0,mLayout.getHeight()-getHeight()+ExpandHeight);
+				}
+			case MotionEvent.ACTION_CANCEL:
 				//清除flag
-				break;
+				flag = -1;
+				useFlag = -1;
+				if (mVelocityTracker != null) {
+					//在ACTION_CANCEL或ACTION_UP时，回收本次创建的mVelocityTracker
+				    mVelocityTracker.recycle();
+				    mVelocityTracker = null;
+				}
 		}
 		postInvalidate();
 		//期待将来刷新，至少在super.onTouchEvent(event)之后
 		return super.onTouchEvent(event);
+	}
+	
+	/* 每次在draw时都会调用我 */
+	@Override
+	public void computeScroll()
+	{
+		//视图被触摸后，就慢慢地滑行一段距离
+		if (mScroller.computeScrollOffset()){
+			//每次从mScroller中拿出本次应该滑行的距离，同时mScroller内部设置的总滑行值也会减少
+			//当总滑行值为0，computeScrollOffset返回false，就不再滑行了
+            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
+            invalidate();
+        }
+	}
+
+	@Override
+	public void scrollTo(int x, int y)
+	{
+		//不允许滑出范围外
+		int my = getWidth();
+		int child = mLayout.maxWidth+ExpandWidth;
+		int min = -(int)mLayout.getLeftPadding();
+		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
+
+		my = getHeight();
+		child = mLayout.getHeight()+ExpandHeight;
+		min = 0;
+		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
+		super.scrollTo(x, y);
 	}
 	
 	@Override
@@ -1815,29 +1876,5 @@ public class Edit extends View implements TextWatcher
 		return -1;
 	}
 
-	@Override
-	public void computeScroll()
-	{
-		//视图被触摸后，就慢慢地停止滚动
-		//scrollBy(dx,dy);
-		super.computeScroll();
-	}
-
-	@Override
-	public void scrollTo(int x, int y)
-	{
-		//不允许滑出范围外
-		int my = getWidth();
-		int child = mLayout.maxWidth+ExpandWidth;
-		int min = -(int)mLayout.getLeftPadding();
-		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
-
-		my = getHeight();
-		child = mLayout.getHeight()+ExpandHeight;
-		min = 0;
-		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
-		super.scrollTo(x, y);
-	}
-	
 }
 
