@@ -15,6 +15,7 @@ import java.math.*;
 import java.util.*;
 import android.util.*;
 import android.os.*;
+import android.widget.*;
 
 
 public class Edit extends View implements TextWatcher
@@ -50,6 +51,7 @@ public class Edit extends View implements TextWatcher
 		configPaint(mPaint);
 		setClickable(true);
 		setLongClickable(true);
+		setFocusable(true);
 		setDefaultFocusHighlightEnabled(false);
 		//设置在获取焦点时不用额外绘制高亮的矩形区域
 	}
@@ -100,11 +102,11 @@ public class Edit extends View implements TextWatcher
 	}
 
 /*
-_______________________________________
+ _______________________________________
 
-当输入事件到来，我们修改文本
+ 当输入事件到来，我们修改文本
+ _______________________________________ 
 
-_______________________________________ 
 */
 
 	@Override
@@ -491,8 +493,8 @@ _______________________________________
  _______________________________________
 
  每次onDraw时会调用Layout绘制文本和光标
- 
  _______________________________________
+ 
 */
 
 	@Override
@@ -1403,11 +1405,10 @@ _______________________________________
 
 
 /*
-________________________________________
+ ________________________________________
 
  将所有操作交还光标自己，以便实现多光标，但我太懒了，所以就这样吧
- 
-________________________________________
+ ________________________________________
 */
 
 	/* 光标 */
@@ -1449,10 +1450,7 @@ ________________________________________
 			selectionStart = start;
 			selectionEnd = end;
 		}
-		public void refresh()
-		{
-			
-		}
+	
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
 		}
@@ -1519,7 +1517,7 @@ ________________________________________
 			public void draw(Canvas p1)
 			{
 				if(selectionStart==selectionEnd){
-				    p1.drawColor(0xea99c8ea);
+				    p1.drawColor(0xff99c8ea);
 				}
 				else{
 					p1.drawColor(0x5099c8ea);
@@ -1534,7 +1532,7 @@ ________________________________________
 
 			@Override
 			public int getOpacity(){
-				return 1;
+				return 255;
 			}
 		}
 	}
@@ -1606,17 +1604,19 @@ ________________________________________
 	
 
 /*
-_______________________________________
+ _______________________________________
 
  当视图被触摸，我们尝试滚动它，当双指触摸，尝试缩放它
+ _______________________________________
  
-_______________________________________
 */
+
+    private Scroller mScroller = new Scroller(getContext());
+	private VelocityTracker mVelocityTracker;
 
     /* 关键指针的id和坐标 */
     private int id;
 	private float lastX,lastY,nowX,nowY;
-	public static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
 	/* 第二个指针的id和坐标 */
 	private int id2;
@@ -1636,6 +1636,7 @@ _______________________________________
 	
 	private static final int MaxSlop = 15;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
+	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
 	
 	/* 分发事件，根据情况舎弃事件 */
@@ -1809,13 +1810,13 @@ _______________________________________
 		return super.performLongClick();
 	}
 	
-	public int isScrollToEdgeH()
+	private int isScrollToEdgeH()
 	{
 		int x = getScrollX();
 		int r = mLayout.maxWidth+ExpandWidth;
 		int w = getWidth();
 		
-		if (x == 0){
+		if (x <= -mLayout.getLeftPadding()){
 			return Left;
 		}
 		else if (x + w >= r){
@@ -1823,13 +1824,13 @@ _______________________________________
 		}
 		return -1;
 	}
-	public int isScrollToEdgeV()
+	private int isScrollToEdgeV()
 	{
 		int y = getScrollY();
 		int b = mLayout.getHeight()+ExpandHeight;
 		int h = getHeight();
 
-		if(y == 0){
+		if(y <= 0){
 			return Top;
 		}
 		else if(y + h >= b){
@@ -1850,28 +1851,17 @@ _______________________________________
 	public void scrollTo(int x, int y)
 	{
 		//不允许滑出范围外
-		
+		int my = getWidth();
+		int child = mLayout.maxWidth+ExpandWidth;
+		int min = -(int)mLayout.getLeftPadding();
+		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
+
+		my = getHeight();
+		child = mLayout.getHeight()+ExpandHeight;
+		min = 0;
+		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
 		super.scrollTo(x, y);
 	}
-	@Override
-	public void scrollBy(int x, int y)
-	{
-		//不允许滑出范围外
-		int tox = getScrollX()+x;
-		int r = mLayout.maxWidth+ExpandWidth;
-		int w = getWidth();
-		r = r<w ? w:r;
-		
-		int toy = getScrollY()+y;
-		int b = mLayout.getHeight()+ExpandHeight;
-		int h = getHeight();
-		b = b<h ? h:b;
-		float l = mLayout.getLeftPadding();
-
-		x = (int) (tox<-l ? -l : (tox+w>r ? r-w:tox));
-		y = toy<0 ? 0 : (toy+h>b ? b-h:toy);
-		super.scrollBy(x, y);
-	}
-
+	
 }
 
