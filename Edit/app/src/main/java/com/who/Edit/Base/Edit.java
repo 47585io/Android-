@@ -1055,7 +1055,7 @@ public class Edit extends View implements TextWatcher
 		/* 获取应该预留给行数的宽度 */
 		public float getLeftPadding()
 		{
-			return (String.valueOf(lineCount).length()+2)*getTextSize();
+			return (String.valueOf(lineCount).length()+1)*getTextSize();
 		}
 
 		/* 测量单行文本宽度，非常精确 */
@@ -1599,6 +1599,9 @@ public class Edit extends View implements TextWatcher
 	private int id2;
 	private float lastX2,lastY2,nowX2,nowY2;
 	
+	/* 记录现在缩放倍数 */
+	private float scaleEdit;
+	
 	/* 指示下次干什么 */
 	private byte flag;
 	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
@@ -1611,7 +1614,9 @@ public class Edit extends View implements TextWatcher
 	private int cursorStart;
 	private float cursorX,cursorY;
 	
-	private static final int MaxSlop = 15;
+	private static final int TouchSlop = 15;
+	private static final float size = 40;
+	private static final float MaxSacle = 3, MinSacle = 0.5f;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
 	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
@@ -1659,12 +1664,12 @@ public class Edit extends View implements TextWatcher
 		    float y = nowY-lastY;
 			
 			if ( (Math.abs(x) > Math.abs(y) 
-				  && ((h == Left && x > MaxSlop) 
-				  || (h == Right && x < -MaxSlop)))
+				  && ((h == Left && x > TouchSlop) 
+				  || (h == Right && x < -TouchSlop)))
 			   || 
 				 (Math.abs(x) < Math.abs(y) 
-				  && ((v == Top && y > MaxSlop) 
-				  || (v == Bottom && y < -MaxSlop)))){
+				  && ((v == Top && y > TouchSlop) 
+				  || (v == Bottom && y < -TouchSlop)))){
 				getParent().requestDisallowInterceptTouchEvent(false);
 			}
 			else{
@@ -1673,7 +1678,7 @@ public class Edit extends View implements TextWatcher
 			//手指倾向于x或y轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动
 			
 			consume = super.dispatchTouchEvent(event);
-			if(x>MaxSlop || x<-MaxSlop || y>MaxSlop || y<-MaxSlop){
+			if(x>TouchSlop || x<-TouchSlop || y>TouchSlop || y<-TouchSlop){
 				//太大幅度的触摸应该判定为滑动，而不是点击或长按
 				useFlag = notClick;
 			}
@@ -1727,7 +1732,9 @@ public class Edit extends View implements TextWatcher
 					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
 					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					float scale = len/hlen;
-					setTextSize(getTextSize()*scale);
+					scaleEdit*=scale;
+					scaleEdit = scaleEdit<MinSacle ? MinSacle: (scaleEdit>MaxSacle ? MaxSacle:scaleEdit);
+					setTextSize(size*scaleEdit);
 					//根据手指间的距离计算缩放倍数，将textSize缩放
 					useFlag = notClick;
 					//缩放不是点击或长按
@@ -1799,22 +1806,6 @@ public class Edit extends View implements TextWatcher
 	}
 
 	@Override
-	public void scrollTo(int x, int y)
-	{
-		//不允许滑出范围外
-		int my = getWidth();
-		int child = mLayout.maxWidth+ExpandWidth;
-		int min = -(int)mLayout.getLeftPadding();
-		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
-
-		my = getHeight();
-		child = mLayout.getHeight()+ExpandHeight;
-		min = 0;
-		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
-		super.scrollTo(x, y);
-	}
-	
-	@Override
 	public boolean performClick()
 	{
 		//点击移动光标
@@ -1845,6 +1836,22 @@ public class Edit extends View implements TextWatcher
 			//记录锚点
 		}
 		return super.performLongClick();
+	}
+	
+	@Override
+	public void scrollTo(int x, int y)
+	{
+		//不允许滑出范围外
+		int my = getWidth();
+		int child = mLayout.maxWidth+ExpandWidth;
+		int min = -(int)mLayout.getLeftPadding();
+		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
+
+		min = 0;
+		my = getHeight();
+		child = mLayout.getHeight()+ExpandHeight;
+		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
+		super.scrollTo(x, y);
 	}
 	
 	private int isScrollToEdgeH()
