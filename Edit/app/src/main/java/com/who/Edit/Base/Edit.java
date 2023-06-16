@@ -20,8 +20,6 @@ import android.os.*;
 public class Edit extends View implements TextWatcher
 {
 
-	public static final char FN = '\n';
-
 	private Cursor mCursor;
 	private myInput mInput;
 	private myText mText;
@@ -30,6 +28,7 @@ public class Edit extends View implements TextWatcher
 
 	private TextWatcher mTextListener;
 	private int mPrivateFlags;
+	public static final char FN = '\n';
 	
 	
 	public Edit(Context cont)
@@ -321,7 +320,7 @@ _______________________________________
 		@Override
 		public boolean commitContent(InputContentInfo p1, int p2, Bundle p3)
 		{
-			return true;
+			return false;
 		}
 
 	}
@@ -1074,7 +1073,7 @@ _______________________________________
 		@Override
 		public int getLineCount()
 		{
-			return lineCount;
+			return lineCount+1;
 		}
 		/* 获取高度 */
 		@Override
@@ -1085,12 +1084,12 @@ _______________________________________
 		/* 获取宽度 */
 		public int maxWidth()
 		{
-			return maxWidth+500;
+			return maxWidth;
 		}
 		/* 获取应该预留给行数的宽度 */
 		public float getLeftPadding()
 		{
-			return (String.valueOf(lineCount).length()+1)*getTextSize();
+			return (String.valueOf(lineCount).length()+2)*getTextSize();
 		}
 
 		/* 测量单行文本宽度，非常精确 */
@@ -1105,11 +1104,30 @@ _______________________________________
 			}
 			return width;
 		}
+		/* 测量单行文本中，指定位置的下标 */
+		public int measureOffset(CharSequence text,int start,int end,float tox,TextPaint paint)
+		{
+			float width = 0;
+			int count = end-start;
+			widths = widths==null || widths.length<count ? new float[count]:widths;
+			mPaint.getTextWidths(mText,start,end,widths);
+			
+			for(int i=0;i<count;++i)
+			{
+				if(width>=tox){
+					break;
+				}
+				++start;
+				width+=widths[i];
+			}
+			return start;
+		}
 		/* 测量文本块的高，另外的getDesiredWidth可以测量文本块的宽 */
 		public float getDesiredHeight(String text, int start, int end)
 		{
 			return StringSpiltor.Count(FN,text,start,end)*getLineHeight();
 		}
+		
 		/* 获取下标所在行 */
 		@Override
 		public int getLineForOffset(int offset)
@@ -1121,34 +1139,8 @@ _______________________________________
 		public int getLineForVertical(int vertical)
 		{
 			int line = (int)(vertical/getLineHeight());
-			if(line<0){
-				line=0;
-			}
-			if(line>lineCount){
-				line = lineCount;
-			}
+			line = line<0 ? 0 : (line>lineCount ? lineCount:line);
 			return line;
-		}
-		/* 获取指定行且指定横坐标处的下标 */
-		@Override
-		public int getOffsetForHorizontal(int line, float horiz)
-		{
-			int start = getLineStart(line);
-			int end = tryLine_End(mText,start);
-			float width = 0;
-			int count = end-start;
-			
-			widths = widths==null || widths.length<count ? new float[count]:widths;
-			mPaint.getTextWidths(mText,start,end,widths);
-			for(int i=0;i<count;++i)
-			{
-				if(width>=horiz){
-					break;
-				}
-				++start;
-				width+=widths[i];
-			}
-			return start;
 		}
 		/* 获取指定行的宽度 */
 		@Override
@@ -1186,6 +1178,14 @@ _______________________________________
 		public int getLineDescent(int p1)
 		{
 			return (int)((p1+1)*getLineHeight());
+		}
+		/* 获取指定行且指定横坐标处的下标 */
+		@Override
+		public int getOffsetForHorizontal(int line, float horiz)
+		{
+			int start = getLineStart(line);
+			int end = tryLine_End(mText,start);
+			return measureOffset(mText,start,end,horiz,mPaint);
 		}
 		
 		/* 获取光标的路径 */
@@ -1335,13 +1335,23 @@ _______________________________________
 		final private int nearPosOffset(String text,int oldOffset,float oldx, float oldy, float x, float y)
 		{
 			float dy = y - oldy;
+			float lineHeight = getLineHeight();
+			int start;
 			if(dy<0){
-				
+				int line = (int) (-dy/lineHeight)+2;
+				start = StringSpiltor.lastNIndex(FN,text,oldOffset,line);
 			}
 			else if(dy>0){
-				
+				int line = (int) (dy/lineHeight)+2;
+				start = StringSpiltor.NIndex(FN,text,oldOffset,line);
 			}
-			return 0;
+			else{
+				start = text.lastIndexOf(FN,oldOffset-1);
+			}
+			start = start<0 ? 0:start+1;
+			int end = text.indexOf(FN,start);
+			end = end<0 ? text.length():end;
+			return measureOffset(text,start,end,x,mPaint);
 		}
 		
 	}
@@ -1544,8 +1554,7 @@ ________________________________________
 	
 	public void addCursor(){}
 	
-	public void removeCursor()
-	{}
+	public void removeCursor(){}
 	
 	protected void onSelectionChanged(int start, int end)
 	{
@@ -1591,7 +1600,6 @@ ________________________________________
 			else if(e.y>y+height){
 				toy = (int) e.y-height;
 			}
-			scrollTo(tox,toy);
 		}
 		scrollTo(tox,toy);
 	}
@@ -1608,12 +1616,11 @@ _______________________________________
     /* 关键指针的id和坐标 */
     private int id;
 	private float lastX,lastY,nowX,nowY;
-	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
+	public static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
 	/* 第二个指针的id和坐标 */
 	private int id2;
 	private float lastX2,lastY2,nowX2,nowY2;
-	private static final int MaxSlop = 15;
 	
 	/* 指示下次干什么 */
 	private byte flag;
@@ -1626,6 +1633,9 @@ _______________________________________
 	/* 长按产生的锚点 */
 	private int cursorStart;
 	private float cursorX,cursorY;
+	
+	private static final int MaxSlop = 15;
+	private static final int ExpandWidth = 500, ExpandHeight = 1000;
 	
 	
 	/* 分发事件，根据情况舎弃事件 */
@@ -1802,7 +1812,7 @@ _______________________________________
 	public int isScrollToEdgeH()
 	{
 		int x = getScrollX();
-		int r = mLayout.maxWidth;
+		int r = mLayout.maxWidth+ExpandWidth;
 		int w = getWidth();
 		
 		if (x == 0){
@@ -1816,7 +1826,7 @@ _______________________________________
 	public int isScrollToEdgeV()
 	{
 		int y = getScrollY();
-		int b = mLayout.getHeight();
+		int b = mLayout.getHeight()+ExpandHeight;
 		int h = getHeight();
 
 		if(y == 0){
@@ -1839,14 +1849,27 @@ _______________________________________
 	@Override
 	public void scrollTo(int x, int y)
 	{
-		// TODO: Implement this method
+		//不允许滑出范围外
+		
 		super.scrollTo(x, y);
 	}
-
 	@Override
 	public void scrollBy(int x, int y)
 	{
-		// TODO: Implement this method
+		//不允许滑出范围外
+		int tox = getScrollX()+x;
+		int r = mLayout.maxWidth+ExpandWidth;
+		int w = getWidth();
+		r = r<w ? w:r;
+		
+		int toy = getScrollY()+y;
+		int b = mLayout.getHeight()+ExpandHeight;
+		int h = getHeight();
+		b = b<h ? h:b;
+		float l = mLayout.getLeftPadding();
+
+		x = (int) (tox<-l ? -l : (tox+w>r ? r-w:tox));
+		y = toy<0 ? 0 : (toy+h>b ? b-h:toy);
 		super.scrollBy(x, y);
 	}
 

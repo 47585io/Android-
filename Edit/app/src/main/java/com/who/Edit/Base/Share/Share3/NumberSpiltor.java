@@ -10,4 +10,5 @@ public class NumberSpiltor
 		BigDecimal d3 = d1.multiply(d2);
 		return d3.doubleValue();
 	}
+	
 }
