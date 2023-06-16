@@ -16,6 +16,7 @@ import java.util.*;
 import android.util.*;
 import android.os.*;
 import android.widget.*;
+import android.text.Layout.*;
 
 
 public class Edit extends View implements TextWatcher
@@ -119,6 +120,7 @@ public class Edit extends View implements TextWatcher
 		return mInput;
 	}
 
+	/* 是否启用输入 */
 	private boolean InputEnabled = true;
 	
 	/* 输入法想要输入时，会调用我们的某些方法，此时我们自动修改文本 */
@@ -194,136 +196,95 @@ public class Edit extends View implements TextWatcher
 		{
 			//用户选择了输入法的提示栏的一个单词，我们需要获取并插入
 			return commitText(text.getText(),0);
-		}
+		}	
 		
+		/* 以下函数懒得实现了 */
 		@Override
-		public CharSequence getTextBeforeCursor(int p1, int p2)
-		{
+		public CharSequence getTextBeforeCursor(int p1, int p2){
 			return null;
 		}
-
 		@Override
-		public CharSequence getTextAfterCursor(int p1, int p2)
-		{
+		public CharSequence getTextAfterCursor(int p1, int p2){
 			return null;
 		}
-
 		@Override
-		public CharSequence getSelectedText(int p1)
-		{
+		public CharSequence getSelectedText(int p1){
 			return null;
 		}
-
 		@Override
-		public int getCursorCapsMode(int p1)
-		{
+		public int getCursorCapsMode(int p1){
 			return 0;
 		}
-
 		@Override
-		public ExtractedText getExtractedText(ExtractedTextRequest p1, int p2)
-		{
+		public ExtractedText getExtractedText(ExtractedTextRequest p1, int p2){
 			return null;
 		}
-
 		@Override
-		public boolean deleteSurroundingTextInCodePoints(int p1, int p2)
-		{
+		public boolean deleteSurroundingTextInCodePoints(int p1, int p2){
 			return false;
 		}
-
 		@Override
-		public boolean setComposingText(CharSequence p1, int p2)
-		{
+		public boolean setComposingText(CharSequence p1, int p2){
 			return false;
 		}
-
 		@Override
-		public boolean setComposingRegion(int p1, int p2)
-		{
+		public boolean setComposingRegion(int p1, int p2){
 			return false;
 		}
-
 		@Override
-		public boolean finishComposingText()
-		{
+		public boolean finishComposingText(){
 			return false;
 		}
-
 		@Override
-		public boolean commitCorrection(CorrectionInfo p1)
-		{
+		public boolean commitCorrection(CorrectionInfo p1){
 			return false;
 		}
-
 		@Override
-		public boolean setSelection(int p1, int p2)
-		{
+		public boolean setSelection(int p1, int p2){
 			return false;
 		}
-
 		@Override
-		public boolean performEditorAction(int p1)
-		{
+		public boolean performEditorAction(int p1){
 			return false;
 		}
-
 		@Override
-		public boolean performContextMenuAction(int p1)
-		{
+		public boolean performContextMenuAction(int p1){
 			return false;
 		}
-
 		@Override
-		public boolean beginBatchEdit()
-		{
+		public boolean beginBatchEdit(){
 			return false;
 		}
-
 		@Override
-		public boolean endBatchEdit()
-		{
+		public boolean endBatchEdit(){
 			return false;
 		}
-
 		@Override
-		public boolean clearMetaKeyStates(int p1)
-		{
+		public boolean clearMetaKeyStates(int p1){
 			return false;
 		}
-
 		@Override
-		public boolean reportFullscreenMode(boolean p1)
-		{
+		public boolean reportFullscreenMode(boolean p1){
 			return false;
 		}
-
 		@Override
-		public boolean performPrivateCommand(String p1, Bundle p2)
-		{
+		public boolean performPrivateCommand(String p1, Bundle p2){
 			return false;
 		}
-
 		@Override
-		public boolean requestCursorUpdates(int p1)
-		{
+		public boolean requestCursorUpdates(int p1){
 			return false;
 		}
-
 		@Override
-		public Handler getHandler()
-		{
+		public Handler getHandler(){
 			return Edit.this.getHandler();
 		}
-
 		@Override
-		public void closeConnection(){}
-
-		@Override
-		public boolean commitContent(InputContentInfo p1, int p2, Bundle p3)
-		{
+		public boolean commitContent(InputContentInfo p1, int p2, Bundle p3){
 			return false;
 		}
+		@Override
+		public void closeConnection(){}
 
 	}
 	
@@ -374,8 +335,10 @@ public class Edit extends View implements TextWatcher
 
 */
 
+    /* 是否开启批量编辑 */
 	private int beginBatchEdit = 0;
 
+	/* SpannableStringBuilder修改文本还是很快的，insert(0,"hello world!")3000000次只要800ms */
     final private class myText extends SpannableStringBuilder
 	{
 		public myText(){
@@ -541,7 +504,7 @@ public class Edit extends View implements TextWatcher
 		float cursorWidth = 0.1f;
 		float lineSpacing = 1.1f;
 		int lineCount, maxWidth;
-		boolean NeddMeasureAll;
+		boolean needMeasureAllText;
 		
 		
 		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
@@ -996,37 +959,43 @@ public class Edit extends View implements TextWatcher
 		}
 
 		/* 每次文本变化前，都应该手动调用，这将计算我的大小和行 */
-		public void measureTextBefore(CharSequence str,int start,int count,int after)
+		public void measureTextBefore(CharSequence text,int start,int count,int after)
 		{
+			/*
+			  toString很消耗时间，当一串字符有1000000行*45个字符时，toString一次需要30ms!!!。这相当于indexOf使用300000次的时间
+			  这里就谈谈，toString本质是拷贝了一份字符数组，并且是逐个字符地拷贝
+			  特别是CharSequence，如果只要一个范围内的字符串，一定先subSequence，再toString，节省时间!!!
+			*/
 			if(count!=0) 
 			{ 
-				String text = str.toString();
-				int line=StringSpiltor.Count('\n',text,start,start+count); 
-				if(line>0)
-				{
+				after = tryLine_End(text,start+count);
+			    start = tryLine_Start(text,start);
+				String str = text.subSequence(start,after).toString();
+				int line=StringSpiltor.Count(FN,str,0,str.length()); 
+				
+				if(line>0){
 					//在删除文本前，计算删除的行
 					lineCount-=line;    
 				}
 
 				//如果删除字符串比当前的maxWidth还宽，重新测量全部文本，找到最大的
-				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+count),mPaint);
+				float width = getDesiredWidth(str,mPaint);
 				if(width>=maxWidth){
-					setNeedMeasureAllText(true);
+					needMeasureAllText = true;
 				}
 			}
 		}
 		
 		/* 每次文本变化后，都应该手动调用，这将计算我的大小和行 */
-		public void measureTextAfter(CharSequence str,int start,int count,int after)
+		public void measureTextAfter(CharSequence text,int start,int count,int after)
 		{
 			boolean need = true;
-			String text = str.toString();	
-			TextPaint paint = mPaint;
-			if(needMeasureAllText())
+			TextPaint paint = mPaint;	
+			if(needMeasureAllText)
 			{
 				//需要测量全部文本找到剩下的最大宽度
 				need = false;
-				setNeedMeasureAllText(false);
+				needMeasureAllText = false;
 				maxWidth = (int) getDesiredWidth(text,paint);
 			}
 			if(count!=0 && need)
@@ -1039,7 +1008,10 @@ public class Edit extends View implements TextWatcher
 			}
 			if (after != 0)
 			{
-				int line = StringSpiltor.Count('\n',text,start,start+after);	
+				int e = tryLine_End(text,start+after);
+			    int s = tryLine_Start(text,start);
+				String str = text.subSequence(s,e).toString();
+				int line = StringSpiltor.Count(FN,str,0,str.length());	
 				if(line>0)
 				{
 					//在插入字符串后，计算增加的行
@@ -1062,15 +1034,7 @@ public class Edit extends View implements TextWatcher
 			lineCount = StringSpiltor.Count(FN,mText.toString(),0,mText.length());
 			maxWidth = (int) getDesiredWidth(mText,mPaint);
 		}
-		private void setNeedMeasureAllText(boolean is)
-		{
-			NeddMeasureAll = is;
-		}
-		private boolean needMeasureAllText()
-		{
-			return NeddMeasureAll;
-		}
-
+		
 		/* 获取行数 */
 		@Override
 		public int getLineCount()
@@ -1189,6 +1153,12 @@ public class Edit extends View implements TextWatcher
 			int end = tryLine_End(mText,start);
 			return measureOffset(mText,start,end,horiz,mPaint);
 		}
+		/* 获取下标的横坐标 */
+		@Override
+		public float getPrimaryHorizontal(int offset)
+		{
+			return measureText(mText,tryLine_Start(mText,offset),offset,mPaint);
+		}
 		
 		/* 获取光标的路径 */
 		@Override
@@ -1300,6 +1270,10 @@ public class Edit extends View implements TextWatcher
 		public int getEllipsisCount(int p1){
 			return 0;
 		}
+		@Override
+		public int getEllipsizedWidth(){
+			return 0;
+		}
 
 		/* 获取光标坐标 */
 		final private void getCursorPos(String str,int offset,pos pos)
@@ -1334,6 +1308,7 @@ public class Edit extends View implements TextWatcher
 			}
 		}
 		
+		/* 获取临近坐标下标 */
 		final private int nearPosOffset(String text,int oldOffset,float oldx, float oldy, float x, float y)
 		{
 			float dy = y - oldy;
@@ -1403,7 +1378,7 @@ public class Edit extends View implements TextWatcher
 		return count;
 	}
 
-
+	
 /*
  ________________________________________
 
@@ -1432,11 +1407,12 @@ public class Edit extends View implements TextWatcher
 
 		public void setSelection(int start,int end)
 		{
-			if(start!=selectionStart || end!=selectionEnd){
+			if(start!=selectionStart || end!=selectionEnd)
+			{
 			    onSelectionChanged(start,end);
+				selectionStart = start;
+				selectionEnd = end;
 			}
-			selectionStart = start;
-			selectionEnd = end;
 		}
 		public void setPos(float x, float y, float x2, float y2)
 		{
