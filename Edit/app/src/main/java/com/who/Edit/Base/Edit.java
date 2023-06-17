@@ -197,7 +197,7 @@ public class Edit extends View implements TextWatcher
 			//用户选择了输入法的提示栏的一个单词，我们需要获取并插入
 			return commitText(text.getText(),0);
 		}	
-		
+			
 		/* 以下函数懒得实现了 */
 		@Override
 		public CharSequence getTextBeforeCursor(int p1, int p2){
@@ -252,14 +252,6 @@ public class Edit extends View implements TextWatcher
 			return false;
 		}
 		@Override
-		public boolean beginBatchEdit(){
-			return false;
-		}
-		@Override
-		public boolean endBatchEdit(){
-			return false;
-		}
-		@Override
 		public boolean clearMetaKeyStates(int p1){
 			return false;
 		}
@@ -276,12 +268,20 @@ public class Edit extends View implements TextWatcher
 			return false;
 		}
 		@Override
-		public Handler getHandler(){
-			return Edit.this.getHandler();
-		}
-		@Override
 		public boolean commitContent(InputContentInfo p1, int p2, Bundle p3){
 			return false;
+		}
+		@Override
+		public boolean beginBatchEdit(){
+			return false;
+		}	
+		@Override
+		public boolean endBatchEdit(){
+			return false;
+		}
+		@Override
+		public Handler getHandler(){
+			return Edit.this.getHandler();
 		}
 		@Override
 		public void closeConnection(){}
@@ -388,9 +388,9 @@ public class Edit extends View implements TextWatcher
 		if(beginBatchEdit>0){
 		    --beginBatchEdit;
 		}
-		mLayout.measureAllText();
 		invalidate();
 	}
+	
 	
 	public void setTextChangeListener(TextWatcher li){
 		mTextListener = li;
@@ -421,31 +421,23 @@ public class Edit extends View implements TextWatcher
 
 	@Override
 	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		//如果没有启用批量编辑
-		if(beginBatchEdit==0)
-		{
-			//然后我们计算大小
-		    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
-		}
+	{	
+		//文本变化前，计算大小
+	    mLayout.measureTextBefore(text,start,lenghtBefore,lengthAfter);
 	}
 	
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		//如果没有启用批量编辑
-		if(beginBatchEdit==0)
-		{
-			//文本变化了，设置光标位置
-			int index = start;
-			if(lengthAfter!=0){
-				index = start+lengthAfter;
-			}
-			setSelection(index,index);
-			
-			//然后我们计算大小
-			mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
+		//文本变化了，设置光标位置
+		int index = start;
+		if(lengthAfter!=0){
+			index = start+lengthAfter;
 		}
+		setSelection(index,index);
+
+		//然后我们计算大小
+		mLayout.measureTextAfter(text,start,lenghtBefore,lengthAfter);
 	}
 
 	@Override
@@ -489,6 +481,7 @@ public class Edit extends View implements TextWatcher
 		
 		//临时变量，免得每次都要重新new
 		float[] widths;
+		Rect rect = new Rect();
 		RectF rectF = new RectF();
 		pos tmp = new pos(), tmp2 = new pos();
 		Paint.FontMetrics font = new Paint.FontMetrics();
@@ -503,8 +496,8 @@ public class Edit extends View implements TextWatcher
 		//记录一些属性，用于draw
 		float cursorWidth = 0.1f;
 		float lineSpacing = 1.1f;
-		int lineCount, maxWidth;
-		boolean needMeasureAllText;
+		int lineCount, cacheLine;
+		int maxWidth, secondWidth;
 		
 		
 		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
@@ -515,6 +508,11 @@ public class Edit extends View implements TextWatcher
 		@Override
 		public void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
 		{
+			//在绘制文本前绘制光标所在行的高亮矩形
+			//int startLine = (int) (cursorOffsetVertical/getLineHeight());
+			//getLineBounds(startLine,rect);
+			//canvas.drawRect(rect,highlightPaint);
+			
 			draw(canvas);
 			//先绘制文本，之后绘制光标
 			/*每次调用cancas.drawxxx方法，都会根据当前的状态新建一个图层并绘制，最后canvas显示的内容是所有图层叠加的效果
@@ -978,10 +976,11 @@ public class Edit extends View implements TextWatcher
 					lineCount-=line;    
 				}
 
-				//如果删除字符串比当前的maxWidth还宽，重新测量全部文本，找到最大的
+				//如果删除了字符串，测量删除文本块的宽
 				float width = getDesiredWidth(str,mPaint);
 				if(width>=maxWidth){
-					needMeasureAllText = true;
+					//如果删除字符串比当前的maxWidth还宽，maxWidth自动替换为secondWidth
+					maxWidth = secondWidth;
 				}
 			}
 		}
@@ -989,42 +988,35 @@ public class Edit extends View implements TextWatcher
 		/* 每次文本变化后，都应该手动调用，这将计算我的大小和行 */
 		public void measureTextAfter(CharSequence text,int start,int count,int after)
 		{
-			boolean need = true;
 			TextPaint paint = mPaint;	
-			if(needMeasureAllText)
-			{
-				//需要测量全部文本找到剩下的最大宽度
-				need = false;
-				needMeasureAllText = false;
-				maxWidth = (int) getDesiredWidth(text,paint);
-			}
-			if(count!=0 && need)
+			if(count!=0)
 			{
 				//删除文本后，两行连接为一行，测量这行的宽度
 				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start),paint);
-				if(width>maxWidth){
+				if(width>=maxWidth){
+					//如果出现了一个更大的宽，就记录它，同时保存上次的宽
+					secondWidth = maxWidth;
 					maxWidth = (int) width;
 				}
 			}
-			if (after != 0)
+			if (after!=0)
 			{
 				int e = tryLine_End(text,start+after);
 			    int s = tryLine_Start(text,start);
 				String str = text.subSequence(s,e).toString();
 				int line = StringSpiltor.Count(FN,str,0,str.length());	
-				if(line>0)
-				{
+				if(line>0){
 					//在插入字符串后，计算增加的行
 					lineCount+=line;
 				}
-				if(need)
-				{
-					//如果插入字符串比当前的maxWidth还宽，就将maxWidth = (int) width
-					float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+after),paint);
-					if(width>maxWidth){
-						maxWidth = (int) width;
-					}
-				}
+				
+				//如果插入了字符串，测量插入的文本块的宽
+				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+after),paint);
+				if(width>=maxWidth){
+					//如果出现了一个更大的宽，就记录它，同时保存上次的宽
+					secondWidth = maxWidth;
+					maxWidth = (int) width;
+			    }
 			} 
 		}
 		
@@ -1050,7 +1042,7 @@ public class Edit extends View implements TextWatcher
 		/* 获取宽度 */
 		public int maxWidth()
 		{
-			return maxWidth;
+			return (int)(maxWidth*scaleEdit);
 		}
 		/* 获取应该预留给行数的宽度 */
 		public float getLeftPadding()
@@ -1088,10 +1080,37 @@ public class Edit extends View implements TextWatcher
 			}
 			return start;
 		}
-		/* 测量文本块的高，另外的getDesiredWidth可以测量文本块的宽 */
+		/* 测量文本块的高 */
 		public float getDesiredHeight(String text, int start, int end)
 		{
-			return StringSpiltor.Count(FN,text,start,end)*getLineHeight();
+			cacheLine = StringSpiltor.Count(FN,text,start,end);
+			return cacheLine*getLineHeight();
+		}
+		/* 测量文本块的宽 */
+		public float getDesiredWidth(String text, int start, int end, TextPaint paint)
+		{
+			float width = 0;
+			int line = 0;
+			while(true)
+			{
+				float w;
+				int before = start;
+				start = text.indexOf(FN,start);
+				
+				if(start>=end || start<0){
+					w = paint.measureText(text,before,end);
+					width = w>width ? w:width;
+					break;
+				}
+				
+				w = paint.measureText(text,before,start);
+				width = w>width ? w:width;
+				
+				++line;
+				++start;
+			}
+			cacheLine = line;
+			return width;
 		}
 		
 		/* 获取下标所在行 */
@@ -1237,7 +1256,7 @@ public class Edit extends View implements TextWatcher
 		{
 			bounds.left = 0;
 			bounds.top = getLineTop(line);
-			bounds.right = (int) (bounds.left+getLineWidth(line));
+			bounds.right = (int) (bounds.left+maxWidth);
 			bounds.bottom = (int) (bounds.top+getLineHeight());
 			return line;
 		}
@@ -1616,7 +1635,7 @@ public class Edit extends View implements TextWatcher
 	
 	private static final int TouchSlop = 15;
 	private static final float size = 40;
-	private static final float MaxSacle = 3, MinSacle = 0.5f;
+	private static final float MaxSacle = 2.0f, MinSacle = 0.5f;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
 	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
@@ -1645,7 +1664,7 @@ public class Edit extends View implements TextWatcher
 			    nowY=event.getY(index);
 			}
 			
-			if(event.getPointerCount()==2)
+			if(event.getPointerCount()==2 && index!=-1)
 			{
 				//缩放手势，父元素一定不能拦截我
 				getParent().requestDisallowInterceptTouchEvent(true);
@@ -1726,7 +1745,7 @@ public class Edit extends View implements TextWatcher
 				}
 				break;
 			case MotionEvent.ACTION_MOVE:
-				if(event.getPointerCount()==2)
+				if(event.getPointerCount()==2 && event.findPointerIndex(id)!=-1)
 				{
 					//双指缩放自己
 					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
@@ -1780,7 +1799,6 @@ public class Edit extends View implements TextWatcher
 			case MotionEvent.ACTION_CANCEL:
 				//清除flag
 				flag = -1;
-				useFlag = -1;
 				if (mVelocityTracker != null) {
 					//在ACTION_CANCEL或ACTION_UP时，回收本次创建的mVelocityTracker
 				    mVelocityTracker.recycle();
