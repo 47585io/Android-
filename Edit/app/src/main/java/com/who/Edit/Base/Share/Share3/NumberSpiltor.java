@@ -3,6 +3,7 @@ import java.math.*;
 
 public class NumberSpiltor
 {
+	/* 调9000000次空函数消耗9秒 */
 	public static double multiply(String f1, String f2)
 	{
 		BigDecimal d1 = new BigDecimal(f1);

@@ -10,6 +10,7 @@ import com.who.Edit.Base.Share.Share3.*;
    额外记录每个文本块的行数和宽度，每次对单个文本块修改时同时修改它的行数和宽度，对于未修改的文本块，它的行数和宽度是不变的
    每次要跳到第几行，我们直接统计一下行就可以找到下标，每次不确定宽度，只要测量这个不确定宽度的块，因为其它块的宽度是不变的
    每次要在非常长的字符串中查找时不用toString，也不用再indexOf，直接让我找，StringBuilder自带indexOf函数
+   Edit的myLayout，draw函数，当500000行文本，光是测量就花了27毫秒，绘画时间倒是挺平衡，只要3ms，必须优化
 */
 public abstract class BlockLayout extends Layout
 {
@@ -18,9 +19,10 @@ public abstract class BlockLayout extends Layout
 	public static final String FNS = "\n";
 
 	private int lineCount,maxWidth;
+	private int cacheLine;
 	private List<StringBuilder> mBlocks;
 	private List<Integer> mLines;
-	private List<Integer> mWidths;
+	private List<Float> mWidths;
 	//每个文本块，每个块的行数，每个块的宽度
 
 	public BlockLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd)
@@ -28,30 +30,30 @@ public abstract class BlockLayout extends Layout
 		super(base,paint,width,align,spacingmult,spacingadd);
 		mBlocks = new ArrayList<>();
 		mLines = new ArrayList<>();
+		mWidths = new ArrayList<>();
 		addBlock();
 	}
 	
 	private void addBlock(){
 		mBlocks.add(new StringBuilder());
 		mLines.add(0);
+		mWidths.add(0f);
 	}
-	private void addBlock(int index){
-		mBlocks.add(index,new StringBuilder());
-		mLines.add(index,0);
+	private void addBlock(int i){
+		mBlocks.add(i,new StringBuilder());
+		mLines.add(i,0);
+		mWidths.add(i,0f);
 	}
-	private void addBlock(int index,String text,int line)
+	private void addBlock(int i,String text,int line)
 	{
 		/* StringBuilder插入CharSequence和String效率不一样！！！
 		   String更快，因为插入CharSequence本质上也是先toString再插入的！！！
 		   所以就这么说吧，如果要效率高，参数尽量是String，而不是CharSequence
 		   StringBuilder插入方法有很多重载，只有参数是String的那个效率最高，因为String内部有存储一个字符数组，StringBuilder插入时必须要拷贝这个数组
 		*/
-		mBlocks.add(index,new StringBuilder(text));
-		mLines.add(index,line);
-	}
-	private void addBlock(int index,StringBuilder text,int line){
-		mBlocks.add(index,text);
-		mLines.add(index,line);
+		mBlocks.add(i,new StringBuilder());
+		mLines.add(i,line);
+		insertForBlock(i,0,text);
 	}
 	
 	public void setText(CharSequence text,int line){
@@ -85,6 +87,7 @@ public abstract class BlockLayout extends Layout
 		}
 	}
 	
+	/* 如何插入文本和分发文本块 */
 	public void insert(int index, String text, int lines)
 	{
 		//找到index所指定的文本块
@@ -142,7 +145,15 @@ public abstract class BlockLayout extends Layout
 			//之后将截取的字符串添加到文本块列表中的下个文本块开头
 		}
 	}
+	/* 在插入文本块时调用，可以做出合理的测量 */
+	private void insertForBlock(int i, int index, String text)
+	{
+		StringBuilder builder = mBlocks.get(i);
+		builder.insert(index,text);
+		
+	}
 	
+	/* 如何删除范围内的文本和文本块 */
 	public void delete(int start, int end)
 	{
 		int size = mBlocks.size();
@@ -183,17 +194,20 @@ public abstract class BlockLayout extends Layout
 		deleteForBlock(i,0,end);
 		//删除末尾的块
 	}
+	
+	/* 在删除文本块时调用，可以做出合理的测量 */
 	private void deleteForBlock(int i, int start, int end)
 	{
 		StringBuilder builder = mBlocks.get(i);
 		if(start==0 && end==builder.length()){
 			mBlocks.remove(i);
 			mLines.remove(i);
+			mWidths.remove(i);
 		}
 		else{
-		    int delLine = StringSpiltor.Count(FNS,builder,start,end);
+			//builder
 		    builder.delete(start,end);
-		    mLines.set(i,mLines.get(i)-delLine);
+		  //  mLines.set(i,mLines.get(i)-delLine);
 		}
 	}
 	
@@ -211,6 +225,39 @@ public abstract class BlockLayout extends Layout
 			start+=nowLen;
 		}
 		return i;
+	}
+	
+	/* 测量文本块的高 */
+	public float getDesiredHeight(String text, int start, int end)
+	{
+		cacheLine = StringSpiltor.Count(FN,text,start,end);
+		return cacheLine*getLineHeight();
+	}
+	/* 测量文本块的宽 */
+	public float getDesiredWidth(String text, int start, int end, TextPaint paint)
+	{
+		float width = 0;
+		int line = 0;
+		while(true)
+		{
+			float w;
+			int before = start;
+			start = text.indexOf(FN,start);
+
+			if(start>=end || start<0){
+				w = paint.measureText(text,before,end);
+				width = w>width ? w:width;
+				break;
+			}
+
+			w = paint.measureText(text,before,start);
+			width = w>width ? w:width;
+
+			++line;
+			++start;
+		}
+		cacheLine = line;
+		return width;
 	}
 
 	@Override
@@ -288,4 +335,9 @@ public abstract class BlockLayout extends Layout
 		// TODO: Implement this method
 		return 0;
 	}
+	
+	public float getLineHeight(){
+		return 0;
+	}
+	
 }
