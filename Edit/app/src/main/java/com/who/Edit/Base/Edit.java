@@ -966,21 +966,22 @@ public class Edit extends View implements TextWatcher
 			*/
 			if(count!=0) 
 			{ 
+			    //检查删除的文本块
 				after = tryLine_End(text,start+count);
 			    start = tryLine_Start(text,start);
 				String str = text.subSequence(start,after).toString();
-				int line=StringSpiltor.Count(FN,str,0,str.length()); 
 				
-				if(line>0){
-					//在删除文本前，计算删除的行
-					lineCount-=line;    
-				}
-
-				//如果删除了字符串，测量删除文本块的宽
-				float width = getDesiredWidth(str,mPaint);
+				//如果删除了字符串，测量删除文本块的宽以及行
+				float width = getDesiredWidth(str,0,str.length(),mPaint);
+				int line=cacheLine;
+				
 				if(width>=maxWidth){
 					//如果删除字符串比当前的maxWidth还宽，maxWidth自动替换为secondWidth
 					maxWidth = secondWidth;
+				}
+				if(line>0){
+					//在删除文本前，计算删除的行
+					lineCount-=line;    
 				}
 			}
 		}
@@ -1001,22 +1002,24 @@ public class Edit extends View implements TextWatcher
 			}
 			if (after!=0)
 			{
+				//检查插入的文本块
 				int e = tryLine_End(text,start+after);
 			    int s = tryLine_Start(text,start);
 				String str = text.subSequence(s,e).toString();
-				int line = StringSpiltor.Count(FN,str,0,str.length());	
-				if(line>0){
-					//在插入字符串后，计算增加的行
-					lineCount+=line;
-				}
 				
-				//如果插入了字符串，测量插入的文本块的宽
-				float width = getDesiredWidth(text,tryLine_Start(text,start),tryLine_End(text,start+after),paint);
+				//如果插入了字符串，测量插入的文本块的宽和行
+				float width = getDesiredWidth(str,0,str.length(),paint);
+				int line = cacheLine;
+				
 				if(width>=maxWidth){
 					//如果出现了一个更大的宽，就记录它，同时保存上次的宽
 					secondWidth = maxWidth;
 					maxWidth = (int) width;
 			    }
+				if(line>0){
+					//在插入字符串后，计算增加的行
+					lineCount+=line;
+				}
 			} 
 		}
 		
