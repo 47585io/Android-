@@ -14,23 +14,27 @@ import android.graphics.*;
    每次要在非常长的字符串的指定下标或行查找时不用全部查找了，也不用全部toString，先直接以文本块的长度来跳跃，再找指定的块
    主要是因为Edit的myLayout，在draw函数中，当1000000行文本，光是测量就花了60ms，绘画时间倒是挺平衡，只要3ms，必须优化测量时间
 */
-public abstract class BlockLayout extends Layout
+public class BlockLayout extends Layout
 {
 	public static final int MaxCount = 100000;
 	public static final char FN = '\n';
+	public static final float MinScacle = 0.5f, MaxScale = 2.0f;
+	public static final float TextSize = 40f;
+	public static final int TextColor = 0xffaaaaaa;
 	
 	//临时变量
-	private float[] widths;
-	private RectF rectF = new RectF();
-	pos tmp = new pos(), tmp2 = new pos();
+	protected float[] widths;
+	protected RectF rectF = new RectF();
+	protected pos tmp = new pos(), tmp2 = new pos();
+	protected Paint.FontMetrics font = new Paint.FontMetrics();
 	private int cacheLine, cacheLen, cacheId;
-	private Paint.FontMetrics font = new Paint.FontMetrics();
 	
 	//记录属性
 	private int lineCount;
 	private float maxWidth;
 	private float cursorWidth;
 	private float lineSpacing;
+	private float scaleLayout;
 	
 	//每个文本块，每个块的行数，每个块的宽度
 	private List<SpannableStringBuilder> mBlocks;
@@ -45,6 +49,13 @@ public abstract class BlockLayout extends Layout
 		mLines = new ArrayList<>();
 		mWidths = new ArrayList<>();
 		setText(base);
+		setPaint(paint);
+	}
+	private void setPaint(TextPaint paint){
+		paint.reset();
+		paint.setTextSize(TextSize);
+		paint.setColor(TextColor);
+		paint.setTypeface(Typeface.MONOSPACE);
 	}
 	
 	public void setCursorWidthSpacing(float spacing){
@@ -52,6 +63,14 @@ public abstract class BlockLayout extends Layout
 	}
 	public void setLineSpacing(float spacing){
 		lineSpacing = spacing;
+	}
+	public void setScale(float scale)
+	{
+		scaleLayout*=scale;
+		scaleLayout = scaleLayout<MinScacle ? MinScacle:scale;
+		scaleLayout = scaleLayout>MaxScale ? MaxScale:scale;
+		TextPaint paint = getPaint();
+		paint.setTextSize(TextSize*scaleLayout);
 	}
 	
 	/* 添加文本块 */
@@ -82,14 +101,14 @@ public abstract class BlockLayout extends Layout
 	}
 	
 	/* 设置文本 */
-	public void setText(CharSequence text)
+	private void setText(CharSequence text)
 	{
 		clearText();
 		addBlock();
 		dispatchTextBlock(0,text);
 	}
 	/* 清除文本 */
-	public void clearText()
+	private void clearText()
 	{
 		mBlocks.clear();
 		mLines.clear();
@@ -410,7 +429,7 @@ public abstract class BlockLayout extends Layout
 		return (int)(lineCount*getLineHeight());
 	}
 	public float maxWidth(){
-		return maxWidth;
+		return maxWidth*scaleLayout;
 	}
 	@Override
 	public int getLineTop(int p1){
