@@ -12,9 +12,11 @@ import android.graphics.*;
    额外记录每个文本块的行数和宽度，每次对单个文本块修改时同时修改它的行数和宽度，对于未修改的文本块，它的行数和宽度是不变的
    每次要跳到第几行，我们直接统计一下行就可以找到下标，每次不确定宽度，只要测量这个不确定宽度的块，因为其它块的宽度是不变的
    每次要在非常长的字符串的指定下标或行查找时不用全部查找了，也不用全部toString，先直接以文本块的长度来跳跃，再找指定的块
+   
    主要是因为Edit的myLayout，在draw函数中，当1000000行文本，光是测量就花了60ms，绘画时间倒是挺平衡，只要3ms，必须优化测量时间
+   现在好了，即使1000000行时，也可以流畅编辑
 */
-public class BlockLayout extends Layout
+public abstract class BlockLayout extends Layout
 {
 	public static final int MaxCount = 100000;
 	public static final char FN = '\n';
@@ -32,9 +34,9 @@ public class BlockLayout extends Layout
 	//记录属性
 	private int lineCount;
 	private float maxWidth;
-	private float cursorWidth;
-	private float lineSpacing;
-	private float scaleLayout;
+	private float cursorWidth=0.1f;
+	private float lineSpacing=1.2f;
+	private float scaleLayout=1;
 	
 	//每个文本块，每个块的行数，每个块的宽度
 	private List<SpannableStringBuilder> mBlocks;
@@ -101,14 +103,14 @@ public class BlockLayout extends Layout
 	}
 	
 	/* 设置文本 */
-	private void setText(CharSequence text)
+	public void setText(CharSequence text)
 	{
 		clearText();
 		addBlock();
 		dispatchTextBlock(0,text);
 	}
 	/* 清除文本 */
-	private void clearText()
+	public void clearText()
 	{
 		mBlocks.clear();
 		mLines.clear();
@@ -152,7 +154,7 @@ public class BlockLayout extends Layout
 		int nowLen = builder.length();
 		index -= cacheLen;
 	
-		if(nowLen+text.length()<MaxCount){
+		if(nowLen+text.length()<=MaxCount){
 			//当插入文本不会超出当前的文本块时，直接插入
 			insertForBlock(i,index,text);
 		}
@@ -165,8 +167,9 @@ public class BlockLayout extends Layout
 			deleteForBlock(i,MaxCount,nowLen);
 			
 			if(nowLen-MaxCount>MaxCount){
-				//超出的个数超过了单个文本块的最大字数
+				//超出的字数超过了单个文本块的最大字数
 				dispatchTextBlock(i+1,text);
+				return;
 			}
 			
 			if (mBlocks.size()-1 == i){
@@ -174,7 +177,7 @@ public class BlockLayout extends Layout
 				addBlock();
 			}
 			else if (mBlocks.get(i+1).length()+nowLen-MaxCount > MaxCount){
-				//若有下个文本块，但它的行也不足，那么在我之后添加一个
+				//若有下个文本块，但它的字数也不足，那么在我之后添加一个
 				addBlock(i+1);
 			}
 
@@ -262,19 +265,21 @@ public class BlockLayout extends Layout
 		}
 		else
 		{
-			//检查删除文本块
+			TextPaint paint = getPaint();
+			//删除前，检查删除的文本块
 			int s = tryLine_Start(builder,start);
 			int e = tryLine_End(builder,end);
 			String str = builder.subSequence(s,e).toString();
+			builder.delete(start,end);
 			
 			//如果删除了字符串，测量删除文本块的宽以及行
-			float width = getDesiredWidth(str,0,str.length(),getPaint());
+			float width = getDesiredWidth(str,0,str.length(),paint);
 			int line=cacheLine;
 			float copyWidth = width;
 			
 			if(width>=mWidths.get(i)){
-				//如果删除字符串比当前的maxWidth还宽，测量整个块
-				width = getDesiredWidth(builder.toString(),0,builder.length(),getPaint());
+				//如果删除字符串比当前的maxWidth还宽，重新测量当前整个块
+				width = getDesiredWidth(builder.toString(),0,builder.length(),paint);
 				mWidths.set(i,width);
 			}
 			if(copyWidth>=maxWidth){
@@ -297,7 +302,7 @@ public class BlockLayout extends Layout
 		for(;i<size;++i)
 		{
 			int nowLen = mBlocks.get(i).length();
-			if(start+nowLen>index){
+			if(start+nowLen>=index){
 				break;
 			}
 			start+=nowLen;
@@ -314,7 +319,7 @@ public class BlockLayout extends Layout
 		for(;i<size;++i)
 		{
 			int nowLine = mLines.get(i);
-			if(start+nowLine>line){
+			if(start+nowLine>=line){
 				break;
 			}
 			start+=nowLine;
@@ -352,7 +357,7 @@ public class BlockLayout extends Layout
 			text = mBlocks.get(i);
 			int nowLen = text.length();
 			int nowLine = mLines.get(i);
-			if(startIndex+nowLen>index){
+			if(startIndex+nowLen>=index){
 				break;
 			}
 			startIndex+=nowLen;
@@ -374,7 +379,7 @@ public class BlockLayout extends Layout
 			text = mBlocks.get(i);
 			int nowLen = text.length();
 			int nowLine = mLines.get(i);
-			if(startLine+nowLine>line){
+			if(startLine+nowLine>=line){
 				break;
 			}
 			startIndex+=nowLen;
@@ -475,7 +480,7 @@ public class BlockLayout extends Layout
 		TextPaint paint = getPaint();
 		paint.getFontMetrics(font);
 		float height = font.bottom-font.top;
-		return height;
+		return height*lineSpacing;
 	}
 
 	@Override
@@ -619,7 +624,6 @@ public class BlockLayout extends Layout
 		return line;
 	}
 	
-	
 	/* 获取光标坐标 */
 	final public void getCursorPos(int offset,pos pos)
 	{  
@@ -636,7 +640,6 @@ public class BlockLayout extends Layout
 		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
 		text = getText();
 		int start = tryLine_Start(text,offset);
-		start = start==0 ? 0:start+1;
 		pos.x = measureText(text,start,offset,getPaint());
 		
 		//offset在使用完后转化为当前块的下标，测量当前块的起始到offset之间的行数，并加上之前的行数，最后计算行数的高
@@ -644,6 +647,7 @@ public class BlockLayout extends Layout
 		int lines = StringSpiltor.Count(FN,str,0,offset)+startLine;
 		pos.y = lines*getLineHeight();
 	}
+	
 	/* 从坐标获取下标 */
 	final public int getOffsetForPosition(float x, float y)
 	{
@@ -652,6 +656,26 @@ public class BlockLayout extends Layout
 		return count;
 	}
 	
+	/* 获取临近光标坐标，可能会更快 */
+	final public void nearOffsetPos(int oldOffset, float x, float y, int newOffset, pos target)
+	{
+		CharSequence text = getText();
+		int index = tryLine_Start(text,newOffset);
+		target.x = measureText(text,index,newOffset,getPaint());
+		
+		if(oldOffset<newOffset)
+		{
+			String str = text.subSequence(oldOffset,newOffset).toString();
+			int line = StringSpiltor.Count(FN,str,0,str.length());
+			target.y = y+getLineHeight()*line;
+		}
+		else if(oldOffset>newOffset)
+		{
+			String str = text.subSequence(newOffset,oldOffset).toString();
+			int line = StringSpiltor.Count(FN,str,0,str.length());
+			target.y = y-getLineHeight()*line;
+		}
+	}
 	
 	/* 测量单行文本宽度，非常精确 */
 	final public float measureText(CharSequence text,int start,int end,TextPaint paint)
@@ -685,13 +709,13 @@ public class BlockLayout extends Layout
 	}
 	
 	/* 测量文本切片的高，同时记录行数 */
-	public float getDesiredHeight(String text, int start, int end)
+	final public float getDesiredHeight(String text, int start, int end)
 	{
 		cacheLine = StringSpiltor.Count(FN,text,start,end);
 		return cacheLine*getLineHeight();
 	}
 	/* 测量文本切片的宽，同时记录行数 */
-	public float getDesiredWidth(String text, int start, int end, TextPaint paint)
+	final public float getDesiredWidth(String text, int start, int end, TextPaint paint)
 	{
 		float width = 0;
 		int line = 0;
@@ -745,18 +769,12 @@ public class BlockLayout extends Layout
 		}
 		return index<0 || index>len ? len:index;
 	}
-	
-	public pos getTemp1(){
-		return tmp;
-	}
-	public pos getTemp2(){
-		return tmp2;
-	}
-	public RectF getTempRect(){
-		return rectF;
-	}
-	public Paint.FontMetrics getTempFont(){
-		return font;
-	}
 
+	
+	@Override
+	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
+
+	@Override
+	public abstract void draw(Canvas c)
+	
 }
