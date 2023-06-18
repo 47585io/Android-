@@ -470,7 +470,7 @@ public class Edit extends View implements TextWatcher
 		try{
 		    Path path = mCursor.getCursorPath();
 		    //获取光标或选择范围的路径
-		    mLayout.draw(canvas,path,mPaint,-100);	
+		    mLayout.draw(canvas,path,mPaint,(int)getSelectionStartPos().y);	
 		    //进行绘制，将文本和光标画到画布上
 		}
 		catch(Exception e){
@@ -503,16 +503,16 @@ public class Edit extends View implements TextWatcher
 		public void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
 		{
 			//在绘制文本前绘制光标所在行的高亮矩形
-			int startLine = (int) (cursorOffsetVertical/getLineHeight());
+			int startLine = getLineForVertical(cursorOffsetVertical);
 			getLineBounds(startLine,rect);
 			canvas.drawRect(rect,highlightPaint);
 			
 			draw(canvas);
 			//先绘制文本，之后绘制光标
-			/*每次调用cancas.drawxxx方法，都会根据当前的状态新建一个图层并绘制，最后canvas显示的内容是所有图层叠加的效果
-			  注意哦，已经绘制的内容是不会被改变的，但是对canvas进行平移等操作会影响之后的图层
-			  考虑到mCursor默认在(0,0)处绘制，因此需要平移图层到下方，使得在(0,0)处绘制的操作转化为在(x,y)处的绘制
-			  并且还需要clipPath，以只绘制指定光标路径的内容 */
+			//每次调用cancas.drawxxx方法，都会根据当前的状态新建一个图层并绘制，最后canvas显示的内容是所有图层叠加的效果
+			//注意哦，已经绘制的内容是不会被改变的，但是对canvas进行平移等操作会影响之后的图层
+			//考虑到mCursor默认在(0,0)处绘制，因此需要平移图层到下方，使得在(0,0)处绘制的操作转化为在(x,y)处的绘制
+			//并且还需要clipPath，以只绘制指定光标路径的内容 
 			
 			float x = getScrollX();
 			float y = getScrollY();
@@ -949,8 +949,12 @@ public class Edit extends View implements TextWatcher
 		}
 		
 		/* 获取应该预留给行数的宽度 */
-		public float getLeftPadding(){
-			return String.valueOf(getLineCount()).length()*getTextSize();
+		public float getLeftPadding()
+		{
+			TextPaint paint = getPaint();
+			String line = String.valueOf(getLineCount());
+			float lineWidth = measureText(line,0,line.length(),paint);
+			return lineWidth+paint.getTextSize();
 		}
 		
 		/* 在文本变化时，同步修改mBlocks */
@@ -966,12 +970,15 @@ public class Edit extends View implements TextWatcher
 
 	}
 	
+	
+	/* 获取光标坐标 */
 	public pos getCursorPos(int offset)
 	{
 		pos tmp = new pos();
 		mLayout.getCursorPos(offset,tmp);
 		return tmp;
 	}
+	/* 从坐标获取光标 */
 	public int getOffsetForPosition(float x, float y){
 		return mLayout.getOffsetForPosition(x,y);
 	}
@@ -1007,24 +1014,26 @@ public class Edit extends View implements TextWatcher
 		{
 			if(start!=selectionStart || end!=selectionEnd)
 			{
-			    onSelectionChanged(start,end);
 				selectionStart = start;
 				selectionEnd = end;
+				mLayout.getCursorPos(start,startPos);
+				mLayout.getCursorPos(end,endPos);
+				onSelectionChanged(start,end);
 			}
 		}
 		public void setPos(float x, float y, float x2, float y2)
 		{
-			startPos.set(x,y);
-			endPos.set(x2,y2);
 			int start = getOffsetForPosition(x,y);
 			int end = getOffsetForPosition(x2,y2);
-			if(start!=selectionStart || end!=selectionEnd){
-			    onSelectionChanged(start,end);
+			if(start!=selectionStart || end!=selectionEnd)
+			{
+				selectionStart = start;
+				selectionEnd = end;
+				mLayout.getCursorPos(start,startPos);
+				mLayout.getCursorPos(end,endPos);
+				onSelectionChanged(start,end);
 			}
-			selectionStart = start;
-			selectionEnd = end;
 		}
-	
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
 		}
@@ -1120,6 +1129,12 @@ public class Edit extends View implements TextWatcher
 	public int getSelectionEnd(){
 		return mCursor.selectionEnd;
 	}
+	public pos getSelectionStartPos(){
+		return mCursor.getStartPos();
+	}
+	public pos getSelectionEndPos(){
+		return mCursor.getEndPos();
+	}
 	public void setCursorDrawable(Drawable draw){
 		mCursor.setDrawable(draw);
 	}
@@ -1142,7 +1157,7 @@ public class Edit extends View implements TextWatcher
 		{
 			//文本被修改或滑动光标导致的位置移动
 			//或者，手指向上选择，因此我们只要判断前面的光标
-			pos s = getCursorPos(start);
+			pos s = getSelectionStartPos();
 			if(s.x<x){
 				tox = (int) s.x;
 			}
@@ -1159,7 +1174,7 @@ public class Edit extends View implements TextWatcher
 		else
 		{
 			//文本向后选择导致的光标移动	
-			pos e = getCursorPos(end);
+			pos e = getSelectionEndPos();
 			if(e.x<x){
 				tox = (int) e.x;
 			}
@@ -1197,9 +1212,6 @@ public class Edit extends View implements TextWatcher
 	private int id2;
 	private float lastX2,lastY2,nowX2,nowY2;
 	
-	/* 记录现在缩放倍数 */
-	private float scaleEdit;
-	
 	/* 指示下次干什么 */
 	private byte flag;
 	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
@@ -1213,8 +1225,6 @@ public class Edit extends View implements TextWatcher
 	private float cursorX,cursorY;
 	
 	private static final int TouchSlop = 15;
-	private static final float size = 40;
-	private static final float MaxSacle = 2.0f, MinSacle = 0.5f;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
 	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
 	
@@ -1249,6 +1259,7 @@ public class Edit extends View implements TextWatcher
 				getParent().requestDisallowInterceptTouchEvent(true);
 				//开始记录第二个手指的坐标
 				index = index==0 ? 1:0;
+				id2 = event.getPointerId(index);
 				lastX2=nowX2;
 				lastY2=nowY2;
 				nowX2=event.getX(index);
@@ -1311,7 +1322,7 @@ public class Edit extends View implements TextWatcher
 				}
 				
 				//计算光标的位置
-				pos cursor = getCursorPos(getSelectionStart());
+				pos cursor = getSelectionStartPos();
 				dx = Math.abs(lastX-(cursor.x-sx));
 				dy = Math.abs(lastY-(cursor.y-sy));
 				if(dx<getTextSize() && dy<getLineHeight()){
@@ -1330,9 +1341,7 @@ public class Edit extends View implements TextWatcher
 					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
 					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					float scale = len/hlen;
-					scaleEdit*=scale;
-					scaleEdit = scaleEdit<MinSacle ? MinSacle: (scaleEdit>MaxSacle ? MaxSacle:scaleEdit);
-					setTextSize(size*scaleEdit);
+					mLayout.setScale(scale);
 					//根据手指间的距离计算缩放倍数，将textSize缩放
 					useFlag = notClick;
 					//缩放不是点击或长按
@@ -1372,8 +1381,8 @@ public class Edit extends View implements TextWatcher
 				    mVelocityTracker.computeCurrentVelocity(1000);
 				    dx = -mVelocityTracker.getXVelocity(id);
 				    dy = -mVelocityTracker.getYVelocity(id);
-				    //存储值，并准备开始滑行
-				    mScroller.fling(sx,sy,(int)dx,(int)dy,(int)-mLayout.getLeftPadding(),(int)mLayout.maxWidth() -getWidth()+ExpandWidth,0,mLayout.getHeight()-getHeight()+ExpandHeight);
+				    //设置mScroller的滑行值，并准备开始滑行
+				    mScroller.fling(sx,sy,(int)dx,(int)dy,(int)-mLayout.getLeftPadding(),(int)mLayout.maxWidth()-getWidth()+ExpandWidth,0,mLayout.getHeight()-getHeight()+ExpandHeight);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				//清除flag

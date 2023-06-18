@@ -15,6 +15,7 @@ import android.graphics.*;
    
    主要是因为Edit的myLayout，在draw函数中，当1000000行文本，光是测量就花了60ms，绘画时间倒是挺平衡，只要3ms，必须优化测量时间
    现在好了，即使1000000行时，也可以流畅编辑
+   但有一个bug，MaxCount的值千万不要设置太小，要不然单个block装不满一行文本，大小计算会有问题
 */
 public abstract class BlockLayout extends Layout
 {
@@ -68,7 +69,7 @@ public abstract class BlockLayout extends Layout
 	}
 	public void setScale(float scale)
 	{
-		scaleLayout*=scale;
+		scaleLayout *= scale;
 		scaleLayout = scaleLayout<MinScacle ? MinScacle:scale;
 		scaleLayout = scaleLayout>MaxScale ? MaxScale:scale;
 		TextPaint paint = getPaint();
@@ -230,7 +231,7 @@ public abstract class BlockLayout extends Layout
 		for(j=i;j<size;++j)
 		{
 			int nowLen = mBlocks.get(i).length();
-			if(end-nowLen<0){
+			if(end-nowLen<=0){
 				break;
 			}
 			end-=nowLen;
@@ -619,7 +620,7 @@ public abstract class BlockLayout extends Layout
 	{
 		bounds.left = 0;
 		bounds.top = getLineTop(line);
-		bounds.right = (int) (bounds.left+maxWidth);
+		bounds.right = (int) (bounds.left+maxWidth());
 		bounds.bottom = (int) (bounds.top+getLineHeight());
 		return line;
 	}
@@ -769,7 +770,6 @@ public abstract class BlockLayout extends Layout
 		}
 		return index<0 || index>len ? len:index;
 	}
-
 	
 	@Override
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
