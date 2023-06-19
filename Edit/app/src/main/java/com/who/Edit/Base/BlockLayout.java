@@ -8,14 +8,15 @@ import android.graphics.*;
 
 
 /* 均衡效率的神器，BlockLayout，
-   拷贝一份原字符串，并打碎成文本块列表，可对它进行插入和删除
+   拷贝一份原字符串，并打碎成文本块列表，并且可对它进行插入和删除
    额外记录每个文本块的行数和宽度，每次对单个文本块修改时同时修改它的行数和宽度，对于未修改的文本块，它的行数和宽度是不变的
    每次要跳到第几行，我们直接统计一下行就可以找到下标，每次不确定宽度，只要测量这个不确定宽度的块，因为其它块的宽度是不变的
    每次要在非常长的字符串的指定下标或行查找时不用全部查找了，也不用全部toString，先直接以文本块的长度来跳跃，再找指定的块
    
    主要是因为Edit的myLayout，在draw函数中，当1000000行文本，光是测量就花了60ms，绘画时间倒是挺平衡，只要3ms，必须优化测量时间
    现在好了，即使1000000行时，也可以流畅编辑
-   但有一个bug，MaxCount的值千万不要设置太小，要不然单个block装不满一行文本，大小计算会有问题
+   但有一个bug，MaxCount的值千万不要设置太小，要不然单个block装不满一行文本，大小计算会有问题，而且block的连接处本身就会切断一行文本，所以maxWidth是有问题的
+   如果您有时间，可以自己解决这个问题
 */
 public abstract class BlockLayout extends Layout
 {
@@ -92,8 +93,8 @@ public abstract class BlockLayout extends Layout
 		mBlocks.add(i,new SpannableStringBuilder());
 		mLines.add(i,0);
 		mWidths.add(i,0f);
-		insertForBlock(i,0,text);
 		//无论怎样，都抛给insertForBlock来测量
+		insertForBlock(i,0,text);	
 	}
 	/* 移除文本块 */
 	private void removeBlock(int i)
@@ -107,7 +108,6 @@ public abstract class BlockLayout extends Layout
 	public void setText(CharSequence text)
 	{
 		clearText();
-		addBlock();
 		dispatchTextBlock(0,text);
 	}
 	/* 清除文本 */
@@ -116,6 +116,7 @@ public abstract class BlockLayout extends Layout
 		mBlocks.clear();
 		mLines.clear();
 		mWidths.clear();
+		addBlock();
 		maxWidth = 0;
 		lineCount = 0;
 	}
@@ -125,7 +126,7 @@ public abstract class BlockLayout extends Layout
 		int count = text.length();
 		int nowIndex = 0;
 		
-		//每次从text中向后切割MaxCount个字符，并添加到mBlocks和mLines中
+		//每次从text中向后切割MaxCount个字符，并添加到mBlocks中
 		while(true)
 		{
 			if(count<MaxCount){
@@ -186,16 +187,18 @@ public abstract class BlockLayout extends Layout
 			//之后将截取的字符串添加到文本块列表中的下个文本块开头
 		}
 	}
-	/* 在插入文本块时调用，可以做出合理的测量 */
+	/* 在插入文本块时调用，可以做出合理的测量，注意必须在全部文本改变后才能调用 */
 	private void insertForBlock(int i, int index, CharSequence text)
 	{
 		SpannableStringBuilder builder = mBlocks.get(i);
 		builder.insert(index,text);
 		
-		//检查插入文本块
-		int e = tryLine_End(builder,index+text.length());
-		int s = tryLine_Start(builder,index);
-		String str = builder.subSequence(s,e).toString();
+		//检查插入文本块，我们仍需到全部文本中查找，因为文本块的连接处可能切断了一行文本
+		CharSequence allText = getText();
+		index += getBlockStartIndex(i);
+		int e = tryLine_End(allText,index+text.length());
+		int s = tryLine_Start(allText,index);
+		String str = allText.subSequence(s,e).toString();
 		
 		//测量插入的文本块的宽和行
 		float width = getDesiredWidth(str,0,str.length(),getPaint());
@@ -221,13 +224,13 @@ public abstract class BlockLayout extends Layout
 		int i, j;
 		int size = mBlocks.size();
 		
-		//找到start所指定的文本块
+		//找到start所指定的文本块，并将start偏移到文本块的下标
 		i = findBlockIdForIndex(start);
 		int startLen = cacheLen;
 		start-=startLen;
 		end-=startLen;
 		
-		//找到end所指定的文本块
+		//找到end所指定的文本块，并将end偏移到文本块的下标
 		for(j=i;j<size;++j)
 		{
 			int nowLen = mBlocks.get(i).length();
@@ -253,7 +256,7 @@ public abstract class BlockLayout extends Layout
 		//删除末尾的块
 	}
 	
-	/* 在删除文本块时调用，可以做出合理的测量 */
+	/* 在删除文本块时调用，可以做出合理的测量，无论怎样都无法正确测量连接处的宽，懒得管了，反正也不会有太大的问题 */
 	private void deleteForBlock(int i, int start, int end)
 	{
 		SpannableStringBuilder builder = mBlocks.get(i);
@@ -271,19 +274,35 @@ public abstract class BlockLayout extends Layout
 			int s = tryLine_Start(builder,start);
 			int e = tryLine_End(builder,end);
 			String str = builder.subSequence(s,e).toString();
-			builder.delete(start,end);
 			
 			//如果删除了字符串，测量删除文本块的宽以及行
 			float width = getDesiredWidth(str,0,str.length(),paint);
 			int line=cacheLine;
 			float copyWidth = width;
+			builder.delete(start,end);
+			//在测量完删除文本块的宽后，才删除文本
 			
-			if(width>=mWidths.get(i)){
-				//如果删除字符串比当前的maxWidth还宽，重新测量当前整个块
-				width = getDesiredWidth(builder.toString(),0,builder.length(),paint);
+			if(width>=mWidths.get(i))
+			{
+				//如果删除字符串是当前的块的最大宽度，重新测量当前整个块
+				str = builder.toString();
+				width = getDesiredWidth(str,0,str.length(),paint);
 				mWidths.set(i,width);
 			}
+			else
+			{
+				//删除文本后，两行连接为一行，测量这行的宽度
+				e = tryLine_End(builder,start);
+				width = paint.measureText(builder,s,e);
+				if(width>mWidths.get(i)){
+					//如果连接成一行的文本比当前的块的最大宽度还宽，就重新设置宽度，并准备与maxWidth比较
+					mWidths.set(i,width);
+					copyWidth = width;
+				}
+			}
+			
 			if(copyWidth>=maxWidth){
+				//当前块的最大宽度比maxWidth大，或者是最大宽度被删了，重新检查
 				maxWidth = checkMaxWidth();
 			}
 			if(line>0){
@@ -409,7 +428,6 @@ public abstract class BlockLayout extends Layout
 		cacheLen = startIndex;
 		cacheLine = startLine;
 	}
-	
 	/* 检查最大的宽度 */
 	private float checkMaxWidth()
 	{
@@ -424,7 +442,61 @@ public abstract class BlockLayout extends Layout
 		}
 		return width;
 	}
+	/* 测量文本块连接处的行宽 */
+	private float measureBlockJoinTextStart(int i)
+	{
+		int start, end;
+		float startWidth;
+		TextPaint paint = getPaint();
+		CharSequence now = mBlocks.get(i);
+		
+		//先测量自己的开头
+		start = 0;
+		end = tryLine_End(now,0);
+		startWidth = paint.measureText(now,start,end);
+		if(i>0)
+		{
+			//如果可以，我们接着测量上个的末尾
+			CharSequence last = mBlocks.get(i-1);
+			if(last.charAt(last.length()-1)!=FN){
+		    	start = tryLine_Start(last,last.length()-1);
+			    end = last.length();
+			    startWidth += paint.measureText(last,start,end);
+			}
+		}	
+		return startWidth;
+	}
+	private float measureBlockJoinTextEnd(int i)
+	{
+		int start, end;
+		float endWidth;
+		TextPaint paint = getPaint();
+		CharSequence now = mBlocks.get(i);
+		
+		//先测量自己的末尾
+		start = tryLine_Start(now,now.length()-1);
+		end = now.length();
+		endWidth = paint.measureText(now,start,end);
+		if(i<mBlocks.size()-1 && now.charAt(now.length()-1)!=FN)
+		{
+			//如果可以，我们接着测量下个的开头
+			CharSequence next = mBlocks.get(i+1);
+			start = 0;
+			end = tryLine_End(next,0);
+			endWidth += paint.measureText(next,start,end);
+		}
+		return endWidth;
+	}
 	
+	
+/*
+_______________________________________
+
+  接下来我们就可以实现父类的一些方法了
+  
+_______________________________________
+
+*/
 	
 	@Override
 	public int getLineCount(){

@@ -31,7 +31,6 @@ public class Edit extends View implements TextWatcher
 	private TextWatcher mTextListener;
 	private Drawable ScrollDrawable;
 	private Drawable LineDrawable;
-	private int mPrivateFlags;
 	
 	
 	public Edit(Context cont)
