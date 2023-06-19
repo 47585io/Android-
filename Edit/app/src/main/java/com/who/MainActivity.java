@@ -20,7 +20,7 @@ public class MainActivity extends Activity
 		Edit.openInputor(this, e);
 		ViewGroup.LayoutParams pa = e.getLayoutParams();
 		pa.width = 1080;
-		pa.height = 2408;
+		pa.height = 2100;
     }
 }
 

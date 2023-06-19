@@ -45,7 +45,7 @@ public abstract class BlockLayout extends Layout
 	private List<Float> mWidths;
 
 	
-	public BlockLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd)
+	public BlockLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, boolean reset)
 	{
 		super(base,paint,width,align,spacingmult,spacingadd);
 		mBlocks = new ArrayList<>();
@@ -196,7 +196,7 @@ public abstract class BlockLayout extends Layout
 		int e = tryLine_End(builder,index+text.length());
 		int s = tryLine_Start(builder,index);
 		String str = builder.subSequence(s,e).toString();
-
+		
 		//测量插入的文本块的宽和行
 		float width = getDesiredWidth(str,0,str.length(),getPaint());
 		int line = cacheLine;

@@ -29,6 +29,8 @@ public class Edit extends View implements TextWatcher
 	private TextPaint mPaint;
 
 	private TextWatcher mTextListener;
+	private Drawable ScrollDrawable;
+	private Drawable LineDrawable;
 	private int mPrivateFlags;
 	
 	
@@ -44,25 +46,17 @@ public class Edit extends View implements TextWatcher
 		mPaint = new TextPaint();
 		mInput = new myInput();
 		mText = new myText();
-		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f);
+		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,true);
 	}
 	protected void config()
 	{
-		configPaint(mPaint);
 		setClickable(true);
 		setLongClickable(true);
 		setFocusable(true);
 		setDefaultFocusHighlightEnabled(false);
 		//设置在获取焦点时不用额外绘制高亮的矩形区域
 	}
-	public void configPaint(TextPaint paint)
-	{
-		paint.reset();
-		paint.setTextSize(40);
-		paint.setColor(0xffaaaaaa);
-		paint.setTypeface(Typeface.MONOSPACE);
-	}
-
+	
 	public void setTextColor(int color){
 		mPaint.setColor(color);
 	}
@@ -77,6 +71,14 @@ public class Edit extends View implements TextWatcher
 	}
 	public void setText(CharSequence text){
 		mText = new myText(text);
+		mLayout = mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,false);
+		mCursor = new Cursor();
+	}
+	public void setScale(float s){
+		mLayout.setScale(s);
+	}
+	public void setHilightDrawable(Drawable draw){
+		
 	}
 	
 	public int getTextColor(){
@@ -478,6 +480,35 @@ public class Edit extends View implements TextWatcher
 		}
 	}
 
+	@Override
+	public void onDrawForeground(Canvas canvas)
+	{
+		//绘制滚动条
+		int x = getScrollX();
+		int y = getScrollY();
+		float rx = getHScrollRange();
+		float by = getVScrollRange();
+		int w = getWidth();
+		int h = getHeight();
+		
+		float bilix = x/rx*w;
+		float biliy = y/by*h;
+		float lenx = w/rx*w;
+		float leny = h/by*h;
+
+		int left = x+w-10;
+		int top = (int) (y+biliy);
+		int right = x+w;
+		int bottom = (int) (top+leny);
+		canvas.drawRect(left,top,right,bottom,mPaint);
+		
+		left = (int) (x+bilix);
+		top = y+h-10;
+		right = (int) (left+lenx);
+		bottom = y+h;
+		canvas.drawRect(left,top,right,bottom,mPaint);
+	}
+
 	
 	/* 使用Layout进行文本布局和绘制，尽可能地节省时间 */
 	final private class myLayout extends BlockLayout
@@ -494,8 +525,8 @@ public class Edit extends View implements TextWatcher
 		int[] spanStarts, spanEnds;
 		
 		
-		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd) {
-			super(base,paint,width,align,spacingmult,spacingadd);
+		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, boolean reset) {
+			super(base,paint,width,align,spacingmult,spacingadd,reset);
 		}
 		
 		/* 开始绘制文本和光标 */
@@ -516,12 +547,16 @@ public class Edit extends View implements TextWatcher
 			
 			float x = getScrollX();
 			float y = getScrollY();
+			canvas.save();
+			//先保存canvas的状态
 			canvas.clipPath(highlight);
 			//在平移前，先裁剪指定路径，但其实在之前已经clipRect了，其实也不会超出Rect的范围
 			canvas.translate(x,y);
 			//再平移，之后的绘制就默认到(x,y)处了，而我们剪切的范围正是(x,y)处，所以刚好命中范围
 			mCursor.draw(canvas);
 			//将canvas交给cursor绘制
+			canvas.restore();
+			//恢复保存前的状态
 		}
 
 		/* 开始绘制文本 */
@@ -1138,6 +1173,9 @@ public class Edit extends View implements TextWatcher
 	public void setCursorDrawable(Drawable draw){
 		mCursor.setDrawable(draw);
 	}
+	public void setCursorWidth(float spacing){
+		mLayout.setCursorWidthSpacing(spacing);
+	}
 	
 	public void addCursor(){}
 	
@@ -1460,6 +1498,12 @@ public class Edit extends View implements TextWatcher
 		super.scrollTo(x, y);
 	}
 	
+	public float getHScrollRange(){
+		return mLayout.maxWidth()+ExpandWidth;
+	}
+	public float getVScrollRange(){
+		return mLayout.getHeight()+ExpandHeight;
+	}
 	private int isScrollToEdgeH()
 	{
 		int x = getScrollX();
