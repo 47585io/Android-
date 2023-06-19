@@ -5,6 +5,7 @@ import java.util.*;
 import com.who.Edit.Base.Share.Share3.*;
 import com.who.Edit.Base.Share.Share1.*;
 import android.graphics.*;
+import android.text.Layout.*;
 
 
 /* 均衡效率的神器，BlockLayout，
@@ -220,6 +221,7 @@ public abstract class BlockLayout extends Layout
 				CharSequence sub2 = text.subSequence(0,count);
 				CharSequence sub3 = text.subSequence(count,len);
 				
+				//逆序重新插入，保证文本整体插入位置不变
 				deleteForBlock(i,index,nowLen);
 				insertForBlock(i,index,sub2);
 				dispatchTextBlock(i+1,sub3);
@@ -556,8 +558,11 @@ _______________________________________
 		return (int)(p1*getLineHeight());
 	}
 	@Override
-	public int getLineDescent(int p1){
-		return (int)((p1+1)*getLineHeight());
+	public int getLineDescent(int p1)
+	{
+		getPaint().getFontMetrics(font);
+		float descent = font.descent*lineSpacing;
+		return (int)(getLineTop(p1)+descent);
 	}
 
 	@Override
@@ -606,7 +611,8 @@ _______________________________________
 		int startLine = cacheLine;
 		int startIndex = cacheLen;
 		
-		String str = mBlocks.get(id).toString();
+		CharSequence text = mBlocks.get(id).toString();
+		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
 		startLine+= StringSpiltor.Count(FN,str,0,offset-startIndex);
 		return startLine;
 	}
@@ -656,7 +662,11 @@ _______________________________________
 	public int getEllipsisCount(int p1){
 		return 0;
 	}
-
+	@Override
+	public int getEllipsizedWidth(){
+		return 0;
+	}
+	
 	@Override
 	public void getCursorPath(int point, Path dest, CharSequence editingBuffer)
 	{
@@ -679,6 +689,7 @@ _______________________________________
 	public void getSelectionPath(int start, int end, Path dest)
 	{
 		CharSequence text = getText();
+		String str = text.subSequence(start,end).toString();
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = rectF;
@@ -687,7 +698,7 @@ _______________________________________
 		getCursorPos(start,s);
 		nearOffsetPos(start,s.x,s.y,end,e);
 		
-		float w = getDesiredWidth(text,start,end,paint);
+		float w = getDesiredWidth(str,0,str.length(),paint);
 		if(s.y == e.y)
 		{
 			//单行的情况
@@ -737,6 +748,43 @@ _______________________________________
 		bounds.bottom = (int) (bounds.top+getLineHeight());
 		return line;
 	}
+
+	@Override
+	public boolean isRtlCharAt(int offset){
+		return super.isRtlCharAt(offset);
+	}
+	@Override
+	public float getPrimaryHorizontal(int offset){
+		return super.getPrimaryHorizontal(offset);
+	}
+	@Override
+	public float getSecondaryHorizontal(int offset){
+		return super.getSecondaryHorizontal(offset);
+	}
+	@Override
+	public float getLineLeft(int line){
+		return 0;
+	}
+	@Override
+	public float getLineRight(int line){
+	    return getLineWidth(line);
+	}
+	@Override
+	public float getLineMax(int line){
+		return getLineWidth(line);
+	}
+	@Override
+	public int getLineVisibleEnd(int line){
+		return super.getLineVisibleEnd(line);
+	}
+	@Override
+	public int getOffsetToLeftOf(int offset){
+		return tryLine_Start(getText(),offset);
+	}
+	@Override
+	public int getOffsetToRightOf(int offset){
+		return tryLine_End(getText(),offset);
+	}
 	
 	/* 获取光标坐标 */
 	final public void getCursorPos(int offset,pos pos)
@@ -749,7 +797,7 @@ _______________________________________
 		CharSequence text = mBlocks.get(id);
 		
 		//先将当前的块转化为String
-		String str = text.toString();
+		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
 		
 		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
 		text = getText();
@@ -883,6 +931,9 @@ _______________________________________
 		}
 		return index<0 || index>len ? len:index;
 	}
+
+	
+	
 	
 	@Override
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)

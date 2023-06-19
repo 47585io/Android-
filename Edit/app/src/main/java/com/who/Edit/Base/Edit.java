@@ -1040,20 +1040,28 @@ public class Edit extends View implements TextWatcher
 	/* 光标 */
 	final private class Cursor
 	{
-		public int mCursorGlintTime = 5;
 		public pos startPos, endPos;
 		public int selectionStart,selectionEnd;
 		public int mCacheStart, mCacheEnd;
-		public Drawable mDrawable;
+		
+		public int mCursorGlintTime = 5;
+		public Drawable mCursorDrawable;
+		public Drawable mSelectionDrawable;
+		public Drawable mLineDrawable;
+		
 		public Path mCursorPath;
+		public Rect mLineBounds;
+		
 		public Cursor next;
 
 		Cursor()
 		{
-			mDrawable = new DefaultDrawable();
-			mCursorPath = new Path();
 			startPos = new pos();
 			endPos = new pos();
+			mCursorDrawable = new CursorDrawable();
+			mSelectionDrawable = new SelectionDrawable();
+			mLineDrawable = new LineDrawable();
+			mCursorPath = new Path();
 		}
 
 		public void setSelection(int start,int end)
@@ -1080,10 +1088,16 @@ public class Edit extends View implements TextWatcher
 				onSelectionChanged(start,end);
 			}
 		}
-		public void setDrawable(Drawable draw){
-			mDrawable = draw;
-		}
 		
+		public void setCursorDrawable(Drawable draw){
+			mCursorDrawable = draw;
+		}
+		public void setSelectionDrawable(Drawable draw){
+			mSelectionDrawable = draw;
+		}
+		public void setLineHilightDrawable(Drawable draw){
+			mLineDrawable = draw;
+		}
 		
 		/* input不应该自己修改文本，而是交给光标修改 */
 		public void sendInputText(CharSequence text,int start,int before,int after)
@@ -1119,9 +1133,19 @@ public class Edit extends View implements TextWatcher
 			return endPos;
 		}
 		
-		public void draw(Canvas canvas){
-			mDrawable.draw(canvas);
+		public void draw(Canvas canvas)
+		{
+			if(selectionStart==selectionEnd){
+				mCursorDrawable.draw(canvas);
+			}
+			else{
+				mSelectionDrawable.draw(canvas);
+			}
 		}
+		public void draw2(Canvas canvas){
+			mLineDrawable.draw(canvas);
+		}
+		
 		public Path getCursorPath()
 		{
 			if(mCacheStart==selectionStart && mCacheEnd==selectionEnd){	
@@ -1140,17 +1164,23 @@ public class Edit extends View implements TextWatcher
 			}
 			return mCursorPath;
 		}
+		public Rect getLineBounds()
+		{
+			if(mCacheStart==selectionStart){
+				return mLineBounds;
+			}
+			int line = mLayout.getLineForVertical((int)startPos.y);
+			mLayout.getLineBounds(line,mLineBounds);
+			return mLineBounds;
+		}
 
-		class DefaultDrawable extends Drawable
+		class CursorDrawable extends Drawable
 		{
 			@Override
 			public void draw(Canvas p1)
 			{
 				if(selectionStart==selectionEnd){
 				    p1.drawColor(0xff99c8ea);
-				}
-				else{
-					p1.drawColor(0x5099c8ea);
 				}
 			}
 
@@ -1165,8 +1195,46 @@ public class Edit extends View implements TextWatcher
 				return 255;
 			}
 		}
-	}
+		class SelectionDrawable extends Drawable
+		{
+			@Override
+			public void draw(Canvas p1){
+				p1.drawColor(0x5099c8ea);
+			}
 
+			@Override
+			public void setAlpha(int p1){}
+
+			@Override
+			public void setColorFilter(ColorFilter p1){}
+
+			@Override
+			public int getOpacity(){
+				return 0;
+			}
+		}
+
+		class LineDrawable extends Drawable
+		{
+			@Override
+			public void draw(Canvas p1)
+			{
+				p1.drawColor(0x25616263);
+			}
+
+			@Override
+			public void setAlpha(int p1){}
+
+			@Override
+			public void setColorFilter(ColorFilter p1){}
+
+			@Override
+			public int getOpacity(){
+				return 0;
+			}
+		}
+	}
+	
 	public void setSelection(int start, int end){
 		mCursor.setSelection(start,end);
 	}
@@ -1182,11 +1250,18 @@ public class Edit extends View implements TextWatcher
 	public pos getSelectionEndPos(){
 		return mCursor.getEndPos();
 	}
+	
 	public void setCursorDrawable(Drawable draw){
-		mCursor.setDrawable(draw);
+		mCursor.setCursorDrawable(draw);
+	}
+	public void setLineHilightDrawable(Drawable draw){
+		mCursor.setLineHilightDrawable(draw);
 	}
 	public void setCursorWidth(float spacing){
 		mLayout.setCursorWidthSpacing(spacing);
+	}
+	public void setSelectionDrawable(Drawable draw){
+		mCursor.setSelectionDrawable(draw);
 	}
 	
 	public void addCursor(){}
