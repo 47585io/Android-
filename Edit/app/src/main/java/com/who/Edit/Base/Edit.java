@@ -19,6 +19,7 @@ import android.widget.*;
 import android.text.Layout.*;
 
 
+/* 基础的编辑器，实现了一些基本功能，但保留了大量效率以便扩展 */
 public class Edit extends View implements TextWatcher
 {
 
@@ -70,8 +71,8 @@ public class Edit extends View implements TextWatcher
 	}
 	public void setText(CharSequence text){
 		mText = new myText(text);
-		mLayout = mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,false);
-		mCursor = new Cursor();
+		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,false);
+		//mCursor = new Cursor();
 	}
 	public void setScale(float s){
 		mLayout.setScale(s);
@@ -164,6 +165,9 @@ public class Edit extends View implements TextWatcher
 			
 			//根据要输入的文本，进行输入
 			mCursor.sendInputText(text,newCursorPosition,0,0);
+			//int start = getSelectionStart();
+			//int end = getSelectionEnd();
+			//mText.replace(start,end,text);
 			return true;
 		}
 
@@ -177,6 +181,14 @@ public class Edit extends View implements TextWatcher
 			
 			//准备删除字符
 			mCursor.sendInputText(null,0,beforeLength,afterLength);
+			//int len = mText.length();
+			//int start = getSelectionStart();
+			//int end = getSelectionEnd();
+
+			//删除范围内的字符
+			//beforeLength = beforeLength>start ? start:beforeLength;
+			//afterLength = end+afterLength>len ? len-end:afterLength;
+			//mText.delete(start-beforeLength,end+afterLength);
 			return true;
 		}
 
@@ -353,7 +365,8 @@ public class Edit extends View implements TextWatcher
 			
 			//文本变化后
 			sendOnTextChanged(this,start,before,after);
-		
+			mLayout.onTextChanged(start,end,tb,tbstart,tbend);
+			
 			if(beginBatchEdit==0){
 				//没有批量编辑，默认刷新
 				invalidate();
@@ -427,18 +440,7 @@ public class Edit extends View implements TextWatcher
 	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter){}
 	
 	@Override
-	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		//文本变化后，计算大小
-		mLayout.onTextChanged(text,start,lenghtBefore,lengthAfter);
-		
-		//文本变化了，设置光标位置
-		int index = start;
-		if(lengthAfter!=0){
-			index = start+lengthAfter;
-		}
-		setSelection(index,index);
-	}
+	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter){}
 
 	@Override
 	public void afterTextChanged(Editable p1){}
@@ -991,15 +993,25 @@ public class Edit extends View implements TextWatcher
 			return lineWidth+paint.getTextSize();
 		}
 		
-		/* 在文本变化时，同步修改mBlocks */
-		public void onTextChanged(CharSequence text, int start, int before, int after)
+		/* 文本变化后调用，用于同步Layout的文本块 */
+		public void onTextChanged(int start, int end, CharSequence tb, int tbstart, int tbend)
 		{
+			int before = end-start;
+			int after = tbend-tbstart;
+			int index = start;
+			
 			if(before!=0){
-				delete(start,start+before);
+				mLayout.delete(start,end);
 			}
 			if(after!=0){
-				insert(start,text.subSequence(start,start+after).toString());
+				if(tbstart!=0 || tbend!=tb.length()){
+					tb = tb.subSequence(tbstart,tbend);
+				}
+				mLayout.insert(start,tb);
+				index = start+after;
 			}
+			//必须在Layout的文本块变化后调用
+			mCursor.setSelection(index,index);
 		}
 
 	}
@@ -1071,6 +1083,7 @@ public class Edit extends View implements TextWatcher
 		public void setDrawable(Drawable draw){
 			mDrawable = draw;
 		}
+		
 		
 		/* input不应该自己修改文本，而是交给光标修改 */
 		public void sendInputText(CharSequence text,int start,int before,int after)

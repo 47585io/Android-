@@ -145,6 +145,8 @@ public abstract class BlockLayout extends Layout
 			count-=MaxCount;
 			++id;
 		}
+		cacheId = id;
+		//保存分发到的位置
 	}
 	
 	/* 如何插入文本和分发文本块 */
@@ -162,29 +164,69 @@ public abstract class BlockLayout extends Layout
 		}
 		else
 		{
-			//当插入文本会超出当前的文本块时，先插入，之后截取多出的部分
-			insertForBlock(i,index,text);
-			nowLen = builder.length();
-			text = builder.subSequence(MaxCount,nowLen);
-			deleteForBlock(i,MaxCount,nowLen);
+			/*当插入文本会超出当前的文本块时，两种方案
 			
-			if(nowLen-MaxCount>MaxCount){
-				//超出的字数超过了单个文本块的最大字数
-				dispatchTextBlock(i+1,text);
-				return;
-			}
+			 *先插再截，总长度为 
+			    插入一次:  text.length() 
+				截取一次:  (nowLen+text.length()-MaxCount)
+				删除一次:  (nowLen+text.length()-MaxCount)
+				分发一次:  (nowLen+text.length()-MaxCount)
 			
-			if (mBlocks.size()-1 == i){
-				//若无下个文本块，则添加一个
-				addBlock();
-			}
-			else if (mBlocks.get(i+1).length()+nowLen-MaxCount > MaxCount){
-				//若有下个文本块，但它的字数也不足，那么在我之后添加一个
-				addBlock(i+1);
-			}
+			 *截删截插截分分，总长度为:
+			    截取index后的文本   nowLen-index
+			    删除index后的文本:   nowLen-index
+				计算可以插入的长度并在text中截取:  MaxCount-index
+				插入截取的文本:  MaxCount-index
+				截取text中的之后的文本:  text.length()-(MaxCount-index)
+				分发之后的文本   text.length()-(MaxCount-index)
+				分发截取的index后的文本   nowLen-index
+			*/
+			
+			int len = text.length();
+			int step1 = len + (nowLen+len-MaxCount)*3;
+			int count = len>=MaxCount-index ? MaxCount-index:len;
+			int step2 = (nowLen-index)*2 + count*2 + (len-count)*2 + nowLen-index;
+			
+			if(step1<=step2)
+			{
+				//方案1，先插入，之后截取多出的部分，适合小量文本
+				insertForBlock(i,index,text);
+				nowLen = builder.length();
+				text = builder.subSequence(MaxCount,nowLen);
+				deleteForBlock(i,MaxCount,nowLen);
 
-			insertForBlock(i+1,0,text);
-			//之后将截取的字符串添加到文本块列表中的下个文本块开头
+				if(nowLen-MaxCount>MaxCount){
+					//超出的字数超过了单个文本块的最大字数
+					dispatchTextBlock(i+1,text);
+					return;
+				}
+
+				if (mBlocks.size()-1 == i){
+					//若无下个文本块，则添加一个
+					addBlock();
+				}
+				else if (mBlocks.get(i+1).length()+nowLen-MaxCount > MaxCount){
+					//若有下个文本块，但它的字数也不足，那么在我之后添加一个
+					addBlock(i+1);
+				}
+
+				insertForBlock(i+1,0,text);
+				//之后将截取的字符串添加到文本块列表中的下个文本块开头
+			}
+			else
+			{
+				//方案2，精确计算应该截取和删除的部分，适合大量文本
+				CharSequence sub1 = builder.subSequence(index,nowLen);
+				CharSequence sub2 = text.subSequence(0,count);
+				CharSequence sub3 = text.subSequence(count,len);
+				
+				deleteForBlock(i,index,nowLen);
+				insertForBlock(i,index,sub2);
+				dispatchTextBlock(i+1,sub3);
+				i = cacheId+1;
+				addBlock(i,sub1);
+			}
+			
 		}
 	}
 	/* 在插入文本块时调用，可以做出合理的测量，注意必须在全部文本改变后才能调用 */
@@ -586,7 +628,6 @@ _______________________________________
 		return measureOffset(text,start,end,horiz,getPaint());
 	}
 	
-	
 	@Override
 	public int getParagraphDirection(int p1){
 		return 0;
@@ -644,7 +685,7 @@ _______________________________________
 		pos s = tmp;
 		pos e = tmp2;
 		getCursorPos(start,s);
-		getCursorPos(end,e);
+		nearOffsetPos(start,s.x,s.y,end,e);
 		
 		float w = getDesiredWidth(text,start,end,paint);
 		if(s.y == e.y)
