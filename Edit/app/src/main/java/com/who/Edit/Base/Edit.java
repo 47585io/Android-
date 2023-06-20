@@ -493,7 +493,7 @@ public class Edit extends View implements TextWatcher
 	{
 		
 		//专门用于绘制span的画笔，不污染原画笔
-		TextPaint spanPaint = new TextPaint();	
+		TextPaint spanPaint;	
 		
 		//记录本次展示的Span和它们的位置，便于之后使用，在方案2中废弃
 		//它的用处是: 用于扩展一些互动性的Span，例如ClickableSpan，具体操作是:
@@ -502,8 +502,14 @@ public class Edit extends View implements TextWatcher
 		int[] spanStarts, spanEnds;
 		
 		
-		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale) {
+		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
+		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
+			spanPaint = new TextPaint(paint);
+			mSpans = new Object[0];
+			spanStarts = new int[0];
+			spanEnds = new int[0];
+			//防止null指针导致的异常
 		}
 		
 		/* 开始绘制文本和光标 */
@@ -992,6 +998,23 @@ public class Edit extends View implements TextWatcher
 			}
 			//必须在Layout的文本块变化后调用
 			mCursor.setSelection(index,index);
+		}
+		
+		/* 检查是否有span被点击了 */
+		public void performClickForSpan(int offset)
+		{
+			for(int i=0;i<mSpans.length;++i)
+			{
+				if(mSpans[i] instanceof ClickableSpan)
+				{
+					ClickableSpan span = (ClickableSpan) mSpans[i];
+					int start = spanStarts[i];
+					int end = spanEnds[i];
+					if(start<=offset && end>=offset){
+						span.onClick(Edit.this);
+					}
+				}
+			}
 		}
 
 	}
@@ -1604,6 +1627,8 @@ public class Edit extends View implements TextWatcher
 		        setSelection(offset,offset);
 			}
 			openInputor(getContext(),this);
+			mLayout.performClickForSpan(offset);
+			//打开输入法，并回调mLayout.performClickForSpan();
 		}
 		return true;
 	}
