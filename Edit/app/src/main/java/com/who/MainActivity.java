@@ -11,6 +11,7 @@ public class MainActivity extends Activity implements Runnable
 {
 	
 	protected ThreadPoolExecutor pool;
+	protected LinkedBlockingQueue<Runnable> queue;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -45,7 +46,7 @@ public class MainActivity extends Activity implements Runnable
 				catch (Exception e) {}
 			}
 		};
-		LinkedBlockingQueue queue = new LinkedBlockingQueue();
+		queue = new LinkedBlockingQueue<>();
 		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 	}
 	

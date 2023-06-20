@@ -945,6 +945,32 @@ _______________________________________
 		}
 		return index<0 || index>len ? len:index;
 	}
+	final public static int tryLine_NStart(CharSequence src,int index,int n)
+	{
+		int len = src.length();
+		while(n-->0)
+		{
+			index = tryLine_Start(src,index);
+			if(n==0 || index<=0){
+				break;
+			}
+			index-=1;
+		}
+		return index<0 || index>len ? 0:index;
+	}
+	final public static int tryLine_NEnd(CharSequence src,int index,int n)
+	{
+		int len = src.length();
+		while(n-->0)
+		{
+			index = tryLine_End(src,index);
+			if(n==0 || index>=len){
+				break;
+			}
+			index+=1;
+		}
+		return index<0 || index>len ? len:index;
+	}
 
 	
 	@Override

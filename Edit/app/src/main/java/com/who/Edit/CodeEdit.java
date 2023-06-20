@@ -36,6 +36,29 @@ public class CodeEdit extends Edit
 		super.config();
 	}
 
+/*
+ ---------------------------------------------------------------
+
+ Uedo和Redo
+
+ 以下内容无需重写
+
+ 对于stack中的token，在文本修改时自己存储
+
+ Uedo和Redo只负责拿出token并replace
+
+ 当修改时，Uedo存储token
+
+ 当Uedo时，Redo存储token
+
+ 当Redo时，Uedo存储token
+
+ 不包含Uedo和Redo造成的修改，这由isUR的状态决定
+
+ ---------------------------------------------------------------
+
+*/
+	
 	@Override
 	public void beforeTextChanged(CharSequence text, int start, int count, int after)
 	{
@@ -154,6 +177,33 @@ public class CodeEdit extends Edit
 			token = new token(start, start+after, "");		
 		}	
 		return token;
+	}
+	
+	
+
+/*
+---------------------------------------------------------------
+
+ 核心功能的调度函数 onTextChange
+
+ -> openWindow
+
+ -> Insert
+
+ -> reDraw
+
+ Insert和reDraw并不冲突，即使是延迟染色也没事，因为只有输入时才染色，Insert默认向后插入，所以没事
+
+ 就算是染色下标超出范围也没事，我们有try，只要不超太多影响结果就可以(怕上次文本没染完，下次就又修改，所以不使用Format)
+
+---------------------------------------------------------------
+
+*/
+
+    @Override
+	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		
 	}
 	
 

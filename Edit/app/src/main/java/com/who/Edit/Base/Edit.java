@@ -440,7 +440,7 @@ public class Edit extends View implements TextWatcher
 	
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter){}
-
+	
 	@Override
 	public void afterTextChanged(Editable p1){}
 
@@ -574,8 +574,7 @@ public class Edit extends View implements TextWatcher
 			
 			//计算可视区域的范围
 			int start = getLineStart(startLine);
-			int end = getLineStart(endLine);
-			end = tryLine_End(spanString,end);
+			int end = tryLine_NEnd(spanString,start,endLine-startLine+1);
 			
 			//只绘制可视区域的内容
 			RectF See = rectF;
