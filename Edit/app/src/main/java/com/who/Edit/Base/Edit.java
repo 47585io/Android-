@@ -164,9 +164,6 @@ public class Edit extends View implements TextWatcher
 			
 			//根据要输入的文本，进行输入
 			mCursor.sendInputText(text,newCursorPosition,0,0);
-			//int start = getSelectionStart();
-			//int end = getSelectionEnd();
-			//mText.replace(start,end,text);
 			return true;
 		}
 
@@ -180,14 +177,6 @@ public class Edit extends View implements TextWatcher
 			
 			//准备删除字符
 			mCursor.sendInputText(null,0,beforeLength,afterLength);
-			//int len = mText.length();
-			//int start = getSelectionStart();
-			//int end = getSelectionEnd();
-
-			//删除范围内的字符
-			//beforeLength = beforeLength>start ? start:beforeLength;
-			//afterLength = end+afterLength>len ? len-end:afterLength;
-			//mText.delete(start-beforeLength,end+afterLength);
 			return true;
 		}
 
@@ -1117,8 +1106,9 @@ public class Edit extends View implements TextWatcher
 		}
 		public void refresh()
 		{
-			selectionStart = mLayout.getOffsetForPosition(startPos.x,startPos.y);
-			selectionEnd = mLayout.getOffsetForPosition(endPos.x,endPos.y);
+			int start = mLayout.getOffsetForPosition(startPos.x,startPos.y);
+			int end = mLayout.getOffsetForPosition(endPos.x,endPos.y);
+			setSelection(start,end);
 		}
 		/* 先调用自己的onSelectionChanged，完成内部工作，再调用外部的onSelectionChanged */
 		public void onSelectionChanged(int start, int end)
