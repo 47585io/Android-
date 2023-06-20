@@ -579,6 +579,7 @@ _______________________________________
 		return (int)(getLineTop(p1)+descent);
 	}
 
+	/* 获取指定行的起始下标 */
 	@Override
 	public int getLineStart(int p1)
 	{
@@ -600,6 +601,7 @@ _______________________________________
 		return index;
 	}
 
+	/* 获取指定行的宽度 */
 	@Override
 	public float getLineWidth(int line)
 	{
@@ -609,6 +611,7 @@ _______________________________________
 		return measureText(text,start,end,getPaint());
 	}
 
+	/* 获取行的高度 */
 	public float getLineHeight()
 	{
 		TextPaint paint = getPaint();
@@ -617,6 +620,7 @@ _______________________________________
 		return height*lineSpacing;
 	}
 
+	/* 获取offset所在的行 */
 	@Override
 	public int getLineForOffset(int offset)
 	{
@@ -631,6 +635,7 @@ _______________________________________
 		return startLine;
 	}
 	
+	/* 获取纵坐标指定的行 */
 	@Override
 	public int getLineForVertical(int vertical)
 	{
@@ -639,6 +644,7 @@ _______________________________________
 		return line;
 	}
 
+	/* 获取指定行且指定横坐标处的offset */
 	@Override
 	public int getOffsetForHorizontal(int line, float horiz)
 	{
@@ -681,6 +687,60 @@ _______________________________________
 		return 0;
 	}
 	
+	/* 获取光标坐标 */
+	final public void getCursorPos(int offset,pos pos)
+	{  
+	    //找到index所指定的块
+		moveToIndexBlock(offset);
+		int id = cacheId;
+		int startLine = cacheLine;
+		int startIndex = cacheLen;
+		CharSequence text = mBlocks.get(id);
+
+		//先将当前的块转化为String
+		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
+
+		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
+		text = getText();
+		int start = tryLine_Start(text,offset);
+		pos.x = measureText(text,start,offset,getPaint());
+
+		//offset在使用完后转化为当前块的下标，测量当前块的起始到offset之间的行数，并加上之前的行数，最后计算行数的高
+		offset = offset-startIndex;
+		int lines = StringSpiltor.Count(FN,str,0,offset)+startLine;
+		pos.y = lines*getLineHeight();
+	}
+
+	/* 从坐标获取下标 */
+	final public int getOffsetForPosition(float x, float y)
+	{
+		int line = getLineForVertical((int)y);
+		int count = getOffsetForHorizontal(line,x);
+		return count;
+	}
+
+	/* 获取临近光标坐标，可能会更快 */
+	final public void nearOffsetPos(int oldOffset, float x, float y, int newOffset, pos target)
+	{
+		CharSequence text = getText();
+		int index = tryLine_Start(text,newOffset);
+		target.x = measureText(text,index,newOffset,getPaint());
+
+		if(oldOffset<newOffset)
+		{
+			String str = text.subSequence(oldOffset,newOffset).toString();
+			int line = StringSpiltor.Count(FN,str,0,str.length());
+			target.y = y+getLineHeight()*line;
+		}
+		else if(oldOffset>newOffset)
+		{
+			String str = text.subSequence(newOffset,oldOffset).toString();
+			int line = StringSpiltor.Count(FN,str,0,str.length());
+			target.y = y-getLineHeight()*line;
+		}
+	}
+	
+	/* 获取光标的路径 */
 	@Override
 	public void getCursorPath(int point, Path dest, CharSequence editingBuffer)
 	{
@@ -699,6 +759,7 @@ _______________________________________
 		//添加这一点的Rect
 	}
 
+	/* 获取选择区域的路径 */
 	@Override
 	public void getSelectionPath(int start, int end, Path dest)
 	{
@@ -707,10 +768,16 @@ _______________________________________
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = rectF;
+		
 		pos s = tmp;
 		pos e = tmp2;
 		getCursorPos(start,s);
-		nearOffsetPos(start,s.x,s.y,end,e);
+		if(end-start>MaxCount){
+			getCursorPos(end,e);
+		}
+		else{
+		    nearOffsetPos(start,s.x,s.y,end,e);
+		}
 		
 		float w = getDesiredWidth(str,0,str.length(),paint);
 		if(s.y == e.y)
@@ -753,6 +820,7 @@ _______________________________________
 		//添加末尾行的Rect
 	}
 
+	/* 获取行的Rect */
 	@Override
 	public int getLineBounds(int line, Rect bounds)
 	{
@@ -763,18 +831,21 @@ _______________________________________
 		return line;
 	}
 
+	/* 获取offset处的横坐标 */
 	@Override
-	public boolean isRtlCharAt(int offset){
-		return super.isRtlCharAt(offset);
+	public float getPrimaryHorizontal(int offset)
+	{
+		CharSequence text = getText();
+		int start = tryLine_Start(text,offset);
+		return measureText(text,start,offset,getPaint());
 	}
-	@Override
-	public float getPrimaryHorizontal(int offset){
-		return super.getPrimaryHorizontal(offset);
-	}
+
+	/* 获取offset处且包含了offset的横坐标 */
 	@Override
 	public float getSecondaryHorizontal(int offset){
-		return super.getSecondaryHorizontal(offset);
+		return getPrimaryHorizontal(offset+1);
 	}
+	
 	@Override
 	public float getLineLeft(int line){
 		return 0;
@@ -798,59 +869,6 @@ _______________________________________
 	@Override
 	public int getOffsetToRightOf(int offset){
 		return tryLine_End(getText(),offset);
-	}
-	
-	/* 获取光标坐标 */
-	final public void getCursorPos(int offset,pos pos)
-	{  
-	    //找到index所指定的块
-		moveToIndexBlock(offset);
-		int id = cacheId;
-		int startLine = cacheLine;
-		int startIndex = cacheLen;
-		CharSequence text = mBlocks.get(id);
-		
-		//先将当前的块转化为String
-		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
-		
-		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
-		text = getText();
-		int start = tryLine_Start(text,offset);
-		pos.x = measureText(text,start,offset,getPaint());
-		
-		//offset在使用完后转化为当前块的下标，测量当前块的起始到offset之间的行数，并加上之前的行数，最后计算行数的高
-		offset = offset-startIndex;
-		int lines = StringSpiltor.Count(FN,str,0,offset)+startLine;
-		pos.y = lines*getLineHeight();
-	}
-	
-	/* 从坐标获取下标 */
-	final public int getOffsetForPosition(float x, float y)
-	{
-		int line = getLineForVertical((int)y);
-		int count = getOffsetForHorizontal(line,x);
-		return count;
-	}
-	
-	/* 获取临近光标坐标，可能会更快 */
-	final public void nearOffsetPos(int oldOffset, float x, float y, int newOffset, pos target)
-	{
-		CharSequence text = getText();
-		int index = tryLine_Start(text,newOffset);
-		target.x = measureText(text,index,newOffset,getPaint());
-		
-		if(oldOffset<newOffset)
-		{
-			String str = text.subSequence(oldOffset,newOffset).toString();
-			int line = StringSpiltor.Count(FN,str,0,str.length());
-			target.y = y+getLineHeight()*line;
-		}
-		else if(oldOffset>newOffset)
-		{
-			String str = text.subSequence(newOffset,oldOffset).toString();
-			int line = StringSpiltor.Count(FN,str,0,str.length());
-			target.y = y-getLineHeight()*line;
-		}
 	}
 	
 	/* 测量单行文本宽度，非常精确 */
