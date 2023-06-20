@@ -21,6 +21,11 @@ public class pos
 			return true;
 		return false;
 	}
+	public boolean equals(float x,float y){
+		if(this.x==x && this.y==y )
+			return true;
+		return false;
+	}
 
 	public void set(float x,float y){
 		this. x=x;

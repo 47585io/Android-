@@ -389,6 +389,8 @@ public class Edit extends View implements TextWatcher
 		if(beginBatchEdit>0){
 		    --beginBatchEdit;
 		}
+		//我们希望光标保持原位
+		mCursor.refresh();
 		invalidate();
 	}
 	
@@ -483,7 +485,7 @@ public class Edit extends View implements TextWatcher
 	@Override
 	public void onDrawForeground(Canvas canvas)
 	{
-		//绘制滚动条
+		//在绘制前景时，绘制滚动条
 		mScrollBar.draw(canvas);
 	}
 
@@ -981,18 +983,26 @@ public class Edit extends View implements TextWatcher
 			int after = tbend-tbstart;
 			int index = start;
 			
+			//Layout的文本块必须与mText同步，否则会有严重后果
 			if(before!=0){
 				mLayout.delete(start,end);
+				//文本删除了，光标还是start
 			}
-			if(after!=0){
+			if(after!=0)
+			{
 				if(tbstart!=0 || tbend!=tb.length()){
 					tb = tb.subSequence(tbstart,tbend);
 				}
 				mLayout.insert(start,tb);
 				index = start+after;
+				//插入了文本，光标挪到文本后
 			}
-			//必须在Layout的文本块变化后调用
-			mCursor.setSelection(index,index);
+			
+			//光标的变化，必须在Layout的文本块变化后调用
+			if(beginBatchEdit==0){
+			    //对于批量编辑，导致光标不可见，我们希望在这之后光标保持原位
+			    mCursor.setSelection(index,index);
+			}
 		}
 		
 		/* 检查是否有span被点击了 */
@@ -1071,25 +1081,45 @@ public class Edit extends View implements TextWatcher
 		{
 			if(start!=selectionStart || end!=selectionEnd)
 			{
+				if(start!=selectionStart){
+					mLayout.getCursorPos(start,startPos);
+				}
+				if(end!=selectionEnd)
+				{
+					if(start==end){
+						endPos.set(startPos);
+					}
+					else
+					{
+						if(end-start>BlockLayout.MaxCount){
+							mLayout.getCursorPos(end,endPos);
+						}
+						else{
+							mLayout.nearOffsetPos(selectionEnd,endPos.x,endPos.y,end,endPos);
+						}
+					}
+				}
 				selectionStart = start;
 				selectionEnd = end;
-				mLayout.getCursorPos(start,startPos);
-				mLayout.getCursorPos(end,endPos);
 				onSelectionChanged(start,end);
 			}
 		}
 		public void setPos(float x, float y, float x2, float y2)
 		{
-			int start = getOffsetForPosition(x,y);
-			int end = getOffsetForPosition(x2,y2);
-			if(start!=selectionStart || end!=selectionEnd)
-			{
-				selectionStart = start;
-				selectionEnd = end;
-				mLayout.getCursorPos(start,startPos);
-				mLayout.getCursorPos(end,endPos);
-				onSelectionChanged(start,end);
+			int start=selectionStart;
+			int end=selectionEnd;
+			if(!startPos.equals(x,y)){
+				start = getOffsetForPosition(x,y);
 			}
+			if(!endPos.equals(x2,y2)){
+				end = getOffsetForPosition(x2,y2);
+			}
+			setSelection(start,end);
+		}
+		public void refresh()
+		{
+			selectionStart = mLayout.getOffsetForPosition(startPos.x,startPos.y);
+			selectionEnd = mLayout.getOffsetForPosition(endPos.x,endPos.y);
 		}
 		
 		public void setCursorDrawable(Drawable draw){
@@ -1391,8 +1421,8 @@ public class Edit extends View implements TextWatcher
 	@Override
 	protected void onScrollChanged(int l, int t, int oldl, int oldt)
 	{
-		// TODO: Implement this method
 		super.onScrollChanged(l, t, oldl, oldt);
+		
 	}
 	
 /*
@@ -1639,7 +1669,8 @@ public class Edit extends View implements TextWatcher
 	public boolean performLongClick()
 	{
 		//长按触发选择
-		if(useFlag!=notClick){
+		if(useFlag!=notClick)
+		{
 	        flag = Selected;
 			cursorX = nowX+getScrollX();
 			cursorY = nowY+getScrollY();

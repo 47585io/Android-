@@ -21,6 +21,11 @@ public class range
 			return true;
 		return false;
 	}
+	public boolean equals(int start,int end){
+		if(this.start==start && this.end==end)
+			return true;
+		return false;
+	}
 
 	public void set(int s,int e){
 		start=s;
