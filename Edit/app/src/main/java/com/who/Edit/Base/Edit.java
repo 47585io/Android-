@@ -506,10 +506,6 @@ public class Edit extends View implements TextWatcher
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			spanPaint = new TextPaint(paint);
-			mSpans = new Object[0];
-			spanStarts = new int[0];
-			spanEnds = new int[0];
-			//防止null指针导致的异常
 		}
 		
 		/* 开始绘制文本和光标 */
@@ -1003,6 +999,9 @@ public class Edit extends View implements TextWatcher
 		/* 检查是否有span被点击了 */
 		public void performClickForSpan(int offset)
 		{
+			if(mSpans==null){
+				return;
+			}
 			for(int i=0;i<mSpans.length;++i)
 			{
 				if(mSpans[i] instanceof ClickableSpan)
@@ -1305,6 +1304,8 @@ public class Edit extends View implements TextWatcher
  _______________________________________
 
 */
+   
+    private static final float MinSize = 100;
 
     /* 滚动条 */
     private final class ScrollBar
@@ -1327,6 +1328,7 @@ public class Edit extends View implements TextWatcher
 			float by = getVScrollRange();
 			float biliy = y/by*h;
 			float leny = h/by*h;
+			leny = leny<MinSize ? MinSize:leny;
 
 			int left = x+w-10;
 			int top = (int) (y+biliy);
@@ -1345,6 +1347,7 @@ public class Edit extends View implements TextWatcher
 			float rx = getHScrollRange();
 			float bilix = x/rx*w;
 			float lenx = w/rx*w;
+			lenx = lenx<MinSize ? MinSize:lenx;
 			
 			int left = (int) (x+bilix);
 			int top = y+h-10;
@@ -1381,7 +1384,7 @@ public class Edit extends View implements TextWatcher
 		{
 			@Override
 			public void draw(Canvas p1){
-				p1.drawColor(0);
+				p1.drawColor(0x99aaaaaa);
 			}
 		}
 	}

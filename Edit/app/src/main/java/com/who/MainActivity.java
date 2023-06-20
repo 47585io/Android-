@@ -7,7 +7,7 @@ import com.who.Edit.Base.*;
 import java.util.concurrent.*;
 import android.text.*;
 
-public class MainActivity extends Activity 
+public class MainActivity extends Activity implements Runnable
 {
 	
 	protected ThreadPoolExecutor pool;
@@ -18,10 +18,16 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		init();
-		loadFileInThread("/storage/emulated/0/Linux/1.java");
+		runOnUiThread(this);
     }
 	
+	@Override
+	public void run()
+	{
+		init();
+		config();
+	}
+
 	public void init()
     {
 		RejectedExecutionHandler rejected = new RejectedExecutionHandler()
@@ -43,11 +49,17 @@ public class MainActivity extends Activity
 		pool = new ThreadPoolExecutor(5, 20, 0, TimeUnit.SECONDS, queue, rejected);
 	}
 	
+	public void config()
+	{
+		loadFileInThread("/storage/emulated/0/Linux/1.java");
+	}
+	
 	public void loadFileInThread(String path)
 	{
 		myReader reader = new myReader(path);
 		final String text = reader.r("UTF-8");
 		reader.close();
+		
 		//第一次可以在子线程中加载
 		Runnable run = new Runnable()
 		{
@@ -58,6 +70,7 @@ public class MainActivity extends Activity
 				E.setText(text);
 				E.setBackgroundColor(0xff222222);
 				//还没有setContentView，因此Edit未与主线程建立联系，还只是一块内存而已
+				
 				runOnUiThread(new Runnable()
 				    {
 						@Override
@@ -80,6 +93,7 @@ public class MainActivity extends Activity
 		};
 		pool.execute(run);
 	}
+	
 	public void loadFile(String path)
 	{
 		myReader reader = new myReader(path);
