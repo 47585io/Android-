@@ -1053,7 +1053,6 @@ public class Edit extends View implements TextWatcher
 	{
 		public pos startPos, endPos;
 		public int selectionStart,selectionEnd;
-		public int mCacheStart, mCacheEnd;
 		
 		public int mCursorGlintTime = 5;
 		public Drawable mCursorDrawable;
@@ -1121,6 +1120,21 @@ public class Edit extends View implements TextWatcher
 			selectionStart = mLayout.getOffsetForPosition(startPos.x,startPos.y);
 			selectionEnd = mLayout.getOffsetForPosition(endPos.x,endPos.y);
 		}
+		/* 先调用自己的onSelectionChanged，完成内部工作，再调用外部的onSelectionChanged */
+		public void onSelectionChanged(int start, int end)
+		{
+			//当光标位置变化，制作新的Path和Rect
+			mCursorPath.rewind();
+			if(selectionStart==selectionEnd){
+				mLayout.getCursorPath(selectionStart,mCursorPath,mText);
+			}
+			else{
+			    mLayout.getSelectionPath(selectionStart,selectionEnd,mCursorPath);
+			}
+			int line = mLayout.getLineForVertical((int)startPos.y);
+			mLayout.getLineBounds(line,mLineBounds);
+			Edit.this.onSelectionChanged(start,end);
+		}
 		
 		public void setCursorDrawable(Drawable draw){
 			mCursorDrawable = draw;
@@ -1179,28 +1193,10 @@ public class Edit extends View implements TextWatcher
 			mLineDrawable.draw(canvas);
 		}
 		
-		public Path getCursorPath()
-		{
-			if(mCacheStart==selectionStart && mCacheEnd==selectionEnd){	
-				return mCursorPath;
-			}
-			
-			mCacheStart = selectionStart;
-			mCacheEnd = selectionEnd;
-			mCursorPath.rewind();
-			
-			if(selectionStart==selectionEnd){
-				mLayout.getCursorPath(selectionStart,mCursorPath,mText);
-			}
-			else{
-			    mLayout.getSelectionPath(selectionStart,selectionEnd,mCursorPath);
-			}
+		public Path getCursorPath(){
 			return mCursorPath;
 		}
-		public Rect getLineBounds()
-		{
-			int line = mLayout.getLineForVertical((int)startPos.y);
-			mLayout.getLineBounds(line,mLineBounds);
+		public Rect getLineBounds(){
 			return mLineBounds;
 		}
 
@@ -1340,20 +1336,21 @@ public class Edit extends View implements TextWatcher
     private final class ScrollBar
 	{
 		private Drawable mScrollDrawable;
-		private Rect mScrollRect;
+		private Rect mHScrollRect,mVScrollRect;
 		
 		ScrollBar(){
 			mScrollDrawable = new ScrollDrawable();
-			mScrollRect = new Rect();
+			mHScrollRect = new Rect();
+			mVScrollRect = new Rect();
 		}
 		
-		public Rect getVRect()
+		public void setVRect()
 		{
 			int x = getScrollX();
 			int y = getScrollY();
 			int w = getWidth();
 			int h = getHeight();
-	
+
 			float by = getVScrollRange();
 			float biliy = y/by*h;
 			float leny = h/by*h;
@@ -1363,45 +1360,39 @@ public class Edit extends View implements TextWatcher
 			int top = (int) (y+biliy);
 			int right = x+w;
 			int bottom = (int) (top+leny);
-			mScrollRect.set(left,top,right,bottom);
-			return mScrollRect;
+			mVScrollRect.set(left,top,right,bottom);
 		}
-		public Rect getHRect()
+		public void setHRect()
 		{
 			int x = getScrollX();
 			int y = getScrollY();
 			int w = getWidth();
 			int h = getHeight();
-			
+
 			float rx = getHScrollRange();
 			float bilix = x/rx*w;
 			float lenx = w/rx*w;
 			lenx = lenx<MinSize ? MinSize:lenx;
-			
+
 			int left = (int) (x+bilix);
 			int top = y+h-10;
 			int right = (int) (left+lenx);
 			int bottom = y+h;
-			mScrollRect.set(left,top,right,bottom);
-			return mScrollRect;
+			mHScrollRect.set(left,top,right,bottom);
+		}
+		public Rect getVRect(){
+			return mVScrollRect;
+		}
+		public Rect getHRect(){
+			return mHScrollRect;
 		}
 		
 		public void draw(Canvas canvas){
-			drawHScrollBar(canvas);
-			drawVScrollBar(canvas);
+			drawScrollBar(canvas,mHScrollRect);
+			drawScrollBar(canvas,mVScrollRect);
 		}
-		private void drawHScrollBar(Canvas canvas)
+		private void drawScrollBar(Canvas canvas, Rect r)
 		{
-			Rect r = getHRect();
-			canvas.save();
-			canvas.clipRect(r);
-			canvas.translate(r.left,r.top);
-			mScrollDrawable.draw(canvas);
-			canvas.restore();
-		}
-		private void drawVScrollBar(Canvas canvas)
-		{
-			Rect r = getVRect();
 			canvas.save();
 			canvas.clipRect(r);
 			canvas.translate(r.left,r.top);
@@ -1422,7 +1413,9 @@ public class Edit extends View implements TextWatcher
 	protected void onScrollChanged(int l, int t, int oldl, int oldt)
 	{
 		super.onScrollChanged(l, t, oldl, oldt);
-		
+		mScrollBar.setHRect();
+		mScrollBar.setVRect();
+		//只在视图滚动时，才设置滚动条的Rect
 	}
 	
 /*
