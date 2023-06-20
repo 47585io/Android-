@@ -37,9 +37,9 @@ public abstract class BlockLayout extends Layout
 	//记录属性
 	private int lineCount;
 	private float maxWidth;
-	private float cursorWidth=0.1f;
-	private float lineSpacing=1.2f;
-	private float scaleLayout=1;
+	private float cursorWidth;
+	private float lineSpacing;
+	private float scaleLayout;
 	
 	//每个文本块，每个块的行数，每个块的宽度
 	private List<SpannableStringBuilder> mBlocks;
@@ -47,16 +47,20 @@ public abstract class BlockLayout extends Layout
 	private List<Float> mWidths;
 
 	
-	public BlockLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, boolean reset)
+	public BlockLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(base,paint,width,align,spacingmult,spacingadd);
 		mBlocks = new ArrayList<>();
 		mLines = new ArrayList<>();
 		mWidths = new ArrayList<>();
 		setText(base);
-		setPaint(paint);
+		
+		scaleLayout = scale;
+		lineSpacing = spacingmult;
+		this.cursorWidth = cursorWidth;
 	}
-	private void setPaint(TextPaint paint){
+	public void setPaint(TextPaint paint)
+	{
 		paint.reset();
 		paint.setTextSize(TextSize);
 		paint.setColor(TextColor);
@@ -76,6 +80,16 @@ public abstract class BlockLayout extends Layout
 		scaleLayout = scaleLayout>MaxScale ? MaxScale:scale;
 		TextPaint paint = getPaint();
 		paint.setTextSize(TextSize*scaleLayout);
+	}
+	
+	public float getCursorWidthSpacing(){
+		return cursorWidth;
+	}
+	public float getLineSpacing(){
+		return lineSpacing;
+	}
+	public float getScale(){
+		return scaleLayout;
 	}
 	
 	/* 添加文本块 */
@@ -932,8 +946,6 @@ _______________________________________
 		return index<0 || index>len ? len:index;
 	}
 
-	
-	
 	
 	@Override
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)

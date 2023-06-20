@@ -24,14 +24,13 @@ public class Edit extends View implements TextWatcher
 {
 
 	private Cursor mCursor;
+	private ScrollBar mScrollBar;
+	
 	private myInput mInput;
 	private myText mText;
 	private myLayout mLayout;
 	private TextPaint mPaint;
-
 	private TextWatcher mTextListener;
-	private Drawable ScrollDrawable;
-	private Drawable LineDrawable;
 	
 	
 	public Edit(Context cont)
@@ -43,13 +42,16 @@ public class Edit extends View implements TextWatcher
 	protected void init()
 	{
 		mCursor = new Cursor();
+		mScrollBar = new ScrollBar();
+		
 		mPaint = new TextPaint();
 		mInput = new myInput();
 		mText = new myText();
-		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,true);
+		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
 	}
 	protected void config()
 	{
+		mLayout.setPaint(mPaint);
 		setClickable(true);
 		setLongClickable(true);
 		setFocusable(true);
@@ -71,14 +73,11 @@ public class Edit extends View implements TextWatcher
 	}
 	public void setText(CharSequence text){
 		mText = new myText(text);
-		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,false);
+		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
 		//mCursor = new Cursor();
 	}
 	public void setScale(float s){
 		mLayout.setScale(s);
-	}
-	public void setHilightDrawable(Drawable draw){
-		
 	}
 	
 	public int getTextColor(){
@@ -485,29 +484,7 @@ public class Edit extends View implements TextWatcher
 	public void onDrawForeground(Canvas canvas)
 	{
 		//绘制滚动条
-		int x = getScrollX();
-		int y = getScrollY();
-		float rx = getHScrollRange();
-		float by = getVScrollRange();
-		int w = getWidth();
-		int h = getHeight();
-		
-		float bilix = x/rx*w;
-		float biliy = y/by*h;
-		float lenx = w/rx*w;
-		float leny = h/by*h;
-
-		int left = x+w-10;
-		int top = (int) (y+biliy);
-		int right = x+w;
-		int bottom = (int) (top+leny);
-		canvas.drawRect(left,top,right,bottom,mPaint);
-		
-		left = (int) (x+bilix);
-		top = y+h-10;
-		right = (int) (left+lenx);
-		bottom = y+h;
-		canvas.drawRect(left,top,right,bottom,mPaint);
+		mScrollBar.draw(canvas);
 	}
 
 	
@@ -515,8 +492,7 @@ public class Edit extends View implements TextWatcher
 	final private class myLayout extends BlockLayout
 	{
 		
-		//临时变量，免得每次都要重新new
-		Rect rect = new Rect();
+		//专门用于绘制span的画笔，不污染原画笔
 		TextPaint spanPaint = new TextPaint();	
 		
 		//记录本次展示的Span和它们的位置，便于之后使用，在方案2中废弃
@@ -526,8 +502,8 @@ public class Edit extends View implements TextWatcher
 		int[] spanStarts, spanEnds;
 		
 		
-		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, boolean reset) {
-			super(base,paint,width,align,spacingmult,spacingadd,reset);
+		public myLayout(java.lang.CharSequence base, android.text.TextPaint paint, int width, android.text.Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale) {
+			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 		}
 		
 		/* 开始绘制文本和光标 */
@@ -535,9 +511,15 @@ public class Edit extends View implements TextWatcher
 		public void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
 		{
 			//在绘制文本前绘制光标所在行的高亮矩形
-			int startLine = getLineForVertical(cursorOffsetVertical);
-			getLineBounds(startLine,rect);
-			canvas.drawRect(rect,highlightPaint);
+			canvas.save();
+			//先保存canvas的状态
+			Rect rect = mCursor.getLineBounds();
+			canvas.clipRect(rect);
+			canvas.translate(0,cursorOffsetVertical);
+			//裁剪行的矩形，并交给mCursor绘制
+			mCursor.draw2(canvas);
+			canvas.restore();
+			//恢复保存前的状态
 			
 			draw(canvas);
 			//先绘制文本，之后绘制光标
@@ -549,7 +531,6 @@ public class Edit extends View implements TextWatcher
 			float x = getScrollX();
 			float y = getScrollY();
 			canvas.save();
-			//先保存canvas的状态
 			canvas.clipPath(highlight);
 			//在平移前，先裁剪指定路径，但其实在之前已经clipRect了，其实也不会超出Rect的范围
 			canvas.translate(x,y);
@@ -557,7 +538,6 @@ public class Edit extends View implements TextWatcher
 			mCursor.draw(canvas);
 			//将canvas交给cursor绘制
 			canvas.restore();
-			//恢复保存前的状态
 		}
 
 		/* 开始绘制文本 */
@@ -1051,17 +1031,19 @@ public class Edit extends View implements TextWatcher
 		
 		public Path mCursorPath;
 		public Rect mLineBounds;
-		
 		public Cursor next;
 
-		Cursor()
+		private Cursor()
 		{
 			startPos = new pos();
 			endPos = new pos();
+			
 			mCursorDrawable = new CursorDrawable();
 			mSelectionDrawable = new SelectionDrawable();
 			mLineDrawable = new LineDrawable();
+			
 			mCursorPath = new Path();
+			mLineBounds = new Rect();
 		}
 
 		public void setSelection(int start,int end)
@@ -1166,72 +1148,49 @@ public class Edit extends View implements TextWatcher
 		}
 		public Rect getLineBounds()
 		{
-			if(mCacheStart==selectionStart){
-				return mLineBounds;
-			}
 			int line = mLayout.getLineForVertical((int)startPos.y);
 			mLayout.getLineBounds(line,mLineBounds);
 			return mLineBounds;
 		}
 
-		class CursorDrawable extends Drawable
+		class CursorDrawable extends NullDrawable
 		{
 			@Override
-			public void draw(Canvas p1)
-			{
-				if(selectionStart==selectionEnd){
-				    p1.drawColor(0xff99c8ea);
-				}
-			}
-
-			@Override
-			public void setAlpha(int p1){}
-
-			@Override
-			public void setColorFilter(ColorFilter p1){}
-
-			@Override
-			public int getOpacity(){
-				return 255;
+			public void draw(Canvas p1){
+				p1.drawColor(0xff99c8ea);
 			}
 		}
-		class SelectionDrawable extends Drawable
+		class SelectionDrawable extends NullDrawable
 		{
 			@Override
 			public void draw(Canvas p1){
 				p1.drawColor(0x5099c8ea);
 			}
-
-			@Override
-			public void setAlpha(int p1){}
-
-			@Override
-			public void setColorFilter(ColorFilter p1){}
-
-			@Override
-			public int getOpacity(){
-				return 0;
-			}
 		}
-
-		class LineDrawable extends Drawable
+		class LineDrawable extends NullDrawable
 		{
 			@Override
 			public void draw(Canvas p1)
 			{
 				p1.drawColor(0x25616263);
 			}
+		}
+	}
+	
+	public static class NullDrawable extends Drawable
+	{
+		@Override
+		public void draw(Canvas p1){}
 
-			@Override
-			public void setAlpha(int p1){}
+		@Override
+		public void setAlpha(int p1){}
 
-			@Override
-			public void setColorFilter(ColorFilter p1){}
+		@Override
+		public void setColorFilter(ColorFilter p1){}
 
-			@Override
-			public int getOpacity(){
-				return 0;
-			}
+		@Override
+		public int getOpacity(){
+			return 0;
 		}
 	}
 	
@@ -1316,7 +1275,101 @@ public class Edit extends View implements TextWatcher
 		scrollTo(tox,toy);
 	}
 	
+/*
+ _______________________________________
 
+ 由视图本身管理的滚动，因此滚动条也要自己画
+ _______________________________________
+
+*/
+
+    /* 滚动条 */
+    private final class ScrollBar
+	{
+		private Drawable mScrollDrawable;
+		private Rect mScrollRect;
+		
+		ScrollBar(){
+			mScrollDrawable = new ScrollDrawable();
+			mScrollRect = new Rect();
+		}
+		
+		public Rect getVRect()
+		{
+			int x = getScrollX();
+			int y = getScrollY();
+			int w = getWidth();
+			int h = getHeight();
+	
+			float by = getVScrollRange();
+			float biliy = y/by*h;
+			float leny = h/by*h;
+
+			int left = x+w-10;
+			int top = (int) (y+biliy);
+			int right = x+w;
+			int bottom = (int) (top+leny);
+			mScrollRect.set(left,top,right,bottom);
+			return mScrollRect;
+		}
+		public Rect getHRect()
+		{
+			int x = getScrollX();
+			int y = getScrollY();
+			int w = getWidth();
+			int h = getHeight();
+			
+			float rx = getHScrollRange();
+			float bilix = x/rx*w;
+			float lenx = w/rx*w;
+			
+			int left = (int) (x+bilix);
+			int top = y+h-10;
+			int right = (int) (left+lenx);
+			int bottom = y+h;
+			mScrollRect.set(left,top,right,bottom);
+			return mScrollRect;
+		}
+		
+		public void draw(Canvas canvas){
+			drawHScrollBar(canvas);
+			drawVScrollBar(canvas);
+		}
+		private void drawHScrollBar(Canvas canvas)
+		{
+			Rect r = getHRect();
+			canvas.save();
+			canvas.clipRect(r);
+			canvas.translate(r.left,r.top);
+			mScrollDrawable.draw(canvas);
+			canvas.restore();
+		}
+		private void drawVScrollBar(Canvas canvas)
+		{
+			Rect r = getVRect();
+			canvas.save();
+			canvas.clipRect(r);
+			canvas.translate(r.left,r.top);
+			mScrollDrawable.draw(canvas);
+			canvas.restore();
+		}
+		
+		class ScrollDrawable extends NullDrawable
+		{
+			@Override
+			public void draw(Canvas p1){
+				p1.drawColor(0);
+			}
+		}
+	}
+
+	@Override
+	protected void onScrollChanged(int l, int t, int oldl, int oldt)
+	{
+		// TODO: Implement this method
+		super.onScrollChanged(l, t, oldl, oldt);
+	}
+	
 /*
  _______________________________________
 
@@ -1339,7 +1392,7 @@ public class Edit extends View implements TextWatcher
 	
 	/* 指示下次干什么 */
 	private byte flag;
-	private static final byte MoveSelf = 0, MoveCursor = 1, Selected = 2;
+	private static final byte MoveSelf = 0, MoveCursor = 1, MoveScroll = 3, Selected = 2;
 	
 	/* 指示能做什么事 */
 	private byte useFlag;
