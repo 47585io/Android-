@@ -974,7 +974,7 @@ public class Edit extends View implements TextWatcher
 			
 			//Layout的文本块必须与mText同步，否则会有严重后果
 			if(before!=0){
-				mLayout.delete(start,end);
+				delete(start,end);
 				//文本删除了，光标还是start
 			}
 			if(after!=0)
@@ -982,7 +982,7 @@ public class Edit extends View implements TextWatcher
 				if(tbstart!=0 || tbend!=tb.length()){
 					tb = tb.subSequence(tbstart,tbend);
 				}
-				mLayout.insert(start,tb);
+				insert(start,tb);
 				index = start+after;
 				//插入了文本，光标挪到文本后
 			}
@@ -1097,10 +1097,10 @@ public class Edit extends View implements TextWatcher
 			int start=selectionStart;
 			int end=selectionEnd;
 			if(!startPos.equals(x,y)){
-				start = getOffsetForPosition(x,y);
+				start = mLayout.getOffsetForPosition(x,y);
 			}
 			if(!endPos.equals(x2,y2)){
-				end = getOffsetForPosition(x2,y2);
+				end = mLayout.getOffsetForPosition(x2,y2);
 			}
 			setSelection(start,end);
 		}
@@ -1235,10 +1235,10 @@ public class Edit extends View implements TextWatcher
 		mCursor.setSelection(start,end);
 	}
 	public int getSelectionStart(){
-		return mCursor.selectionStart;
+		return mCursor.getSelectionStart();
 	}
 	public int getSelectionEnd(){
-		return mCursor.selectionEnd;
+		return mCursor.getSelectionEnd();
 	}
 	public pos getSelectionStartPos(){
 		return mCursor.getStartPos();
@@ -1388,6 +1388,11 @@ public class Edit extends View implements TextWatcher
 			canvas.translate(r.left,r.top);
 			mScrollDrawable.draw(canvas);
 			canvas.restore();
+		}
+		
+		public void setScroll(float dx,float dy)
+		{
+			
 		}
 		
 		class ScrollDrawable extends NullDrawable

@@ -1,4 +1,5 @@
 package com.who.Edit;
+
 import android.view.*;
 import com.who.Edit.Base.*;
 import android.content.*;
@@ -6,6 +7,7 @@ import android.graphics.*;
 import java.util.*;
 import com.who.Edit.Base.Share.Share1.*;
 import android.text.*;
+
 
 public class CodeEdit extends Edit
 {
@@ -22,6 +24,7 @@ public class CodeEdit extends Edit
 	public CodeEdit(Context cont){
 		super(cont);
 	}
+	
 	@Override
 	protected void init()
 	{
