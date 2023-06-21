@@ -53,6 +53,7 @@ public class Edit extends View implements TextWatcher
 	protected void config()
 	{
 		mLayout.setPaint(mPaint);
+		setLineColor(0xff666666);
 		setClickable(true);
 		setLongClickable(true);
 		setFocusable(true);
@@ -79,6 +80,7 @@ public class Edit extends View implements TextWatcher
 	{
 		mText = new myText(text);
 		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
+		setLineColor(0xff666666);
 		mCursor.setSelection(text.length(),text.length());
 	}
 	public void setScale(float s){
@@ -387,7 +389,7 @@ public class Edit extends View implements TextWatcher
 		    --beginBatchEdit;
 		}
 		//我们希望光标保持原位
-		mCursor.refresh();
+		mCursor.refreshForPos();
 		invalidate();
 	}
 	
@@ -976,8 +978,8 @@ public class Edit extends View implements TextWatcher
 			float y = getScrollY();
 			float now = getScale();
 			scale = now/src;
+			mCursor.refreshForIndex();
 			scrollTo((int)(x*scale),(int)(y*scale));
-			mCursor.onSelectionChanged(mCursor.getSelectionStart(),mCursor.getSelectionEnd());
 		}
 		
 		/* 获取应该预留给行数的宽度 */
@@ -1130,11 +1132,17 @@ public class Edit extends View implements TextWatcher
 			}
 			setSelection(start,end);
 		}
-		public void refresh()
+		public void refreshForPos()
 		{
 			int start = mLayout.getOffsetForPosition(startPos.x,startPos.y);
 			int end = mLayout.getOffsetForPosition(endPos.x,endPos.y);
 			setSelection(start,end);
+		}
+		public void refreshForIndex()
+		{
+			mLayout.getCursorPos(selectionStart,startPos);
+			mLayout.getCursorPos(selectionEnd,endPos);
+			onSelectionChanged(selectionStart,selectionEnd);
 		}
 		/* 先调用自己的onSelectionChanged，完成内部工作，再调用外部的onSelectionChanged */
 		public void onSelectionChanged(int start, int end)
@@ -1528,7 +1536,7 @@ public class Edit extends View implements TextWatcher
 	
 	/* 指示下次干什么 */
 	private byte flag;
-	private static final byte MoveSelf = 0, MoveCursor = 1, MoveHScroll = 3,MoveVScroll=4, Selected = 2;
+	private static final byte MoveSelf = 0, MoveCursor = 1, MoveHScroll = 3, MoveVScroll=4, Selected = 2;
 	
 	/* 指示能做什么事 */
 	private byte useFlag;
@@ -1660,13 +1668,13 @@ public class Edit extends View implements TextWatcher
 				if(event.getPointerCount()==2 && event.findPointerIndex(id)!=-1)
 				{
 					//双指缩放自己
-					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
-					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
-					float scale = len/hlen;
+					double len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
+					double hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
+					double scale = len/hlen;
 					//根据手指间的距离计算缩放倍数，将textSize缩放
 					if(scale<0.95 || scale>1.05){
 						//太小的变化不需要去检查
-					    mLayout.setScale(scale);
+					    mLayout.setScale((float)scale);
 					}
 					useFlag = notClick;
 					//缩放不是点击或长按
@@ -1832,4 +1840,3 @@ public class Edit extends View implements TextWatcher
 	}
 
 }
-
