@@ -6,6 +6,7 @@ import android.view.*;
 import com.who.Edit.Base.*;
 import java.util.concurrent.*;
 import android.text.*;
+import android.graphics.drawable.*;
 
 public class MainActivity extends Activity implements Runnable
 {
@@ -17,7 +18,8 @@ public class MainActivity extends Activity implements Runnable
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-		getWindow().setBackgroundDrawable(null);
+		getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
+		//getWindow().setBackgroundDrawable(null);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		runOnUiThread(this);
@@ -70,7 +72,6 @@ public class MainActivity extends Activity implements Runnable
 			{
 				final Edit E = new Edit(MainActivity.this);
 				E.setText(text);
-				E.setBackgroundColor(0xff222222);
 				//还没有setContentView，因此Edit未与主线程建立联系，还只是一块内存而已
 				
 				runOnUiThread(new Runnable()
@@ -82,7 +83,7 @@ public class MainActivity extends Activity implements Runnable
 							//将Edit添加到DecorView中，并开始绘制和分发事件
 							ViewGroup.LayoutParams pa = E.getLayoutParams();
 							pa.width = 1080;
-							pa.height = 2100;
+							pa.height = 2180;
 							//在将Edit添加到DecorView中时，DecorView已经给Edit设置了一个LayoutParams
 							
 							//然后我们与输入法建立连接
@@ -96,26 +97,4 @@ public class MainActivity extends Activity implements Runnable
 		pool.execute(run);
 	}
 	
-	public void loadFile(String path)
-	{
-		myReader reader = new myReader(path);
-		final String text = reader.r("UTF-8");
-		reader.close();
-		
-		final Edit E = new Edit(MainActivity.this);
-		E.setText(text);
-		E.setBackgroundColor(0xff222222);
-		
-		setContentView(E);
-		ViewGroup.LayoutParams pa = E.getLayoutParams();
-		pa.width = 1080;
-		pa.height = 2100;
-		
-		Edit.openInputor(MainActivity. this, E);
-		float y = E.getVScrollRange();
-		E.scrollTo(0,(int)y);
-	}
 }
-
-
-

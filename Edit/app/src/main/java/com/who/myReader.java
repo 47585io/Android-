@@ -7,47 +7,44 @@ public class myReader
 	private FileInputStream reader;
 	private File f;
 
-	public myReader(String path){
-		try
-		{
+	public myReader(String path)
+	{
+		try{
 			reader=new FileInputStream(path);
 			f=new File(path);
 		}
-		catch (FileNotFoundException e)
-		{}
+		catch (FileNotFoundException e){}
 	}
-	public myReader(File f){
-		try
-		{
+	public myReader(File f)
+	{
+		try{
 			reader=new FileInputStream(f);
 			this.f=f;
 		}
-		catch (FileNotFoundException e)
-		{}
+		catch (FileNotFoundException e){}
 	}
 
-	public String r(String decode){
+	public String r(String decode)
+	{
 		String src = "";
 		try
 		{
 			if(reader!=null&&f!=null){
 				byte[] buf=new byte[(int)f.length()];
 			    reader.read(buf);
-			    src= new String(buf, decode);
+			    src = new String(buf, decode);
 			}
 		}
-		catch (Exception e)
-		{}
+		catch (Exception e){}
 		return src;
 	}
 
-	public void close(){
-		try
-		{
+	public void close()
+	{
+		try{
 			if(reader!=null)
 			    reader.close();
 		}
-		catch (IOException e)
-		{}
+		catch (IOException e){}
 	}
 }

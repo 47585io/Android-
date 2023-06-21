@@ -965,6 +965,20 @@ public class Edit extends View implements TextWatcher
 			}
 
 		}
+
+		@Override
+		public void setScale(float scale)
+		{
+			//scale改变了，就额外缩放光标，并且滚动位置应该保持不变
+			float src = getScale();
+			super.setScale(scale);
+			float x = getScrollX();
+			float y = getScrollY();
+			float now = getScale();
+			scale = now/src;
+			scrollTo((int)(x*scale),(int)(y*scale));
+			mCursor.onSelectionChanged(mCursor.getSelectionStart(),mCursor.getSelectionEnd());
+		}
 		
 		/* 获取应该预留给行数的宽度 */
 		public float getLeftPadding()
@@ -1630,11 +1644,11 @@ public class Edit extends View implements TextWatcher
 					//手指选中了光标
 					flag = MoveCursor;
 				}
-				else if(mScrollBar.getHRect().contains((int)nowX,(int)nowY)){
+				else if(mScrollBar.getHRect().contains((int)nowX+sx,(int)nowY+sy)){
 					//手指选中了滚动条
 					flag = MoveHScroll;
 				}
-				else if(mScrollBar.getVRect().contains((int)nowX,(int)nowY)){
+				else if(mScrollBar.getVRect().contains((int)nowX+sx,(int)nowY+sy)){
 					flag = MoveVScroll;
 				}
 				else{
@@ -1649,8 +1663,11 @@ public class Edit extends View implements TextWatcher
 					float len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
 					float hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					float scale = len/hlen;
-					mLayout.setScale(scale);
 					//根据手指间的距离计算缩放倍数，将textSize缩放
+					if(scale<0.95 || scale>1.05){
+						//太小的变化不需要去检查
+					    mLayout.setScale(scale);
+					}
 					useFlag = notClick;
 					//缩放不是点击或长按
 					break;

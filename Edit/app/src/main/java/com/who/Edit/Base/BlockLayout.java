@@ -22,7 +22,7 @@ import android.text.Layout.*;
 public abstract class BlockLayout extends Layout
 {
 	public static final int MaxCount = 100000;
-	public static final char FN = '\n';
+	public static final char FN = '\n', FT = '\t';
 	public static final float MinScacle = 0.5f, MaxScale = 2.0f;
 	public static final float TextSize = 40f;
 	public static final int TextColor = 0xffaaaaaa;
@@ -61,7 +61,6 @@ public abstract class BlockLayout extends Layout
 	}
 	public void setPaint(TextPaint paint)
 	{
-		paint.reset();
 		paint.setTextSize(TextSize);
 		paint.setColor(TextColor);
 		paint.setTypeface(Typeface.MONOSPACE);
@@ -75,11 +74,12 @@ public abstract class BlockLayout extends Layout
 	}
 	public void setScale(float scale)
 	{
+		TextPaint paint = getPaint();
+		float textSize = paint.getTextSize()/scaleLayout;
 		scaleLayout *= scale;
 		scaleLayout = scaleLayout<MinScacle ? MinScacle:scaleLayout;
 		scaleLayout = scaleLayout>MaxScale ? MaxScale:scaleLayout;
-		TextPaint paint = getPaint();
-		paint.setTextSize(TextSize*scaleLayout);
+		paint.setTextSize(textSize*scaleLayout);
 	}
 	
 	public float getCursorWidthSpacing(){
@@ -112,16 +112,14 @@ public abstract class BlockLayout extends Layout
 		insertForBlock(i,0,text);	
 	}
 	/* 移除文本块 */
-	private void removeBlock(int i)
-	{
+	private void removeBlock(int i){
 		mBlocks.remove(i);
 		mLines.remove(i);
 		mWidths.remove(i);
 	}
 	
 	/* 设置文本 */
-	public void setText(CharSequence text)
-	{
+	public void setText(CharSequence text){
 		clearText();
 		dispatchTextBlock(0,text);
 	}
@@ -546,12 +544,10 @@ public abstract class BlockLayout extends Layout
 		return endWidth;
 	}
 	
-	
 /*
 _______________________________________
 
   接下来我们就可以实现父类的一些方法了
-  
 _______________________________________
 
 */
@@ -653,14 +649,20 @@ _______________________________________
 		int end = tryLine_End(text,start);
 		return measureOffset(text,start,end,horiz,getPaint());
 	}
-	
+
 	@Override
 	public int getParagraphDirection(int p1){
-		return 0;
+		return DIR_LEFT_TO_RIGHT;
 	}
+	/* 行中是否包含tab符号 */
 	@Override
-	public boolean getLineContainsTab(int p1){
-		return false;
+	public boolean getLineContainsTab(int p1)
+	{
+		CharSequence text = getText();
+		int start = getLineStart(p1);
+		int end = tryLine_End(text,start);
+		String str = text.subSequence(start,end).toString();
+		return str.indexOf(FT)!=-1;
 	}
 	@Override
 	public Layout.Directions getLineDirections(int p1){
@@ -839,13 +841,11 @@ _______________________________________
 		int start = tryLine_Start(text,offset);
 		return measureText(text,start,offset,getPaint());
 	}
-
 	/* 获取offset处且包含了offset的横坐标 */
 	@Override
 	public float getSecondaryHorizontal(int offset){
 		return getPrimaryHorizontal(offset+1);
 	}
-	
 	@Override
 	public float getLineLeft(int line){
 		return 0;
