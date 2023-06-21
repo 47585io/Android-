@@ -1052,7 +1052,7 @@ public class Edit extends View implements TextWatcher
 		public pos startPos, endPos;
 		public int selectionStart,selectionEnd;
 		
-		public int mCursorGlintTime = 5;
+		public int mCursorGlintTime = 60;
 		public Drawable mCursorDrawable;
 		public Drawable mSelectionDrawable;
 		public Drawable mLineDrawable;
@@ -1341,12 +1341,15 @@ public class Edit extends View implements TextWatcher
    
     private int minScrollLen = 100;
 	private int scrollWidth = 10;
+	private static final int ScrollGnoeTime=1000;
 
     /* 滚动条 */
     private final class ScrollBar
 	{
 		private Drawable mScrollDrawable;
 		private Rect mHScrollRect,mVScrollRect;
+		private boolean canDraw;
+		private Runnable mLastRunnable;
 		
 		ScrollBar(){
 			mScrollDrawable = new ScrollDrawable();
@@ -1397,9 +1400,12 @@ public class Edit extends View implements TextWatcher
 			return mHScrollRect;
 		}
 		
-		public void draw(Canvas canvas){
-			drawScrollBar(canvas,mHScrollRect);
-			drawScrollBar(canvas,mVScrollRect);
+		public void draw(Canvas canvas)
+		{
+			if(canDraw){
+			    drawScrollBar(canvas,mHScrollRect);
+			    drawScrollBar(canvas,mVScrollRect);
+			}
 		}
 		private void drawScrollBar(Canvas canvas, Rect r)
 		{
@@ -1432,11 +1438,35 @@ public class Edit extends View implements TextWatcher
 			scrollTo(tox,toy);
 		}
 		
+		public void setVisllble(int flag)
+		{
+			if(flag==GONE){
+				mLastRunnable = new R();
+				postDelayed(mLastRunnable,ScrollGnoeTime);
+			}
+			else if(flag==VISIBLE){
+				canDraw = true;
+				if(mLastRunnable!=null){
+				    getHandler().removeCallbacks(mLastRunnable);
+				}
+			}
+		}
+		
 		class ScrollDrawable extends NullDrawable
 		{
 			@Override
 			public void draw(Canvas p1){
 				p1.drawColor(0x99aaaaaa);
+			}
+		}
+		
+		class R implements Runnable
+		{
+			@Override
+			public void run()
+			{
+				canDraw = false;
+				invalidate();
 			}
 		}
 	}
@@ -1445,9 +1475,11 @@ public class Edit extends View implements TextWatcher
 	protected void onScrollChanged(int l, int t, int oldl, int oldt)
 	{
 		super.onScrollChanged(l, t, oldl, oldt);
+		mScrollBar.setVisllble(VISIBLE);
 		mScrollBar.setHRect();
 		mScrollBar.setVRect();
-		//只在视图滚动时，才设置滚动条的Rect
+		mScrollBar.setVisllble(GONE);
+		//只在视图滚动时，才设置滚动条的Rect，并移除上次还未执行的Runnable，并将要在之后消失
 	}
 	
 	public void setScrollBarWidth(int width){

@@ -96,7 +96,7 @@ public class CodeEdit extends Edit
 			++IsModify;
 			IsUR(true);
 			token token = mLast.pop();
-			DoAndCastToken(token);
+			doAndCastToken(token);
 			mNext.push(token);
 			IsUR(false);
 			--IsModify;
@@ -111,7 +111,7 @@ public class CodeEdit extends Edit
 			++IsModify;
 			IsUR(true);
 		    token token = mNext.pop();
-			DoAndCastToken(token);
+			doAndCastToken(token);
 			mLast.push(token);
 			IsUR(false);
 			--IsModify;
@@ -119,7 +119,7 @@ public class CodeEdit extends Edit
 	}
 	
 	/* 应用Token到文本，并将其反向转化 */
-    final protected void DoAndCastToken(token token)
+    final protected void doAndCastToken(token token)
 	{
 		CharSequence text;
 		Editable editor = getText();
