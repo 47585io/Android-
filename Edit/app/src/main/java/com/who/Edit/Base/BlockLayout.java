@@ -76,8 +76,8 @@ public abstract class BlockLayout extends Layout
 	public void setScale(float scale)
 	{
 		scaleLayout *= scale;
-		scaleLayout = scaleLayout<MinScacle ? MinScacle:scale;
-		scaleLayout = scaleLayout>MaxScale ? MaxScale:scale;
+		scaleLayout = scaleLayout<MinScacle ? MinScacle:scaleLayout;
+		scaleLayout = scaleLayout>MaxScale ? MaxScale:scaleLayout;
 		TextPaint paint = getPaint();
 		paint.setTextSize(TextSize*scaleLayout);
 	}
