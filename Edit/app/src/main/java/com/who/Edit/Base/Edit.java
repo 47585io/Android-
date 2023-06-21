@@ -1179,8 +1179,11 @@ public class Edit extends View implements TextWatcher
 				mSelectionDrawable.draw(canvas);
 			}
 		}
-		public void draw2(Canvas canvas){
-			mLineDrawable.draw(canvas);
+		public void draw2(Canvas canvas)
+		{
+			if(selectionStart==selectionEnd){
+			    mLineDrawable.draw(canvas);
+			}
 		}
 		
 		public Path getCursorPath(){
