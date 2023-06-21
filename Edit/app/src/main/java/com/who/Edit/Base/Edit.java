@@ -176,7 +176,7 @@ public class Edit extends View implements TextWatcher
 			}
 			
 			//准备删除字符
-			mCursor.sendInputText(null,0,beforeLength,afterLength);
+			mCursor.sendInputText(null,0,beforeLength,afterLength);	
 			return true;
 		}
 
@@ -460,15 +460,10 @@ public class Edit extends View implements TextWatcher
 	@Override
 	protected void onDraw(Canvas canvas)
 	{
-		try{
-		    Path path = mCursor.getCursorPath();
-		    //获取光标或选择范围的路径
-		    mLayout.draw(canvas,path,mPaint,(int)getSelectionStartPos().y);	
-		    //进行绘制，将文本和光标画到画布上
-		}
-		catch(Exception e){
-			Log.e("onDraw Error",e.toString());
-		}
+		Path path = mCursor.getCursorPath();
+		//获取光标或选择范围的路径
+	    mLayout.draw(canvas,path,mPaint,(int)getSelectionStartPos().y);	
+		//进行绘制，将文本和光标画到画布上
 	}
 
 	@Override
@@ -1083,7 +1078,7 @@ public class Edit extends View implements TextWatcher
 							mLayout.getCursorPos(end,endPos);
 						}
 						else{
-							mLayout.nearOffsetPos(selectionEnd,endPos.x,endPos.y,end,endPos);
+							mLayout.nearOffsetPos(start,startPos.x,startPos.y,end,endPos);
 						}
 					}
 				}
@@ -1592,7 +1587,7 @@ public class Edit extends View implements TextWatcher
 						else if(offset<cursorStart){
 							//手指滑动到锚点前
 							setSelection(offset,cursorStart);
-						}
+						}	
 						break;
 				}
 				break;
