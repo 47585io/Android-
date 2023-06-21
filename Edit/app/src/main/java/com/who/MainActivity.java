@@ -18,6 +18,7 @@ public class MainActivity extends Activity implements Runnable
     {
         super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(null);
+		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		runOnUiThread(this);
     }

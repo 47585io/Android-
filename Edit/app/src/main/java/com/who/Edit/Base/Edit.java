@@ -29,6 +29,7 @@ public class Edit extends View implements TextWatcher
 	private myInput mInput;
 	private myText mText;
 	private myLayout mLayout;
+	
 	private TextPaint mPaint;
 	private TextWatcher mTextListener;
 	
@@ -71,10 +72,11 @@ public class Edit extends View implements TextWatcher
 	public void setLetterSpacing(float spacing){
 		mPaint.setLetterSpacing(spacing);
 	}
-	public void setText(CharSequence text){
+	public void setText(CharSequence text)
+	{
 		mText = new myText(text);
 		mLayout = new myLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
-		//mCursor = new Cursor();
+		mCursor.setSelection(text.length(),text.length());
 	}
 	public void setScale(float s){
 		mLayout.setScale(s);
@@ -285,8 +287,6 @@ public class Edit extends View implements TextWatcher
 
 	final public static void openInputor(final Context context, final View editText)
 	{
-		Activity act = (Activity) context;
-		act.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		editText.requestFocus();
 		InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		inputMethodManager.showSoftInput(editText, 0);
@@ -308,11 +308,13 @@ public class Edit extends View implements TextWatcher
   
      replace(int start, int end, CharSequence tb, int tbstart, int tbend)
  
- 有两个例外:
+ 有三个例外:
  
      append(char text)会先调用append(str)，再由append(str)调用replace
  
      append(CharSequence text, Object what, int flags)会调用先append(str)
+	 
+	 SpannableStringBuilder的构造函数不会调用replace
 	 
  ______________________________________________________________________________
  
@@ -384,6 +386,7 @@ public class Edit extends View implements TextWatcher
 	}
 	
 	
+	/* 可以设置监听文本变化的监听器 */
 	public void setTextChangeListener(TextWatcher li){
 		mTextListener = li;
 	}
@@ -1008,7 +1011,6 @@ public class Edit extends View implements TextWatcher
 				}
 			}
 		}
-
 	}
 	
 	
@@ -1094,7 +1096,10 @@ public class Edit extends View implements TextWatcher
 			if(!startPos.equals(x,y)){
 				start = mLayout.getOffsetForPosition(x,y);
 			}
-			if(!endPos.equals(x2,y2)){
+			if(x==x2 && y==y2){
+				end = start;
+			}
+			else if(!endPos.equals(x2,y2)){
 				end = mLayout.getOffsetForPosition(x2,y2);
 			}
 			setSelection(start,end);
@@ -1226,8 +1231,12 @@ public class Edit extends View implements TextWatcher
 		}
 	}
 	
-	public void setSelection(int start, int end){
-		mCursor.setSelection(start,end);
+	public void setSelection(int start, int end)
+	{
+		int len = mText.length();
+		if(start>=0&&start<=len && end>=0&&end<=len){
+		    mCursor.setSelection(start,end);
+		}
 	}
 	public int getSelectionStart(){
 		return mCursor.getSelectionStart();

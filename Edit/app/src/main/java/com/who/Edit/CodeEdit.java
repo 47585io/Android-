@@ -13,8 +13,6 @@ public class CodeEdit extends Edit
 {
 	
 	private Stack<token> mLast, mNext;
-	private int mLastIndex;
-	private token prepareToken;
 	
 	private int IsModify;
 	private int mPrivateFlags;
@@ -73,24 +71,20 @@ public class CodeEdit extends Edit
 			return;
 		}
 		
-		//文本修改前，判断一下本次start是否与上次相连
-		if(start==mLastIndex){
-			
+		token token = null;
+		if(mLast.size()>0){
+			token = mLast.peek();
 		}
-		else{
-		    //制作一个token，并保存到mLast
-		    token token = makeToken(text,start,count,after);
+		
+		//文本修改前，判断一下本次修改位置是否与上次token相连
+		if(token==null || !replaceToken(text,start,count,after,token))
+		{
+		    //如果不相连，制作一个token，并保存到mLast
+		    token = makeToken(text,start,count,after);
 		    if(token!=null){
 			    mLast.push(token);
 		    }
 		}
-		//计算文本修改后，光标最后位置
-		if (count != 0){
-			mLastIndex = start;
-		}
-		else if (after != 0){
-			mLastIndex = start+after;
-		}	
 	}
 	
 	/* 得到Token并应用到文本，并把转化的Token存入stack */
@@ -101,11 +95,8 @@ public class CodeEdit extends Edit
 			++IsModify;
 			IsUR(true);
 			token token = mLast.pop();
-			if (token != null)
-			{
-				DoAndCastToken(token);
-				mNext.push(token);
-			}
+			DoAndCastToken(token);
+			mNext.push(token);
 			IsUR(false);
 			--IsModify;
 		}
@@ -119,11 +110,8 @@ public class CodeEdit extends Edit
 			++IsModify;
 			IsUR(true);
 		    token token = mNext.pop();
-			if (token != null)
-			{
-				DoAndCastToken(token);
-				mLast.push(token);
-			}
+			DoAndCastToken(token);
+			mLast.push(token);
 			IsUR(false);
 			--IsModify;
 		}
@@ -182,8 +170,46 @@ public class CodeEdit extends Edit
 		return token;
 	}
 	
+	/* 检查token是否可以扩展，如果可以就扩展token的范围 */
+	final protected boolean replaceToken(CharSequence text, int start, int count, int after, token token)
+	{
+		if(count != 0)
+		{
+			//如果token的类型是删除型token
+			if(token.start==token.end)
+			{
+				//继续删除了字符，我们应该检查token的前面
+				if(token.start==start+count)
+				{
+					//我们继续向前截取删除的文本，并添加到已有的文本前
+					CharSequence src = text.subSequence(start,start+count);
+					SpannableStringBuilder b = (SpannableStringBuilder) token.src;
+					b.insert(0,src);
+					
+					//并且移动到新的位置
+					token.start=start;
+					token.end=start;
+					return true;
+				}
+			}
+		}
+		else if(after != 0)
+		{
+			//如果token的类型是插入型token
+			if(token.end!=token.start)
+			{
+				//继续插入了字符，我们应该检查token的后面
+				if(token.end==start)
+				{
+					//我们继续向后扩展token的范围
+					token.end+=after;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 	
-
 /*
 ---------------------------------------------------------------
 
