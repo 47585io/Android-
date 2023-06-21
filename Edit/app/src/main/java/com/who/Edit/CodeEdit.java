@@ -9,6 +9,7 @@ import com.who.Edit.Base.Share.Share1.*;
 import android.text.*;
 
 
+/* CodeEdit扩展了Edit的功能 */
 public class CodeEdit extends Edit
 {
 	

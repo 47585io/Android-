@@ -63,6 +63,9 @@ public class Edit extends View implements TextWatcher
 	public void setTextColor(int color){
 		mPaint.setColor(color);
 	}
+	public void setLineColor(int color){
+		mLayout.lineColor = color;
+	}
 	public void setTextSize(float size){
 		mPaint.setTextSize(size);
 	}
@@ -85,6 +88,9 @@ public class Edit extends View implements TextWatcher
 	public int getTextColor(){
 		return mPaint.getColor();
 	}
+	public int getLineColor(){
+		return mLayout.lineColor;
+	} 
 	public float getTextSize(){
 		return mPaint.getTextSize();
 	}
@@ -481,6 +487,8 @@ public class Edit extends View implements TextWatcher
 	final private class myLayout extends BlockLayout
 	{
 		
+		//行数的颜色
+		public int lineColor;
 		//专门用于绘制span的画笔，不污染原画笔
 		TextPaint spanPaint;	
 		
@@ -495,6 +503,7 @@ public class Edit extends View implements TextWatcher
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			spanPaint = new TextPaint(paint);
+			lineColor = paint.getColor();
 		}
 		
 		/* 开始绘制文本和光标 */
@@ -519,12 +528,10 @@ public class Edit extends View implements TextWatcher
 			//考虑到mCursor默认在(0,0)处绘制，因此需要平移图层到下方，使得在(0,0)处绘制的操作转化为在(x,y)处的绘制
 			//并且还需要clipPath，以只绘制指定光标路径的内容 
 			
-			float x = getScrollX();
-			float y = getScrollY();
 			canvas.save();
 			canvas.clipPath(highlight);
 			//在平移前，先裁剪指定路径，但其实在之前已经clipRect了，其实也不会超出Rect的范围
-			canvas.translate(x,y);
+			canvas.translate(0,cursorOffsetVertical);
 			//再平移，之后的绘制就默认到(x,y)处了，而我们剪切的范围正是(x,y)处，所以刚好命中范围
 			mCursor.draw(canvas);
 			//将canvas交给cursor绘制
@@ -546,6 +553,7 @@ public class Edit extends View implements TextWatcher
 			//初始化文本和笔
 			TextPaint textPaint = getPaint();
 			TextPaint spanPaint = this.spanPaint;
+			spanPaint.set(textPaint);
 			
 			//计算可视区域
 			int x = getScrollX();
@@ -606,7 +614,6 @@ public class Edit extends View implements TextWatcher
 			}
 			
 			//绘制背景的Span
-			spanPaint.set(textPaint);
 			onDrawBackground(spanString,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp2,canvas,spanPaint,See);
 
 			//重置画笔绘制文本
@@ -614,7 +621,10 @@ public class Edit extends View implements TextWatcher
 			drawText(spanString.subSequence(start,end).toString(),0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint,See);
 
 			//绘制行
+			int saveColor = textPaint.getColor();
+			textPaint.setColor(lineColor);
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
+			textPaint.setColor(saveColor);
 
 			//绘制前景的Span
 			onDrawForeground(spanString,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp,canvas,spanPaint,See);	
@@ -733,8 +743,10 @@ public class Edit extends View implements TextWatcher
 		protected void onDraw2(Spanned spanString, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
 		{
 			//先将行数绘制在左侧
-			spanPaint.set(textPaint);
+			int saveColor = textPaint.getColor();
+			textPaint.setColor(lineColor);
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
+			textPaint.setColor(saveColor);
 			
 			float x = 0;
 			float y = startLine*lineHeight;
@@ -1257,14 +1269,14 @@ public class Edit extends View implements TextWatcher
 	public void setCursorDrawable(Drawable draw){
 		mCursor.setCursorDrawable(draw);
 	}
+	public void setSelectionDrawable(Drawable draw){
+		mCursor.setSelectionDrawable(draw);
+	}
 	public void setLineHilightDrawable(Drawable draw){
 		mCursor.setLineHilightDrawable(draw);
 	}
 	public void setCursorWidth(float spacing){
 		mLayout.setCursorWidthSpacing(spacing);
-	}
-	public void setSelectionDrawable(Drawable draw){
-		mCursor.setSelectionDrawable(draw);
 	}
 	
 	public void addCursor(){}
@@ -1327,7 +1339,8 @@ public class Edit extends View implements TextWatcher
 
 */
    
-    private static final float MinSize = 100;
+    private int minScrollLen = 100;
+	private int scrollWidth = 10;
 
     /* 滚动条 */
     private final class ScrollBar
@@ -1351,9 +1364,9 @@ public class Edit extends View implements TextWatcher
 			float by = getVScrollRange();
 			float biliy = y/by*h;
 			float leny = h/by*h;
-			leny = leny<MinSize ? MinSize:leny;
+			leny = leny<minScrollLen ? minScrollLen:leny;
 
-			int left = x+w-10;
+			int left = x+w-scrollWidth;
 			int top = (int) (y+biliy);
 			int right = x+w;
 			int bottom = (int) (top+leny);
@@ -1369,10 +1382,10 @@ public class Edit extends View implements TextWatcher
 			float rx = getHScrollRange();
 			float bilix = x/rx*w;
 			float lenx = w/rx*w;
-			lenx = lenx<MinSize ? MinSize:lenx;
+			lenx = lenx<minScrollLen ? minScrollLen:lenx;
 
 			int left = (int) (x+bilix);
-			int top = y+h-10;
+			int top = y+h-scrollWidth;
 			int right = (int) (left+lenx);
 			int bottom = y+h;
 			mHScrollRect.set(left,top,right,bottom);
@@ -1397,9 +1410,26 @@ public class Edit extends View implements TextWatcher
 			canvas.restore();
 		}
 		
-		public void setScroll(float dx,float dy)
+		/* 将滚动条移动一个距离，需要移动多少真实距离呢 */
+		public void moveScroll(float dx,float dy)
 		{
+			int x = getScrollX();
+			int y = getScrollY();
+			int w = getWidth();
+			int h = getHeight();
 			
+			float rx = getHScrollRange();
+			float by = getVScrollRange();
+			
+			float lenx = mHScrollRect.left-x+dx;
+			float leny = mVScrollRect.top-y+dy;
+			
+			float bilix = lenx/w;
+			float biliy = leny/h;
+			
+			int tox = (int) (rx*bilix);
+			int toy = (int) (by*biliy);
+			scrollTo(tox,toy);
 		}
 		
 		class ScrollDrawable extends NullDrawable
@@ -1418,6 +1448,16 @@ public class Edit extends View implements TextWatcher
 		mScrollBar.setHRect();
 		mScrollBar.setVRect();
 		//只在视图滚动时，才设置滚动条的Rect
+	}
+	
+	public void setScrollBarWidth(int width){
+		scrollWidth = width;
+	}
+	public void setMinScrollBarLenght(int len){
+		minScrollLen = len;
+	}
+	public void setScrollBarDrawable(Drawable draw){
+		mScrollBar.mScrollDrawable = draw;
 	}
 	
 /*
@@ -1442,7 +1482,7 @@ public class Edit extends View implements TextWatcher
 	
 	/* 指示下次干什么 */
 	private byte flag;
-	private static final byte MoveSelf = 0, MoveCursor = 1, MoveScroll = 3, Selected = 2;
+	private static final byte MoveSelf = 0, MoveCursor = 1, MoveHScroll = 3,MoveVScroll=4, Selected = 2;
 	
 	/* 指示能做什么事 */
 	private byte useFlag;
@@ -1553,9 +1593,17 @@ public class Edit extends View implements TextWatcher
 				pos cursor = getSelectionStartPos();
 				dx = Math.abs(lastX-(cursor.x-sx));
 				dy = Math.abs(lastY-(cursor.y-sy));
+				
 				if(dx<getTextSize() && dy<getLineHeight()){
 					//手指选中了光标
 					flag = MoveCursor;
+				}
+				else if(mScrollBar.getHRect().contains((int)nowX,(int)nowY)){
+					//手指选中了滚动条
+					flag = MoveHScroll;
+				}
+				else if(mScrollBar.getVRect().contains((int)nowX,(int)nowY)){
+					flag = MoveVScroll;
 				}
 				else{
 					//手指选中了自己
@@ -1576,12 +1624,12 @@ public class Edit extends View implements TextWatcher
 					break;
 				}
 				
+				dx = nowX-lastX;
+				dy = nowY-lastY;
 				switch(flag)
 				{
 					//滚动自己
 					case MoveSelf:			
-						dx = nowX-lastX;
-						dy = nowY-lastY;
 						scrollBy(-(int)dx,-(int)dy);
 						break;
 					//移动光标
@@ -1601,10 +1649,18 @@ public class Edit extends View implements TextWatcher
 							setSelection(offset,cursorStart);
 						}	
 						break;
+					//移动滚动条
+					case MoveHScroll:
+						mScrollBar.moveScroll(dx, 0);
+						break;
+					case MoveVScroll:
+						mScrollBar.moveScroll(0,dy);
+						break;
 				}
 				break;
 			case MotionEvent.ACTION_UP:
-				if(flag==MoveSelf){
+				if(flag==MoveSelf)
+				{
 				    //计算速度并获取应该在x和y轴上滑行的距离
 				    mVelocityTracker.computeCurrentVelocity(1000);
 				    dx = -mVelocityTracker.getXVelocity(id);
