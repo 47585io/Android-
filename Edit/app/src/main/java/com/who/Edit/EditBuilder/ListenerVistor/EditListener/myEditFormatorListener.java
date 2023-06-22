@@ -44,7 +44,7 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	final public static void reSAll(int start, int end, String want, CharSequence to, Editable editor)
 	{
 		int len = want.length();
-		String src=editor.toString().substring(start, end);
+		String src=editor.subSequence(start, end).toString();
 		int nowIndex = src.lastIndexOf(want);
 		while (nowIndex != -1)
 		{

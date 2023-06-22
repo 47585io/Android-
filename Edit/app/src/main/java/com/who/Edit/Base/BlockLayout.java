@@ -625,7 +625,7 @@ _______________________________________
 		int startLine = cacheLine;
 		int startIndex = cacheLen;
 		
-		CharSequence text = mBlocks.get(id).toString();
+		CharSequence text = mBlocks.get(id);
 		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
 		startLine+= StringSpiltor.Count(FN,str,0,offset-startIndex);
 		return startLine;
