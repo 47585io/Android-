@@ -8,5 +8,5 @@ import android.view.*;
 
 public abstract interface EditCanvaserListener extends EditListener
 {
-	public abstract void onDraw(View self, Canvas canvas, TextPaint paint, pos pos)
+	public abstract void onDraw(View self, Canvas canvas, Paint paint, pos pos)
 }
