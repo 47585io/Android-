@@ -8,6 +8,7 @@ package com.who.Edit.EditBuilder.ListenerVistor;
 */
 public abstract interface EditListenerInfoUser
 {
+	
 	public abstract EditListenerInfo getInfo()
 
 	public abstract void setInfo(EditListenerInfo Info)
@@ -15,4 +16,5 @@ public abstract interface EditListenerInfoUser
 	public abstract void trimListener()
 	
 	public abstract void clearListener()
+	
 }

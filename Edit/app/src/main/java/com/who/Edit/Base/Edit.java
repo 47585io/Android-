@@ -1251,7 +1251,7 @@ public class Edit extends View implements TextWatcher
 		}
 	}
 	
-	public static class NullDrawable extends Drawable
+	private static class NullDrawable extends Drawable
 	{
 		@Override
 		public void draw(Canvas p1){}

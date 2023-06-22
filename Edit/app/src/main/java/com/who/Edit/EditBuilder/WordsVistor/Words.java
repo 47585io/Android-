@@ -36,7 +36,7 @@ public abstract interface Words
 
 	public abstract int size()
 	
-	public abstract boolean contrans(int index)
+	public abstract boolean contians(int index)
 
 	public abstract Collection<Character> getACollectionChars(int index)
 	

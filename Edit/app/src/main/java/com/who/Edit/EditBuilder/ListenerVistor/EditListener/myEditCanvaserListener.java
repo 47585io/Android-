@@ -12,7 +12,7 @@ import android.view.*;
 /*
   在画布上绘画
   
-  此监听器非常灵活，因为提供了画布，画笔和编辑器。而且一般这个监听器用于onDraw，可以实时刷新。另外的，flag可以表示任意的状态
+  此监听器非常灵活，因为提供了画布，画笔和编辑器。而且一般这个监听器用于onDraw，可以实时刷新
 
   self表示编辑器本身，canvas和paint分别表示编辑器的画布和画笔，pos是一个坐标，它可能是编辑器上次被触摸的坐标，也可能是光标坐标，这由具体的编辑器决定
   
@@ -34,7 +34,8 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	public void onDraw(View self, Canvas canvas, TextPaint paint, pos pos)
 	{
 		int flag = getFlag();
-		if((flag&BeforeDraw)==BeforeDraw){
+		
+		if((flag & BeforeDraw) == BeforeDraw){
 		    beforeDraw(self,canvas,paint,pos);
 		}
 		else{

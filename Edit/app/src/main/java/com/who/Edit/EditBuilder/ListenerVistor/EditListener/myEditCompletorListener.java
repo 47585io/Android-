@@ -48,7 +48,13 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		lib = onBeforeSearchWord(Wordlib);
 		if (lib != null && lib.size() != 0)
 		{
-			//words = SearchOnce(wantBefore, wantAfter, lib, before, after);
+			if(lib instanceof prefixCharSequenceMap){
+				words = new ArrayList<>();
+				//words.addAll(((prefixCharSequenceMap)lib).getCharSetFromPrefix(wantBefore);
+			}
+			else{
+				//words = SearchOnce(wantBefore, wantAfter, lib, before, after);
+			}
 		}
 	    onFinishSearchWord(words,Adapter);
 		return Adapter;

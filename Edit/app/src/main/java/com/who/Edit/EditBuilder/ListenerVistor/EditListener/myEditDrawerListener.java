@@ -19,14 +19,6 @@ import java.util.*;
 
   由于Find函数允许重写，所以以下代码并不唯一，但在重写时尽量保证调用上面的四个抽象方法
  
- 用找到的nodes染色
-  
-  start和end分别表示本次要染色的text文本的开头和结尾，nodes存储刚刚Finder找到的单词，您可以在editor中将nodes设置上去
-  
-  注意Finder返回的是原生单词，即在start~end文本之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的
-  
-  为什么这样，因为原生单词可以直接应用至start~end文本中，甚至是切割出来也可以
-  
 */
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
@@ -160,7 +152,17 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	}
 	
 	
-/**/
+/*
+
+ 用找到的nodes染色
+
+ start和end分别表示本次要染色的text文本的开头和结尾，nodes存储刚刚Finder找到的单词，您可以在editor中将nodes设置上去
+ 
+ 注意Finder返回的是原生单词，即在start~end文本之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的
+
+ 为什么这样，因为原生单词可以直接应用至start~end文本中，甚至是切割出来也可以
+	 
+*/
 	
 	@Override
 	public abstract void onDrawNodes(int start, int end, Spannable editor)

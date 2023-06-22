@@ -7,17 +7,25 @@ import android.graphics.*;
 import java.util.*;
 import com.who.Edit.Base.Share.Share1.*;
 import android.text.*;
+import com.who.Edit.EditBuilder.*;
+import com.who.Edit.EditBuilder.ListenerVistor.*;
+import com.who.Edit.EditBuilder.WordsVistor.*;
 
 
 /* CodeEdit扩展了Edit的功能 */
-public class CodeEdit extends Edit
+public class CodeEdit extends Edit implements EditBuilderUser
 {
-	
+
+	private Words WordLib;
+	private EditListenerInfo Info;
+	private EditBuilder EditBuilder;
 	private Stack<token> mLast, mNext;
 	
 	private int IsModify;
 	private int mPrivateFlags;
 	public static int mPublicFlags;
+	
+	private String luagua;
 	
 	
 	public CodeEdit(Context cont){
@@ -33,9 +41,57 @@ public class CodeEdit extends Edit
 	}
 
 	@Override
-	protected void config()
-	{
+	protected void config(){
 		super.config();
+	}
+
+	@Override
+	public void setEditBuilder(EditBuilder builder){
+		EditBuilder = builder;
+	}
+	@Override
+	public EditBuilder getEditBuilder(){
+		return EditBuilder;
+	}
+    @Override
+	public void setLuagua(String Lua){
+		EditBuilder.SwitchLuagua(this,Lua);
+	}
+	@Override
+	public String getLuagua(){
+		return luagua;
+	}
+	@Override
+	public EditListenerInfo getInfo(){
+		return Info;
+	}
+	@Override
+	public void setInfo(EditListenerInfo Info){
+		this.Info = Info;
+	}
+	@Override
+	public void trimListener(){
+		EditBuilder.trimListener(Info);
+	}
+	@Override
+	public void clearListener(){
+		Info.clear();
+	}
+	@Override
+	public Words getWordLib(){
+		return WordLib;
+	}
+	@Override
+	public void setWordLib(Words Lib){
+		WordLib = Lib;
+	}
+	@Override
+	public void loadWords(){
+		EditBuilder.loadWords(WordLib);
+	}
+	@Override
+	public void clearWords(){
+		WordLib.clear();
 	}
 
 /*

@@ -7,7 +7,7 @@ import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 
 
 /*
-  对齐文本
+  对齐文本和插入文本
   
   editor表示编辑器的文本容器，start和end分别表示文本格式化的起始和末尾，nowIndex表示文本格式到了哪儿，beforeIndex表示最后一次之前的位置
   
@@ -19,13 +19,10 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 	
 	abstract protected int dothing_Run(Editable editor, int nowIndex);
 	//开始做事
-	
 	abstract protected int dothing_Start(Editable editor, int nowIndex,int start,int end);
 	//为了避免繁琐的判断，一开始就调用start方法，将事情初始化为你想要的样子
-	
 	abstract protected int dothing_End(Editable editor, int beforeIndex,int start,int end);
 	//收尾工作
-	
 	
 	@Override
 	public void onFormat(int start, int end, Editable editor)
@@ -42,16 +39,9 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 		}
 		nowIndex =  dothing_End(editor, beforeIndex, start, end);		
 	}
-
-	@Override
-	public int onInsert(int nowIndex, int count, Editable editor)
-	{
-		return 0;
-	}
-	
 	
 	/* 从起始位置开始，反向把字符串中的want替换为to */
-	final public static void reSAll(int start, int end, String want, CharSequence to,Editable editor)
+	final public static void reSAll(int start, int end, String want, CharSequence to, Editable editor)
 	{
 		int len = want.length();
 		String src=editor.toString().substring(start, end);
@@ -63,4 +53,8 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 		}
 	}
 	
+	/* 插入字符时调用 */
+	@Override
+	abstract public int onInsert(int index, int count, Editable editor)
+
 }
