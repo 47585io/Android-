@@ -299,7 +299,7 @@ public abstract class BlockLayout extends Layout
 		//找到end所指定的文本块，并将end偏移到文本块的下标
 		for(j=i;j<size;++j)
 		{
-			int nowLen = mBlocks.get(i).length();
+			int nowLen = mBlocks.get(j).length();
 			if(end-nowLen<=0){
 				break;
 			}
