@@ -67,7 +67,7 @@ public abstract class onTouchToZoom implements OnTouchListener
 	public float Iszoom(){
 		return len/hlen;
 	}
-	
+
 	public void clear()
 	{
 		hp1x=1;
@@ -124,3 +124,4 @@ public abstract class onTouchToZoom implements OnTouchListener
 	}
 
 }
+

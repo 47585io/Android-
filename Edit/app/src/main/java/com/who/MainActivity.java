@@ -7,6 +7,7 @@ import com.who.Edit.Base.*;
 import java.util.concurrent.*;
 import android.text.*;
 import android.graphics.drawable.*;
+import com.who.Edit.*;
 
 public class MainActivity extends Activity implements Runnable
 {
@@ -70,7 +71,7 @@ public class MainActivity extends Activity implements Runnable
 			@Override
 			public void run()
 			{
-				final Edit E = new Edit(MainActivity.this);
+				final CodeEdit E = new CodeEdit(MainActivity.this);
 				E.setText(text);
 				//还没有setContentView，因此Edit未与主线程建立联系，还只是一块内存而已
 				

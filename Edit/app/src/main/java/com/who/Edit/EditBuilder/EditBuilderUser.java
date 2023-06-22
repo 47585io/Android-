@@ -1,0 +1,20 @@
+package com.who.Edit.EditBuilder;
+
+import com.who.Edit.EditBuilder.ListenerVistor.*;
+import com.who.Edit.EditBuilder.WordsVistor.*;
+
+/* 
+ 如果你是EditBuilder的拥有者，
+
+ 需要管理监听器和单词，加载它们，切换它们
+*/
+public abstract interface EditBuilderUser extends EditListenerInfoUser,WordsUser
+{
+	public abstract void setEditBuilder(EditBuilder builder)
+	
+	public abstract EditBuilder getEditBuilder()
+	
+	public abstract void setLuagua(String Lua)
+	
+	public abstract String getLuagua()
+}
