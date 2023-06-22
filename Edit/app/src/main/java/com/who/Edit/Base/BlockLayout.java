@@ -75,11 +75,21 @@ public abstract class BlockLayout extends Layout
 	public void setScale(float scale)
 	{
 		TextPaint paint = getPaint();
+		float lastSacle = scaleLayout;
 		float textSize = paint.getTextSize()/scaleLayout;
+		
+		//首先我们缩放文本的大小
 		scaleLayout *= scale;
 		scaleLayout = scaleLayout<MinScacle ? MinScacle:scaleLayout;
 		scaleLayout = scaleLayout>MaxScale ? MaxScale:scaleLayout;
 		paint.setTextSize(textSize*scaleLayout);
+		
+		//我们还应该同步maxWidth的大小
+		scale = scaleLayout/lastSacle;
+		for(int j=mWidths.size()-1;j>=0;--j){
+			mWidths.set(j,mWidths.get(j)*scale);
+		}
+		maxWidth = maxWidth*scale;
 	}
 	
 	public float getCursorWidthSpacing(){
@@ -561,7 +571,7 @@ _______________________________________
 		return (int)(lineCount*getLineHeight());
 	}
 	public float maxWidth(){
-		return maxWidth*scaleLayout;
+		return maxWidth;
 	}
 	@Override
 	public int getLineTop(int p1){

@@ -20,6 +20,9 @@ public class StringSpiltor
 	   这里就谈谈，toString本质是拷贝了一份字符数组，并且是逐个字符地拷贝
 	   特别是CharSequence，如果只要一个范围内的字符串，一定先subSequence，再toString，节省时间！！！
 	   但有一个例外，不知道为什么，StringBuilder的toString很快。非常快
+	   
+	 * 虽然说toString很消耗时间，但如果你只有一个CharSequence，并且需要遍历整个串，还是建议你toString
+	   因为CharSequence的charAt使用次数多了，也很慢，而且先toString再indexOf效率比直接全部charAt高得多
 	
 	 * StringBuilder的insert和delete效率非常慢，超级慢
 	   当一串5000行*15个字符的StringBuilder，插入5000次居然要250ms
