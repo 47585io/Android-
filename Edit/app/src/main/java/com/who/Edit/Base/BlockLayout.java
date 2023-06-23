@@ -175,7 +175,7 @@ public abstract class BlockLayout extends Layout
 	/* 如何插入文本和分发文本块 */
 	public void insert(int index, CharSequence text)
 	{
-		//找到index所指定的文本块
+		//找到index所指定的文本块，并将index偏移到文本块的下标
 		int i = findBlockIdForIndex(index);
 		SpannableStringBuilder builder = mBlocks.get(i);
 		int nowLen = builder.length();
@@ -190,24 +190,27 @@ public abstract class BlockLayout extends Layout
 			/*当插入文本会超出当前的文本块时，两种方案
 			
 			 *插截删分，总长度为 
-			    插入一次:  text.length() 
-				截取一次:  (nowLen+text.length()-MaxCount)
-				删除一次:  (nowLen+text.length()-MaxCount)
-				分发一次:  (nowLen+text.length()-MaxCount)
+			    插入文本:  text.length() 
+				截取超出部分:  (nowLen+text.length()-MaxCount)
+				删除超出部分:  (nowLen+text.length()-MaxCount)
+				分发截取的超出部分:  (nowLen+text.length()-MaxCount)
 			
 			 *截删分插，总长度为:
 			    截取index后的文本   nowLen-index
 			    删除index后的文本:   nowLen-index
 				分发文本   text.length()
 				插入截取的index后的文本   nowLen-index
+				
+			 *容易看出，
+			    方案1的总量为 text.length() + 3*(nowLen+text.length()-MaxCount)
+			    方案2的总量为 text.length() + 3*(nowLen-index);
+			  如果 nowLen+text.length()-MaxCount <= nowLen-index，使用方案1，否则使用方案2
+			  
 			*/
 			
 			int len = text.length();
-			int count = nowLen+len > MaxCount ? nowLen+len:0;
-			int step1 = len + count*3;
-			int step2 = len + (nowLen-index)*3;
-			
-			if(step1<=step2)
+			int count = nowLen+len > MaxCount ? nowLen+len-MaxCount:0;
+			if(count <= nowLen-index)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
 				insertForBlock(i,index,text);
