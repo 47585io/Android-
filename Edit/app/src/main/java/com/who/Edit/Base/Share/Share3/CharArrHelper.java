@@ -1,5 +1,6 @@
 package com.who.Edit.Base.Share.Share3;
 import android.text.*;
+import android.graphics.*;
 
 
 /*
@@ -57,5 +58,8 @@ import android.text.*;
 */
 public class CharArrHelper
 {
-	
+	public static int Count(char c,char[] arr,int start,int end)
+	{		
+		return 0;
+	}
 }
