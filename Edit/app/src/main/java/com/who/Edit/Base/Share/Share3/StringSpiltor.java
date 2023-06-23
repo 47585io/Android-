@@ -16,15 +16,18 @@ public class StringSpiltor
 	   但貌似String已经考虑到了这点，如果字符串只有一个字符，String会转而调用字符的查找函数
 	   注意，StringBuilder并没有考虑到这点！
 	
-	 * toString很消耗时间，当一串字符有1000000行*45个字符时，toString一次需要30ms!!!。这相当于indexOf使用300000次的时间
+	 * toString很消耗时间，当一串字符有1000000行*45个字符时，toString一次需要30ms!!!。这相当于正常情况下indexOf使用300000次的时间
 	   这里就谈谈，toString本质是拷贝了一份字符数组，并且是逐个字符地拷贝
 	   特别是CharSequence，如果只要一个范围内的字符串，一定先subSequence，再toString，节省时间！！！
-	   但有一个例外，不知道为什么，StringBuilder的toString很快。非常快
+	   但有一个例外，不知道为什么，StringBuilder的toString很快，非常快
 	   
 	 * 虽然说toString很消耗时间，但如果你只有一个CharSequence，并且需要遍历整个串，还是建议你toString
 	   因为CharSequence的charAt使用次数多了，也很慢，而且先toString再indexOf效率比直接全部charAt高得多
 	
-	 * StringBuilder的insert和delete效率非常慢，超级慢
+	 * indexOf函数比较看脸，如果字符串很长，并且没有指定的字符，就会把字符串遍历完，非常慢！！！
+	   当一串5000000字符的字符串时，indexOf一遍需要10ms，全部charAt一遍要36ms
+	   
+	 * StringBuilder的insert和delete效率非常慢，超级慢，StringBuilder的append效率很高
 	   当一串5000行*15个字符的StringBuilder，插入5000次居然要250ms
 	   没办法，因为StringBuilder内部用字符数组存储字符，每次增删都要把整个数组拷贝一遍
 	

@@ -29,9 +29,10 @@ public class Edit extends View implements TextWatcher
 	private myInput mInput;
 	private myText mText;
 	private myLayout mLayout;
-	
 	private TextPaint mPaint;
+	
 	private TextWatcher mTextListener;
+	private SelectionWatcher mSelectionListener;
 	
 	
 	public Edit(Context cont)
@@ -1273,6 +1274,13 @@ public class Edit extends View implements TextWatcher
 		int len = mText.length();
 		if(start>=0&&start<=len && end>=0&&end<=len){
 		    mCursor.setSelection(start,end);
+		}
+	}
+	public void setSelection(int index)
+	{
+		int len = mText.length();
+		if(index>=0&&index<=len){
+		    mCursor.setSelection(index,index);
 		}
 	}
 	public int getSelectionStart(){

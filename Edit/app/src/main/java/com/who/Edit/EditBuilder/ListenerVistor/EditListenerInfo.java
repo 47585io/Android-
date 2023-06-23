@@ -18,8 +18,6 @@ public abstract interface EditListenerInfo
 	
 	public static final int RunnarIndex = 6;
 	
-	public static final int SelectionSeerIndex = 8;
-	
 	
 	public abstract boolean addAListener(EditListener li)
 

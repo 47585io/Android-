@@ -8,6 +8,7 @@ import com.who.Edit.Base.Share.Share3.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import com.who.Edit.EditBuilder.WordsVistor.*;
 import java.util.*;
+import android.view.*;
 
 
 /*
@@ -38,7 +39,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	  text表示编辑器文本，index表示光标位置，wantBefore和wantAfter分别表示光标前后的字符串，before和after表示搜索前单词和后单词的起始下标，Wordlib为单词库
 	*/
 	@Override
-	public List<Icon> onSearchWord(CharSequence text, int index, Words Wordlib)
+	public void onSearchWord(CharSequence text, int index, Words Wordlib)
 	{
 		Collection<CharSequence> lib;
 		List<CharSequence> words = null;
@@ -57,7 +58,6 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 			}
 		}
 	    onFinishSearchWord(words,Adapter);
-		return Adapter;
 	}
 
 	/* 
@@ -147,6 +147,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 			Icon2 token = new Icon2(path,word);
 		    adapter.add(token);
 		}
+	}
+	
+	public static interface CompleteListener
+	{
+		public void onFinishSearchWord(View self, List<Icon> Icons)
 	}
 	
 }

@@ -23,10 +23,12 @@ import java.util.*;
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 	
-	private List<wordIndex> nodes;
+	private List<wordIndex> addNodes;
+	private List<wordIndex> removeNodes;
 	
 	public myEditDrawerListener(){
-		nodes = Collections.synchronizedList(new LinkedList<>());
+		addNodes = Collections.synchronizedList(new LinkedList<>());
+		removeNodes = Collections.synchronizedList(new LinkedList<>());
 	}
 	
 	
@@ -45,21 +47,20 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 
 	/*  LetMeFind函数返回原生nodes，即在start~end之间找到的nodes，这些单词不可直接使用，需要偏移一个start才是对的  */
 	@Override
-	public void onFindNodes(int start, int end, CharSequence text,Words WordLib)
+	public void onFindNodes(int start, int end, CharSequence text, Words WordLib)
 	{
-		String subStr = text.subSequence(start,end).toString();
 		List<wordIndex> nodes=new ArrayList<>();
 		List<DoAnyThing> totalList =new LinkedList<>();
 		//为每一个listener分配一个nodes和totalList
 
 		OnFindWord(totalList, WordLib); 
-		startFind(subStr,totalList,nodes);
+		startFind(start,end,text,totalList,nodes);
 		totalList.clear();
 		nodes.clear();
 		OnClearFindWord(WordLib);
 
 		OnFindNodes(totalList,WordLib);
-		startFind(subStr,totalList,nodes);
+		startFind(start,end,text,totalList,nodes);
 		OnClearFindNodes(start, end, text, WordLib, nodes);	
 	}
 
@@ -74,32 +75,29 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 
 	 * 防止重复（覆盖），只遍历一次
 	 */
-	final public static void startFind(String src,List<DoAnyThing> totalList,List<wordIndex> nodes)
+	final public static void startFind(int start, int end, CharSequence src, List<DoAnyThing> totalList, List<wordIndex> nodes)
 	{
-		char[] arr = src.toCharArray();
-		int nowIndex, len = src.length();
 		StringBuilder nowWord = new StringBuilder();
-
-		for(nowIndex=0;nowIndex<len;++nowIndex)
+		for(;start<end;++start)
 	    {
-			nowWord.append(arr[nowIndex]);
+			nowWord.append(src.charAt(start));
 			//每次追加一个字符，交给totalList中的任务过滤
 			//注意是先追加，index后++		
 			for(DoAnyThing total:totalList)
 			{
 				try
 			    {
-				    int index = total.dothing(src,nowWord,nowIndex,nodes);
-				    if(index>=nowIndex)
+				    int index = total.dothing(src,nowWord,start,nodes);
+				    if(index>=start)
 					{
 				        //单词已经找到了，不用找了
-						//如果本次想放弃totalList中的后续任务，可以返回一个大于或等于传入的nowIndex的值，并且这个值还会直接设置nowIndex
-						nowIndex=index;
+						//如果本次想放弃totalList中的后续任务，可以返回一个大于或等于传入的start的值，并且这个值还会直接设置nowIndex
+						start=index;
 						break;
 					}
 				}
 				catch(Exception e){
-					Log.e("StartFind Don't know！","The total name is"+total.toString()+"  Has Error "+e.toString());
+					Log.e("StartFind Don't know！","The total name is"+ total.toString()+"  Has Error "+e.toString());
 				}
 			}
 		}
@@ -148,7 +146,9 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	/* DoAnyThing，用于找nodes */
 	public static interface DoAnyThing
 	{
-		public abstract int dothing(String src,StringBuilder nowWord,int nowIndex,List<wordIndex> nodes);
+		public abstract int dothing(CharSequence src,StringBuilder nowWord,int nowIndex,List<wordIndex> nodes);
+		
+		public abstract Words getWords()
 	}
 	
 	
