@@ -28,6 +28,7 @@ public abstract class BlockLayout extends Layout
 	public static final int TextColor = 0xffaaaaaa;
 	
 	//临时变量
+	protected char[] chars;
 	protected float[] widths;
 	protected RectF rectF = new RectF();
 	protected pos tmp = new pos(), tmp2 = new pos();
@@ -939,6 +940,38 @@ _______________________________________
 		}
 		cacheLine = line;
 		return width;
+	}
+	/* 为了效率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
+	final public float getDesiredWidth(GetChars text, int start, int end, TextPaint paint)
+	{
+		chars = chars.length < end-start ? new char[end-start] : chars;
+		text.getChars(start,end,chars,0);
+		end = end-start;
+		int last = 0;
+		float width = 0, w;
+		int line = 0;
+		
+		for(start=0;start<end;++start)
+		{
+			if(chars[start]==FN)
+			{
+				w = paint.measureText(chars,last,start-last);
+				width = w>width ? w:width;
+				last = start+1;
+				++line;
+			}
+		}
+		w = paint.measureText(chars,last,start-last);
+		width = w>width ? w:width;
+		cacheLine = line;
+		return width;
+	}
+	final public float getDesiredHeight(GetChars text, int start, int end)
+	{
+		chars = chars.length < end-start ? new char[end-start] : chars;
+		text.getChars(start,end,chars,0);
+		cacheLine = CharArrHelper.Count(FN,chars,0,end-start);
+		return cacheLine*getLineHeight();
 	}
 	
 	//试探当前下标所在行的起始

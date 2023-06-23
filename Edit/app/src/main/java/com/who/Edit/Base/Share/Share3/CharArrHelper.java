@@ -63,9 +63,9 @@ public class CharArrHelper
 	public static int Count(char c,char[] arr,int start,int end)
 	{
 		int count = 0;
-	    for(int i=start;i<end;++i)
+	    for(;start<end;++end)
 		{
-			if(arr[i]==c){
+			if(arr[start]==c){
 				++count;
 			}
 		}
