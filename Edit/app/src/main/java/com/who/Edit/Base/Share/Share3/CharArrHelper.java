@@ -4,6 +4,7 @@ import android.graphics.*;
 
 
 /*
+________________________________________
 
  SpannableStringBuilder的增删方法都很快，但速度还是有差距，增删同样字符串，时间消耗:
 
@@ -11,7 +12,7 @@ import android.graphics.*;
  
  这里只是大概，insert在尾部插入时效率更高
  
- ________________________________________
+________________________________________
  
  至于获取字符串的方法呢，SpannableStringBuilder有三个选择:
 
@@ -21,7 +22,7 @@ import android.graphics.*;
  
  下面我们测试一下它们的效率如何
  
- ________________________________________
+________________________________________
 
  我们先考虑插入效率:
  SpannableStringBuilder只能插入CharSequence及其子类，当已有一个CharSequence，要插入它
@@ -32,7 +33,7 @@ import android.graphics.*;
 
  也可以先getChars，再用String.valueOf转化为字符串后插入，效率较低，并且getChars是GetChars接口的方法，不是CharSequence的方法
 
- ________________________________________
+________________________________________
 
  我们再考虑获取效率:
  我现在需要获取一串String或字符数组以便快速查找，因为SpannableStringBuilder的charAt调用次数多了太慢
@@ -45,7 +46,7 @@ import android.graphics.*;
 
  但有一个更快的方法，您可以直接getChars，这样它会将指定范围内的字符拷贝到指定字符数组中，并且数组可循环使用，并且数组遍历效率高，代价是您需要自己在字符数组中查找
 
- ________________________________________
+________________________________________
 
  总结:
 
@@ -53,13 +54,71 @@ import android.graphics.*;
 
  至于获取，如果获取的字符较少，可以循环charAt，如果获取的字符较多，无论怎样getChars效率最高
 
- ________________________________________
+________________________________________
 
 */
 public class CharArrHelper
 {
+	
 	public static int Count(char c,char[] arr,int start,int end)
-	{		
-		return 0;
+	{
+		int count = 0;
+	    for(int i=start;i<end;++i)
+		{
+			if(arr[i]==c){
+				++count;
+			}
+		}
+		return count;
 	}
+	
+	public static int NIndex(char c,char[] arr,int index,int n)
+	{
+		for(;index<arr.length && n>0;++index)
+		{
+			if(arr[index]==c){
+				--n;
+			}
+			if(n==0){
+				break;
+			}
+		}
+		return index;
+	}
+	
+	public static int lastNIndex(char c,char[] arr,int index,int n)
+	{
+		for(;index>-1 && n>0;--index)
+		{
+			if(arr[index]==c){
+				--n;
+			}
+			if(n==0){
+				break;
+			}
+		}
+		return index;
+	}
+	
+	public static int indexOf(char c, char[] arr, int index)
+	{
+		for(;index<arr.length;++index)
+		{
+			if(arr[index]==c){
+				break;
+			}
+		}
+		return index;
+	}
+	public static int lastIndexOf(char c, char[] arr, int index)
+	{
+		for(;index>-1;--index)
+		{
+			if(arr[index]==c){
+				break;
+			}
+		}
+		return index;
+	}
+	
 }

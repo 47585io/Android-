@@ -189,26 +189,23 @@ public abstract class BlockLayout extends Layout
 		{
 			/*当插入文本会超出当前的文本块时，两种方案
 			
-			 *先插再截，总长度为 
+			 *插截删分，总长度为 
 			    插入一次:  text.length() 
 				截取一次:  (nowLen+text.length()-MaxCount)
 				删除一次:  (nowLen+text.length()-MaxCount)
 				分发一次:  (nowLen+text.length()-MaxCount)
 			
-			 *截删截插截分分，总长度为:
+			 *截删分插，总长度为:
 			    截取index后的文本   nowLen-index
 			    删除index后的文本:   nowLen-index
-				计算可以插入的长度并在text中截取:  MaxCount-index
-				插入截取的文本:  MaxCount-index
-				截取text中的之后的文本:  text.length()-(MaxCount-index)
-				分发之后的文本   text.length()-(MaxCount-index)
-				分发截取的index后的文本   nowLen-index
+				分发文本   text.length()
+				插入截取的index后的文本   nowLen-index
 			*/
 			
 			int len = text.length();
-			int step1 = len + (nowLen+len-MaxCount)*3;
-			int count = len>=MaxCount-index ? MaxCount-index:len;
-			int step2 = (nowLen-index)*2 + count*2 + (len-count)*2 + nowLen-index;
+			int count = nowLen+len > MaxCount ? nowLen+len:0;
+			int step1 = len + count*3;
+			int step2 = len + (nowLen-index)*3;
 			
 			if(step1<=step2)
 			{
@@ -239,16 +236,12 @@ public abstract class BlockLayout extends Layout
 			else
 			{
 				//方案2，精确计算应该截取和删除的部分，适合大量文本
-				CharSequence sub1 = builder.subSequence(index,nowLen);
-				CharSequence sub2 = text.subSequence(0,count);
-				CharSequence sub3 = text.subSequence(count,len);
-				
-				//逆序重新插入，保证文本整体插入位置不变
+				CharSequence sub = builder.subSequence(index,nowLen);
 				deleteForBlock(i,index,nowLen);
-				insertForBlock(i,index,sub2);
-				dispatchTextBlock(i+1,sub3);
+				//逆序重新插入，保证文本整体插入位置不变
+				dispatchTextBlock(i+1,text);
 				i = cacheId+1;
-				addBlock(i,sub1);
+				addBlock(i,sub);
 			}
 			
 		}
