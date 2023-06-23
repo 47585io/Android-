@@ -1,4 +1,5 @@
 package com.who.Edit.Base.Share.Share3;
+import android.text.*;
 
 
 /*
@@ -6,6 +7,8 @@ package com.who.Edit.Base.Share.Share3;
  SpannableStringBuilder的增删方法都很快，但速度还是有差距，增删同样字符串，时间消耗:
 
  append(540) < delete(580) < insert(702) < replace(709)
+ 
+ 这里只是大概，insert在尾部插入时效率更高
  
  ________________________________________
  
@@ -36,9 +39,10 @@ package com.who.Edit.Base.Share.Share3;
  从SpannableStringBuilder中获取全部的文本，可以直接toString，效率较低
  (其实，toString方法的效率，等于先getChars全部字符的数组，再String.valueOf将数组转化为字符串)
 
- 如果要获取一个范围内的文本，可以先subSequence，再toString，效率较高
+ 如果要获取一个范围内的文本，可以先subSequence，再toString，效率较低，因为截取出来的也是一个SpannableStringBuilder，有着一样慢的toString方法
+ (说实话，与其builder.subSequence(start,end).toString()，不如String.valueOf(builder.getChars(start,end,arr,0))
 
- 但有一个更快的方法，您可以直接getChars，这样它会将指定范围内的字符拷贝到指定字符数组中，并且数组可循环使用，并且数组遍历效率高
+ 但有一个更快的方法，您可以直接getChars，这样它会将指定范围内的字符拷贝到指定字符数组中，并且数组可循环使用，并且数组遍历效率高，代价是您需要自己在字符数组中查找
 
  ________________________________________
 
@@ -51,7 +55,7 @@ package com.who.Edit.Base.Share.Share3;
  ________________________________________
 
 */
-public class CharSequenceHelper
+public class CharArrHelper
 {
 	
 }
