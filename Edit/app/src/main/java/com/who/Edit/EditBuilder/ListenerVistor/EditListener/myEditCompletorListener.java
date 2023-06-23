@@ -149,9 +149,4 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		}
 	}
 	
-	public static interface CompleteListener
-	{
-		public void onFinishSearchWord(View self, List<Icon> Icons)
-	}
-	
 }

@@ -106,7 +106,7 @@ public class Edit extends View implements TextWatcher
 	public Layout getLayout(){
 		return mLayout;
 	}
-	public TextPaint getTextPaint(){
+	public TextPaint getPaint(){
 		return mPaint;
 	}
 	public Editable getText(){

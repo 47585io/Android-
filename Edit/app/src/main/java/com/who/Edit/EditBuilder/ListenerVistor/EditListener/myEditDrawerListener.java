@@ -24,13 +24,19 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 {
 	
 	private List<wordIndex> addNodes;
-	private List<wordIndex> removeNodes;
+	private List<Object> removeNodes;
 	
 	public myEditDrawerListener(){
 		addNodes = Collections.synchronizedList(new LinkedList<>());
 		removeNodes = Collections.synchronizedList(new LinkedList<>());
 	}
 	
+	public List<wordIndex> getDrawNodes(){
+		return addNodes;
+	}
+	public List<Object> getRemoveNodes(){
+		return removeNodes;
+	}
 	
 	abstract protected void OnFindWord(List<DoAnyThing> totalList,Words WordLib);
 	//这是查找的第一步，您可以配合WordLib将查找单词的方案装入totalList

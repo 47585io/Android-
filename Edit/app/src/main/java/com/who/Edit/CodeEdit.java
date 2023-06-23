@@ -1,21 +1,23 @@
 package com.who.Edit;
 
 import android.content.*;
+import android.graphics.*;
 import android.text.*;
 import android.util.*;
 import com.who.Edit.Base.*;
 import com.who.Edit.Base.Share.Share1.*;
+import com.who.Edit.Base.Share.Share2.*;
 import com.who.Edit.Base.Share.Share3.*;
 import com.who.Edit.EditBuilder.*;
 import com.who.Edit.EditBuilder.ListenerVistor.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditListener.*;
-import static com.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
+import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.EditRunnarListener.*;
 import com.who.Edit.EditBuilder.WordsVistor.*;
 import java.util.*;
 import java.util.concurrent.*;
-import com.who.Edit.Base.Share.Share2.*;
+import static com.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
 
 
 /* CodeEdit扩展了Edit的功能 */
@@ -48,11 +50,19 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		super.init();
 		mLast = new Stack<>();
 		mNext = new Stack<>();
+		
+		Info = new CodeEditListenerInfo();
+		WordLib = new CodeWords();
+		EditBuilder = new CodeEditBuilder();
+		Icons = new LinkedList<>();
 	}
 
 	@Override
-	protected void config(){
+	protected void config()
+	{
 		super.config();
+		loadWords();
+		trimListener();
 	}
 
 	@Override
@@ -64,7 +74,9 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		return EditBuilder;
 	}
     @Override
-	public void setLuagua(String Lua){
+	public void setLuagua(String Lua)
+	{
+		luagua = Lua;
 		EditBuilder.SwitchLuagua(this,Lua);
 	}
 	@Override
@@ -331,7 +343,8 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
 		++IsModify;
 		IsFormat(true); 	
-
+		beginBatchEdit();
+		
 		try{
 			onFormat(start, end, editor);
 		}
@@ -339,6 +352,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			Log.e("Format Error", e.toString());
 		}
 		
+		endBatchEdit();
 		IsFormat(false);
 		--IsModify;
 
@@ -453,10 +467,12 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		if(mLi==null || IsComplete()){
 			return;
 		}
+		
+		List<Icon> list = Icons;
 		long last = System.currentTimeMillis();
 		
 		try{
-		    SearchInGroup(getText(),getSelectionEnd());
+		    SearchInGroup(getText(),getSelectionEnd(),list);
 		}
 		catch(Exception e){
 			Log.e("SearchWord Error", e.toString());
@@ -477,7 +493,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	}
 
 	/* 在不同集合中找单词 */
-	public void SearchInGroup(final CharSequence text,final int index)
+	public void SearchInGroup(final CharSequence text,final int index,final List<Icon> Icons)
 	{
 		EditListener lis = getCompletor();
 		final Words WordLib = getWordLib();
@@ -538,6 +554,188 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		  //  setSelection(tmp.start + word.length());
 		    //把光标移动到最后
 		}
+	}
+	
+
+
+/*
+ ---------------------------------------------------------------
+
+ 绘画者
+
+ 你可以进行任意的绘制操作
+
+ DrawAndDraw: 为所有Listener绘制
+
+
+ onDraw -> DrawAndDraw
+
+ ---------------------------------------------------------------
+
+*/
+
+    @Override
+	protected void onDraw(Canvas canvas)
+	{
+		if(IsCanvas()){
+			//即使禁用了Canvas，也要进行默认绘制
+			super.onDraw(canvas);
+			return;
+		}
+
+		//获取当前控件的画笔
+        TextPaint paint = getPaint();
+		pos pos = getCursorPos(getSelectionEnd());
+		++IsModify;
+		try
+		{
+		    DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.BeforeDraw);
+			super.onDraw(canvas);
+			DrawAndDraw(canvas,paint,pos,myEditCanvaserListener.AfterDraw);	
+		}
+		catch (Exception e){
+			Log.e("onDraw Error", e.toString());
+			super.onDraw(canvas); //即使Listener出现问题，也请继续绘制
+		}
+		--IsModify;
+		//我们并不主动进行Canvas的禁用，这没有意义
+    }
+
+	protected void DrawAndDraw(final Canvas canvas, final TextPaint paint, final pos pos, final int flag)
+	{
+		EditListener lis = getCanvaser();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditCanvaserListener){
+			        ((EditCanvaserListener)li).onDraw(CodeEdit.this, canvas, paint, pos, flag);
+				}
+				return false;
+			}
+		};
+		lis.dispatchCallBack(run);
+	}
+
+
+/*
+ ---------------------------------------------------------------
+
+ 运行器
+
+ MakeCommand: 在不同状态下制作不同命令
+
+ RunCommand: 执行命令
+
+ onMakeCommand: 如何制作命令
+
+ onRunCommand: 如何运行命令
+
+ ---------------------------------------------------------------
+
+ Runnar
+
+ MakeCommand ->1
+
+ RunCommand ->2 
+
+
+ 1-> onMakeCommand
+
+ 2-> onRunCommand
+
+ ---------------------------------------------------------------
+
+*/
+
+	final public String MakeCommand(final String state)
+	{
+		if(IsRun()){
+			return "";
+		}
+
+		String com = "";
+		++IsModify;
+
+		try{
+			com = onMakeCommand(state);
+		}
+		catch(Exception e){
+			Log.e("onMakeCommand Error",e.toString());
+		}
+
+		--IsModify;
+		return com;//为保证isxxx能成功配对，请不要提前返回
+	}
+
+	protected String onMakeCommand(final String state)
+	{
+		final StringBuilder com = new StringBuilder();
+		EditListener li = getRunnar();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditRunnarListener)
+				{
+					String command = ((EditRunnarListener)li).onMakeCommand(CodeEdit.this,state);
+					com.append(command);
+					com.append(myEditRunnarListener.CommandSpilt);
+				}
+				return false;
+			}
+		};
+		li.dispatchCallBack(run);
+		return com.toString();
+	}
+
+	final public RunResult RunCommand(final String command)
+	{
+		if(IsRun()){
+			return myEditRunnarListener.Default;
+		}
+
+		RunResult flag = myEditRunnarListener.Default;
+		++IsModify;
+
+		try{
+			flag = onRunCommand(command);
+		}
+		catch(Exception e){
+			flag = myEditRunnarListener.Error;
+			Log.e("onRunCommand Error",e.toString());
+		}
+
+		--IsModify;
+		return flag;
+	}
+
+	protected RunResult onRunCommand(final String command)
+	{
+		RunResult flag = null;
+		EditListener li = getRunnar();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditRunnarListener)
+				{
+				    EditRunnarListener.RunResult Return = ((EditRunnarListener)li).onRunCommand(CodeEdit.this,command);
+					if(Return==myEditRunnarListener.Error){
+						return true;
+					}
+					else if(Return==myEditRunnarListener.Warring){
+						Log.w("Runnar With"+li.hashCode(),"Has Warring，But I Dont Know !");
+					}
+			    }
+				return false;
+			}
+		};
+		if(li.dispatchCallBack(run)){
+			//有listener提前返回，发现了一个Error
+			flag = myEditRunnarListener.Error;
+		}
+		return flag;
 	}
 	
 
@@ -821,6 +1019,55 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	public int getFlags(){
 		return mPrivateFlags;
 	}
+	
+	
+/* 
+ ------------------------------------------------------------------------------------
+
+ 受支持的，可在线程中运行的任务
+
+ 所有函数都默认不直接使用线程，即使可以在线程中运行，也只返回一个线程安全的Runnable，
+
+ 这样做的好处是: 由您控制如何处理和启动这些任务，而不是每个任务都默认消耗一个线程
+
+ ------------------------------------------------------------------------------------
+*/
+
+    public Runnable ReDraw(final int start, final int end)
+	{
+		return new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				reDraw(start,end);
+			}
+		};
+	}
+	
+	public Runnable OpenWindow()
+	{
+		return new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				openWindow();
+			}
+		};
+	}
+	
+	public void ReDrawInThread(int start, int end)
+	{
+		if(pool!=null)
+		{
+			for(;start<end;start+=BlockLayout.MaxCount)
+			{
+				Runnable run = ReDraw(start,start+BlockLayout.MaxCount);
+				pool.execute(run);
+			}
+		}
+	} 
 
 /*  
  ------------------------------------------------------------------------------------

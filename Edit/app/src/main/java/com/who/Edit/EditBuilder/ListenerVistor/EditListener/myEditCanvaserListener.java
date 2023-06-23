@@ -24,6 +24,8 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	
 	public static final int BeforeDraw = 256;
 	//在编辑器绘制前，进行绘制
+	public static final int AfterDraw = 512;
+	//在编辑器绘制后，进行绘制
 	
 	abstract protected void beforeDraw(View self,Canvas canvas,Paint paint,pos pos);
 	
@@ -31,14 +33,12 @@ public abstract class myEditCanvaserListener extends myEditListener implements E
 	
 	
 	@Override
-	public void onDraw(View self, Canvas canvas, Paint paint, pos pos)
+	public void onDraw(View self, Canvas canvas, Paint paint, pos pos, int flag)
 	{
-		int flag = getFlag();
-		
-		if((flag & BeforeDraw) == BeforeDraw){
+		if(flag == BeforeDraw){
 		    beforeDraw(self,canvas,paint,pos);
 		}
-		else{
+		else if(flag == AfterDraw){
 			afterDraw(self,canvas,paint,pos);
 		}
 	}

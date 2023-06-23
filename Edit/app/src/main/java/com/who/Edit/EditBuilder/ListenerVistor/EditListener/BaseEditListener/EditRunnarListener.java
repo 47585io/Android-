@@ -7,5 +7,8 @@ public abstract interface EditRunnarListener extends EditListener
 {
 	public abstract String onMakeCommand(View self, String state)
 
-	public abstract int onRunCommand(View self, String command)
+	public abstract RunResult onRunCommand(View self, String command)
+	
+	
+	public static abstract interface RunResult{}
 }
