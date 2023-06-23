@@ -257,7 +257,7 @@ public abstract class BlockLayout extends Layout
 	private void insertForBlock(int i, int index, CharSequence text)
 	{
 		SpannableStringBuilder builder = mBlocks.get(i);
-		builder.insert(index,text);
+	    builder.insert(index,text);
 		
 		//检查插入文本块，我们仍需到全部文本中查找，因为文本块的连接处可能切断了一行文本
 		CharSequence allText = getText();

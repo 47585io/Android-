@@ -1000,13 +1000,15 @@ public class Edit extends View implements TextWatcher
 			int index = start;
 			
 			//Layout的文本块必须与mText同步，否则会有严重后果
-			if(before!=0){
+			if(before!=0)
+			{
 				delete(start,end);
 				//文本删除了，光标还是start
 			}
 			if(after!=0)
 			{
 				if(tbstart!=0 || tbend!=tb.length()){
+					//默认情况下，不需要重复截取
 					tb = tb.subSequence(tbstart,tbend);
 				}
 				insert(start,tb);

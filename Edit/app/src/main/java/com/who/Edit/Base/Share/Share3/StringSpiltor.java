@@ -35,6 +35,10 @@ public class StringSpiltor
 	   String更快，因为插入CharSequence本质上也是先toString再插入的！！！
 	   所以就这么说吧，如果要效率高，参数尽量是String，而不是CharSequence
 	   StringBuilder插入方法有很多重载，只有参数是String的那个效率最高，因为String内部有存储一个字符数组，StringBuilder插入时必须要拷贝这个数组
+	
+	 * SpannableStringBuilder的subSequence比较快，但CharSequence一个一个charAt效率实在太低
+	   String不用charAt，查找效率高，但要toString才能获取，SpannableStringBuilder的toString太慢
+	   SpannableStringBuilder的getChars()可以获取一个范围内的字符数组，非常快，并且数组可循环使用，并且数组遍历效率高
 	*/
 	 
 	//字符c第n次出现的下标，从index开始

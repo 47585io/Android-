@@ -53,7 +53,7 @@ public class UnsafeEdit extends View implements TextWatcher
 		mInput = new myInput(this,true);
 		mText = mInput.getEditable();
 		mLayout=new DynamicLayout(mText, mPaint, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f,true);
-		
+	
 		mBitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888);
 		mPool = new ThreadPoolExecutor(1,1,0,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
 		
