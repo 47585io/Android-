@@ -182,7 +182,8 @@ public abstract class BlockLayout extends Layout
 		int nowLen = builder.length();
 		index -= cacheLen;
 	
-		if(nowLen+text.length()<=MaxCount){
+		int len = text.length();
+		if(nowLen+len<=MaxCount){
 			//当插入文本不会超出当前的文本块时，直接插入
 			insertForBlock(i,index,text);
 		}
@@ -191,27 +192,25 @@ public abstract class BlockLayout extends Layout
 			/*当插入文本会超出当前的文本块时，两种方案
 			
 			 *插截删分，总长度为 
-			    插入文本:  text.length() 
-				截取超出部分:  (nowLen+text.length()-MaxCount)
-				删除超出部分:  (nowLen+text.length()-MaxCount)
-				分发截取的超出部分:  (nowLen+text.length()-MaxCount)
+			    插入文本:  len
+				截取超出部分:  (nowLen+len-MaxCount)
+				删除超出部分:  (nowLen+len-MaxCount)
+				分发截取的超出部分:  (nowLen+len-MaxCount)
 			
 			 *截删分插，总长度为:
 			    截取index后的文本   nowLen-index
 			    删除index后的文本:   nowLen-index
-				分发文本   text.length()
+				分发文本   len
 				插入截取的index后的文本   nowLen-index
 				
 			 *容易看出，
-			    方案1的总量为 text.length() + 3*(nowLen+text.length()-MaxCount)
-			    方案2的总量为 text.length() + 3*(nowLen-index);
-			  如果 nowLen+text.length()-MaxCount <= nowLen-index，使用方案1，否则使用方案2
+			    方案1的总量为 len + 3*(nowLen+len-MaxCount)
+			    方案2的总量为 len + 3*(nowLen-index);
+			  如果 nowLen+len-MaxCount <= nowLen-index，使用方案1，否则使用方案2
 			  
 			*/
 			
-			int len = text.length();
-			int count = nowLen+len > MaxCount ? nowLen+len-MaxCount:0;
-			if(count <= nowLen-index)
+			if(nowLen+len-MaxCount <= nowLen-index)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
 				insertForBlock(i,index,text);
