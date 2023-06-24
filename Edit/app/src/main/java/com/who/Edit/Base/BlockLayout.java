@@ -239,7 +239,6 @@ public abstract class BlockLayout extends Layout
 		      更确切地说，方案一只处理溢出小于MaxCount的情况，方案二则可处理更多情况
 			  
 			*/
-			
 			if(nowLen+len-MaxCount <= MaxCount)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
@@ -283,10 +282,9 @@ public abstract class BlockLayout extends Layout
 		index += getBlockStartIndex(i);
 		int e = tryLine_End(allText,index+text.length());
 		int s = tryLine_Start(allText,index);
-		String str = allText.subSequence(s,e).toString();
 		
 		//测量插入的文本块的宽和行
-		float width = getDesiredWidth(str,0,str.length(),getPaint());
+		float width = getDesiredWidthForType(allText,s,e,getPaint());
 		int line = cacheLine;
 
 		if(width>maxWidth){
@@ -313,10 +311,9 @@ public abstract class BlockLayout extends Layout
 		index += getBlockStartIndex(i);
 		int e = tryLine_End(allText,index+tbEnd-tbStart);
 		int s = tryLine_Start(allText,index);
-		String str = allText.subSequence(s,e).toString();
-
+		
 		//测量插入的文本块的宽和行
-		float width = getDesiredWidth(str,0,str.length(),getPaint());
+		float width = getDesiredWidthForType(allText,s,e,getPaint());
 		int line = cacheLine;
 
 		if(width>maxWidth){
@@ -388,10 +385,9 @@ public abstract class BlockLayout extends Layout
 			//删除前，检查删除的文本块
 			int s = tryLine_Start(builder,start);
 			int e = tryLine_End(builder,end);
-			String str = builder.subSequence(s,e).toString();
 			
 			//如果删除了字符串，测量删除文本块的宽以及行
-			float width = getDesiredWidth(str,0,str.length(),paint);
+			float width = getDesiredWidthForType(builder,s,e,paint);
 			int line=cacheLine;
 			float copyWidth = width;
 			builder.delete(start,end);
@@ -400,8 +396,7 @@ public abstract class BlockLayout extends Layout
 			if(width>=mWidths.get(i))
 			{
 				//如果删除字符串是当前的块的最大宽度，重新测量当前整个块
-				str = builder.toString();
-				width = getDesiredWidth(str,0,str.length(),paint);
+				width = getDesiredWidthForType(builder,0,builder.length(),paint);
 				mWidths.set(i,width);
 			}
 			else
@@ -996,7 +991,7 @@ _______________________________________
 	/* 为了效率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
 	final public float getDesiredWidth(GetChars text, int start, int end, TextPaint paint)
 	{
-		chars = chars.length < end-start ? new char[end-start] : chars;
+		chars = chars==null || chars.length < end-start ? new char[end-start] : chars;
 		text.getChars(start,end,chars,0);
 		end = end-start;
 		int last = 0;
@@ -1020,10 +1015,56 @@ _______________________________________
 	}
 	final public float getDesiredHeight(GetChars text, int start, int end)
 	{
-		chars = chars.length < end-start ? new char[end-start] : chars;
+		chars = chars==null || chars.length < end-start ? new char[end-start] : chars;
 		text.getChars(start,end,chars,0);
 		cacheLine = CharArrHelper.Count(FN,chars,0,end-start);
 		return cacheLine*getLineHeight();
+	}
+	
+	/*
+	  一串等长字符串
+	  直接getChars，再遍历整个数组，耗时80ms，
+	  直接subSequence，再toString，再遍历String，耗时100ms
+	  直接charAt遍历，耗时168ms
+	*/
+	
+	/* 测量文本块宽度，但会根据不同类型，选择更省时的方案 */
+	final public float getDesiredWidthForType(CharSequence text, int start, int end, TextPaint paint)
+	{
+		float width;
+		if(text instanceof String){
+			//String不用截取，直接测量
+			width = getDesiredWidth((String)text,start,end,paint);
+		}
+		else if(text instanceof GetChars){
+			//GetChars可以先截取数组再测量
+			width = getDesiredWidth((GetChars)text,start,end,paint);
+		}
+		else{
+			//我们永远不要去一个个charAt，因为效率太低
+			String str = text.subSequence(start,end).toString();
+			width = getDesiredWidth(str,0,str.length(),paint);
+		}
+		return width;
+	}
+	/* 测量文本块高度，但会根据不同类型，选择更省时的方案 */
+	final public float getDesiredHeightForType(CharSequence text, int start, int end, TextPaint paint)
+	{
+		float height;
+		if(text instanceof String){
+			//String不用截取，直接测量
+			height = getDesiredHeight((String)text,start,end);
+		}
+		else if(text instanceof GetChars){
+			//GetChars可以先截取数组再测量
+			height = getDesiredHeight((GetChars)text,start,end);
+		}
+		else{
+			//我们永远不要去一个个charAt，因为效率太低
+			String str = text.subSequence(start,end).toString();
+			height = getDesiredHeight(str,0,str.length());
+		}
+		return height;
 	}
 	
 	//试探当前下标所在行的起始
