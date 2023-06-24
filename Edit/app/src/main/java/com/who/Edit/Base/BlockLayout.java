@@ -239,7 +239,7 @@ public abstract class BlockLayout extends Layout
 		      更确切地说，方案一只处理溢出小于MaxCount的情况，方案二则可处理更多情况
 			  
 			*/
-			if(nowLen+len-MaxCount <= MaxCount)
+			if(nowLen+len-MaxCount <= nowLen-index)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
 				insertForBlock(i,index,text);
@@ -1022,9 +1022,9 @@ _______________________________________
 	}
 	
 	/*
-	  一串等长字符串
+	  一串等长字符串(1000000行*15字)
 	  直接getChars，再遍历整个数组，耗时80ms，
-	  直接subSequence，再toString，再遍历String，耗时100ms
+	  直接subSequence，再toString，再遍历String，耗时108ms
 	  直接charAt遍历，耗时168ms
 	*/
 	
@@ -1065,6 +1065,33 @@ _______________________________________
 			height = getDesiredHeight(str,0,str.length());
 		}
 		return height;
+	}
+	
+	final public int CountForType(char c, CharSequence text, int start, int end)
+	{
+		int count;
+		if(text instanceof String){
+			//String不用截取，直接测量
+			count = StringSpiltor.Count(c,(String)text,start,end);
+		}
+		else if(text instanceof GetChars){
+			//GetChars可以先截取数组再测量
+			chars = chars==null || chars.length < end-start ? new char[end-start] : chars;
+			((GetChars)text).getChars(start,end,chars,0);
+			count = CharArrHelper.Count(c,chars,0,end-start);
+		}
+		else{
+			//我们永远不要去一个个charAt，因为效率太低
+			String str = text.subSequence(start,end).toString();
+			count = StringSpiltor.Count(c,str,0,str.length());
+		}
+		return count;
+	}
+	final public int NIndexForType(char c,CharSequence text,int index, int n){
+		return 0;
+	}
+	final public int lastNIndexForType(char c,CharSequence text,int index, int n){
+		return 0;
 	}
 	
 	//试探当前下标所在行的起始
