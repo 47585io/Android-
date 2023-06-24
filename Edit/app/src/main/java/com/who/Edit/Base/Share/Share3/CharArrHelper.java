@@ -8,7 +8,7 @@ ________________________________________
 
  SpannableStringBuilder的增删方法都很快，但速度还是有差距，增删同样字符串，时间消耗:
 
- append(540) < delete(580) < insert(702) < replace(709)
+ append(570) < delete(580) < insert(702) < replace(709)
  
  这里只是大概，insert在尾部插入时效率更高
  
@@ -30,11 +30,14 @@ ________________________________________
  如果要全部插入，您可以直接提交这个CharSequence，效率最高，但如果它不包含Span，效率更高
  
  如果只要插入其中一个范围内的字符串
- SpannableStringBuilder支持只插入指定字符串的一个范围内的字符，即insert(int start, CharSequence tb, int tbStart, int tbEnd)，效率最高
+ SpannableStringBuilder支持只插入指定字符串的一个范围内的字符，即insert(int start, CharSequence tb, int tbStart, int tbEnd)，效率最高，
+ (因为SpannableStringBuilder的这个方法会只复制指定范围内的字符)
 
- 也可以先subSequence再插入，效率较低
+ 也可以先从原字符串中subSequence一串再插入，效率较低
+ (说实话，无论如何，SpannableStringBuilder的插入方法都是直接复制字符的，所以没必要截取了再插)
  
  也可以先getChars，再用String.valueOf转化为字符串后插入，效率很低，并且getChars是GetChars接口的方法，不是CharSequence的方法
+ (说实话，无论如何都不推荐使用这个方法)
 
 ________________________________________
 
@@ -48,6 +51,7 @@ ________________________________________
  (说实话，与其builder.subSequence(start,end).toString()，不如String.valueOf(builder.getChars(start,end,arr,0))
 
  但有一个更快的方法，您可以直接getChars，这样它会将指定范围内的字符拷贝到指定字符数组中，并且数组可循环使用，并且数组遍历效率高，代价是您需要自己在字符数组中查找
+ (可以借助CharArrHelper类帮助您在字符数组中查找字符)
 
 ________________________________________
 
@@ -66,7 +70,7 @@ public class CharArrHelper
 	public static int Count(char c,char[] arr,int start,int end)
 	{
 		int count = 0;
-	    for(;start<end;++end)
+	    for(;start<end;++start)
 		{
 			if(arr[start]==c){
 				++count;
@@ -77,12 +81,12 @@ public class CharArrHelper
 	
 	public static int NIndex(char c,char[] arr,int index,int n)
 	{
-		for(;index<arr.length && n>0;++index)
+		for(;index<arr.length;++index)
 		{
 			if(arr[index]==c){
 				--n;
 			}
-			if(n==0){
+			if(n<1){
 				break;
 			}
 		}
@@ -91,12 +95,12 @@ public class CharArrHelper
 	
 	public static int lastNIndex(char c,char[] arr,int index,int n)
 	{
-		for(;index>-1 && n>0;--index)
+		for(;index>-1;--index)
 		{
 			if(arr[index]==c){
 				--n;
 			}
-			if(n==0){
+			if(n<1){
 				break;
 			}
 		}
@@ -113,6 +117,7 @@ public class CharArrHelper
 		}
 		return index;
 	}
+	
 	public static int lastIndexOf(char c, char[] arr, int index)
 	{
 		for(;index>-1;--index)

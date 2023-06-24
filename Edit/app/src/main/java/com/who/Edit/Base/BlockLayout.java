@@ -158,16 +158,16 @@ public abstract class BlockLayout extends Layout
 		int len = text.length();
 		int nowIndex = 0;
 		
-		//每次从text中向后切割MaxCount个字符，并添加到mBlocks中
+		//每次从text中向后截取MaxCount个字符，并添加到mBlocks中
 		while(true)
 		{
 			if(len-nowIndex<=MaxCount){
-				//最后一个块，直接从上次的位置切割
+				//最后一个块，直接切割到末尾
 				addBlock(id,text,nowIndex,len);
 				break;
 			}
 
-			//向后找下一个位置，并切割范围内的文本，并插入到刚创建的文本块中
+			//切割范围内的文本，并插入到刚创建的文本块中
 			addBlock(id,text,nowIndex,nowIndex+MaxCount);
 			
 			//继续向后找下个位置
@@ -651,7 +651,7 @@ _______________________________________
 		return index;
 	}
 
-	/* 获取指定行的宽度 */
+	/* 获取指定行的宽度，可能不那么精确 */
 	@Override
 	public float getLineWidth(int line)
 	{
@@ -750,7 +750,7 @@ _______________________________________
 		int startLine = cacheLine;
 		int startIndex = cacheLen;
 		CharSequence text = mBlocks.get(id);
-
+	
 		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
 		pos.x = getPrimaryHorizontal(offset);
 		
@@ -774,17 +774,13 @@ _______________________________________
 		CharSequence text = getText();
 		int index = tryLine_Start(text,newOffset);
 		target.x = measureText(text,index,newOffset,getPaint());
-
-		if(oldOffset<newOffset)
-		{
-			String str = text.subSequence(oldOffset,newOffset).toString();
-			int line = StringSpiltor.Count(FN,str,0,str.length());
+		
+		if(oldOffset<newOffset){
+			int line = CountForType(FN,text,oldOffset,newOffset);
 			target.y = y+getLineHeight()*line;
 		}
-		else if(oldOffset>newOffset)
-		{
-			String str = text.subSequence(newOffset,oldOffset).toString();
-			int line = StringSpiltor.Count(FN,str,0,str.length());
+		else if(oldOffset>newOffset){
+			int line = CountForType(FN,text,newOffset,oldOffset);
 			target.y = y-getLineHeight()*line;
 		}
 	}
@@ -880,7 +876,7 @@ _______________________________________
 		return line;
 	}
 
-	/* 获取offset处的横坐标 */
+	/* 获取offset处的横坐标，非常精确 */
 	@Override
 	public float getPrimaryHorizontal(int offset)
 	{
@@ -1014,12 +1010,14 @@ _______________________________________
 		return cacheLine*getLineHeight();
 	}
 	
-	/*
-	  一串等长字符串(1000000行*15字)
-	  直接getChars，再遍历整个数组，耗时80ms，
-	  直接subSequence，再toString，再遍历String，耗时108ms
-	  直接charAt遍历，耗时168ms
-	*/
+/*
+  一串等长字符串(1000000行*15字)
+  直接getChars，再遍历整个数组，耗时80ms，
+  直接subSequence，再toString，再遍历String，耗时108ms
+  直接charAt遍历，耗时168ms
+	  
+  还有，千万别用Layout的getDesiredWidth，就1000000行*15字，硬是花了我2480ms，这是怎么测的啊？！
+*/
 	
 	/* 测量文本块宽度，但会根据不同类型，选择更省时的方案 */
 	final public float getDesiredWidthForType(CharSequence text, int start, int end, TextPaint paint)
@@ -1045,21 +1043,19 @@ _______________________________________
 	{
 		float height;
 		if(text instanceof String){
-			//String不用截取，直接测量
 			height = getDesiredHeight((String)text,start,end);
 		}
 		else if(text instanceof GetChars){
-			//GetChars可以先截取数组再测量
 			height = getDesiredHeight((GetChars)text,start,end);
 		}
 		else{
-			//我们永远不要去一个个charAt，因为效率太低
 			String str = text.subSequence(start,end).toString();
 			height = getDesiredHeight(str,0,str.length());
 		}
 		return height;
 	}
 	
+	/* 根据不同类型选择更省时的统计方案 */	
 	final public int CountForType(char c, CharSequence text, int start, int end)
 	{
 		int count;
@@ -1077,6 +1073,7 @@ _______________________________________
 		}
 		return count;
 	}
+	/* 根据不同类型选择更省时的查找方案 */
 	final public int NIndexForType(char c,CharSequence text,int index, int n)
 	{
 		int i;
@@ -1084,8 +1081,7 @@ _______________________________________
 		if(text instanceof String){
 			i = StringSpiltor.NIndex(c,(String)text,index,n);
 		}
-		else if(text instanceof GetChars)
-		{
+		else if(text instanceof GetChars){
 			chars = chars==null || chars.length < len-index ? new char[len-index] : chars;
 			((GetChars)text).getChars(index,len,chars,0);
 			i = index+ CharArrHelper.NIndex(c,chars,0,n);
@@ -1102,8 +1098,7 @@ _______________________________________
 		if(text instanceof String){
 			i = StringSpiltor.lastNIndex(c,(String)text,index,n);
 		}
-		else if(text instanceof GetChars)
-		{
+		else if(text instanceof GetChars){
 			chars = chars==null || chars.length < index+1 ? new char[index+1] : chars;
 			((GetChars)text).getChars(0,index+1,chars,0);
 			i = CharArrHelper.lastNIndex(c,chars,index,n);
