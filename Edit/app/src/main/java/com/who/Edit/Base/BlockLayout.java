@@ -643,9 +643,9 @@ _______________________________________
 		int hasLine = mLines.get(id);
 		
 		//寻找剩余的行数的位置
-		String str = mBlocks.get(id).toString();
+		CharSequence str = mBlocks.get(id);
 		int len = getText().length();
-		int index = toLine<hasLine-toLine ? StringSpiltor.NIndex(FN,str,0,toLine):StringSpiltor.lastNIndex(FN,str,str.length()-1,hasLine-toLine+1);
+		int index = toLine<hasLine-toLine ? NIndexForType(FN,str,0,toLine):lastNIndexForType(FN,str,str.length()-1,hasLine-toLine+1);
 		index+=startIndex;
 		index = p1<1 ? 0 : (index<0 ? len : (index+1>len ? len:index+1));
 		return index;
@@ -658,7 +658,7 @@ _______________________________________
 		CharSequence text = getText();
 		int start = getLineStart(line); 
 		int end = tryLine_End(text,start);
-		return measureText(text,start,end,getPaint());
+		return getPaint().measureText(text,start,end);
 	}
 
 	/* 获取行的高度 */
@@ -680,8 +680,7 @@ _______________________________________
 		int startIndex = cacheLen;
 		
 		CharSequence text = mBlocks.get(id);
-		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
-		startLine+= StringSpiltor.Count(FN,str,0,offset-startIndex);
+		startLine+= CountForType(FN,text,0,offset-startIndex);
 		return startLine;
 	}
 	
@@ -715,8 +714,7 @@ _______________________________________
 		CharSequence text = getText();
 		int start = getLineStart(p1);
 		int end = tryLine_End(text,start);
-		String str = text.subSequence(start,end).toString();
-		return str.indexOf(FT)!=-1;
+		return CountForType(FT,text,start,end)!=0;
 	}
 	@Override
 	public Layout.Directions getLineDirections(int p1){
@@ -753,17 +751,12 @@ _______________________________________
 		int startIndex = cacheLen;
 		CharSequence text = mBlocks.get(id);
 
-		//先将当前的块转化为String
-		String str = offset-startIndex<text.length()/2 ? text.subSequence(0,offset-startIndex).toString() : text.toString();
-
 		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽
-		text = getText();
-		int start = tryLine_Start(text,offset);
-		pos.x = measureText(text,start,offset,getPaint());
-
+		pos.x = getPrimaryHorizontal(offset);
+		
 		//offset在使用完后转化为当前块的下标，测量当前块的起始到offset之间的行数，并加上之前的行数，最后计算行数的高
 		offset = offset-startIndex;
-		int lines = StringSpiltor.Count(FN,str,0,offset)+startLine;
+		int lines = CountForType(FN,text,0,offset)+startLine;
 		pos.y = lines*getLineHeight();
 	}
 
@@ -1071,27 +1064,55 @@ _______________________________________
 	{
 		int count;
 		if(text instanceof String){
-			//String不用截取，直接测量
 			count = StringSpiltor.Count(c,(String)text,start,end);
 		}
 		else if(text instanceof GetChars){
-			//GetChars可以先截取数组再测量
 			chars = chars==null || chars.length < end-start ? new char[end-start] : chars;
 			((GetChars)text).getChars(start,end,chars,0);
 			count = CharArrHelper.Count(c,chars,0,end-start);
 		}
 		else{
-			//我们永远不要去一个个charAt，因为效率太低
 			String str = text.subSequence(start,end).toString();
 			count = StringSpiltor.Count(c,str,0,str.length());
 		}
 		return count;
 	}
-	final public int NIndexForType(char c,CharSequence text,int index, int n){
-		return 0;
+	final public int NIndexForType(char c,CharSequence text,int index, int n)
+	{
+		int i;
+		int len = text.length();
+		if(text instanceof String){
+			i = StringSpiltor.NIndex(c,(String)text,index,n);
+		}
+		else if(text instanceof GetChars)
+		{
+			chars = chars==null || chars.length < len-index ? new char[len-index] : chars;
+			((GetChars)text).getChars(index,len,chars,0);
+			i = index+ CharArrHelper.NIndex(c,chars,0,n);
+		}
+		else{
+			String str = text.subSequence(index,len).toString();
+			i = index+ StringSpiltor.NIndex(c,str,0,n);
+		}
+		return i;
 	}
-	final public int lastNIndexForType(char c,CharSequence text,int index, int n){
-		return 0;
+	final public int lastNIndexForType(char c,CharSequence text,int index, int n)
+	{
+		int i;
+		if(text instanceof String){
+			i = StringSpiltor.lastNIndex(c,(String)text,index,n);
+		}
+		else if(text instanceof GetChars)
+		{
+			chars = chars==null || chars.length < index+1 ? new char[index+1] : chars;
+			((GetChars)text).getChars(0,index+1,chars,0);
+			i = CharArrHelper.lastNIndex(c,chars,index,n);
+		}
+		else{
+			String str = text.subSequence(0,index+1).toString();
+			i = StringSpiltor.lastNIndex(c,str,index,n);
+		}
+		return i;
 	}
 	
 	//试探当前下标所在行的起始
