@@ -122,6 +122,14 @@ public abstract class BlockLayout extends Layout
 		//无论怎样，都抛给insertForBlock来测量
 		insertForBlock(i,0,text);	
 	}
+	private void addBlock(int i,CharSequence text,int tbStart,int tbEnd)
+	{
+		mBlocks.add(i,new SpannableStringBuilder());
+		mLines.add(i,0);
+		mWidths.add(i,0f);
+		//无论怎样，都抛给insertForBlock来测量
+		insertForBlock(i,0,text,tbStart,tbEnd);	
+	}
 	/* 移除文本块 */
 	private void removeBlock(int i){
 		mBlocks.remove(i);
@@ -147,26 +155,45 @@ public abstract class BlockLayout extends Layout
 	/* 只管分发文本块，不管怎样，大段文本块都可给我 */
 	private void dispatchTextBlock(int id, CharSequence text)
 	{
-		int count = text.length();
+		int len = text.length();
 		int nowIndex = 0;
 		
 		//每次从text中向后切割MaxCount个字符，并添加到mBlocks中
 		while(true)
 		{
-			if(count<MaxCount){
+			if(len-nowIndex<=MaxCount){
 				//最后一个块，直接从上次的位置切割
-				CharSequence str = text.subSequence(nowIndex,text.length());
-				addBlock(id,str);
+				addBlock(id,text,nowIndex,len);
 				break;
 			}
 
 			//向后找下一个位置，并切割范围内的文本，并插入到刚创建的文本块中
-			CharSequence str = text.subSequence(nowIndex,nowIndex+MaxCount);
-			addBlock(id,str);
+			addBlock(id,text,nowIndex,nowIndex+MaxCount);
 			
 			//继续向后找下个位置
 			nowIndex+=MaxCount;
-			count-=MaxCount;
+			++id;
+		}
+		cacheId = id;
+		//保存分发到的位置
+	}
+	/* 只分发原文本中指定范围内的字符串 */
+	private void dispatchTextBlock(int id, CharSequence text,int tbStart,int tbEnd)
+	{
+		//每次从tbStart开始向后切割MaxCount个字符，并添加到mBlocks中，直至tbEnd
+		while(true)
+		{
+			if(tbEnd-tbStart<=MaxCount){
+				//最后一个块，直接切割到tbEnd
+				addBlock(id,text,tbStart,tbEnd);
+				break;
+			}
+			
+			//切割范围内的文本，并插入到刚创建的文本块中
+			addBlock(id,text,tbStart,tbStart+MaxCount);
+
+			//继续向后找下个位置
+			tbStart+=MaxCount;
 			++id;
 		}
 		cacheId = id;
@@ -191,38 +218,33 @@ public abstract class BlockLayout extends Layout
 		{
 			/*当插入文本会超出当前的文本块时，两种方案
 			
-			 *插截删分，总长度为 
+			 *插分删，总长度为 
 			    插入文本:  len
-				截取超出部分:  (nowLen+len-MaxCount)
+				分发超出部分:  (nowLen+len-MaxCount)
 				删除超出部分:  (nowLen+len-MaxCount)
-				分发截取的超出部分:  (nowLen+len-MaxCount)
 			
-			 *截删分插，总长度为:
-			    截取index后的文本   nowLen-index
-			    删除index后的文本:   nowLen-index
+			 *分插删，总长度为:
 				分发文本   len
-				插入截取的index后的文本   nowLen-index
+				插入index后的文本到末尾   nowLen-index
+				删除index后的文本    nowLen-index
 				
 			 *容易看出，
-			    方案1的总量为 len + 3*(nowLen+len-MaxCount)
-			    方案2的总量为 len + 3*(nowLen-index);
+			    方案1的总量为 len + 2*(nowLen+len-MaxCount)
+			    方案2的总量为 len + 2*(nowLen-index);
 			  如果 nowLen+len-MaxCount <= nowLen-index，使用方案1，否则使用方案2
+			  
+			 *另外也可以知道，
+			    nowLen-index的最大值为MaxCount，
+				也就是说一旦nowLen+len-MaxCount > MaxCount，默认使用方案2
+		      更确切地说，方案一只处理溢出小于MaxCount的情况，方案二则可处理更多情况
 			  
 			*/
 			
-			if(nowLen+len-MaxCount <= nowLen-index)
+			if(nowLen+len-MaxCount <= MaxCount)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
 				insertForBlock(i,index,text);
 				nowLen = builder.length();
-				text = builder.subSequence(MaxCount,nowLen);
-				deleteForBlock(i,MaxCount,nowLen);
-
-				if(nowLen-MaxCount>MaxCount){
-					//超出的字数超过了单个文本块的最大字数
-					dispatchTextBlock(i+1,text);
-					return;
-				}
 
 				if (mBlocks.size()-1 == i){
 					//若无下个文本块，则添加一个
@@ -233,20 +255,21 @@ public abstract class BlockLayout extends Layout
 					addBlock(i+1);
 				}
 
-				insertForBlock(i+1,0,text);
-				//之后将截取的字符串添加到文本块列表中的下个文本块开头
+				//之后将超出的字符串添加到文本块列表中的下个文本块开头
+				insertForBlock(i+1,0,builder,MaxCount,nowLen);
+				//最后删除超出部分
+				deleteForBlock(i,MaxCount,nowLen);
 			}
 			else
 			{
-				//方案2，精确计算应该截取和删除的部分，适合大量文本
-				CharSequence sub = builder.subSequence(index,nowLen);
-				deleteForBlock(i,index,nowLen);
+				//方案2，精确计算删除和分发的部分，适合大量文本
 				//逆序重新插入，保证文本整体插入位置不变
 				dispatchTextBlock(i+1,text);
-				i = cacheId+1;
-				addBlock(i,sub);
+				int j = cacheId+1;
+				addBlock(j,builder,index,nowLen);
+				//最后删除这部分
+				deleteForBlock(i,index,nowLen);
 			}
-			
 		}
 	}
 	/* 在插入文本块时调用，可以做出合理的测量，注意必须在全部文本改变后才能调用 */
@@ -262,6 +285,36 @@ public abstract class BlockLayout extends Layout
 		int s = tryLine_Start(allText,index);
 		String str = allText.subSequence(s,e).toString();
 		
+		//测量插入的文本块的宽和行
+		float width = getDesiredWidth(str,0,str.length(),getPaint());
+		int line = cacheLine;
+
+		if(width>maxWidth){
+			//如果出现了一个更大的宽，就记录它
+			maxWidth = width;
+		}
+		if(width>mWidths.get(i)){
+			mWidths.set(i,width);
+		}
+		if(line>0){
+			//在插入字符串后，计算增加的行
+			lineCount+=line;
+			mLines.set(i,mLines.get(i)+line);
+		}
+	}
+	/* 只插入tbStart~tbEnd之间的文本，然后再测量 */
+	private void insertForBlock(int i, int index, CharSequence text, int tbStart, int tbEnd)
+	{
+		SpannableStringBuilder builder = mBlocks.get(i);
+	    builder.insert(index,text,tbStart,tbEnd);
+
+		//检查插入文本块，我们仍需到全部文本中查找，因为文本块的连接处可能切断了一行文本
+		CharSequence allText = getText();
+		index += getBlockStartIndex(i);
+		int e = tryLine_End(allText,index+tbEnd-tbStart);
+		int s = tryLine_Start(allText,index);
+		String str = allText.subSequence(s,e).toString();
+
 		//测量插入的文本块的宽和行
 		float width = getDesiredWidth(str,0,str.length(),getPaint());
 		int line = cacheLine;
