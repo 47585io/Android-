@@ -55,7 +55,7 @@ public abstract class BlockLayout extends Layout
 		mLines = new ArrayList<>();
 		mWidths = new ArrayList<>();
 		setText(base);
-		
+	
 		scaleLayout = scale;
 		lineSpacing = spacingmult;
 		this.cursorWidth = cursorWidth;
