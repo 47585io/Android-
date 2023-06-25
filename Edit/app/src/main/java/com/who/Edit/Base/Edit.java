@@ -1007,11 +1007,7 @@ public class Edit extends View implements TextWatcher
 			}
 			if(after!=0)
 			{
-				if(tbstart!=0 || tbend!=tb.length()){
-					//默认情况下，不需要重复截取
-					tb = tb.subSequence(tbstart,tbend);
-				}
-				insert(start,tb);
+				insert(start,tb,tbstart,tbend);
 				index = start+after;
 				//插入了文本，光标挪到文本后
 			}
