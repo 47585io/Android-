@@ -423,6 +423,17 @@ public abstract class BlockLayout extends Layout
 		}
 	}
 	
+	/* 如果您想宽度测量正确，就重写它们，并在适时调用 */
+	private void measureInsertBlockAfter(int start, int end){
+		
+	}
+	private void measureDeleteBlockBefore(int start, int end){
+		
+	}
+	private void measureDeleteBlockAfter(int index){
+		
+	}
+	
 	/* 寻找index所指定的文本块，并记录文本块的起始下标 */
 	private int findBlockIdForIndex(int index)
 	{
@@ -597,6 +608,7 @@ public abstract class BlockLayout extends Layout
 		}
 		return endWidth;
 	}
+	
 	
 /*
 _______________________________________
@@ -809,7 +821,6 @@ _______________________________________
 	public void getSelectionPath(int start, int end, Path dest)
 	{
 		CharSequence text = getText();
-		String str = text.subSequence(start,end).toString();
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = rectF;
@@ -824,7 +835,7 @@ _______________________________________
 		    nearOffsetPos(start,s.x,s.y,end,e);
 		}
 		
-		float w = getDesiredWidth(str,0,str.length(),paint);
+		float w = getDesiredWidthForType(text,start,end,paint);
 		if(s.y == e.y)
 		{
 			//单行的情况
@@ -1108,6 +1119,16 @@ _______________________________________
 			i = StringSpiltor.lastNIndex(c,str,index,n);
 		}
 		return i;
+	}
+	
+	/* 安全地获取数据 */
+	protected void fillChars(GetChars text, int start, int end){
+		chars = chars==null || chars.length<end-start ? new char[end-start]:chars;
+		text.getChars(start,end,chars,0);
+	}
+	protected void fillWidths(CharSequence text, int start, int end, TextPaint paint){
+		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
+		paint.getTextWidths(text,start,end,widths);
 	}
 	
 	//试探当前下标所在行的起始
