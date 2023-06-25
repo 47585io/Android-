@@ -424,13 +424,13 @@ public abstract class BlockLayout extends Layout
 	}
 	
 	/* 如果您想宽度测量正确，就重写它们，并在适时调用 */
-	private void measureInsertBlockAfter(int start, int end){
+	private void measureInsertBlockAfter(int id, int start, int end){
 		
 	}
-	private void measureDeleteBlockBefore(int start, int end){
-		
+	private boolean measureDeleteBlockBefore(int id, int start, int end){
+		return false;
 	}
-	private void measureDeleteBlockAfter(int index){
+	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText){
 		
 	}
 	
