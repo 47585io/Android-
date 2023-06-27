@@ -294,7 +294,6 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
 		long now = System.currentTimeMillis();
 		Log.w("After PrePare","I'm "+hashCode()+", "+ "I take " + (now - last) + " ms, ");
-
 	}
 	
 	
@@ -1305,6 +1304,5 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		}
 
 	}
-	
 	
 }

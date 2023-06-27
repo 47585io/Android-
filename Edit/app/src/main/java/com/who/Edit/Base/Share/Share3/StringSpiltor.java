@@ -19,7 +19,7 @@ public class StringSpiltor
 	 * toString很消耗时间，当一串字符有1000000行*45个字符时，toString一次需要30ms!!!。这相当于正常情况下indexOf使用300000次的时间
 	   这里就谈谈，toString本质是拷贝了一份字符数组，并且是逐个字符地拷贝
 	   特别是CharSequence，如果只要一个范围内的字符串，一定先subSequence，再toString，节省时间！！！
-	   但有一个例外，不知道为什么，StringBuilder的toString很快，非常快
+	   但有一个例外，不知道为什么，StringBuilder的toString很快，非常快(可能是因为StringBuilder内部存储了一个String，toString直接返回这个String，在增删时同步这个String)
 	   
 	 * 虽然说toString很消耗时间，但如果你只有一个CharSequence，并且需要遍历整个串，还是建议你toString
 	   因为CharSequence的charAt使用次数多了，也很慢，而且先toString再indexOf效率比直接全部charAt高得多

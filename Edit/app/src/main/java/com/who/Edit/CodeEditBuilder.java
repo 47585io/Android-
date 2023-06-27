@@ -12,6 +12,7 @@ import java.util.*;
 
 import static com.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.myEditDrawerListener.*;
+import android.text.style.*;
 
 
 public class CodeEditBuilder implements EditBuilder
@@ -26,7 +27,7 @@ public class CodeEditBuilder implements EditBuilder
 	@Override
 	public void trimListener(EditListenerInfo Info)
 	{
-		
+		Info.addAListener(new DrawerFactory.DefaultDrawer());
 	}
 
 	@Override
@@ -40,7 +41,10 @@ public class CodeEditBuilder implements EditBuilder
 	{
 
 		@Override
-		public void SwitchListener(EditListenerInfo Info, String Lua){}
+		public void SwitchListener(EditListenerInfo Info, String Lua)
+		{
+			
+		}
 
 		@Override
 		public EditListener ToLisrener(String Lua){
@@ -59,7 +63,26 @@ public class CodeEditBuilder implements EditBuilder
 			protected void OnFindWord(List<myEditDrawerListener.DoAnyThing> totalList, Words WordLib){}
 
 			@Override
-			protected void OnFindNodes(List<myEditDrawerListener.DoAnyThing> totalList, Words WordLib){}
+			protected void OnFindNodes(List<myEditDrawerListener.DoAnyThing> totalList, Words WordLib)
+			{
+				final Random rand = new Random();
+				totalList.add(new DoAnyThing(){
+
+						@Override
+						public int dothing(CharSequence src, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							nodes.add(new wordIndex(nowIndex,nowIndex+1,new ForegroundColorSpan(rand.nextInt())));
+							return nowIndex;
+						}
+
+						@Override
+						public Words getWords()
+						{
+							// TODO: Implement this method
+							return null;
+						}
+					});
+			}
 
 			@Override
 			protected void OnClearFindWord(Words WordLib){}
@@ -81,7 +104,7 @@ public class CodeEditBuilder implements EditBuilder
 				return BToC;
 			}
 			public void setSpan(int start,int end,Spannable b,List<wordIndex> nodes){
-				Colors.setSpans(start,b,nodes);
+				Colors.setSpans(0,b,nodes);
 			}
 			public void clearSpan(int start,int end,Spannable b){
 				Colors.clearSpan(start,end,b,Colors.ForeSpanType);

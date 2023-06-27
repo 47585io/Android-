@@ -17,7 +17,7 @@ import android.text.Layout.*;
    主要是因为Edit的myLayout，在draw函数中，当1000000行文本，光是测量就花了60ms，绘画时间倒是挺平衡，只要3ms，必须优化测量时间
    现在好了，即使1000000行时，也可以流畅编辑
    但有一个bug，MaxCount的值千万不要设置太小，要不然单个block装不满一行文本，大小计算会有问题，而且block的连接处本身就会切断一行文本，所以maxWidth是有问题的
-   如果您有时间，可以自己解决这个问题
+   如果您有时间，可以自己解决这个问题(不过我已经解决了)
 */
 public abstract class BlockLayout extends Layout
 {
@@ -116,11 +116,10 @@ public abstract class BlockLayout extends Layout
 	}
 	private void addBlock(int i,CharSequence text,int tbStart,int tbEnd)
 	{
-		mBlocks.add(i,new SpannableStringBuilder());
+		SpannableStringBuilder builder = new SpannableStringBuilder(text,tbStart,tbEnd);
+		mBlocks.add(i,builder);
 		mLines.add(i,0);
 		mWidths.add(i,0f);
-		//无论怎样，都抛给insertForBlock来测量
-		insertForBlock(i,0,text,tbStart,tbEnd);	
 	}
 	/* 移除文本块 */
 	private void removeBlock(int i){
@@ -130,9 +129,10 @@ public abstract class BlockLayout extends Layout
 	}
 	
 	/* 设置文本 */
-	private void setText(CharSequence text,int tbStart,int tbEnd){
+	private void setText(CharSequence text,int tbStart,int tbEnd)
+	{
 		clearText();
-		dispatchTextBlock(0,text,tbStart,tbEnd);
+		insertForBlocks(0,text,tbStart,tbEnd);
 	}
 	/* 清除文本 */
 	private void clearText()
@@ -168,17 +168,18 @@ public abstract class BlockLayout extends Layout
 		//保存分发到的位置
 	}
 	
-	/* 从全部文本的index处开始，插入text中指定范围内的文本 */
+	/* 从全部文本的index处开始，插入text中指定范围内的文本，并进行测量 */
 	public void insert(int index, CharSequence text, int tbStart, int tbEnd)
 	{
 		//找到index所指定的文本块，并将index偏移到文本块的下标
-		int i = findBlockIdForIndex(index);
+	    int i = findBlockIdForIndex(index);
 		SpannableStringBuilder builder = mBlocks.get(i);
 		int nowLen = builder.length();
 		index -= cacheLen;
 
 		int len = tbEnd-tbStart;
-		if(nowLen+len<=MaxCount){
+		if(nowLen+len<=MaxCount)
+		{
 			//当插入文本不会超出当前的文本块时，直接插入
 			insertForBlock(i,index,text,tbStart,tbEnd);
 		}
@@ -205,8 +206,8 @@ public abstract class BlockLayout extends Layout
 			 nowLen-index的最大值为MaxCount，
 			 也就是说一旦nowLen+len-MaxCount > MaxCount，默认使用方案2
 			 更确切地说，方案一只处理溢出小于MaxCount的情况，方案二则可处理更多情况
-
-			 */
+			 
+			*/
 			if(nowLen+len-MaxCount <= nowLen-index)
 			{
 				//方案1，先插入，之后截取多出的部分，适合小量文本
@@ -222,54 +223,30 @@ public abstract class BlockLayout extends Layout
 					addBlock(i+1);
 				}
 
+				//删除前先截取要删除的部分
+				CharSequence sub = builder.subSequence(MaxCount,nowLen);
+				//删除超出部分并同步文本块的行和宽，为什么要先删除呢？因为文本末尾的连接处的宽是与下一块共同测量得出的，删除时也应该先测量与下一块的连接
+				deleteForBlocks(i,i,MaxCount,nowLen);
 				//之后将超出的字符串添加到文本块列表中的下个文本块开头
-				insertForBlock(i+1,0,builder,MaxCount,nowLen);
-				//最后删除超出部分
-				deleteForBlock(i,MaxCount,nowLen);
+				insertForBlock(i+1,0,sub,0,sub.length());
 			}
 			else
 			{
 				//方案2，精确计算删除和分发的部分，适合大量文本
+				CharSequence sub = builder.subSequence(index,nowLen);
+				//先删除这部分
+				deleteForBlocks(i,i,index,nowLen);
 				//逆序重新插入，保证文本整体插入位置不变
 				dispatchTextBlock(i+1,text,tbStart,tbEnd);
-				int j = cacheId+1;
-				addBlock(j,builder,index,nowLen);
-				//最后删除这部分
-				deleteForBlock(i,index,nowLen);
+				//将index后的部分挪到插入文本后
+				addBlock(cacheId+1,sub,0,sub.length());
+				//最后一并测量它们
+				measureInsertBlocksAfter(i+1,cacheId+1,0,sub.length());
 			}
 		}
 	}
-	/* 将插入tbStart~tbEnd之间的文本至指定文本块的指定index处，然后再测量 */
-	private void insertForBlock(int i, int index, CharSequence text, int tbStart, int tbEnd)
-	{
-		SpannableStringBuilder builder = mBlocks.get(i);
-	    builder.insert(index,text,tbStart,tbEnd);
-
-		//检查插入文本块，我们仍需到全部文本中查找，因为文本块的连接处可能切断了一行文本
-		CharSequence allText = getText();
-		index += getBlockStartIndex(i);
-		int e = tryLine_End(allText,index+tbEnd-tbStart);
-		int s = tryLine_Start(allText,index);
-		
-		//测量插入的文本块的宽和行
-		float width = getDesiredWidthForType(allText,s,e,getPaint());
-		int line = cacheLine;
-
-		if(width>maxWidth){
-			//如果出现了一个更大的宽，就记录它
-			maxWidth = width;
-		}
-		if(width>mWidths.get(i)){
-			mWidths.set(i,width);
-		}
-		if(line>0){
-			//在插入字符串后，计算增加的行
-			lineCount+=line;
-			mLines.set(i,mLines.get(i)+line);
-		}
-	}
 	
-	/* 删除全部文本中start~end之间的文本 */
+	/* 删除全部文本中start~end之间的文本，并进行测量 */
 	public void delete(int start, int end)
 	{
 		int i, j;
@@ -291,86 +268,149 @@ public abstract class BlockLayout extends Layout
 			end-=nowLen;
 		}
 		
-		if(i==j){
-			//只要删除一个
-			deleteForBlock(i,start,end);
-			return;
-		}
-		
-		//删除开头的块
-		deleteForBlock(i,start,mBlocks.get(i).length());
-		for(++i;i<j;--j){
-			//删除中间的块
-			deleteForBlock(i,0,mBlocks.get(i).length());
-		}
-		deleteForBlock(i,0,end);
-		//删除末尾的块
+		//删除范围内的文本和文本块，并进行测量
+		deleteForBlocks(i,j,start,end);
 	}
 	
-	/* 在删除文本块时调用，可以做出合理的测量，无论怎样都无法正确测量连接处的宽，懒得管了，反正也不会有太大的问题 */
-	private void deleteForBlock(int i, int start, int end)
+	/* 从指定文本块的指定位置插入文本，插入完成后进行一次测量 */
+	private void insertForBlock(int id, int index, CharSequence text, int tbStart, int tbEnd)
 	{
-		SpannableStringBuilder builder = mBlocks.get(i);
+		mBlocks.get(id).insert(index,text,tbStart,tbEnd);
+		measureInsertBlocksAfter(id,id,index,index+tbEnd-tbStart);
+	}
+	/* 从指定文本块开始分发文本，在分发完成后进行一次全部测量 */
+	private void insertForBlocks(int id, CharSequence text, int tbStart, int tbEnd)
+	{
+		dispatchTextBlock(id,text,tbStart,tbEnd);
+		measureInsertBlocksAfter(id,cacheId,0,mBlocks.get(cacheId).length());
+	}
+	/* 删除指定范围内的文本和文本块，并在删除前和后进行测量 */
+	private void deleteForBlocks(int i, int j, int start, int end)
+	{
+		if(i==j)
+		{
+			//只要删除一个文本块中的内容
+			SpannableStringBuilder builder = mBlocks.get(i);
+			boolean is = measureDeleteBlockBefore(i,start,end);
+			if(start!=0 || end!=builder.length()){
+				//如果文本块没有被全部删除，我们才需要测量
+			    builder.delete(start,end);
+			    measureDeleteBlockAfter(i,start,is);
+			}
+		}
+		else
+		{
+			SpannableStringBuilder sb = mBlocks.get(i);
+			SpannableStringBuilder eb = mBlocks.get(j);
+
+			//删除前，先进行测量
+			boolean isStart = measureDeleteBlockBefore(i,start,sb.length());
+			for(++i;i<j;--j){
+				//中间的块必然不会进行测量，而是全部删除
+				measureDeleteBlockBefore(i,0,mBlocks.get(i).length());
+			}
+			boolean isEnd = measureDeleteBlockBefore(j,0,end);
+
+			//在删除完成后，只剩下了起始和末尾的块，因此只要测量它们
+			if(start!=0){
+				//如果sb没有被移除，它就是i-1，删除后起始位置为start
+				sb.delete(start,sb.length());
+				measureDeleteBlockAfter(i-1,start,isStart);
+			}
+			if(end!=eb.length()){
+				//如果eb没有被移除，那么在之间的块移除后，它就是j，删除后起始位置为0
+				eb.delete(0,end);
+				measureDeleteBlockAfter(j,0,isEnd);
+			}
+		}
+	}
+	
+	/* 在插入后测量指定范围内的文本和文本块 */
+	private void measureInsertBlocksAfter(int i, int j, int iStart, int jEnd)
+	{
+		if(i==j){
+			//只插入了一个
+			measureInsertBlockAfter(i,iStart,jEnd);
+		}
+		else
+		{
+			//插入的文本跨越了多个文本块，我们应该全部测量
+			measureInsertBlockAfter(i,iStart,mBlocks.get(i).length());
+			for(++i;i<=j;++i){
+				measureInsertBlockAfter(i,0,mBlocks.get(i).length());
+			}
+			measureInsertBlockAfter(j,0,jEnd);
+		}
+	}
+	/* 在插入后测量指定文本块的指定范围内的文本的宽和行数，并做出插入决策 */
+	private void measureInsertBlockAfter(int id, int start, int end)
+	{
+		float width = measureBlockWidth(id,start,end);
+		int line = cacheLine;
+		if(width>maxWidth){
+			//如果出现了一个更大的宽，就记录它
+			maxWidth = width;
+		}
+		if(width>mWidths.get(id)){
+			mWidths.set(id,width);
+		}
+		if(line>0){
+			//在插入字符串后，计算增加的行
+			lineCount+=line;
+			mLines.set(id,mLines.get(id)+line);
+		}
+	}
+	/* 在删除前测量指定文本块的指定范围内的文本的宽和行数，并做出删除决策 */
+	private boolean measureDeleteBlockBefore(int id, int start, int end)
+	{
+		boolean is = false;
+		SpannableStringBuilder builder = mBlocks.get(id);
 		if(start==0 && end==builder.length())
 		{
 			//如果文本块会被全删了，直接移除它
-			lineCount-=mLines.get(i);
-			removeBlock(i);
+			lineCount-=mLines.get(id);
+			removeBlock(id);
 			maxWidth = checkMaxWidth();
 		}
 		else
 		{
-			TextPaint paint = getPaint();
-			//删除前，检查删除的文本块
-			int s = tryLine_Start(builder,start);
-			int e = tryLine_End(builder,end);
-			
-			//如果删除了字符串，测量删除文本块的宽以及行
-			float width = getDesiredWidthForType(builder,s,e,paint);
-			int line=cacheLine;
-			float copyWidth = width;
-			builder.delete(start,end);
-			//在测量完删除文本块的宽后，才删除文本
-			
-			if(width>=mWidths.get(i))
-			{
+			float width = measureBlockWidth(id,start,end);
+			int line = cacheLine;
+			if(width>=mWidths.get(id)){
 				//如果删除字符串是当前的块的最大宽度，重新测量当前整个块
-				width = getDesiredWidthForType(builder,0,builder.length(),paint);
-				mWidths.set(i,width);
-			}
-			else
-			{
-				//删除文本后，两行连接为一行，测量这行的宽度
-				e = tryLine_End(builder,start);
-				width = paint.measureText(builder,s,e);
-				if(width>mWidths.get(i)){
-					//如果连接成一行的文本比当前的块的最大宽度还宽，就重新设置宽度，并准备与maxWidth比较
-					mWidths.set(i,width);
-					copyWidth = width;
-				}
-			}
-			
-			if(copyWidth>=maxWidth){
-				//当前块的最大宽度比maxWidth大，或者是最大宽度被删了，重新检查
-				maxWidth = checkMaxWidth();
+				is = true;
 			}
 			if(line>0){
 				//在删除文本前，计算删除的行
 				lineCount-=line;    
-				mLines.set(i,mLines.get(i)-line);
+				mLines.set(id,mLines.get(id)-line);
 			}
 		}
+		return is;
 	}
-	
-	/* 如果您想宽度测量正确，就重写它们，并在适时调用 */
-	private void measureInsertBlockAfter(int id, int start, int end){
-		
-	}
-	private boolean measureDeleteBlockBefore(int id, int start, int end){
-		return false;
-	}
-	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText){
-		
+	/* 在删除后测量指定文本块的指定位置的文本的宽，对应measureDeleteBlockBefore，并对其返回值做出回应 */
+	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText)
+	{
+		float width;
+		float w = mWidths.get(id);
+		SpannableStringBuilder builder = mBlocks.get(id);
+		if(needMeasureAllText){
+			//如果需要全部测量
+			width = measureBlockWidth(id,0,builder.length());
+			mWidths.set(id,width);
+		}
+		else{
+			//删除文本后，两行连接为一行，测量这行的宽度
+			width = measureBlockWidth(id,start,start);
+			if(width>mWidths.get(id)){
+				//如果连接成一行的文本比当前的块的最大宽度还宽，就重新设置宽度，并准备与maxWidth比较
+				mWidths.set(id,width);
+			}
+		}
+		if(width>=maxWidth || w>=maxWidth){
+			//当前块的最大宽度比maxWidth大，或者是最大宽度被删了，重新检查
+			maxWidth = checkMaxWidth();
+		}
 	}
 	
 	/* 寻找index所指定的文本块，并记录文本块的起始下标 */
@@ -488,6 +528,7 @@ public abstract class BlockLayout extends Layout
 		cacheLen = startIndex;
 		cacheLine = startLine;
 	}
+	
 	/* 检查最大的宽度 */
 	private float checkMaxWidth()
 	{
@@ -502,6 +543,7 @@ public abstract class BlockLayout extends Layout
 		}
 		return width;
 	}
+	
 	/* 测量文本块连接处的行宽 */
 	private float measureBlockJoinTextStart(int i)
 	{
@@ -518,9 +560,9 @@ public abstract class BlockLayout extends Layout
 		{
 			//如果可以，我们接着测量上个的末尾
 			CharSequence last = mBlocks.get(i-1);
-			if(last.charAt(last.length()-1)!=FN){
-		    	start = tryLine_Start(last,last.length()-1);
-			    end = last.length();
+			end = last.length();
+			if(end>0 && last.charAt(end-1)!=FN){
+		    	start = tryLine_Start(last,end-1);
 			    startWidth += paint.measureText(last,start,end);
 			}
 		}	
@@ -537,7 +579,7 @@ public abstract class BlockLayout extends Layout
 		start = tryLine_Start(now,now.length()-1);
 		end = now.length();
 		endWidth = paint.measureText(now,start,end);
-		if(i<mBlocks.size()-1 && now.charAt(now.length()-1)!=FN)
+		if(i<mBlocks.size()-1 && end>0 && now.charAt(end-1)!=FN)
 		{
 			//如果可以，我们接着测量下个的开头
 			CharSequence next = mBlocks.get(i+1);
@@ -546,6 +588,23 @@ public abstract class BlockLayout extends Layout
 			endWidth += paint.measureText(next,start,end);
 		}
 		return endWidth;
+	}
+	/* 测量指定文本块的指定范围内的文本的宽，并考虑连接处的宽 */
+	private float measureBlockWidth(int i,int start,int end)
+	{
+		SpannableStringBuilder builder = mBlocks.get(i);
+		int s = tryLine_Start(builder,start);
+		int e = tryLine_End(builder,end);
+		float width = getDesiredWidthForType(builder,s,e,getPaint());
+		if(s==0){
+			float w = measureBlockJoinTextStart(i);
+			width = w>width ? w:width;
+		}
+		if(e==builder.length()){
+			float w = measureBlockJoinTextEnd(i);
+			width = w>width ? w:width;
+		}
+		return width;
 	}
 	
 	
@@ -1061,11 +1120,11 @@ _______________________________________
 	}
 	
 	/* 安全地获取数据 */
-	protected void fillChars(GetChars text, int start, int end){
+	final protected void fillChars(GetChars text, int start, int end){
 		chars = chars==null || chars.length<end-start ? new char[end-start]:chars;
 		text.getChars(start,end,chars,0);
 	}
-	protected void fillWidths(CharSequence text, int start, int end, TextPaint paint){
+	final protected void fillWidths(CharSequence text, int start, int end, TextPaint paint){
 		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
 		paint.getTextWidths(text,start,end,widths);
 	}

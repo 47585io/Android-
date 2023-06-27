@@ -55,19 +55,18 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	@Override
 	public void onFindNodes(int start, int end, CharSequence text, Words WordLib)
 	{
-		List<wordIndex> nodes=new ArrayList<>();
 		List<DoAnyThing> totalList =new LinkedList<>();
-		//为每一个listener分配一个nodes和totalList
+		//为每一个listener分配一个totalList
 
 		OnFindWord(totalList, WordLib); 
-		startFind(start,end,text,totalList,nodes);
+		startFind(start,end,text,totalList,addNodes);
 		totalList.clear();
-		nodes.clear();
+		addNodes.clear();
 		OnClearFindWord(WordLib);
 
 		OnFindNodes(totalList,WordLib);
-		startFind(start,end,text,totalList,nodes);
-		OnClearFindNodes(start, end, text, WordLib, nodes);	
+		startFind(start,end,text,totalList,addNodes);
+		OnClearFindNodes(start, end, text, WordLib, addNodes);	
 	}
 
 

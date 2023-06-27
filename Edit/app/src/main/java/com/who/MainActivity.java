@@ -72,8 +72,10 @@ public class MainActivity extends Activity implements Runnable
 			public void run()
 			{
 				final CodeEdit E = new CodeEdit(MainActivity.this);
-				E.setText(text);
-				//E.getText().insert(0,text);
+				//E.setText(text);
+				E.getText().insert(0,text);
+				Editable editor = E.getText();
+				E.reDraw(editor.length()-1000,editor.length());
 				//还没有setContentView，因此Edit未与主线程建立联系，还只是一块内存而已
 				
 				runOnUiThread(new Runnable()
