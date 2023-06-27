@@ -930,6 +930,7 @@ _______________________________________
 		int count = end-start;
 		widths = widths==null || widths.length<count ? new float[count]:widths;
 		paint.getTextWidths(text,start,end,widths);
+		
 		for(int i = 0;i<count;++i){
 			width+=widths[i];
 		}
@@ -1022,7 +1023,7 @@ _______________________________________
 /*
   一串等长字符串(1000000行*15字)
   直接getChars，再遍历整个数组，耗时80ms，
-  直接subSequence，再toString，再遍历String，耗时108ms
+  直接subSequence，再toString，再遍历String，耗时118ms
   直接charAt遍历，耗时168ms
 	  
   还有，千万别用Layout的getDesiredWidth，就1000000行*15字，硬是花了我2480ms，这是怎么测的啊？！
