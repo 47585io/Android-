@@ -20,7 +20,7 @@ public class MainActivity extends Activity
 		//getWindow().setBackgroundDrawable(null);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-        loadFileInThread("/storage/emulated/0/Linux/2.java");
+        loadFileInThread("/storage/emulated/0/Linux/1.java");
     }
 	
 	public void loadFileInThread(String path)
@@ -30,11 +30,11 @@ public class MainActivity extends Activity
 	    Edit E = new Edit(this);
 		E.setText(text,0,text.length());
 		setContentView(E);
-		E.getLayoutParams().height=1800;
+		E.getLayoutParams().height=2180;
 		
 		Editable editor = E.getText();
-		editor.setSpan(new BackgroundColorSpan(0xffddeeff),0,editor.length(),0);
-		E.scrollTo(0,100000);
+		editor.setSpan(new BackgroundColorSpan(0xffcccccc),0,editor.length(),0);
+		E.scrollTo(0,(int)E.getVScrollRange());
 	}
 	
 }

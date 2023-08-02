@@ -13,6 +13,9 @@ public class EditableList extends Object implements Editable
 	List<Editable> mBlocks;
 	Map<Object,List<Editable>> mSpanToEditors;
 	
+	int[] mBlockStarts;
+	Map<Editable,Integer> mIndexOfBlocks;
+	
 	private Factory mEditableFactory;
 	private TextWatcher mTextWatcher;
 	private BlockListener mBlockListener;
@@ -62,12 +65,8 @@ public class EditableList extends Object implements Editable
 	/* 添加文本块的同时，填充它的文本，并调用监听器的添加方法，但并不调用监听器的修改方法 */
 	private void addBlock(int i ,CharSequence tb, int start, int end)
 	{
-		Editable editor = mEditableFactory==null ? new SpannableStringBuilder() : mEditableFactory.newEditable("");
-		mBlocks.add(i,editor);
+		addBlock(i);
 		repalceWithSpan(i,0,0,tb,start,end);
-		if(mBlockListener!=null){
-		    mBlockListener.onAddBlock(i);
-		}
 	}
 	/* 移除文本块，并调用监听器的移除方法，但并不调用监听器的修改方法 */
 	private void removeBlock(int i)
@@ -88,7 +87,7 @@ public class EditableList extends Object implements Editable
 	{
 		int s = start, e = end;
 		int ts = tbStart, te = tbEnd;
-		//文本变化前，调用监听器的方法
+		//文本变化前，调用文本监视器的方法
 		if(mTextWatcher!=null){
 		    mTextWatcher.beforeTextChanged(this,s,e-s,te-ts);
 		}
@@ -151,7 +150,7 @@ public class EditableList extends Object implements Editable
 			}
 		}
 		
-		//最后统计长度，并调用监听器的方法
+		//最后统计长度，并调用文本监视器的方法
 		length += -(e-s)+(te-ts);
 		if(mTextWatcher!=null){
 		    mTextWatcher.onTextChanged(this,s,e-s,te-ts);
@@ -427,7 +426,7 @@ public class EditableList extends Object implements Editable
 	@Override
 	public <T extends Object> T[] getSpans(int start, int end, final Class<T> type)
 	{
-		//收集途径所有文本块的span，并不包含重复的span
+		//收集范围内所有文本块的span，并不包含重复的span
 		final Set<T> spanSet = new LinkedHashSet<>();
 		Do d = new Do()
 		{
@@ -480,17 +479,9 @@ public class EditableList extends Object implements Editable
 	public int nextSpanTransition(int start, int end, Class type)
 	{
 		//先走到start指定的文本块，并获取文本块start后的span位置
-		int next = start;
 		int i = findBlockIdForIndex(start);
 		Editable editor = mBlocks.get(i);
-		next = editor.nextSpanTransition(start-cacheLen,end-cacheLen,type);
-		
-		int len = editor.length();
-		if(next>=len && i<mBlocks.size()-1){
-			//如果本文本块已经找不到下个span的位置，去下个文本块寻找
-			next = mBlocks.get(i+1).nextSpanTransition(0,len,type);
-			cacheLen += len;
-		}
+		int next = editor.nextSpanTransition(start-cacheLen,end-cacheLen,type);
 		return next+cacheLen;
 	}
 
@@ -543,7 +534,8 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 寻找index所指定的文本块 */
-	private int findBlockIdForIndex(int index){
+	private int findBlockIdForIndex(int index)
+	{
 		return findBlockIdForIndex(0,0,index);
 	}
 	/* 从指定的id和已前进到的start开始，寻找index所指定的文本块，并记录文本块起始位置 */
@@ -593,6 +585,12 @@ public class EditableList extends Object implements Editable
 			}
 			d.dothing(i,0,end);
 		}
+	}
+	
+	private int find(int index)
+	{
+		//找到临近的位置，然后从此处开始
+		return index/MaxCount;
 	}
 	
 	private static interface Do

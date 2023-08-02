@@ -26,7 +26,7 @@ public class CharArrHelper
 				break;
 			}
 		}
-		return index;
+		return arr[index]==c ? index:-1;
 	}
 
 	public static int lastNIndex(char c,char[] arr,int index,int n)
@@ -40,7 +40,7 @@ public class CharArrHelper
 				break;
 			}
 		}
-		return index;
+		return arr[index]==c ? index:-1;
 	}
 
 	public static int indexOf(char c, char[] arr, int index)
@@ -51,7 +51,7 @@ public class CharArrHelper
 				break;
 			}
 		}
-		return index;
+		return arr[index]==c ? index:-1;
 	}
 
 	public static int lastIndexOf(char c, char[] arr, int index)
@@ -62,7 +62,7 @@ public class CharArrHelper
 				break;
 			}
 		}
-		return index;
+		return arr[index]==c ? index:-1;
 	}
 
 }

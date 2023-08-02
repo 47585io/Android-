@@ -24,8 +24,8 @@ public class Edit extends View implements TextWatcher
 	private EditableList mText;
 	private InputConnection mInput;
 	
-	private TextWatcher mTextListener;
-	private SelectionWatcher mSelectionListener;
+	private TextWatcher mTextWatcher;
+	private SelectionWatcher mSelectionWatcher;
 	private Editable.Factory mEditableFactory;
 
 	
@@ -41,10 +41,8 @@ public class Edit extends View implements TextWatcher
 		mCursor = new Cursor();
 		mScrollBar = new ScrollBar();
 		mPaint = new TextPaint();
-		
 		mInput = new myInput();
-		mText = new EditableList();
-		mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);	
+		setText("",0,0);
 	}
 	protected void config()
 	{
@@ -59,15 +57,17 @@ public class Edit extends View implements TextWatcher
 	protected void configPaint(TextPaint paint)
 	{
 		paint.setTextSize(33);
-		paint.setColor(0xffeaffae);
+		paint.setColor(0xffaaaaaa);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
 	
 	public void setText(CharSequence text,int start,int end)
 	{
 		mText = new EditableList(text,start,end);
+		mText.setTextWatcher(this);
 		mText.setEditableFactory(mEditableFactory);
 		mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
+		setLineColor(0xff666666);
 	}
 	public void setEditableFactory(Editable.Factory fa)
 	{
@@ -334,58 +334,39 @@ public class Edit extends View implements TextWatcher
 		invalidate();
 	}
 	
-	/* 可以设置监听文本变化的监听器 */
-	public void setTextChangeListener(TextWatcher li){
-		mTextListener = li;
+	/* 可以设置监视文本变化的监视器 */
+	public void setTextWatcher(TextWatcher li){
+		mTextWatcher = li;
 	}
 
-	/* 发送文本事件 */
-	protected void sendBeforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	/* 文本变化时调用文本监视器的方法 */
+	public void beforeTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		try{
-		    if(mTextListener!=null){
-				mTextListener.beforeTextChanged(text,start,lenghtBefore,lengthAfter);
-			}
-			beforeTextChanged(text,start,lenghtBefore,lengthAfter);
-		}
-		catch(Exception e){
-			Log.e("beforeTextChanged Error",e.toString());
+		if(mTextWatcher!=null){
+			mTextWatcher.beforeTextChanged(text,start,lenghtBefore,lengthAfter);
 		}
 	}
-	protected void sendOnTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		try{
-		    if(mTextListener!=null){
-			    mTextListener.onTextChanged(text,start,lenghtBefore,lengthAfter);
-		    }
-		    onTextChanged(text,start,lenghtBefore,lengthAfter);
+		if(mTextWatcher!=null){
+			mTextWatcher.onTextChanged(text,start,lenghtBefore,lengthAfter);
 		}
-		catch(Exception e){
-			Log.e("onTextChanged Error",e.toString());
+		if(batchEditCount==0)
+		{
+			//如果没有开启批量编辑，默认刷新
+			//光标的变化，必须在Layout的文本块变化后调用
+			//对于批量编辑，导致光标不可见，我们希望在这之后光标保持原位
+			int index = start+lengthAfter;
+			mCursor.setSelection(index,index);
+			invalidate();
 		}
 	}
-	protected void sendAfterTextChanged(Editable p1)
+	public void afterTextChanged(Editable text)
 	{
-		try{
-			if(mTextListener!=null){
-				mTextListener.afterTextChanged(p1);
-			}
-			afterTextChanged(p1);
-		}
-		catch(Exception e){
-			Log.e("afterTextChanged Error",e.toString());
-		}
+		if(mTextWatcher!=null){
+			mTextWatcher.afterTextChanged(text);
+		}	
 	}
-	
-	@Override
-	public void beforeTextChanged(CharSequence p1, int p2, int p3, int p4){}
-
-	@Override
-	public void onTextChanged(CharSequence p1, int p2, int p3, int p4){}
-
-	@Override
-	public void afterTextChanged(Editable p1){}
-	
 
 /*
  _______________________________________
@@ -518,7 +499,7 @@ public class Edit extends View implements TextWatcher
 			//只绘制可视区域的内容
 			RectF See = rectF;
 			See.set(x,y,x+width,y+height);
-			onDraw2(spanString,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
+			onDraw1(spanString,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
 		}
 
 		/* 
@@ -560,7 +541,7 @@ public class Edit extends View implements TextWatcher
 
 			//重置画笔绘制文本
 			spanPaint.set(textPaint);
-			drawText(spanString.subSequence(start,end).toString(),0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint,See);
+			drawText((GetChars)spanString,start,end,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
 
 			//绘制行
 			int saveColor = textPaint.getColor();
@@ -605,11 +586,10 @@ public class Edit extends View implements TextWatcher
 					index = start;
 					//记录坐标对应的光标
 
-					String text = spanString.subSequence(start,end).toString();
 					paint.setColor(span.getBackgroundColor());
 					span.updateDrawState(paint);
 					//刷新画笔状态
-					drawBlock(text,0,end-start,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint,See);
+					drawBlock((GetChars)spanString,start,end,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint);
 					//绘制span范围内的文本的背景
 				}
 		   	}
@@ -649,11 +629,10 @@ public class Edit extends View implements TextWatcher
 					index = start;
 					//记录坐标对应的光标
 
-					String text = spanString.subSequence(start,end).toString();
 					//刷新画笔状态
 					span.updateDrawState(paint);
 					//覆盖绘制span范围内的文本
-					drawText(text,0,end-start,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint,See);
+					drawText((GetChars)spanString,start,end,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint);
 				}
 		   	}
 		}
@@ -699,11 +678,12 @@ public class Edit extends View implements TextWatcher
 			for(;startLine<=endLine && now<len;++startLine)
 			{
 				//获取行的起始和末尾
-				next = tryLine_End(spanString,now);
+				next = tryLine_End(now);
 				//测量并保存每个字符的宽
 				int count = next-now;
-				fillWidths(spanString,now,next,textPaint);
-
+				fillChars((GetChars)spanString,now,next);
+				fillWidths(chars,0,count,textPaint);
+				
 				int i = 0;
 				float w = x;
 
@@ -761,13 +741,15 @@ public class Edit extends View implements TextWatcher
 			{
 				//寻找在当前位置之后，在end之前的下个区间的起始位置
 				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
-				//当前区间的末尾坐标
-				xEnd = xStart + textPaint.measureText(spanString, i, next);
+				//获取区间内的文本
+				fillChars((GetChars)spanString, i, next);
+				//计算当前区间的末尾坐标
+				xEnd = xStart + textPaint.measureText(chars, 0, next-i);
 
 				int j;
 				boolean isDrawText = false;
 				//获取当前区间内的Span，抱歉，我们只能管理CharacterStyle类型的Span
-				CharacterStyle[] spans = spanString.getSpans(i,next,CharacterStyle.class);		
+				CharacterStyle[] spans = spanString.getSpans(i, next, CharacterStyle.class);		
 
 				//遍历Span，首先绘制背景
 				for(j = 0; j < spans.length; ++j)
@@ -790,14 +772,14 @@ public class Edit extends View implements TextWatcher
 						//如果有前景的Span，使用Span的颜色绘制文本
 						CharacterStyle span = spans[j];
 						span.updateDrawState(spanPaint);
-						canvas.drawText(spanString, i, next, xStart, y-font.ascent, spanPaint);
+						canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, spanPaint);
 						isDrawText = true; 
 					}
 				}
 
 				if(!isDrawText){
 					//如果没有绘制前景，则使用默认颜色绘制
-					canvas.drawText(spanString, i, next, xStart, y-font.ascent, textPaint);
+					canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, textPaint);
 				}
 
 				//继续寻找下个区间
@@ -805,57 +787,28 @@ public class Edit extends View implements TextWatcher
 			}
 		}
 
-		/* 可以方便地调用我绘制Span，返回start指示下次文本应该从哪里开始，为了效率，暂不使用 */
-		protected int onDrawSpan(Spanned spanString, String text, int start, int end, Object span, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		/* 从x,y开始绘制指定范围内的文本，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight */
+		public void drawText(GetChars text, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
-			if(span instanceof CharacterStyle){
-				//刷新画笔
-				((CharacterStyle)span).updateDrawState(paint);
-			}
-			if(span instanceof BackgroundColorSpan)
-			{
-				//绘制span范围内的文本的背景
-				paint.setColor(((BackgroundColorSpan)span).getBackgroundColor());
-				drawBlock(text,start,end,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint,See);
-			}
-			else if(span instanceof ReplacementSpan)
-			{
-				//对于ReplacementSpan，进行特殊处理
-				ReplacementSpan re = (ReplacementSpan) span;
-				re.draw(canvas,spanString,start,end,tmp.x+leftPadding,(int)tmp.y,0,(int)(tmp.y+lineHeight),paint);
-			}
-			else{
-				//覆盖绘制span范围内的文本
-				drawText(text,start,end,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint,See);
-			}
-			return start;
-		}
-
-		/* 从x,y开始绘制指定范围内的文本，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight，尽量不绘制See范围外的内容 */
-		public void drawText(String text, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
-		{
-			int e = end; 
 			x+=leftPadding;
+			int e = end-start;
+			fillChars(text,start,end);
+			start = 0;
 
 			while(start<e)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = text.indexOf(FN,start);
+				end = CharArrHelper.indexOf(FN,chars,start);
 				if(end>=e || end<0)
 				{
-					if(!(x>See.right || y+lineHeight<See.top || y>See.bottom)){	
-					    //如果有可能在可视范围内，才会绘制
-					    canvas.drawText(text,start,e,x,y,paint);
-					}
 					//start~end之间的内容不会换行，画完就走
+					canvas.drawText(chars,start,e-start,x,y,paint);		
 					break;
 				}
 				else
 				{
-					if(!(x>See.right || y+lineHeight<See.top || y>See.bottom)){	
-						canvas.drawText(text,start,end,x,y,paint);
-					}
 					//start~end之间的内容会换行，之后继续下行
+					canvas.drawText(chars,start,end-start,x,y,paint);
 					x = leftPadding;
 					y += lineHeight;
 				}
@@ -863,47 +816,35 @@ public class Edit extends View implements TextWatcher
 			}
 		}
 
-		/* 从x,y开始绘制指定范围内的文本的块，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight，尽量不绘制See范围外的内容 */
-		public void drawBlock(String text, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		/* 从x,y开始绘制指定范围内的文本的块，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight */
+		public void drawBlock(GetChars text, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
-			float add;
-			int e = end; 
 			x+=leftPadding;
+			int e = end-start;
+			fillChars(text,start,end);
+			start = 0;
 
 			while(start<e)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = text.indexOf(FN,start);
+				end = CharArrHelper.indexOf(FN,chars,start);
 				if(end>=e || end<0)
 				{
-					if(!(x>See.right || y+lineHeight<See.top || y>See.bottom))
-					{
-						//如果有可能在可视范围内，才会测量
-					    add = measureText(text,start,e,paint);
-						if(x+add>See.left){
-							//如果宽度大于了可视的左侧，才会绘制
-					        canvas.drawRect(x,y,x+add,y+lineHeight,paint);
-						}
-					}
 					//start~end之间的内容不会换行，画完就走
+					float add = measureText(chars,start,e,paint);
+					canvas.drawRect(x,y,x+add,y+lineHeight,paint);
 					break;	
 				}
 				else
-				{
-					if(!(x>See.right || y+lineHeight<See.top || y>See.bottom))
-					{
-						add = measureText(text,start,end,paint);
-						if(x+add>See.left){
-						    canvas.drawRect(x,y,x+add,y+lineHeight,paint);
-						}
-					}
-					//start~end之间的内容会换行，之后继续下行
+				{	
+				    //start~end之间的内容会换行，之后继续下行
+					float add = measureText(chars,start,end,paint);
+				    canvas.drawRect(x,y,x+add,y+lineHeight,paint);
 					x = leftPadding;
 					y += lineHeight;
 				}
 				start = end+1;
 			}
-
 		}
 
 		/* 获取应该预留给行数的宽度 */
@@ -1208,8 +1149,8 @@ public class Edit extends View implements TextWatcher
 
 	public void removeCursor(){}
 
-	public void setOnSelectionChangeListener(SelectionWatcher li){
-		mSelectionListener = li;
+	public void setSelectionWatcher(SelectionWatcher li){
+		mSelectionWatcher = li;
 	}
 
 	protected void onSelectionChanged(int start, int end)

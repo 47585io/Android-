@@ -47,11 +47,13 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 		mLines = new ArrayList<>();
 		mWidths = new ArrayList<>();
 		int size = mBlocks.size();
+		//测量所有文本块以初始化数据
 		for(int i=0;i<size;++i){
 			onAddBlock(i);
 			measureInsertBlockAfter(i,0,mBlocks.get(i).length());
 		}
 		
+		//等待后续的测量
 		text.setBlockListener(this);
 		scaleLayout = scale;
 		lineSpacing = spacingmult;
@@ -61,6 +63,7 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onAddBlock(int i)
 	{
+		//每次添加文本块，都同步对应的行数和宽度
 		mLines.add(i,0);
 		mWidths.add(i,0f);
 	}
@@ -68,6 +71,7 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onRemoveBlock(int i)
 	{
+		//每次移除文本块，都同步对应的行数和宽度
 		lineCount-=mLines.get(i);
 		mLines.remove(i);
 		mWidths.remove(i);
@@ -77,7 +81,10 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onBlocksDeleteBefore(int i, int j, int iStart, int jEnd)
 	{
+		//在一段连续文本被删除前，测量要删除的起始文本和末尾文本块
+		//若文本被全删，不测量，而是等待移除文本块时同步
 		if(i==j){
+			//只有一个文本块
 			isStart = measureDeleteBlockBefore(i,iStart,jEnd);
 		}
 		else{
@@ -89,18 +96,21 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onBlocksDeleteAfter(int i, int j, int iStart, int jEnd)
 	{
-		if(i==j && i!=-1){
+		//若删除后，文本块没有被移除，就再次测量删除的起始文本块和末尾文本块
+		if(i==j && i>-1){
+			//只有一个文本块
 			measureDeleteBlockAfter(i,iStart,isStart);
 		}
 		else
 		{
-			if(i!=-1){
+			if(i>-1){
 				measureDeleteBlockAfter(i,iStart,isStart);
 			}
-			if(j!=-1){
+			if(j>-1){
 				measureDeleteBlockAfter(j,jEnd,isEnd);
 			}
 		}
+		//无论怎样，清空本次的值
 		isStart = false;
 		isEnd = false;
 	}
@@ -108,6 +118,8 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onBlocksInsertAfter(int i, int j, int iStart, int jEnd)
 	{
+		//在一段连续文本被插入后，测量它们
+		//文本块在添加时并不测量
 		measureInsertBlocksAfter(i,j,iStart,jEnd);
 	}
 	
@@ -661,14 +673,6 @@ _______________________________________
 	public float getLineMax(int line){
 		return getLineWidth(line);
 	}
-	/* 获取Tab键应该显示的字符串 */
-	public static CharSequence getTabStr(){
-		return StringSpiltor.getNStr(" ",TabSize);
-	}
-	public float getTabWidth(){
-		CharSequence str = getTabStr();
-		return getPaint().measureText(str,0,str.length());
-	}
 	@Override
 	public int getOffsetToLeftOf(int offset){
 		return tryLine_Start(getText(),offset);
@@ -772,6 +776,17 @@ _______________________________________
 		}
 		return width;
 	}
+	final public float measureText(char[] chars,int start,int end,TextPaint paint)
+	{
+		float width = 0;
+		int count = end-start;
+		fillWidths(chars,start,end,paint);
+
+		for(int i = 0;i<count;++i){
+			width+=widths[i];
+		}
+		return width;
+	}
 	/* 测量单行文本中，指定位置的下标 */
 	final public int measureOffset(CharSequence text,int start,int end,float tox,TextPaint paint)
 	{
@@ -813,12 +828,43 @@ _______________________________________
 		chars = chars==null || chars.length<end-start ? new char[end-start]:chars;
 		text.getChars(start,end,chars,0);
 	}
+	final protected void fillWidths(char[] chars, int start, int end, TextPaint paint)
+	{
+		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
+		paint.getTextWidths(chars,start,end-start,widths);
+	}
 	final protected void fillWidths(CharSequence text, int start, int end, TextPaint paint)
 	{
 		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
 		paint.getTextWidths(text,start,end,widths);
 	}
 	
+	final public int tryLine_Start(int index)
+	{
+		int id = findBlockIdForIndex(index);
+		CharSequence text = mBlocks.get(id);
+		int start = tryLine_Start(text,index-cacheLen);
+		if(id>0 && text.charAt(start)!=FN)
+		{
+			text = mBlocks.get(id-1);
+			start = tryLine_Start(text,text.length());
+			cacheLen-=text.length();
+		}
+		return start+cacheLen;
+	}
+	final public int tryLine_End(int index)
+	{
+		int id = findBlockIdForIndex(index);
+		CharSequence text = mBlocks.get(id);
+		int end = tryLine_End(text,index-cacheLen);
+		if(id<mBlocks.size()-1 && (end>=text.length() || text.charAt(end)!=FN))
+		{
+			cacheLen+=text.length();
+			text = mBlocks.get(id+1);
+			end = tryLine_End(text,0);
+		}
+		return end+cacheLen;
+	}
 	//试探当前下标所在行的起始
 	final public static int tryLine_Start(CharSequence src,int index)
 	{
@@ -844,32 +890,6 @@ _______________________________________
 				break;
 			}
 			++index;
-		}
-		return index<0 || index>len ? len:index;
-	}
-	final public static int tryLine_NStart(CharSequence src,int index,int n)
-	{
-		int len = src.length();
-		while(n-->0)
-		{
-			index = tryLine_Start(src,index);
-			if(n==0 || index<=0){
-				break;
-			}
-			index-=1;
-		}
-		return index<0 || index>len ? 0:index;
-	}
-	final public static int tryLine_NEnd(CharSequence src,int index,int n)
-	{
-		int len = src.length();
-		while(n-->0)
-		{
-			index = tryLine_End(src,index);
-			if(n==0 || index>=len){
-				break;
-			}
-			index+=1;
 		}
 		return index<0 || index>len ? len:index;
 	}
