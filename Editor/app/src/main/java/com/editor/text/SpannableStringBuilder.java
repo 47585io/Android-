@@ -1112,7 +1112,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	  例如一列数 0，1，2，3，4，5，6
 	  若表示为二叉树则是如下的结果:
               3
-	        ↙  ↘
+            ↙  ↘
           1        5
         ↙  ↘    ↙  ↘
        0     2   4     6
