@@ -153,6 +153,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             selectionStart = Selection.getSelectionStart(this);
             selectionEnd = Selection.getSelectionEnd(this);
         }
+		
 		//改变文本
         change(start, end, tb, tbstart, tbend);
 		
@@ -542,7 +543,8 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     }
     private void sendToSpanWatchers(int replaceStart, int replaceEnd, int nbNewChars) 
 	{
-        for (int i = 0; i < mSpanCount; i++) {
+        for (int i = 0; i < mSpanCount; i++) 
+		{
             int spanFlags = mSpanFlags[i];
             // This loop handles only modified (not added) spans.
             if ((spanFlags & SPAN_ADDED) != 0) continue;
@@ -791,28 +793,35 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	{
         if (kind == null || mSpanCount == 0) return (T[]) Array.newInstance(kind,0);
         
+		//统计范围内节点个数，并创建指定大小的数组
 		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {
             return (T[])Array.newInstance(kind,0);
         }
-		
         T[] ret = (T[]) Array.newInstance(kind, count);
         final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : new int[0];
         final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : new int[0];
+		
+		//从根节点开始，找到范围内的所有节点
         getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
 					orderSortBuffer, 0, sortByInsertionOrder);
-        if (sortByInsertionOrder) {
+       
+		//如果需要排序，则排序
+		if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
             recycle(prioSortBuffer);
             recycle(orderSortBuffer);
         }
         return ret;
     }
+	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
     private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
 	{
         int count = 0;
-        if ((i & 1) != 0) {
-            // internal tree node
+        if ((i & 1) != 0) 
+		{
+            //若节点i不是叶子节点，遍历其左子节点
+			//若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
             if (spanMax > mGapStart) {
@@ -822,12 +831,16 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                 count = countSpans(queryStart, queryEnd, kind, left);
             }
         }
-        if (i < mSpanCount) {
+        if (i < mSpanCount)
+		{
+			//若节点i是叶子节点，并且自己在范围内，count++
+			//若节点i有右子节点，并且spanStart <= queryEnd，则从右子节点开始找(因为右子节点spanStart大于或等于i)
             int spanStart = mSpanStarts[i];
             if (spanStart > mGapStart) {
                 spanStart -= mGapLength;
             }
-            if (spanStart <= queryEnd) {
+            if (spanStart <= queryEnd)
+			{
                 int spanEnd = mSpanEnds[i];
                 if (spanEnd > mGapStart) {
                     spanEnd -= mGapLength;
@@ -862,8 +875,10 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     @SuppressWarnings("unchecked")
     private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, T[] ret, int[] priority, int[] insertionOrder, int count, boolean sort)
 	{
-        if ((i & 1) != 0) {
-            //内部树节点
+        if ((i & 1) != 0) 
+		{
+            //若节点i不是叶子节点，先遍历其左子节点
+			//若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
             if (spanMax > mGapStart) {
@@ -875,11 +890,16 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             }
         }
         if (i >= mSpanCount) return count;
+		//i已经在有效元素之后，其右子节点的下标更大，因此不用找了
+		
         int spanStart = mSpanStarts[i];
         if (spanStart > mGapStart) {
             spanStart -= mGapLength;
         }
-        if (spanStart <= queryEnd) {
+        if (spanStart <= queryEnd) 
+		{
+			//若节点i是叶子节点，并且自己在范围内，将自己放入
+			//若节点i有右子节点，并且spanStart <= queryEnd，则从右子节点开始找(因为右子节点spanStart大于或等于i)
             int spanEnd = mSpanEnds[i];
             if (spanEnd > mGapStart) {
                 spanEnd -= mGapLength;
@@ -887,14 +907,18 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             if (spanEnd >= queryStart &&
 				(spanStart == spanEnd || queryStart == queryEnd ||
 				(spanStart != queryEnd && spanEnd != queryStart)) &&
-				(Object.class == kind || kind.isInstance(mSpans[i]))) {
+				(Object.class == kind || kind.isInstance(mSpans[i]))) 
+			{
                 int spanPriority = mSpanFlags[i] & SPAN_PRIORITY;
                 int target = count;
                 if (sort) {
+					//如果需要排序
                     priority[target] = spanPriority;
                     insertionOrder[target] = mSpanOrder[i];
-                } else if (spanPriority != 0) {
-                    //insertion sort for elements with priority
+                } 
+				else if (spanPriority != 0) 
+				{
+                    //对具有优先级的元素进行插入排序
                     int j = 0;
                     for (; j < count; j++) {
                         int p = getSpanFlags(ret[j]) & SPAN_PRIORITY;
@@ -1050,33 +1074,45 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         if (priority1 == priority2) {
             return Integer.compare(insertionOrder[left], insertionOrder[right]);
         }
-        // since high priority has to be before a lower priority, the arguments to compare are
-        // opposite of the insertion order check.
+		//因为高优先级必须在低优先级之前，所以要比较的参数与插入顺序检查相反
         return Integer.compare(priority2, priority1);
     }
-    /**
-     * Return the next offset after <code>start</code> but less than or
-     * equal to <code>limit</code> where a span of the specified type
-     * begins or ends.
-     */
+	/**返回start之后但小于或等于limit的下一个偏移量，其中指定类型的范围开始或结束*/
     public int nextSpanTransition(int start, int limit, Class kind)
 	{
         if (mSpanCount == 0) return limit;
         if (kind == null) {
             kind = Object.class;
         }
+		//从根节点开始找
         return nextSpanTransitionRec(start, limit, kind, treeRoot());
     }
+	
+	//夹逼最小左区间
+	//试探最大右区间
+	
+	//从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
+	//若其本身是叶子节点，返回它在start~limit之内的最大值
+	//若其有左子节点，找到一个spanEnd大于start的左子节点
+	//若其有右子节点，
     private int nextSpanTransitionRec(int start, int limit, Class kind, int i) 
 	{
-        if ((i & 1) != 0) {
-            // internal tree node
+        if ((i & 1) != 0) 
+		{
+            //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-            if (resolveGap(mSpanMax[left]) > start) {
+            if (resolveGap(mSpanMax[left]) > start)
+			{
+				//左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
+				//因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点
                 limit = nextSpanTransitionRec(start, limit, kind, left);
             }
         }
-        if (i < mSpanCount) {
+		//
+        if (i < mSpanCount) 
+		{
+			//若i在有效span范围内，看看i是不是下个节点
+			//若i是叶子节点，则返回其在start~limit之内的最大的位置，否则返回limit
             int st = resolveGap(mSpanStarts[i]);
             int en = resolveGap(mSpanEnds[i]);
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
@@ -1084,6 +1120,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
                 limit = en;
             if (st < limit && (i & 1) != 0) {
+				//否则若i的起始位置在limit之前，则可以从i之后找一个小于limit的值，从右子节点开始(因为右子节点spanStart大于或等于i)
                 limit = nextSpanTransitionRec(start, limit, kind, rightChild(i));
             }
         }
@@ -1243,11 +1280,11 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	/*
 	  例如一列数 0，1，2，3，4，5，6
 	  若表示为二叉树则是如下的结果:
-	            3
-			  ↙  ↘
-			1        5
-		  ↙  ↘    ↙  ↘
-		 0     2   4     6
+                3
+              ↙  ↘
+            1        5
+          ↙  ↘    ↙  ↘
+         0     2   4     6
 	*/
 	
 	//这里将跨度列表视为二叉树的跨度(以及开始和结束偏移量和标志)存储在按开始偏移量排序的线性数组中
@@ -1262,10 +1299,11 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	//索引i的一个节点的高度是i的二进制表示中尾部1的个数
 	//高度为h的节点i的左子节点是i - 2^(h - 1)
 	//高度为h的节点i的右子节点是i + 2^(h - 1)
-	//任意节点的左孑节点都小于它，右子节点都大于它
+	//任意节点的所有左子节点(及其索引)都小于它，所有右子节点都大于它
 	
 	//获取数组中间数，此下标是二叉树根节点的下标
 	private int treeRoot() {
+		//使用mSpanCount而不是arr.len，目的是让根节点保持在有效范围的中间位置
         return Integer.highestOneBit(mSpanCount) - 1;
     }
 	//获取下标为i的节点的左子节点在数组中的下标
@@ -1282,14 +1320,14 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	//span数组还增加了mSpanMax[]数组，该数组表示上述二叉树结构上的区间树
 	//对于每个节点，mSpanMax[]数组包含该节点及其后代的mSpanEnds的最大值
 	//因此，遍历可以轻松地拒绝不包含与感兴趣区域重叠的跨度的子树
-	//请注意，mSpanMax[]对于索引> = n的内部节点也有有效值，但这些节点有索引< n的后代
-	//在这些情况下，它只表示其后代的最大跨度端，这是完美二叉树结构的结果
+	//请注意，mSpanMax[]对于索引 >=n 的内部节点也有有效值，但这些节点有索引 <n 的后代
+	//在这些情况下，它只表示其后代的最大跨度端，这是完美二叉树结构的结果，你也可以称它为二分区间树
   
 	//注意，此函数总是递归更新节点i及其之下的所有子节点的mSpanMax值
-	//注意，对于任意n，此树的内部节点可能> = n，因此，节点i的递归遍历的一般结构是:
+	//注意，对于任意n，此树的内部节点可能 >= n，因此，节点i的递归遍历的一般结构是:
 	//若i不是叶子节点，则计算所有左侧子节点的最大值
 	//若i在有效范围内，则计算自己的最大值
-	//若i不是叶子节点，则计算所有右侧子节点的最大值，并且右子节点的值比它大
+	//若i在有效范围内且有右子节点，则计算所有右侧子节点的最大值，右侧子节点的下标大于i
 	private int calcMax(int i)
 	{
         int max = 0;
@@ -1299,10 +1337,10 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         if (i < mSpanCount) 
 		{
-			//若i在有效范围内，则计算自己的最大值
+			//若i在有效的节点范围内，则计算自己的最大值
             max = Math.max(max, mSpanEnds[i]);
             if ((i & 1) != 0){
-				//若i不是叶子节点，则计算右子节点的最大值，并且右子节点的值比它大
+				//若i不是叶子节点，则计算右子节点的最大值，右侧子节点的下标必然大于i，因此若不在有效范围内可以不计算
                 max = Math.max(max, calcMax(rightChild(i)));
             }
         }
@@ -1345,7 +1383,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 					//之后判断j-2位置的元素是否小于start，如果是就break
                 } while (j > 0 && start < mSpanStarts[j - 1]);
                 
-				//最后将span插入这里
+				//最后将span插入这里(也就是j-1的位置)
 				mSpans[j] = span;
                 mSpanStarts[j] = start;
                 mSpanEnds[j] = end;
@@ -1372,7 +1410,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                 mIndexOfSpan.put(mSpans[i], i);
             }
         }
-		//修改完后mLowWaterMark置为无限大，意为暂时不用再恢复了
+		//修改完后mLowWaterMark置为无限大，意为所有的span都刷新了
         mLowWaterMark = Integer.MAX_VALUE;
     }
     //对mSpans的任何更新调用此函数，以便mIndexOfSpan可以被更新
