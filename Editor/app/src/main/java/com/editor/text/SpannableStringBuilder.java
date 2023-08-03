@@ -1,9 +1,8 @@
 package com.editor.text;
 
-import android.graphics.*;
-import android.os.*;
 import android.text.*;
 import android.util.*;
+import com.editor.text.base.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -311,6 +310,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
+	//移除在start~end之间的节点i及其所有子节点
 	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
 	{
         if ((i & 1) != 0) {
@@ -325,7 +325,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
-			    //下面的条件表示跨度将变为空
+			//下面的条件表示跨度将变为空
 				(textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart))
 			{
                 mIndexOfSpan.remove(mSpans[i]);
@@ -336,32 +336,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                 removeSpansForChange(start, end, textIsRemoved, rightChild(i));
         }
         return false;
-    }
-    //注意:调用者负责删除mIndexOfSpan条目
-    private void removeSpan(int i, int flags) 
-	{
-        Object object = mSpans[i];
-        int start = mSpanStarts[i];
-        int end = mSpanEnds[i];
-        if (start > mGapStart) start -= mGapLength;
-        if (end > mGapStart) end -= mGapLength;
-       
-		//要移除此span，其实就是把此span之后的span全部往前挪一位
-		int count = mSpanCount - (i + 1);
-        System.arraycopy(mSpans, i + 1, mSpans, i, count);
-        System.arraycopy(mSpanStarts, i + 1, mSpanStarts, i, count);
-        System.arraycopy(mSpanEnds, i + 1, mSpanEnds, i, count);
-        System.arraycopy(mSpanFlags, i + 1, mSpanFlags, i, count);
-        System.arraycopy(mSpanOrder, i + 1, mSpanOrder, i, count);
-        
-		mSpanCount--;
-        invalidateIndex(i);
-        mSpans[mSpanCount] = null;
-        //在发送span removed通知之前，必须恢复不变量
-        restoreInvariants();
-        if ((flags & Spanned.SPAN_INTERMEDIATE) == 0) {
-            sendSpanRemoved(object, start, end);
-        }
     }
 	
 	//更新的间隔绑定
@@ -543,35 +517,38 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         return false;
     }
+	
     private void sendToSpanWatchers(int replaceStart, int replaceEnd, int nbNewChars) 
 	{
         for (int i = 0; i < mSpanCount; i++) 
 		{
             int spanFlags = mSpanFlags[i];
-            // This loop handles only modified (not added) spans.
+            //此循环仅处理修改的(非添加的)跨度
             if ((spanFlags & SPAN_ADDED) != 0) continue;
             int spanStart = mSpanStarts[i];
             int spanEnd = mSpanEnds[i];
-            if (spanStart > mGapStart) spanStart -= mGapLength;
+           
+			if (spanStart > mGapStart) spanStart -= mGapLength;
             if (spanEnd > mGapStart) spanEnd -= mGapLength;
             int newReplaceEnd = replaceEnd + nbNewChars;
             boolean spanChanged = false;
             int previousSpanStart = spanStart;
+			
             if (spanStart > newReplaceEnd) {
                 if (nbNewChars != 0) {
                     previousSpanStart -= nbNewChars;
                     spanChanged = true;
                 }
             } else if (spanStart >= replaceStart) {
-                // No change if span start was already at replace interval boundaries before replace
+                //如果span start在替换之前已经位于替换间隔边界，则不改变
                 if ((spanStart != replaceStart ||
 					((spanFlags & SPAN_START_AT_START) != SPAN_START_AT_START)) &&
 					(spanStart != newReplaceEnd ||
 					((spanFlags & SPAN_START_AT_END) != SPAN_START_AT_END))) {
-                    // TODO A correct previousSpanStart cannot be computed at this point.
-                    // It would require to save all the previous spans' positions before the replace
-                    // Using an invalid -1 value to convey this would break the broacast range
-                    spanChanged = true;
+                    //此时无法计算正确的previousSpanStart
+					//在替换之前需要保存所有先前跨度的位置
+					//使用无效的-1值来传达这将破坏broacast范围
+					spanChanged = true;
                 }
             }
             int previousSpanEnd = spanEnd;
@@ -581,12 +558,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                     spanChanged = true;
                 }
             } else if (spanEnd >= replaceStart) {
-                // No change if span start was already at replace interval boundaries before replace
+                //如果span start在替换之前已经位于替换间隔边界，则不改变
                 if ((spanEnd != replaceStart ||
 					((spanFlags & SPAN_END_AT_START) != SPAN_END_AT_START)) &&
 					(spanEnd != newReplaceEnd ||
 					((spanFlags & SPAN_END_AT_END) != SPAN_END_AT_END))) {
-                    // TODO same as above for previousSpanEnd
+                    //与上面的previousSpanEnd相同
                     spanChanged = true;
                 }
             }
@@ -595,10 +572,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             }
             mSpanFlags[i] &= ~SPAN_START_END_MASK;
         }
-        // Handle added spans
-        for (int i = 0; i < mSpanCount; i++) {
+        //处理添加的跨度
+        for (int i = 0; i < mSpanCount; i++) 
+		{
             int spanFlags = mSpanFlags[i];
-            if ((spanFlags & SPAN_ADDED) != 0) {
+            if ((spanFlags & SPAN_ADDED) != 0)
+			{
                 mSpanFlags[i] &= ~SPAN_ADDED;
                 int spanStart = mSpanStarts[i];
                 int spanEnd = mSpanEnds[i];
@@ -608,24 +587,21 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             }
         }
     }
-    /**
-     * Mark the specified range of text with the specified object.
-     * The flags determine how the span will behave when text is
-     * inserted at the start or end of the span's range.
-     */
+    /** 用指定对象标记指定范围的文本。
+	 * 标志决定了当文本插入到范围的开始或结束位置时，范围的行为
+	 */
     public void setSpan(Object what, int start, int end, int flags) {
-        setSpan(true, what, start, end, flags, true/*enforceParagraph*/);
+        setSpan(true, what, start, end, flags, true);
     }
-    // Note: if send is false, then it is the caller's responsibility to restore
-    // invariants. If send is false and the span already exists, then this method
-    // will not change the index of any spans.
+	//注意:如果send为false，那么恢复不变量就是调用者的责任
+	//如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引
     private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforceParagraph)
 	{
         checkRange("setSpan", start, end);
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         if (isInvalidParagraph(start, flagsStart)) {
             if (!enforceParagraph) {
-                // do not set the span
+                //不要设置跨度
                 return;
             }
             throw new RuntimeException("PARAGRAPH span must start at paragraph boundary"
@@ -634,20 +610,19 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         int flagsEnd = flags & END_MASK;
         if (isInvalidParagraph(end, flagsEnd)) {
             if (!enforceParagraph) {
-                // do not set the span
+                //不要设置跨度
                 return;
             }
             throw new RuntimeException("PARAGRAPH span must end at paragraph boundary"
 									   + " (" + end + " follows " + charAt(end - 1) + ")");
         }
-        // 0-length Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
         if (flagsStart == POINT && flagsEnd == MARK && start == end) {
             if (send) {
                 Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
             }
-            // Silently ignore invalid spans when they are created from this class.
-            // This avoids the duplication of the above test code before all the
-            // calls to setSpan that are done in this class
+			//从该类创建无效跨度时，自动忽略无效跨度。
+			//这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
             return;
         }
         int nstart = start;
@@ -710,87 +685,94 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             sendSpanAdded(what, nstart, nend);
         }
     }
+	//检查是否是无效段落
     private boolean isInvalidParagraph(int index, int flag) {
         return flag == PARAGRAPH && index != 0 && index != length() && charAt(index - 1) != '\n';
     }
-    /**
-     * Remove the specified markup object from the buffer.
-     */
+	
+	/**从缓冲区中移除指定的标记对象*/
     public void removeSpan(Object what) {
-        removeSpan(what, 0 /* flags */);
+        removeSpan(what, 0);
     }
-    /**
-     * Remove the specified markup object from the buffer.
-     *
-     * @hide
-     */
     public void removeSpan(Object what, int flags)
 	{
         if (mIndexOfSpan == null) return;
+		//获取span的下标，并移除它
         Integer i = mIndexOfSpan.remove(what);
         if (i != null) {
             removeSpan(i.intValue(), flags);
         }
     }
-    /**
-     * Return externally visible offset given offset into gapped buffer.
-     */
+    //注意:调用者负责删除mIndexOfSpan条目
+    private void removeSpan(int i, int flags) 
+	{
+        Object object = mSpans[i];
+        int start = mSpanStarts[i];
+        int end = mSpanEnds[i];
+        if (start > mGapStart) start -= mGapLength;
+        if (end > mGapStart) end -= mGapLength;
+
+		//要移除此span，其实就是把此span之后的span全部往前挪一位
+		int count = mSpanCount - (i + 1);
+        System.arraycopy(mSpans, i + 1, mSpans, i, count);
+        System.arraycopy(mSpanStarts, i + 1, mSpanStarts, i, count);
+        System.arraycopy(mSpanEnds, i + 1, mSpanEnds, i, count);
+        System.arraycopy(mSpanFlags, i + 1, mSpanFlags, i, count);
+        System.arraycopy(mSpanOrder, i + 1, mSpanOrder, i, count);
+
+		mSpanCount--;
+        invalidateIndex(i);
+        mSpans[mSpanCount] = null;
+        //在发送span removed通知之前，必须恢复不变量
+        restoreInvariants();
+        if ((flags & Spanned.SPAN_INTERMEDIATE) == 0) {
+            sendSpanRemoved(object, start, end);
+        }
+    }
+	
+    /**将给定偏移量的外部可见偏移量返回到间隙缓冲区*/
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
-    /**
-     * Return the buffer offset of the beginning of the specified
-     * markup object, or -1 if it is not attached to this buffer.
-     */
+	/**返回指定标记对象开头的缓冲区偏移量，如果该对象未附加到此缓冲区，则返回-1*/
     public int getSpanStart(Object what) 
 	{
         if (mIndexOfSpan == null) return -1;
         Integer i = mIndexOfSpan.get(what);
         return i == null ? -1 : resolveGap(mSpanStarts[i]);
     }
-    /**
-     * Return the buffer offset of the end of the specified
-     * markup object, or -1 if it is not attached to this buffer.
-     */
+    /**返回指定标记对象末尾的缓冲区偏移量，如果该对象未附加到此缓冲区，则返回-1*/
     public int getSpanEnd(Object what)
 	{
         if (mIndexOfSpan == null) return -1;
         Integer i = mIndexOfSpan.get(what);
         return i == null ? -1 : resolveGap(mSpanEnds[i]);
     }
-    /**
-     * Return the flags of the end of the specified
-     * markup object, or 0 if it is not attached to this buffer.
-     */
+    /**返回指定标记对象结尾的标志，如果它没有附加到此缓冲区，则返回0*/
     public int getSpanFlags(Object what) 
 	{
         if (mIndexOfSpan == null) return 0;
         Integer i = mIndexOfSpan.get(what);
         return i == null ? 0 : mSpanFlags[i];
     }
-    /**
-     * Return an array of the spans of the specified type that overlap
-     * the specified range of the buffer.  The kind may be Object.class to get
-     * a list of all the spans regardless of type.
-     */
+	
+    /**返回指定类型的范围的数组，这些范围与指定的缓冲区范围重叠。
+	  种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
+	 */
     @SuppressWarnings("unchecked")
     public <T> T[] getSpans(int queryStart, int queryEnd, Class<T> kind) {
         return getSpans(queryStart, queryEnd, kind, true);
     }
-    /**
-     * Return an array of the spans of the specified type that overlap
-     * the specified range of the buffer.  The kind may be Object.class to get
-     * a list of all the spans regardless of type.
-     *
-     * @param queryStart Start index.
-     * @param queryEnd End index.
-     * @param kind Class type to search for.
-     * @param sortByInsertionOrder If true the results are sorted by the insertion order.
-     * @param <T>
-     * @return Array of the spans. Empty array if no results are found.
-     *
-     * @hide
-     */
+	
+	/*** 返回指定类型跨度的数组，重叠缓冲区的指定范围。 
+	   种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
+	   * * @param querystart 开始索引。 
+	   * @Param QueryEnd 结束索引。 
+	   * @param kind 类类型进行搜索。
+	   * @Param SortByInsertionOrder 如果为 true 结果按插入顺序排序。
+	   * @param <t> * @return 跨度数组。
+	   如果找不到结果，则为空数组。 
+	 **/
     public <T> T[] getSpans(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder) 
 	{
         if (kind == null || mSpanCount == 0) return (T[]) Array.newInstance(kind,0);
@@ -801,14 +783,14 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             return (T[])Array.newInstance(kind,0);
         }
         T[] ret = (T[]) Array.newInstance(kind, count);
-        final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : new int[0];
-        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : new int[0];
+        final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : new int[count];
+        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : new int[count];
 		
 		//从根节点开始，找到范围内的所有节点
         getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
 					orderSortBuffer, 0, sortByInsertionOrder);
        
-		//如果需要排序，则排序
+		//如果需要排序，则按插入顺序排序
 		if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
             recycle(prioSortBuffer);
@@ -944,7 +926,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	
     /** *获取临时排序缓冲区。* 
 	* @param elementCount要返回的int[]的大小
-	* @返回一个长度为elementCount的int[]
+	* @返回一个长度至少为elementCount的int[]
 	*/
     private static int[] obtain(final int elementCount)
 	{
@@ -955,7 +937,8 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             int candidateIndex = -1;
             for (int i = sCachedIntBuffer.length - 1; i >= 0; i--)
 			{
-                if (sCachedIntBuffer[i] != null) {
+                if (sCachedIntBuffer[i] != null)
+				{
                     if (sCachedIntBuffer[i].length >= elementCount) {
                         candidateIndex = i;
                         break;
@@ -1000,7 +983,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     private static int[] checkSortBuffer(int[] buffer, int size)
 	{
         if (buffer == null || size > buffer.length) {
-            return ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(size));
+            return new int[GrowingArrayUtils.growSize(size)];
         }
         return buffer;
     }
@@ -1120,15 +1103,36 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	
 	//此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
 	//由于二叉树是用数组表示的，因此对树的遍历类似于递归二分数组
-	//我更愿意称nextSpanTransitionRec是二分查找法的升级版
-	//原二分查找法是找数组中指定的值，这个函数就是在指定范围内找数组中的值
+	//我更愿意称nextSpanTransitionRec是二分查找法的升级版，原二分查找法是找数组中指定的值，这个函数就是在指定范围内找数组中的值
 	//注意，每个节点包含st和en，虽然mSpanStarts可以这样找，但mSpanEnds是未预料的，因此无论如何仍要遍历所有节点
 	
-	//虽然函数相当于遍历节点i之下的所有节点，但会利用已有条件来判断并舍弃遍历某部分的节点，并将在st或en在范围内的节点的limit边界记录下来
-	//由于先遍历左子节点，并且是先分下去，然后返回，所以先遍历更左边的节点
-	//每次遍历一个左边的节点，就返回它的limit边界，此limit边界必然是最小的，并且此limit边界会限制之后的节点的limit边界
-	//可以这样想，由于它在所有节点最左边，因此若它的st在范围内，必然最小(在最左边)，但若它的en在范围内，无非限制之后的节点的st或en的范围
-	//每次limit都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
+	//可以理解为它就是将数组分为一个个的二分区间，然后从最大的区间开始，遍历之下的区间
+	//由于先遍历左子节点，再遍历右子节点，并且是先分下去，然后返回，遍历顺序实际是按数组顺序进行的
+	/*  
+	  例如一列数 0，1，2，3，4，5，6
+	  若表示为二叉树则是如下的结果:
+              3
+	        ↙  ↘
+          1        5
+        ↙  ↘    ↙  ↘
+       0     2   4     6
+	   
+	  1、找到整个数组中点3，从3开始向左分发
+	  2、找到0~3区间内的中点1，从1开始向左分发
+	  3、找到0~1区间内的中点0，0被执行！
+	  4、从0返回到1，1被执行！
+	  5、1继续向右分发到2，2被执行！
+	  6、从2返回到1返回到3，3被执行！
+	  7、从3开始向右分发，找到3~6区间的中点5，从5开始向左分发
+	  8、找到3~5区间的中点4，4被执行！
+	  9、从4返回到5，5被执行！
+	  10、5继续向右分发到6，6被执行！
+	  11、最后从6返回到5返回到3，递归遍历完成
+	*/
+	
+	//虽然函数相当于顺序遍历节点i之下的所有节点，但会利用已有条件来判断并舍弃遍历某部分的节点，并把st或en在范围内的节点的limit边界记录下来
+	//每次遍历一个节点，就返回它的limit边界，此limit边界不超过上个节点的limit，并且此limit边界会限制之后的节点的limit边界
+	//每次limit边界都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
 	
 	//从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
     private int nextSpanTransitionRec(int start, int limit, Class kind, int i) 
@@ -1144,6 +1148,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                 limit = nextSpanTransitionRec(start, limit, kind, left);
             }
         }
+		//所有左子节点遍历完成，现在遍历自己和所有右子节点
         if (i < mSpanCount) 
 		{
 			//若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
@@ -1154,7 +1159,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
                 limit = en;
             if (st < limit && (i & 1) != 0) {
-				//否则若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界，从右子节点开始(因为右子节点spanStart大于或等于i)
+				//若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点spanStart大于或等于i)
                 limit = nextSpanTransitionRec(start, limit, kind, rightChild(i));
             }
         }
