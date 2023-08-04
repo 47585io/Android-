@@ -408,10 +408,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 		if (replacedLength > 0)
 		{ 
 		    //修正所有span的范围，纯插入时不需要span修正
-			//我们一般认为当插入文本后，插入位置之后的span的范围应该往后挪，这个想法很单纯
-			//但由于我们引入了间隙缓冲区，所以每次获取span的位置后，会减去GapLength得到原本的长度
-			//因此，若将GapStart移动到end并将GapLength缩小，实际等同于缓冲区之后的span的位置增大
-			//即使reSizeFor时GapLen加大，但也连带之后的span加大，它们是同步的
+			//我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
+			//但由于我们引入了间隙缓冲区，所以每次获取缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
+			//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于缓冲区之后的span的位置增大
+			//同理，若将GapStart移动到前面并将GapLength增大，实际等同于缓冲区之后的span的位置缩小
+			//另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
+			//即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
             //潜在优化:仅更新相交跨度的界限
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
             for (int i = 0; i < mSpanCount; i++)
