@@ -1131,7 +1131,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	*/
 	
 	//虽然函数相当于顺序遍历节点i之下的所有节点，但会利用已有条件来判断并舍弃遍历某部分的节点，并把st或en在范围内的节点的limit边界记录下来
-	//每次遍历一个节点，就返回它的limit边界，此limit边界不超过上个节点的limit，并且此limit边界会限制之后的节点的limit边界
+	//每次遍历一个节点，就返回它的limit边界，此limit边界可以是自己的st或en，但大于start并且不超过上个节点的limit，并且此limit边界会限制之后的节点的limit边界
 	//每次limit边界都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
 	
 	//从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
