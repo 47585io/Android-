@@ -19,37 +19,21 @@ public abstract class myEditRunnarListener extends myEditListener implements Edi
 	
 	public static final String DEFAULT_COMMAND = "DEFAULT_COMMAND";
 	
-	public static final RunResult Default = new RunResultForCode(0);
+	public static final int Default = 0;
 	
-	public static final RunResult Error = new RunResultForCode(-1);
+	public static final int Error = -1;
 	
-	public static final RunResult Warring = new RunResultForCode(-2);
+	public static final int Warring = -2;
 	
 	public static final String AragSpilt = " ";
 
 	public static final String CommandSpilt = ":";
 	
-
+	
 	@Override
 	public abstract String onMakeCommand(View self,String state)
 	
 	@Override
-	public abstract RunResult onRunCommand(View self,String command)
-	
-	
-	public static class RunResultForCode implements RunResult
-	{
-		int code;
-		
-		public RunResultForCode(int i){
-			code = i;
-		}
-
-		@Override
-		public String toString()
-		{
-			return String.valueOf(code);
-		}
-	}
+	public abstract int onRunCommand(View self,String command)
 
 }

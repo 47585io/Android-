@@ -988,7 +988,7 @@ public class Edit extends View implements TextWatcher
 		{
 			TextPaint paint = getPaint();
 			String line = String.valueOf(getLineCount());
-			float lineWidth = measureText(line,0,line.length(),paint);
+			float lineWidth = paint.measureText(line);
 			return lineWidth+paint.getTextSize();
 		}
 		
@@ -1310,6 +1310,10 @@ public class Edit extends View implements TextWatcher
 	public void addCursor(){}
 	
 	public void removeCursor(){}
+	
+	public void setOnSelectionChangeListener(SelectionWatcher li){
+		mSelectionListener = li;
+	}
 	
 	protected void onSelectionChanged(int start, int end)
 	{

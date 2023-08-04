@@ -13,10 +13,4 @@ public abstract interface EditCompletorListener extends EditListener
 	public abstract int onInsertWord(Editable editor, int index, CharSequence word)
 	
 	public abstract List<Icon> toList()
-	
-	
-	public static interface CompleteListener
-	{
-		public void onFinishSearchWord(View self, List<Icon> Icons)
-	}
 }

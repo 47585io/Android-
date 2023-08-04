@@ -26,6 +26,7 @@ public abstract class BlockLayout extends Layout
 	public static final float MinScacle = 0.5f, MaxScale = 2.0f;
 	public static final float TextSize = 40f;
 	public static final int TextColor = 0xffaaaaaa;
+	public static int TabSize = 4;
 	
 	//临时变量
 	protected char[] chars;
@@ -60,7 +61,7 @@ public abstract class BlockLayout extends Layout
 		lineSpacing = spacingmult;
 		this.cursorWidth = cursorWidth;
 	}
-	public void setPaint(TextPaint paint)
+	public static void setPaint(TextPaint paint)
 	{
 		paint.setTextSize(TextSize);
 		paint.setColor(TextColor);
@@ -910,9 +911,13 @@ _______________________________________
 	public float getLineMax(int line){
 		return getLineWidth(line);
 	}
-	@Override
-	public int getLineVisibleEnd(int line){
-		return super.getLineVisibleEnd(line);
+	/* 获取Tab键应该显示的字符串 */
+	public static CharSequence getTabStr(){
+		return StringSpiltor.getNStr(" ",TabSize);
+	}
+	public float getTabWidth(){
+		CharSequence str = getTabStr();
+		return getPaint().measureText(str,0,str.length());
 	}
 	@Override
 	public int getOffsetToLeftOf(int offset){

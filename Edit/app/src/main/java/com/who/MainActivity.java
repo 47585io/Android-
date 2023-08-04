@@ -8,12 +8,15 @@ import java.util.concurrent.*;
 import android.text.*;
 import android.graphics.drawable.*;
 import com.who.Edit.*;
+import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.who.Edit.EditBuilder.ListenerVistor.EditListener.*;
 
 public class MainActivity extends Activity implements Runnable
 {
 	
 	protected ThreadPoolExecutor pool;
 	protected LinkedBlockingQueue<Runnable> queue;
+	
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -72,10 +75,10 @@ public class MainActivity extends Activity implements Runnable
 			public void run()
 			{
 				final CodeEdit E = new CodeEdit(MainActivity.this);
-				//E.setText(text);
-				E.getText().insert(0,text);
-				Editable editor = E.getText();
-				E.reDraw(editor.length()-1000,editor.length());
+				E.setText(text);
+				E.setPool(pool);
+				E.prepare(0,30000,E.getText());
+				//E.getText().insert(0,text);
 				//还没有setContentView，因此Edit未与主线程建立联系，还只是一块内存而已
 				
 				runOnUiThread(new Runnable()
@@ -92,8 +95,8 @@ public class MainActivity extends Activity implements Runnable
 							
 							//然后我们与输入法建立连接
 							Edit.openInputor(MainActivity. this, E);
-							float y = E.getVScrollRange();
-							E.scrollTo(0,(int)y);
+							//float y = E.getVScrollRange();
+							E.scrollTo(0,(int)0);
 						}
 					});
 			}

@@ -27,8 +27,8 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	private List<Object> removeNodes;
 	
 	public myEditDrawerListener(){
-		addNodes = Collections.synchronizedList(new LinkedList<>());
-		removeNodes = Collections.synchronizedList(new LinkedList<>());
+		addNodes = Collections.synchronizedList(new ArrayList<>());
+		removeNodes = Collections.synchronizedList(new ArrayList<>());
 	}
 	
 	public List<wordIndex> getDrawNodes(){

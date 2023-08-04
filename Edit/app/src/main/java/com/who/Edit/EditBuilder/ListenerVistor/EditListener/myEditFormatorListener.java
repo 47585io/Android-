@@ -4,6 +4,7 @@ import android.text.*;
 import android.util.*;
 import android.widget.*;
 import com.who.Edit.EditBuilder.ListenerVistor.EditListener.BaseEditListener.*;
+import com.who.Edit.Base.Share.Share3.*;
 
 
 /*
@@ -50,6 +51,17 @@ public abstract class myEditFormatorListener extends myEditListener implements E
 		{
 			editor.replace(nowIndex + start, nowIndex + start + len, to);	
 			nowIndex = src.lastIndexOf(want, nowIndex - 1);
+		}
+	}
+	final public static void reSAll(int start, int end, char want, CharSequence to, Editable editor)
+	{
+		char[] arr = new char[end-start];
+		editor.getChars(start,end,arr,0);
+		int nowIndex = CharArrHelper.lastIndexOf(want,arr,arr.length-1);
+		while (nowIndex > 0)
+		{
+			editor.replace(nowIndex+start, nowIndex+start+1 , to);	
+			nowIndex = CharArrHelper.lastIndexOf(want,arr,nowIndex-1);
 		}
 	}
 	

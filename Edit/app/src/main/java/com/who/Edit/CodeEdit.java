@@ -18,6 +18,7 @@ import com.who.Edit.EditBuilder.WordsVistor.*;
 import java.util.*;
 import java.util.concurrent.*;
 import static com.who.Edit.EditBuilder.ListenerVistor.EditListenerInfo.*;
+import android.view.*;
 
 
 /* CodeEdit扩展了Edit的功能 */
@@ -116,6 +117,16 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		WordLib.clear();
 	}
 	
+	public void setPool(ThreadPoolExecutor pool){
+		this.pool = pool;
+	}
+	public ThreadPoolExecutor getPool(){
+		return pool;
+	}
+	public void setCompleteListener(myEditCompletorListener.CompleteListener li){
+		mLi = li;
+	}
+	
     public boolean setDrawer(EditListener li)
 	{
 		return Info!=null ? Info.addListenerTo(li,DrawerIndex):false;
@@ -170,10 +181,6 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
  onDrawNodes: 真正的染色操作写在这里，同时只能有一个Listener修改
 
- onPrePare: 真正的存储操作写在这里，一定要存储
-
- GetString: 如何获取存储的文本
-
  ------------------------------------------------------------------------------------
 
  Dreawr
@@ -186,14 +193,12 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
  1-> onDrawNodes
 
- 2-> onPrePare
-
  ------------------------------------------------------------------------------------
 
 */
 
     /* 立即进行一次默认的完整的染色 */
-	final public void reDraw(final int start,final int end)
+	final synchronized public void reDraw(final int start,final int end)
 	{	
 	    if(IsDraw()){
 			//flag值不可被抵消
@@ -231,6 +236,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
 				IsDraw(false);
 				--IsModify; //为保证isxxx能成功配对，它们必须写在try和catch外，并紧贴try和catch
+				invalidate();
 				long now = System.currentTimeMillis();	
 				Log.w("After DrawNodes","I'm "+CodeEdit.this.hashCode()+", "+ "I take " + (now - last) + " ms, ");		
 			}
@@ -370,7 +376,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 				if(li instanceof EditFormatorListener){
 				    ((EditFormatorListener)li).onFormat(start, end, editor);
 				}
-				return false;
+				return true;
 			}
 		};
 		li.dispatchCallBack(run);
@@ -411,7 +417,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 				    int selection = ((EditFormatorListener)li).onInsert(index,count,editor);
 					setSelection(selection,selection);
 				}
-				return false;
+				return true;
 			}
 		}; 
 		lis.dispatchCallBack(run);
@@ -581,10 +587,10 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			super.onDraw(canvas);
 			return;
 		}
-
+		long last = System.currentTimeMillis();
 		//获取当前控件的画笔
         TextPaint paint = getPaint();
-		pos pos = getCursorPos(getSelectionEnd());
+		pos pos = getSelectionStartPos();
 		++IsModify;
 		try
 		{
@@ -597,6 +603,8 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			super.onDraw(canvas); //即使Listener出现问题，也请继续绘制
 		}
 		--IsModify;
+		long now = System.currentTimeMillis();
+		Log.w("onDraw",Long.toString(now-last));
 		//我们并不主动进行Canvas的禁用，这没有意义
     }
 
@@ -608,7 +616,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			public boolean run(EditListener li)
 			{
 				if(li instanceof EditCanvaserListener){
-			        ((EditCanvaserListener)li).onDraw(CodeEdit.this, canvas, paint, pos, flag);
+			        ((EditCanvaserListener)li).onDraw(CodeEdit.this, canvas, paint, pos.x, pos.y, flag);
 				}
 				return false;
 			}
@@ -681,20 +689,20 @@ public class CodeEdit extends Edit implements EditBuilderUser
 					com.append(command);
 					com.append(myEditRunnarListener.CommandSpilt);
 				}
-				return false;
+				return true;
 			}
 		};
 		li.dispatchCallBack(run);
 		return com.toString();
 	}
 
-	final public RunResult RunCommand(final String command)
+	final public int RunCommand(final String command)
 	{
 		if(IsRun()){
 			return myEditRunnarListener.Default;
 		}
 
-		RunResult flag = myEditRunnarListener.Default;
+		int flag = myEditRunnarListener.Default;
 		++IsModify;
 
 		try{
@@ -709,9 +717,9 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		return flag;
 	}
 
-	protected RunResult onRunCommand(final String command)
+	protected int onRunCommand(final String command)
 	{
-		RunResult flag = null;
+		int flag = 0;
 		EditListener li = getRunnar();
 		RunLi run = new RunLi()
 		{
@@ -719,21 +727,12 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			{
 				if(li instanceof EditRunnarListener)
 				{
-				    EditRunnarListener.RunResult Return = ((EditRunnarListener)li).onRunCommand(CodeEdit.this,command);
-					if(Return==myEditRunnarListener.Error){
-						return true;
-					}
-					else if(Return==myEditRunnarListener.Warring){
-						Log.w("Runnar With"+li.hashCode(),"Has Warring，But I Dont Know !");
-					}
+				    ((EditRunnarListener)li).onRunCommand(CodeEdit.this,command);
 			    }
-				return false;
+				return true;
 			}
 		};
-		if(li.dispatchCallBack(run)){
-			//有listener提前返回，发现了一个Error
-			flag = myEditRunnarListener.Error;
-		}
+		li.dispatchCallBack(run);
 		return flag;
 	}
 	
@@ -932,8 +931,12 @@ public class CodeEdit extends Edit implements EditBuilderUser
 
     @Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
-	{
-		
+	{	
+	    if(IsModify()){
+			return;
+		}
+		Runnable run = ReDraw(BlockLayout.tryLine_Start(text,start),BlockLayout.tryLine_End(text,start+lengthAfter));
+		pool.execute(run);
 	}
 	
 
@@ -1044,6 +1047,32 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		};
 	}
 	
+	public Runnable Prepare(final int start,final int end,final Spannable str)
+	{
+		return new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				prepare(start,end,str);
+			}
+		};
+	}
+	
+	public final Runnable Formator(final int start, final int end)
+	{
+		return new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				SpannableStringBuilder b = new SpannableStringBuilder(getText());
+				onFormat(start,end,b);
+				setText(b);
+			}
+		};
+	}
+	
 	public Runnable OpenWindow()
 	{
 		return new Runnable()
@@ -1067,6 +1096,32 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			}
 		}
 	} 
+	
+	public void Recursion(final int start, final int end, final DoOnce o)
+	{
+		if(end-start<=BlockLayout.MaxCount){
+			o.doOnce(start,end,this);
+		}
+		else
+		{
+			final int s = start+BlockLayout.MaxCount;
+			Runnable run = new Runnable()
+			{
+        		@Override
+				public void run()
+				{
+					o.doOnce(start,s,CodeEdit.this);
+					Recursion(s, end, o);
+				}
+			};
+			postDelayed(run,Delayed_Millis);
+		}
+	}
+	
+	public static interface DoOnce
+	{
+		public void doOnce(int start, int end, View v)
+	}
 
 /*  
  ------------------------------------------------------------------------------------
