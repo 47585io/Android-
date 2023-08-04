@@ -386,7 +386,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	//为了达到这种效果，每次插入新的字符，就将Gap缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
 	//Gap缓冲区中的内容总是无效的，它不被计入总文本之中，若Gap缓冲区长度不足，需要进行扩展
     
-    /**返回缓冲区中指定偏移量处的字符*/
+    /**返回文本中指定偏移量处的字符*/
     public char charAt(int where) 
 	{
         int len = length();
@@ -395,17 +395,19 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         } else if (where >= len) {
             throw new IndexOutOfBoundsException("charAt: " + where + " >= length " + len);
         }
+		//在缓冲区之后的字符的真实位置总是where + mGapLength
         if (where >= mGapStart)
             return mText[where + mGapLength];
         else
             return mText[where];
     }
 	
-    /** 真实文本长度总是数组长度减去缓冲区长度*/
+    /**文本长度总是数组长度减去缓冲区长度*/
     public int length() {
         return mText.length - mGapLength;
     }
 	
+	/*扩展缓冲区的长度为size*/
 	private void resizeFor(int size) 
 	{
         final int oldLength = mText.length;
@@ -417,10 +419,11 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         char[] newText = new char[size];
         System.arraycopy(mText, 0, newText, 0, mGapStart);
         final int newLength = newText.length;
-        //新增的字符数，原来空闲的字符数
+        //新增的字符数
 		final int delta = newLength - oldLength;
-        final int after = oldLength - (mGapStart + mGapLength);
-		//将缓冲区之后的字符也拷贝到新数组末尾
+        //原数组中缓冲区的末尾
+		final int after = oldLength - (mGapStart + mGapLength);
+		//将缓冲区之后的字符也拷贝到新数组末尾，并且多预留一些位置以扩展缓冲区大小
         System.arraycopy(mText, oldLength - after, newText, newLength - after, after);
       
 		//轮替mText，缓冲区长度增加
@@ -441,11 +444,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
-	/*如果此偏移量在缓冲区之后，那么它实际的位置应减去缓冲区长度*/
+	/*如果此偏移量在缓冲区之后，那么它的位置应减去缓冲区长度*/
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
 	
+	/*移动缓冲区到指定位置*/
     private void moveGapTo(int where)
 	{
         if (where == mGapStart)
