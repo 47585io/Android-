@@ -11,10 +11,9 @@ public class EditableList extends Object implements Editable
 	public int MaxCount = 100000;
 
 	List<Editable> mBlocks;
-	Map<Object,List<Editable>> mSpanToEditors;
-	
 	int[] mBlockStarts;
 	Map<Editable,Integer> mIndexOfBlocks;
+	Map<Object,List<Editable>> mSpanToEditors;
 	
 	private Factory mEditableFactory;
 	private TextWatcher mTextWatcher;

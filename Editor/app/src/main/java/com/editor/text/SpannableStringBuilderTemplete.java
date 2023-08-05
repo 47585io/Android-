@@ -851,13 +851,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	 **/
     public <T> T[] getSpans(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder) 
 	{
-        if (kind == null) return (T[])ArrayUtils.emptyArray(Object.class);
-        if (mSpanCount == 0) return ArrayUtils.emptyArray(kind);
+        if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
+        if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
 		//统计范围内节点个数，并创建指定大小的数组
 		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {
-            return ArrayUtils.emptyArray(kind);
+            return EmptyArray.emptyArray(kind);
         }
         T[] ret = (T[]) Array.newInstance(kind, count);
         final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
@@ -1384,7 +1384,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//Depth of node 节点的 深度 是从树的根节点到该节点的边的个数。（注：树的深度指的是树中节点的最大层次。）
 	//Forest 森林是n(>=0)棵互不相交的树的集合
 	
-	//若将顺序排列的数组无限二分，可构成一颗二叉树，而二叉树的根节点必然在数组中间，从根节点分发出来的左子节点和右子节点便是二分的结果
+	//若将顺序排列的一组数无限二分，可构成一颗二叉树，而二叉树的根节点必然在数组中间，从根节点分发出来的左子节点和右子节点便是二分的结果
 	/*
 	  例如一列数 0，1，2，3，4，5，6
 	  若表示为二叉树则是如下的结果:
@@ -1537,7 +1537,10 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private int mGapLength; //空闲间隙的长度
   
 	//用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
-	//mSpanStarts是最重要的，其总是正序排列，因此二叉树的顺序便是二分mSpanStarts得到的
+	//mSpanStarts是最重要的，其总是正序排列，而节点的区间是用mSpanMax表示的
+	//虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
+	//另外二叉树的顺序是从mSpanCount/2这个下标开始二分得到的
+	
 	private Object[] mSpans; //存储每个节点所代表的span
     private int[] mSpanStarts; //存储每个节点在文本中的起始位置
     private int[] mSpanEnds; //存储每个节点在文本中的末尾位置

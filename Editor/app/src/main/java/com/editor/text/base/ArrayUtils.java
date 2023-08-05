@@ -1,82 +1,102 @@
 package com.editor.text.base;
 import java.lang.reflect.*;
+import java.util.*;
 
 public class ArrayUtils
 {
-	
-	private static final int CACHE_SIZE = 73;
-	private static Object[] sCache = new Object[CACHE_SIZE];
-	
-	private static int MaxObjectSize = 16;
-	
+	private static final int ALIGNMENT_AMOUNT = 8;
 	
 	public static<T> T[] newUnpaddedArray(Class<T> type, int size){
-		return (T[])Array.newInstance(type,size);
+		return (T[])Array.newInstance(type,getAlignmentMinimumSize(type,size));
 	}
 	
 	public static boolean[] newUnpaddedBooleanArray(int size){
-		return new boolean[size];
+		return new boolean[getAlignmentMinimumSize(boolean.class,size)];
 	}
 	
 	public static byte[] newUnpaddedByteArray(int size){
-		return new byte[size];
+		return new byte[getAlignmentMinimumSize(byte.class,size)];
 	}
 	
 	public static char[] newUnpaddedCharArray(int size){
-		return new char[size];
+		return new char[getAlignmentMinimumSize(char.class,size)];
 	}
 	
 	public static int[] newUnpaddedIntArray(int size){
-		return new int[size];
+		return new int[getAlignmentMinimumSize(int.class,size)];
 	}
 	
 	public static long[] newUnpaddedLongArray(int size){
-		return new long[size];
+		return new long[getAlignmentMinimumSize(long.class,size)];
 	}
 
 	public static float[] newUnpaddedFloatArray(int size){
-		return new float[size];
+		return new float[getAlignmentMinimumSize(float.class,size)];
 	}
 	
 	public static double[] newUnpaddedDoubleArray(int size){
-		return new double[size];
+		return new double[getAlignmentMinimumSize(double.class,size)];
 	}
 	
-	public static int getAlignmentMinimumSize(int size, Class type)
+	//计算指定元素类型且指定元素个数的数组的内存对齐后的最小元素个数
+	public static int getAlignmentMinimumSize(Class kind, int size)
 	{
-		int min = size%MaxObjectSize;
-		if(min==0){
-			return size;
+		if(kind==boolean.class || kind==byte.class){
+			size = getAlignmentMinimumSize(1,size);
 		}
-		
-		min = MaxObjectSize -min;
-		if(type==byte.class){
-			
+		else if(kind==char.class){
+			size = getAlignmentMinimumSize(2,size);
 		}
-		else if(type==char.class){
-			min/=2;
+		else if(kind==int.class || kind==float.class){
+			size = getAlignmentMinimumSize(4,size);
 		}
-		else if(type==int.class || type==float.class){
-			min/=4;
+		else if(kind==long.class || kind==double.class){
+			size = getAlignmentMinimumSize(8,size);
 		}
-		else if(type==long.class){
-			min/=8;
+		else{
+			size = getAlignmentMinimumSize(4,size);
 		}
-		return size+min;
+		return size;
 	}
 	
-	public static <T> T[] emptyArray(Class<T> kind)
+	//数组要占用的内存长度没有对齐，就将其对齐到下个位置，计算对齐后的元素个数
+	private static int getAlignmentMinimumSize(int kind, int size)
 	{
-        if (kind == Object.class) {
-            return (T[]) EmptyArray.OBJECT;
+		int len = size*kind;
+		int over = len%ALIGNMENT_AMOUNT;
+		if(over!=0){
+			len += ALIGNMENT_AMOUNT-over;
+			size = len/kind;
+		}
+		return size;
+	}
+	
+	public static <T> int indexOf(T[] array, T value, int index)
+	{
+        if (array == null) return -1;
+        for (; index < array.length; index++) {
+            if (Objects.equals(array[index], value)) return index;
         }
-        int bucket = (kind.hashCode() & 0x7FFFFFFF) % CACHE_SIZE;
-        Object cache = sCache[bucket];
-        if (cache == null || cache.getClass().getComponentType() != kind) {
-            cache = Array.newInstance(kind, 0);
-            sCache[bucket] = cache;
-        }
-        return (T[]) cache;
+        return -1;
     }
 	
+	public static <T> int lastIndexOf(T[] array, T value, int index)
+	{
+        if (array == null || index>=array.length) return -1;
+        for (;index>=0; index--) {
+            if (Objects.equals(array[index], value)) return index;
+        }
+        return -1;
+    }
+	
+	public static <T> int Count(T[] array, T value, int start, int end)
+	{
+		int count = 0;
+		for(;start<end;++start)
+		{
+			if(Objects.equals(array[start],value)) ++count;
+		}
+		return count;
+	}
+
 }
