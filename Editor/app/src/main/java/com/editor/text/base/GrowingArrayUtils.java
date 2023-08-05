@@ -23,9 +23,7 @@ public final class GrowingArrayUtils
         array[currentSize] = element;
         return array;
     }
-    /**
-     * Primitive int version of {@link #append(Object[], int, Object)}.
-     */
+  
     public static int[] append(int[] array, int currentSize, int element)
 	{
         assert currentSize <= array.length;
@@ -37,9 +35,7 @@ public final class GrowingArrayUtils
         array[currentSize] = element;
         return array;
     }
-    /**
-     * Primitive long version of {@link #append(Object[], int, Object)}.
-     */
+   
     public static long[] append(long[] array, int currentSize, long element)
 	{
         assert currentSize <= array.length;
@@ -51,9 +47,7 @@ public final class GrowingArrayUtils
         array[currentSize] = element;
         return array;
     }
-    /**
-     * Primitive boolean version of {@link #append(Object[], int, Object)}.
-     */
+   
     public static boolean[] append(boolean[] array, int currentSize, boolean element) 
 	{
         assert currentSize <= array.length;
@@ -65,9 +59,7 @@ public final class GrowingArrayUtils
         array[currentSize] = element;
         return array;
     }
-    /**
-     * Primitive float version of {@link #append(Object[], int, Object)}.
-     */
+  
     public static float[] append(float[] array, int currentSize, float element)
 	{
         assert currentSize <= array.length;
@@ -79,6 +71,7 @@ public final class GrowingArrayUtils
         array[currentSize] = element;
         return array;
     }
+	
 	/** 
 	 *在数组中的指定索引处插入一个元素，如果没有更多的空间，则增大数组
 	 * @param array要追加元素的数组，不得为空
@@ -102,9 +95,7 @@ public final class GrowingArrayUtils
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
-    /**
-     * Primitive int version of {@link #insert(Object[], int, int, Object)}.
-     */
+ 
     public static int[] insert(int[] array, int currentSize, int index, int element)
 	{
         assert currentSize <= array.length;
@@ -119,9 +110,7 @@ public final class GrowingArrayUtils
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
-    /**
-     * Primitive long version of {@link #insert(Object[], int, int, Object)}.
-     */
+    
     public static long[] insert(long[] array, int currentSize, int index, long element) 
 	{
         assert currentSize <= array.length;
@@ -136,9 +125,7 @@ public final class GrowingArrayUtils
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
-    /**
-     * Primitive boolean version of {@link #insert(Object[], int, int, Object)}.
-     */
+   
     public static boolean[] insert(boolean[] array, int currentSize, int index, boolean element) 
 	{
         assert currentSize <= array.length;

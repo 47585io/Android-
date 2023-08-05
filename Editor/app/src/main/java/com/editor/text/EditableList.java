@@ -56,7 +56,7 @@ public class EditableList extends Object implements Editable
 	/* 在指定位置添加文本块，并调用监听器的添加方法 */
 	private void addBlock(int i)
 	{
-		Editable editor = mEditableFactory==null ? new SpannableStringBuilder() : mEditableFactory.newEditable("");
+		Editable editor = mEditableFactory==null ? new SpannableStringBuilderTemplete() : mEditableFactory.newEditable("");
 		mBlocks.add(i,editor);
 		if(mBlockListener!=null){
 		    mBlockListener.onAddBlock(i);
@@ -507,7 +507,7 @@ public class EditableList extends Object implements Editable
 	public CharSequence subSequence(int start, int end)
 	{
 		//累计范围内的所有文本块的字符序列
-		final SpannableStringBuilder b = new SpannableStringBuilder();
+		final SpannableStringBuilderTemplete b = new SpannableStringBuilderTemplete();
 		Do d = new Do()
 		{
 			@Override
