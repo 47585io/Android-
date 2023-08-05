@@ -1,16 +1,15 @@
 package com.editor.text.base;
 
 
-public final class GrowingArrayUtils {
-    /**
-     * Appends an element to the end of the array, growing the array if there is no more room.
-     * @param array The array to which to append the element. This must NOT be null.
-     * @param currentSize The number of elements in the array. Must be less than or equal to
-     *                    array.length.
-     * @param element The element to append.
-     * @return the array to which the element was appended. This may be different than the given
-     *         array.
-     */
+public final class GrowingArrayUtils
+{
+    /** 
+	 * 将元素附加到数组的末尾，如果没有更多空间，则会增加数组。
+	 * @param array 追加元素的数组。 这不能为空。
+	 * @param currentSize 数组中元素的数量。 必须小于或等于array.length。 
+	 * @param element 要追加的元素。
+	 * @return 元素附加到的数组。 这可能与给定的数组不同。
+	 */
      public static <T> T[] append(T[] array, int currentSize, T element) 
 	 {
         assert currentSize <= array.length;
@@ -80,17 +79,13 @@ public final class GrowingArrayUtils {
         array[currentSize] = element;
         return array;
     }
-    /**
-     * Inserts an element into the array at the specified index, growing the array if there is no
-     * more room.
-     *
-     * @param array The array to which to append the element. Must NOT be null.
-     * @param currentSize The number of elements in the array. Must be less than or equal to
-     *                    array.length.
-     * @param element The element to insert.
-     * @return the array to which the element was appended. This may be different than the given
-     *         array.
-     */
+	/** 
+	 *在数组中的指定索引处插入一个元素，如果没有更多的空间，则增大数组
+	 * @param array要追加元素的数组，不得为空
+	 * @param currentSize数组中元素的数量，必须小于或等于array.length
+	 * @param element要插入的元素
+	 * @返回元素附加到的数组。这可能与给定的数组不同
+	 */
     public static <T> T[] insert(T[] array, int currentSize, int index, T element)
 	{
         assert currentSize <= array.length;
@@ -158,11 +153,11 @@ public final class GrowingArrayUtils {
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
-    /**
-     * Given the current size of an array, returns an ideal size to which the array should grow.
-     * This is typically double the given size, but should not be relied upon to do so in the
-     * future.
-     */
+	
+	/** 
+	 * 给定数组的当前大小，返回数组应该增长到的理想大小。
+	 * 这通常是给定大小的两倍，但在未来不应依赖。
+	 */
     public static int growSize(int currentSize) {
         return currentSize <= 4 ? 8 : currentSize * 2;
 	}

@@ -7,30 +7,21 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-/**
- * This is the class for text whose content and markup can both be changed.
-*/
+/** 这是内容和标记都可以更改的文本类 */
 public class SpannableStringBuilder implements CharSequence, GetChars, Spannable, Editable, Appendable 
 {
 	
 	private final static String TAG = "SpannableStringBuilder";
-	/**
-	 * Create a new SpannableStringBuilder with empty contents
-    */
+	
+	/** 创建一个包含空内容的新SpannableStringBuilder */
 	public SpannableStringBuilder() {
 			this("");
 	}
-    /**
-     * Create a new SpannableStringBuilder containing a copy of the
-     * specified text, including its spans if any.
-     */
+	/** 创建一个包含指定文本副本的新SpannableStringBuilder，包括其范围(如果有) */
     public SpannableStringBuilder(CharSequence text) {
         this(text, 0, text.length());
     }
-    /**
-     * Create a new SpannableStringBuilder containing a copy of the
-     * specified slice of the specified text, including its spans if any.
-     */
+	/** 创建一个新的SpannableStringBuilder，其中包含指定文本的指定部分的副本，包括其范围(如果有) */
     public SpannableStringBuilder(CharSequence text, int start, int end) 
 	{
         int srclen = end - start;
@@ -176,8 +167,8 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                 int end = mSpanEnds[i];
 				
 				//下面的代码分为两步理解
-				//先认为我们把缓冲区移除了，因此在缓冲区之后的span位置都前移mGapLength
-				//之后又把缓冲区插入到where的位置，因此在where之后的span都后移mGapLength
+				//先认为我们把缓冲区移除了，因此在缓冲区之后的span的真实位置都前移mGapLength
+				//之后又把缓冲区插入到where的位置，因此在where之后的span的真实位置都后移mGapLength
                 if (start > mGapStart)
                     start -= mGapLength;
                 if (start > where)
@@ -244,6 +235,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return replace(start, end, tb, 0, tb.length());
     }
 	
+	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置，同时调用监视器发送事件 */
     public SpannableStringBuilder replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
 	{
         checkRange("replace", start, end);
@@ -320,6 +312,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return this;
     }
 	
+	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
 	private void change(int start, int end, CharSequence cs, int csStart, int csEnd) 
 	{
 		//删除文本的长度，替换的文本长度，溢出文本的长度(可以是负数)
@@ -374,7 +367,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             else if (spanEnd == end + nbNewChars) flags |= SPAN_END_AT_END;
             mSpanFlags[i] |= flags;
         }
-		
+	   
         if (changed) {
 			//如果span的范围变化了，需要刷新
             restoreInvariants();
@@ -390,7 +383,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         final boolean textIsRemoved = replacementLength == 0;
 		//需要在缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
         if (replacedLength > 0){ 
-		    //纯插入时不需要span修正
+		    //纯插入时不需要span移除
             while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
 				  //根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
             }
@@ -398,6 +391,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 		
 		//插入文本并不需要扩展数组，仅需将缓冲区缩小
 		//另一个情况是，nbNewChars是负数，说明要替换的文本太短，此时等同于扩展缓冲区
+		//无论怎样，都将缓冲区对齐到替换(到我之内的)文本的末尾
         mGapStart += nbNewChars;
         mGapLength -= nbNewChars;
         if (mGapLength < 1)
@@ -449,6 +443,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
                     int copySpanFlags = sp.getSpanFlags(spans[i]) | SPAN_ADDED;
+					//刚刚添加的span附加上SPAN_ADDED标志
                     setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
                 }
             }
@@ -457,11 +452,11 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
-	/* 删除start~end范围内的文本时，下标为i的节点及其子节点是否要删除，删除了返回true */
+	/* 在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了返回true */
 	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
 	{
         if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的最大边界在start之后，则处理左子节点
+            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
             if (resolveGap(mSpanMax[i]) >= start &&
 				removeSpansForChange(start, end, textIsRemoved, leftChild(i))) {
                 return true;
@@ -469,8 +464,9 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         if (i < mSpanCount) 
 		{
-			//整个节点在start之后，在缓冲区之前
-			//要替换的文本长度为0，或者spanStart在start之后，或者spanEnd在缓冲区之前
+			//此时mGapStart实际上是删除范围的end
+			//整个节点原本在start~end之间，但可能两端衔接在start和end上
+			//要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
@@ -490,18 +486,20 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	/*
 	 offset: 要更新的位置
 	 start: 删除文本的起始位置
-	 nbNewChars: 较原文本新增的字符数
+	 nbNewChars: 溢出文本的字符数
 	 flag: 更新标志 
-	 atEnd: gap缓冲区已满
+	 atEnd: gap缓冲区在数组最后
 	 textIsRemoved: 要替换的文本长度为0
 	*/
-	//更新的间隔绑定
+	/* 更新的间隔绑定 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
+		//此时mGapStart实际上是替换文本的end，并且mGapStart + mGapLength必然最大
+		//若offset的原本位置处于删除文本和替换文本的范围内
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-                //位于替换范围内的点应该移动到替换文本的末尾。
+                //位于替换范围内的点应该移动到替换文本的末尾
 				//例外情况是，当该点位于范围的开始处，并且我们正在进行文本替换(与删除相反):该点停留在那里。
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
@@ -514,14 +512,18 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                         return mGapStart + mGapLength;
                     }
                 }
-				else 
+				else
 				{ 
-				    //应该将标记移动到开头，但位于范围结尾的标记除外(由于mGapLength大于0
-				    //因此该标记应该< mGapStart + mGapLength，它应该在替换文本的结尾保持“不变”
+				    //下面分为两步理解
+					//假设我们先把start~end之间的内容删除了
+				    //由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
                     if (textIsRemoved || offset < mGapStart - nbNewChars) {
                         return start;
                     } else {
-                        //移动到替换文本的末尾(如果nbNewChars！= 0)
+						//我们再把要替换的文本插入start的位置
+						//若标记在删除范围内，它的位置还是start
+						//若标记在删除范围之后并且在替换文本范围内，上面的if没有处理它，它应该被替换文本挤到末尾，因此移动到替换文本的末尾(如果nbNewChars！= 0)
+						//由于mGapLength大于0，因此该标记应该< mGapStart + mGapLength，其原本位置在mGapStart之前，但在mGapStart - nbNewChars之后
                         return mGapStart;
                     }
                 }
@@ -597,6 +599,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             int spanFlags = mSpanFlags[i];
             if ((spanFlags & SPAN_ADDED) != 0)
 			{
+				//如果是新添加的span，处理后需要清除SPAN_ADDED标志
                 mSpanFlags[i] &= ~SPAN_ADDED;
                 int spanStart = mSpanStarts[i];
                 int spanEnd = mSpanEnds[i];
@@ -1040,6 +1043,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             }
         }
     }
+	
 	/** *检查数组的大小，并根据需要进行扩展。* 
 	* @param buffer要检查的数组。
 	* @param size所需的大小。
@@ -1053,7 +1057,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         return buffer;
     }
-	
 	
 	//将数组表示为堆，堆的每个节点最多有两个子节点，节点从按层次从上至下，从左至右，按数组中的顺序排列
 	//将下标为0的元素作为根节点，而根节点的左右子节点下标分别为1，2，并且下层的子节点下标为3，4，5，6，一直这样排列下去
@@ -1155,6 +1158,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 		//因为高优先级必须在低优先级之前，所以要比较的参数与插入顺序检查相反
         return Integer.compare(priority2, priority1);
     }
+	
 	
 	/**返回start之后但小于或等于limit的下一个偏移量，其中指定节点的类型和范围*/
     public int nextSpanTransition(int start, int limit, Class kind)
@@ -1361,6 +1365,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return mFilters;
     }
   
+	
 	//树的基本术语:
 	//Tree 树是由结点和边组成的且不存在着任何环的一种数据结构
 	//Node 结点，结点是组成树的每一个元素
