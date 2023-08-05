@@ -26,32 +26,38 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	{
         int srclen = end - start;
         if (srclen < 0) throw new StringIndexOutOfBoundsException();
-        mText = new char[srclen];
+        mText = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(srclen));
         mGapStart = srclen;
         mGapLength = mText.length - srclen;
         TextUtils.getChars(text, start, end, mText, 0);
     
 		mSpanCount = 0;
         mSpanInsertCount = 0;
-        mSpans = new Object[0];
-        mSpanStarts = new int[0];
-        mSpanEnds = new int[0];
-        mSpanFlags = new int[0];
-        mSpanMax = new int[0];
-        mSpanOrder = new int[0];
+        mSpans = EmptyArray.OBJECT;
+        mSpanStarts = EmptyArray.INT;
+        mSpanEnds = EmptyArray.INT;
+        mSpanFlags = EmptyArray.INT;
+        mSpanMax = EmptyArray.INT;
+        mSpanOrder = EmptyArray.INT;
 		
         if (text instanceof Spanned) 
 		{
+			//如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) text;
             Object[] spans = sp.getSpans(start, end, Object.class);
-            for (int i = 0; i < spans.length; i++) {
+            for (int i = 0; i < spans.length; i++) 
+			{
                 if (spans[i] instanceof NoCopySpan) {
                     continue;
                 }
+				
+				//将span在原字符串中较start的偏移量获取，并偏移到自身中的位置
                 int st = sp.getSpanStart(spans[i]) - start;
                 int en = sp.getSpanEnd(spans[i]) - start;
                 int fl = sp.getSpanFlags(spans[i]);
-                if (st < 0)
+               
+				//范围不可超过自己的大小
+				if (st < 0)
                     st = 0;
                 if (st > end - start)
                     st = end - start;
@@ -59,12 +65,14 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
                     en = 0;
                 if (en > end - start)
                     en = end - start;
-                setSpan(false, spans[i], st, en, fl, false/*enforceParagraph*/);
+                setSpan(false, spans[i], st, en, fl, false);
             }
+			//设置完span后一并刷新
             restoreInvariants();
         }
     }
-    public static SpannableStringBuilder valueOf(CharSequence source){
+    public static SpannableStringBuilder valueOf(CharSequence source)
+	{
         if (source instanceof SpannableStringBuilder) {
             return (SpannableStringBuilder) source;
         } else {
@@ -72,7 +80,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
-	//编辑器通常会在连续的光标位置插入字符，因此为了提升文本插入效率，使用Gap(间隙)缓冲区
+	//编辑器通常会在连续的光标位置插入字符，因此为了提升文本插入效率，使用Gap Buffer(间隙缓冲区)
 	//Gap缓冲区使用GapStart和GapLenght表示文本数组中空闲的间隙位置，当有文本插入间隙时，不用将整个数组扩展，而是将指针偏移缩小间隙缓冲区
 	//为了达到这种效果，每次插入新的字符，就将Gap缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
 	//Gap缓冲区中的内容总是无效的，它不被计入总文本之中，若Gap缓冲区长度不足，需要进行扩展
@@ -97,7 +105,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     public int length() {
         return mText.length - mGapLength;
     }
-
+	
+	/*如果此偏移量在缓冲区之后，那么它的原本位置应减去缓冲区长度*/
+    private int resolveGap(int i) {
+        return i > mGapStart ? i - mGapLength : i;
+    }
+	
 	/*扩展缓冲区的长度为size*/
 	private void resizeFor(int size) 
 	{
@@ -134,11 +147,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 			//重新计算节点最大范围
             calcMax(treeRoot());
         }
-    }
-
-	/*如果此偏移量在缓冲区之后，那么它的位置应减去缓冲区长度*/
-    private int resolveGap(int i) {
-        return i > mGapStart ? i - mGapLength : i;
     }
 
 	/*移动缓冲区到指定位置*/
@@ -223,8 +231,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     public SpannableStringBuilder insert(int where, CharSequence tb) {
         return replace(where, where, tb, 0, tb.length());
     }
-    public SpannableStringBuilder delete(int start, int end) 
-	{
+    public SpannableStringBuilder delete(int start, int end) {
         SpannableStringBuilder ret = replace(start, end, "", 0, 0);
         //删除文本后，间隙缓冲区大小过大，重新调整大小
 		if (mGapLength > 2 * length())
@@ -235,7 +242,11 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return replace(start, end, tb, 0, tb.length());
     }
 	
-	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置，同时调用监视器发送事件 */
+	/** 
+	 * 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置
+	 * 若范围内设置了SpanWatcher和TextWatcher，则会连带发送事件
+	 * 若范围内设置了光标的Span，则连带改变光标位置
+	 */
     public SpannableStringBuilder replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
 	{
         checkRange("replace", start, end);
@@ -367,7 +378,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             else if (spanEnd == end + nbNewChars) flags |= SPAN_END_AT_END;
             mSpanFlags[i] |= flags;
         }
-	   
         if (changed) {
 			//如果span的范围变化了，需要刷新
             restoreInvariants();
@@ -401,7 +411,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         
 		if (replacedLength > 0)
 		{ 
-		    //修正所有span的范围，纯插入时不需要span修正
+		    //修正所有在删除文本范围和插入文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
 			//我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
 			//但由于我们引入了间隙缓冲区，所以每次获取缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
 			//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于缓冲区之后的span的位置增大
@@ -483,14 +493,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return false;
     }
 	
-	/*
-	 offset: 要更新的位置
-	 start: 删除文本的起始位置
-	 nbNewChars: 溢出文本的字符数
-	 flag: 更新标志 
-	 atEnd: gap缓冲区在数组最后
-	 textIsRemoved: 要替换的文本长度为0
-	*/
 	/* 更新的间隔绑定 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
@@ -613,17 +615,20 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	
     public void clear() 
 	{
+		//删除所有的文本，并发送文本事件
         replace(0, length(), "", 0, 0);
         mSpanInsertCount = 0;
     }
     
     public void clearSpans() 
 	{
+		//遍历所有的span并删除，每删除一个发送一次事件
         for (int i = mSpanCount - 1; i >= 0; i--) 
 		{
             Object what = mSpans[i];
             int ostart = mSpanStarts[i];
             int oend = mSpanEnds[i];
+			//span的原本位置是真实位置减去缓冲区大小
             if (ostart > mGapStart)
                 ostart -= mGapLength;
             if (oend > mGapStart)
@@ -803,14 +808,14 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
-	/**返回指定标记对象开头的缓冲区偏移量，如果该对象未附加到文本，则返回-1*/
+	/**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
     public int getSpanStart(Object what) 
 	{
         if (mIndexOfSpan == null) return -1;
         Integer i = mIndexOfSpan.get(what);
         return i == null ? -1 : resolveGap(mSpanStarts[i]);
     }
-    /**返回指定标记对象末尾的缓冲区偏移量，如果该对象未附加到文本，则返回-1*/
+    /**返回指定标记对象末尾在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
     public int getSpanEnd(Object what)
 	{
         if (mIndexOfSpan == null) return -1;
@@ -993,7 +998,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         return count;
     }
 	
-    /** *获取临时排序数组。* 
+    /** 获取临时排序数组
 	* @param elementCount要返回的int[]的大小
 	* @返回一个长度至少为elementCount的int[]
 	*/
@@ -1027,7 +1032,6 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	
     /** 
 	* 回收排序数组
-	*
 	* @param buffer要回收的数组
 	*/
     private static void recycle(int[] buffer)
@@ -1044,7 +1048,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
 	
-	/** *检查数组的大小，并根据需要进行扩展。* 
+	/** 检查数组的大小，并根据需要进行扩展
 	* @param buffer要检查的数组。
 	* @param size所需的大小。
 	* @如果当前大小大于所需大小，则返回相同的数组实例。
@@ -1053,7 +1057,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
     private static int[] checkSortBuffer(int[] buffer, int size)
 	{
         if (buffer == null || size > buffer.length) {
-            return new int[GrowingArrayUtils.growSize(size)];
+            return ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(size));
         }
         return buffer;
     }
@@ -1067,7 +1071,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 	//然后将第一个节点与最后一个节点交换位置，也就是将最大的节点踢出堆(实际放到数组最后)，并且需要维护刚刚交换的根节点，使其之下的路径顺序排列
 	//之后再从剩下的最后一个节点开始，按相同的方式排序，每次都将剩下的最大节点移至末尾，最后所有节点按升序排列
 	
-    /** *迭代堆排序实现。它将首先按照优先级*然后按照插入顺序对跨度进行排序。
+    /** 迭代堆排序实现。它将首先按照优先级，然后按照插入顺序对跨度进行排序
 	优先级较高的范围将在优先级较低的范围之前。
 	如果优先级相同，跨度将按照插入顺序排序。
 	具有较低插入顺序的*范围将在具有较高插入顺序的范围之前。*
@@ -1102,7 +1106,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
     
-	/** *堆的维护函数。*
+	/** 堆的维护函数
 	* @param index 要维护的元素的索引。
 	* @param array 要排序的数组。
 	* @param size当前堆大小。
@@ -1235,17 +1239,12 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         return limit;
     }
-    /**
-     * Return a new CharSequence containing a copy of the specified
-     * range of this buffer, including the overlapping spans.
-     */
+    
+	/** 返回一个新的CharSequence，它包含本对象的字符数组指定范围的文本，包括重叠范围 */
     public CharSequence subSequence(int start, int end) {
         return new SpannableStringBuilder(this, start, end);
     }
-    /**
-     * Copy the specified range of chars from this buffer into the
-     * specified array, beginning at the specified offset.
-     */
+    /** 将指定的字符范围从自己的字符数组复制到指定数组中，从指定的偏移开始 */
     public void getChars(int start, int end, char[] dest, int destoff)
 	{
         checkRange("getChars", start, end);
@@ -1260,9 +1259,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
 							 end - mGapStart);
         }
     }
-    /**
-     * Return a String containing a copy of the chars in this buffer.
-     */
+    /** 返回一个包含自己全部文本的字符串 */
     @Override
     public String toString()
 	{
@@ -1271,25 +1268,19 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         getChars(0, len, buf, 0);
         return new String(buf);
     }
-    /**
-     * Return a String containing a copy of the chars in this buffer, limited to the
-     * [start, end[ range.
-     * @hide
-     */
+	/** 返回包含自身中指定范围的字符的字符串 */
     public String substring(int start, int end)
 	{
         char[] buf = new char[end - start];
         getChars(start, end, buf, 0);
         return new String(buf);
     }
-    /**
-     * Returns the depth of TextWatcher callbacks. Returns 0 when the object is not handling
-     * TextWatchers. A return value greater than 1 implies that a TextWatcher caused a change that
-     * recursively triggered a TextWatcher.
-     */
+	
+	/** 返回TextWatcher回调的深度，当对象没有处理TextWatchers时返回0，大于1的返回值意味着TextWatcher导致了递归触发TextWatcher的更改 */
     public int getTextWatcherDepth() {
         return mTextWatcherDepth;
     }
+	/* 发送文本事件 */
     private void sendBeforeTextChanged(TextWatcher[] watchers, int start, int before, int after) {
         int n = watchers.length;
         mTextWatcherDepth++;
@@ -1314,6 +1305,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
         mTextWatcherDepth--;
     }
+	/* 要发送span事件，会获取范围内的所有SpanWatcher并发送事件 */
     private void sendSpanAdded(Object what, int start, int end) {
         SpanWatcher[] recip = getSpans(start, end, SpanWatcher.class);
         int n = recip.length;
@@ -1322,9 +1314,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
     }
     private void sendSpanRemoved(Object what, int start, int end) {
-		// The bounds of a possible SpanWatcher are guaranteed to be set before this method is
-        // called, so that the order of the span does not affect this broadcast.
-        
+		//在调用此方法之前，保证设置了可能的SpanWatcher的边界，以便span的顺序不会影响此事件
 		SpanWatcher[] recip = getSpans(start, end, SpanWatcher.class);
         int n = recip.length;
         for (int i = 0; i < n; i++) {
@@ -1339,6 +1329,8 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
             spanWatchers[i].onSpanChanged(this, what, oldStart, oldEnd, start, end);
         }
     }
+	
+	/* 检查范围，并抛出异常 */
     private static String region(int start, int end) {
         return "(" + start + " ... " + end + ")";
     }
@@ -1354,6 +1346,7 @@ public class SpannableStringBuilder implements CharSequence, GetChars, Spannable
         }
 	}
 	
+	/* 设置文本过滤器，它在文本改变前被调用，过滤器返回的文本将真正被插入 */
     public void setFilters(InputFilter[] filters)
 	{
         if (filters == null) {
