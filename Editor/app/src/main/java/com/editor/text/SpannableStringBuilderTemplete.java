@@ -1,6 +1,5 @@
 package com.editor.text;
 
-import android.graphics.*;
 import android.text.*;
 import android.util.*;
 import com.editor.text.base.*;
@@ -96,19 +95,19 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         } else if (where >= len) {
             throw new IndexOutOfBoundsException("charAt: " + where + " >= length " + len);
         }
-		//在缓冲区之后的字符的真实位置总是where + mGapLength
+		//在间隙缓冲区之后的字符的真实位置总是where + mGapLength
         if (where >= mGapStart)
             return mText[where + mGapLength];
         else
             return mText[where];
     }
 
-    /**文本长度总是数组长度减去缓冲区长度*/
+    /**文本长度总是数组长度减去间隙缓冲区长度*/
     public int length() {
         return mText.length - mGapLength;
     }
 	
-	/*如果此偏移量在缓冲区之后，那么它的原本位置应减去缓冲区长度*/
+	/*如果此偏移量在间隙缓冲区之后，那么它的原本位置应减去间隙缓冲区长度*/
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
@@ -122,18 +121,18 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             return;
         }
 
-		//创建一个比size更大的数组，并将原数组中缓冲区之前的字符拷贝过去
+		//创建一个比size更大的数组，并将原数组中间隙缓冲区之前的字符拷贝到新数组开头
         char[] newText = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(size));
         System.arraycopy(mText, 0, newText, 0, mGapStart);
         final int newLength = newText.length;
         //新增的长度，可以是负数，负数代表缩小数组长度
 		final int delta = newLength - oldLength;
-        //原数组中缓冲区的末尾
+        //原数组中间隙缓冲区的末尾
 		final int after = oldLength - (mGapStart + mGapLength);
-		//将缓冲区之后的字符也拷贝到新数组末尾，并且多预留一些位置以扩展缓冲区大小
+		//将原数组中间隙缓冲区之后的字符也拷贝到新数组末尾，中间多预留一些位置以扩展间隙缓冲区大小(请注意，间隙缓冲区的大小永远是数组中空闲的大小)
         System.arraycopy(mText, oldLength - after, newText, newLength - after, after);
 
-		//轮替mText，缓冲区长度增加
+		//轮替mText，间隙缓冲区长度增加
 		mText = newText;
         mGapLength += delta;
 
@@ -141,7 +140,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             new Exception("mGapLength < 1").printStackTrace();
         if (mSpanCount != 0) 
 		{
-			//遍历所有span，在缓冲区之后的span的范围会增加delta
+			//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
             for (int i = 0; i < mSpanCount; i++) {
                 if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
                 if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
@@ -151,14 +150,14 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
     }
 
-	/*移动缓冲区到指定位置*/
+	/*移动间隙缓冲区到指定位置*/
     private void moveGapTo(int where)
 	{
         if (where == mGapStart)
             return;
         boolean atEnd = (where == length());
         if (where < mGapStart) {
-			//如果要移动到的位置在当前缓冲区之前，仅需将缓冲区与其位置置换
+			//如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与其位置置换
             int overlap = mGapStart - where;
             System.arraycopy(mText, where, mText, mGapStart + mGapLength - overlap, overlap);
         } else {
@@ -177,8 +176,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 int end = mSpanEnds[i];
 				
 				//下面的代码分为两步理解
-				//先认为我们把缓冲区移除了，因此在缓冲区之后的span的真实位置都前移mGapLength
-				//之后又把缓冲区插入到where的位置，因此在where之后的span的真实位置都后移mGapLength
+				//先认为我们把间隙缓冲区移除了，因此在间隙缓冲区之后的span的真实位置都前移mGapLength
+				//之后又把间隙缓冲区插入到where的位置，因此在where之后的span的真实位置都后移mGapLength
                 if (start > mGapStart)
                     start -= mGapLength;
                 if (start > where)
@@ -337,7 +336,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//遍历所有的span，修正它们的flags，如果flags是SPAN_PARAGRAPH，则还会修正范围
         for (int i = mSpanCount - 1; i >= 0; i--)
 		{
-			//获取span位置，并移动到原本的位置(而不是附加上缓冲区之后的真实位置)
+			//获取span位置，并移动到原本的位置(而不是附加上间隙缓冲区之后的真实位置)
             int spanStart = mSpanStarts[i];
             if (spanStart > mGapStart){
                 spanStart -= mGapLength;
@@ -385,15 +384,15 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             restoreInvariants();
         }
 		
-		//将缓冲区移动到末尾
+		//将间隙缓冲区移动到删除文本的末尾
         moveGapTo(end);
         if (nbNewChars >= mGapLength) {
-			//缓冲区不足以容纳溢出的文本，需要扩展缓冲区
+			//间隙缓冲区不足以容纳溢出的文本，需要扩展间隙缓冲区
             resizeFor(mText.length + nbNewChars - mGapLength);
         }
 		
         final boolean textIsRemoved = replacementLength == 0;
-		//需要在缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
+		//需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
         if (replacedLength > 0){ 
 		    //纯插入时不需要span移除
             while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
@@ -401,23 +400,23 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             }
         }
 		
-		//插入文本并不需要扩展数组，仅需将缓冲区缩小
-		//另一个情况是，nbNewChars是负数，说明要替换的文本太短，此时等同于扩展缓冲区
-		//无论怎样，都将缓冲区对齐到替换(到我之内的)文本的末尾
+		//插入文本并不需要扩展数组，仅需将间隙缓冲区缩小
+		//另一个情况是，nbNewChars是负数，说明要替换的文本太短，此时等同于扩展间隙缓冲区
+		//无论怎样，都将间隙缓冲区对齐到替换(到我之内的)文本的末尾
         mGapStart += nbNewChars;
         mGapLength -= nbNewChars;
         if (mGapLength < 1)
             new Exception("mGapLength < 1").printStackTrace();
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
-		//然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此缓冲区只用管溢出文本
+		//然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
         
 		if (replacedLength > 0)
 		{ 
 		    //修正所有在删除文本范围和插入文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
 			//我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
-			//但由于我们引入了间隙缓冲区，所以每次获取缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
-			//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于缓冲区之后的span的位置增大
-			//同理，若将GapStart移动到前面并将GapLength增大，实际等同于缓冲区之后的span的位置缩小
+			//但由于我们引入了间隙缓冲区，所以每次获取间隙缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
+			//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于间隙缓冲区之后的span的位置增大
+			//同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
 			//另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
 			//即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
             //潜在优化:仅更新相交跨度的界限
@@ -459,7 +458,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                     setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
                 }
             }
-			//添加span时再次刷新
+			//添加span之后一并刷新
             restoreInvariants();
         }
     }
@@ -668,8 +667,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         setSpan(true, what, start, end, flags, true);
     }
 	
-	//注意:如果send为false，那么恢复不变量就是调用者的责任
-	//如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引
+	//注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
+	//因为新增的span默认在最后，不影响前面节点的顺序，所以可以暂时不刷新
     private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforceParagraph)
 	{
         checkRange("setSpan", start, end);
@@ -769,7 +768,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return flag == PARAGRAPH && index != 0 && index != length() && charAt(index - 1) != '\n';
     }
 	
-	/**从缓冲区中移除指定的标记对象*/
+	/**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) {
         removeSpan(what, 0);
     }
@@ -783,12 +782,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
     }
     //注意:调用者负责删除mIndexOfSpan条目
+	//与setSpan相反，移除span会打乱前面的索引，因此需要立刻刷新
     private void removeSpan(int i, int flags) 
 	{
         Object object = mSpans[i];
         int start = mSpanStarts[i];
         int end = mSpanEnds[i];
-		//如果span位置在缓冲区之后，原本的位置应减去一个mGapLength
+		//如果span位置在间隙缓冲区之后，原本的位置应减去一个mGapLength
         if (start > mGapStart) start -= mGapLength;
         if (end > mGapStart) end -= mGapLength;
 
@@ -928,9 +928,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	* @param i 当前树节点的索引。 
 	* @param ret 数组将被填充结果。
 	* @param priority buffer 记录找到的跨度优先级。
-	* @param insertionOrder 缓冲区记录找到的跨度的插入顺序。
+	* @param insertionOrder 记录找到的跨度的插入顺序。
 	* @param count 找到的跨度数。
-	* @param sort flag 填充优先级和插入顺序缓冲区。 
+	* @param sort flag 填充优先级和插入顺序。 
 	如果 false 则 * 具有优先级标志的跨度将在结果数组中进行排序。 
 	* @param <t> * @return 找到的跨度总数。 
 	*/
@@ -1010,7 +1010,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         int[] result = null;
         synchronized (sCachedIntBuffer)
 		{
-            //如果找不到第一个可用的tmp缓冲区，请尝试查找长度至少为elementCount的tmp缓冲区
+            //如果找不到第一个可用的tmp数组，请尝试查找长度至少为elementCount的tmp数组
             int candidateIndex = -1;
             for (int i = sCachedIntBuffer.length - 1; i >= 0; i--)
 			{
@@ -1251,7 +1251,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     public void getChars(int start, int end, char[] dest, int destoff)
 	{
         checkRange("getChars", start, end);
-		//若范围完全在缓冲区左边或右边，只获取一次，否则分两次获取
+		//若范围完全在间隙缓冲区左边或右边，只获取一次，否则分两次获取
         if (end <= mGapStart) {
             System.arraycopy(mText, start, dest, destoff, end - start);
         } else if (start >= mGapStart) {
@@ -1457,7 +1457,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return max;
     }
 	
-    //在跨度结构的任何突变后恢复二元区间树不变量
+    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少刷新会越快)
 	private void restoreInvariants() 
 	{
         if (mSpanCount == 0) return;
@@ -1537,7 +1537,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private int mGapLength; //空闲间隙的长度
   
 	//用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
-	//mSpanStarts是最重要的，其总是正序排列，而节点的区间是用mSpanMax表示的
+	//mSpanStarts是最重要的，其总是正序排列，而节点的最大区间是用mSpanMax表示的
 	//虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
 	//另外二叉树的顺序是从mSpanCount/2这个下标开始二分得到的
 	

@@ -839,6 +839,7 @@ _______________________________________
 		paint.getTextWidths(text,start,end,widths);
 	}
 	
+	
 	final public int tryLine_Start(int index)
 	{
 		int id = findBlockIdForIndex(index);
@@ -893,7 +894,6 @@ _______________________________________
 		}
 		return index<0 || index>len ? len:index;
 	}
-	
 	
 	@Override
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)

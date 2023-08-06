@@ -1,6 +1,5 @@
 package com.editor.text.base;
 
-
 public final class GrowingArrayUtils
 {
     /** 
@@ -140,6 +139,45 @@ public final class GrowingArrayUtils
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
+	
+	/** 
+	 *在数组中的指定索引处删除一个元素
+	 * @param array要删除元素的数组，不得为空
+	 * @param currentSize数组中元素的数量，必须小于或等于array.length
+	 * @param index要删除的元素索引
+	 * @返回元素附加到的数组
+	 */
+	public static <T> T[] remove(T[] array, int currentSize, int index)
+	{
+		assert currentSize <= array.length;
+		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = null;
+		return array;
+	}
+	
+	public static int[] remove(int[] array, int currentSize, int index)
+	{
+		assert currentSize <= array.length;
+		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = 0;
+		return array;
+	}
+	
+	public static long[] remove(long[] array, int currentSize, int index)
+	{
+		assert currentSize <= array.length;
+		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = 0;
+		return array;
+	}
+	
+	public static boolean[] remove(boolean[] array, int currentSize, int index)
+	{
+		assert currentSize <= array.length;
+		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = false;
+		return array;
+	}
 	
 	/** 
 	 * 给定数组的当前大小，返回数组应该增长到的理想大小。

@@ -98,5 +98,33 @@ public class ArrayUtils
 		}
 		return count;
 	}
+	
+	public static int indexOf(char[] array, char value, int index)
+	{
+        if (array == null) return -1;
+        for (; index < array.length; index++) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
+
+	public static int lastIndexOf(char[] array, char value, int index)
+	{
+        if (array == null || index>=array.length) return -1;
+        for (;index>=0; index--) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
+
+	public static int Count(char[] array, char value, int start, int end)
+	{
+		int count = 0;
+		for(;start<end;++start)
+		{
+			if(array[start]==value) ++count;
+		}
+		return count;
+	}
 
 }
