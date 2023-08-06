@@ -494,11 +494,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return false;
     }
 	
-	/* 文本修改后，在修改范围内的span位置应该移动到哪里 */
+	/* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
 		//此时mGapStart实际上是替换文本的end，并且mGapStart + mGapLength必然最大
-		//若offset的原本位置处于删除文本和替换文本的范围内
+		//若offset的原本位置处于删除文本和替换文本的范围内，才需要计算位置
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
