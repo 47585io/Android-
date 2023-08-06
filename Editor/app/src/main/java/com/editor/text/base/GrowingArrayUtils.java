@@ -145,7 +145,7 @@ public final class GrowingArrayUtils
 	 * @param array要删除元素的数组，不得为空
 	 * @param currentSize数组中元素的数量，必须小于或等于array.length
 	 * @param index要删除的元素索引
-	 * @返回元素附加到的数组
+	 * @返回原数组
 	 */
 	public static <T> T[] remove(T[] array, int currentSize, int index)
 	{

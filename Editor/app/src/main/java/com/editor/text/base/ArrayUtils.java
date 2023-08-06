@@ -4,8 +4,10 @@ import java.util.*;
 
 public class ArrayUtils
 {
+	
 	private static final int ALIGNMENT_AMOUNT = 8;
 	
+	/* 创建一个新的指定元素个数的数组，可能比size更大，但这会利用空闲的空间 */
 	public static<T> T[] newUnpaddedArray(Class<T> type, int size){
 		return (T[])Array.newInstance(type,getAlignmentMinimumSize(type,size));
 	}
@@ -71,6 +73,7 @@ public class ArrayUtils
 		return size;
 	}
 	
+	/* 在数组中向后寻找指定元素，找到了返回它的下标，从index开始 */
 	public static <T> int indexOf(T[] array, T value, int index)
 	{
         if (array == null) return -1;
@@ -79,7 +82,7 @@ public class ArrayUtils
         }
         return -1;
     }
-	
+	/* 在数组中向前寻找指定元素，找到了返回它的下标，从index开始 */
 	public static <T> int lastIndexOf(T[] array, T value, int index)
 	{
         if (array == null || index>=array.length) return -1;
@@ -88,12 +91,11 @@ public class ArrayUtils
         }
         return -1;
     }
-	
+	/* 统计数组中指定范围内的指定元素个数 */
 	public static <T> int Count(T[] array, T value, int start, int end)
 	{
 		int count = 0;
-		for(;start<end;++start)
-		{
+		for(;start<end;++start){
 			if(Objects.equals(array[start],value)) ++count;
 		}
 		return count;
@@ -120,11 +122,38 @@ public class ArrayUtils
 	public static int Count(char[] array, char value, int start, int end)
 	{
 		int count = 0;
-		for(;start<end;++start)
-		{
+		for(;start<end;++start){
 			if(array[start]==value) ++count;
 		}
 		return count;
 	}
 
+	/* 在数组中寻找元素，与indexOf不同，它只比较它们的地址值，也即找到的元素必然是唯一的内存相同的元素 */
+	public static<T> int indexOfHashCode(T[] array, T value, int index)
+	{
+        if (array == null) return -1;
+        for (; index < array.length; index++) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
+
+	public static<T> int lastIndexOfHashCode(T[] array, T value, int index)
+	{
+        if (array == null || index>=array.length) return -1;
+        for (;index>=0; index--) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
+
+	public static<T> int CountHashCode(T[] array, T value, int start, int end)
+	{
+		int count = 0;
+		for(;start<end;++start){
+			if(array[start]==value) ++count;
+		}
+		return count;
+	}
+	
 }
