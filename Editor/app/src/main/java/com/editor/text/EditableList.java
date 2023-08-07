@@ -350,7 +350,6 @@ public class EditableList extends Object implements Editable
 							blocks.add(++j,mBlocks[id]);
 							++size;
 						}
-						++j;
 					}
 				}
 				
