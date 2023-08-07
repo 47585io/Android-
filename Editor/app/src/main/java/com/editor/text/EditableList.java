@@ -150,16 +150,21 @@ public class EditableList extends Object implements Editable
 		end-=mBlockStarts[j];
 		
 		//删除范围内的文本和文本块
-		if(end>start){
+		if(before>0){
 		    deleteForBlocks(i,j,start,end);
 		}
 		//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
-		if(tbEnd>tbStart){
+		if(after>0){
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
 		refreshInvariants();
-		prefixSpan(i,start);
+		//获取可能衔接在两端的span
+		Object[] spans = mBlocks[i].getSpans(start,start,Object.class);	
+		//遍历所有的span，修正它们绑定的文本块，并修正它们在文本块中的范围
+		for(i=0;i<spans.length;++i){
+			correctSpan(spans[i]);
+		}
 		
 		//最后统计长度，并调用文本监视器的方法
 		length += -before+after;
@@ -309,73 +314,61 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
-	/* 在文本修改后，修正空缺span的范围，这通常是取自修改范围的两端
+	/* 在文本修改后，修正空缺span绑定的文本块和其所在文本块中的范围，span样本通常是取自修改范围的两端
 	 * 若删除了一个span，并把它全删了，这倒没什么
 	 * 若删除了一个span，并把它前半部分删了，因此在插入文本时会被挤至后面，这也没什么
 	 * 若删除了一个span，并把它后半部分删了，因此在插入文本时仍保持在前面，这都没什么
 	 * 若删除了一个span，并把它中间删了，两端保留，在插入文本后span应该扩展并包含中间所有文本块，而不是仅悬停在两端
 	 */
-	private void prefixSpan(int idForBlock, int index)
+	private void correctSpan(Object span)
 	{
-		if(index==0)
-		{
-			if(idForBlock==0){
-				return;
-			}
-			--idForBlock;
-			index = mBlocks[idForBlock].length();
-		}
+		List<Editable> blocks = mSpanInBlocks.get(span);
+		int size = blocks.size();	
 		
-		Object[] spans = mBlocks[idForBlock].getSpans(index-1,index,Object.class);	
-		//遍历所有的span，修正它们绑定的文本块，并修正它们在文本块中的范围
-		for(int i=0;i<spans.length;++i)
+		//如果span绑定了多个文本块
+		if(blocks!=null && size>1)
 		{
-			Object span = spans[i];
-			List<Editable> blocks = mSpanInBlocks.get(span);
-			int size = blocks.size();	
-			
-			//如果span绑定了多个文本块
-			if(blocks!=null && size>1)
+			//先修正span绑定的文本块，使它们连续排列
+			for(int j=0;j<size-1;++j)
 			{
-				//先修正span绑定的文本块，使它们连续排列
-				for(int j=0;j<size-1;++j)
+				int id = mIndexOfBlocks.get(blocks.get(j));
+				int nextId = mIndexOfBlocks.get(blocks.get(j+1));		
+				//如果当前文本块的下标和下个文本块的下标不连续，需要插入中间的文本块
+				if(id+1<nextId)
 				{
-					int id = mIndexOfBlocks.get(blocks.get(j));
-					int nextId = mIndexOfBlocks.get(blocks.get(j+1));		
-					//如果当前文本块的下标和下个文本块的下标不连续，需要插入中间的文本块
-					if(id+1<nextId)
-					{
-						//从id+1开始，向nextId前进，将途中的文本块添加到blocks中
-						for(++id;id<nextId;++id){
-							blocks.add(++j,mBlocks[id]);
-							++size;
-						}
+					//从id+1开始，向nextId前进，将途中的文本块添加到blocks中
+					for(++id;id<nextId;++id){
+						blocks.add(++j,mBlocks[id]);
+						++size;
 					}
 				}
+			}
 				
-				int flags = blocks.get(0).getSpanFlags(span);
-				//遍历所有文本块，修正span在文本块中的范围
-				for(int j=0;j<size;++j)
-				{
-					int id = mIndexOfBlocks.get(blocks.get(j));
-					Editable block = mBlocks[id];
-					int len = block.length();
-					int start = block.getSpanStart(span);
-					int end = block.getSpanEnd(span);
+			int flags = blocks.get(0).getSpanFlags(span);
+			//遍历所有文本块，修正span在文本块中的范围(请注意，即使绑定正确，也不能代表范围设置正确)
+			for(int j=0;j<size;++j)
+			{
+				int id = mIndexOfBlocks.get(blocks.get(j));
+				Editable block = mBlocks[id];
+				int len = block.length();
+				int start = block.getSpanStart(span);
+				int end = block.getSpanEnd(span);
 					
-					if(j==0){
-						if(end!=len){
-							block.setSpan(span,start,len,flags);
-						}
+				if(j==0){
+					//span应衔接在起始块末尾
+					if(end!=len){
+						block.setSpan(span,start,len,flags);
 					}
-					else if(j==size-1){
-						if(start!=0){
-							block.setSpan(span,0,end,flags);
-						}
+				}
+				else if(j==size-1){
+					//span应衔接在末尾块起始
+					if(start!=0){
+						block.setSpan(span,0,end,flags);
 					}
-					else if(start!=0 || end!=len){
-					    block.setSpan(span,0,len,flags);
-					}
+				}
+				else if(start!=0 || end!=len){
+					//span应附着在整个中间块
+				    block.setSpan(span,0,len,flags);
 				}
 			}
 		}
