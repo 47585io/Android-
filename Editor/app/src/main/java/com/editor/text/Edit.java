@@ -941,7 +941,7 @@ public class Edit extends View implements TextWatcher
 					}
 					else
 					{
-						if(end-start>mText.MaxCount){
+						if(end-start>100000){
 							mLayout.getCursorPos(end,endPos);
 						}
 						else{

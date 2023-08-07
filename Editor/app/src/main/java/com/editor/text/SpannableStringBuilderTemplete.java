@@ -15,7 +15,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	
 	/** 创建一个包含空内容的新SpannableStringBuilder */
 	public SpannableStringBuilderTemplete() {
-			this("");
+		this("");
 	}
 	/** 创建一个包含指定文本的新SpannableStringBuilder，包括其范围(如果有) */
     public SpannableStringBuilderTemplete(CharSequence text) {
