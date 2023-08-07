@@ -882,7 +882,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         int count = 0;
         if ((i & 1) != 0) 
 		{
-            //若节点i不是叶子节点，遍历其左子节点
+            //若节点i不是叶子节点，先遍历其左子节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
             if (spanMax > mGapStart) {
@@ -1236,7 +1236,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
                 limit = en;
             if (st < limit && (i & 1) != 0) {
-				//若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点spanStart大于或等于i)
+				//若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点的spanStart大于或等于i的spanStart)
                 limit = nextSpanTransitionRec(start, limit, kind, rightChild(i));
             }
         }
@@ -1403,8 +1403,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//这个结构的基本性质:
 	//整颗树像一个等腰三角形
 	//对于一棵高度为m的完美二叉树，树有2^(m+1) - 1个总节点，树根的索引是2^m - 1
-	//所有叶子节点的索引都是偶数，所有内部节点的索引都是奇数
-	//索引i的一个节点的高度是i的二进制表示中尾部1的个数
+	//所有叶子节点的索引都是偶数，所有内部节点的索引都是奇数，因此(i & 1) != 0可判断其是不是叶子节点
+	//索引i的一个节点的高度是i的二进制表示中尾部的连续的1的个数
 	//高度为h的节点i的左子节点是i - 2^(h - 1)
 	//高度为h的节点i的右子节点是i + 2^(h - 1)
 	//任意节点的所有左子节点(及其索引)都小于它，所有右子节点都大于它

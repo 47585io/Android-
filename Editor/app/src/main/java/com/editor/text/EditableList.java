@@ -158,6 +158,9 @@ public class EditableList extends Object implements Editable
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
+		refreshInvariants();
+		prefixSpan(i,start);
+		
 		//最后统计长度，并调用文本监视器的方法
 		length += -before+after;
 		sendTextChanged(start,before,after);
@@ -302,6 +305,79 @@ public class EditableList extends Object implements Editable
 					mSpanInBlocks.put(span,blocks);
 				}
 				blocks.add(editor);
+			}
+		}
+	}
+	
+	/* 在文本修改后，修正空缺span的范围，这通常是取自修改范围的两端
+	 * 若删除了一个span，并把它全删了，这倒没什么
+	 * 若删除了一个span，并把它前半部分删了，因此在插入文本时会被挤至后面，这也没什么
+	 * 若删除了一个span，并把它后半部分删了，因此在插入文本时仍保持在前面，这都没什么
+	 * 若删除了一个span，并把它中间删了，两端保留，在插入文本后span应该扩展并包含中间所有文本块，而不是仅悬停在两端
+	 */
+	private void prefixSpan(int idForBlock, int index)
+	{
+		if(index==0)
+		{
+			if(idForBlock==0){
+				return;
+			}
+			--idForBlock;
+			index = mBlocks[idForBlock].length();
+		}
+		
+		Object[] spans = mBlocks[idForBlock].getSpans(index-1,index,Object.class);	
+		//遍历所有的span，修正它们绑定的文本块，并修正它们在文本块中的范围
+		for(int i=0;i<spans.length;++i)
+		{
+			Object span = spans[i];
+			List<Editable> blocks = mSpanInBlocks.get(span);
+			int size = blocks.size();	
+			
+			//如果span绑定了多个文本块
+			if(blocks!=null && size>1)
+			{
+				//先修正span绑定的文本块，使它们连续排列
+				for(int j=0;j<size-1;++j)
+				{
+					int id = mIndexOfBlocks.get(blocks.get(j));
+					int nextId = mIndexOfBlocks.get(blocks.get(j+1));		
+					//如果当前文本块的下标和下个文本块的下标不连续，需要插入中间的文本块
+					if(id+1<nextId)
+					{
+						//从id+1开始，向nextId前进，将途中的文本块添加到blocks中
+						for(++id;id<nextId;++id){
+							blocks.add(++j,mBlocks[id]);
+							++size;
+						}
+						++j;
+					}
+				}
+				
+				int flags = blocks.get(0).getSpanFlags(span);
+				//遍历所有文本块，修正span在文本块中的范围
+				for(int j=0;j<size;++j)
+				{
+					int id = mIndexOfBlocks.get(blocks.get(j));
+					Editable block = mBlocks[id];
+					int len = block.length();
+					int start = block.getSpanStart(span);
+					int end = block.getSpanEnd(span);
+					
+					if(j==0){
+						if(end!=len){
+							block.setSpan(span,start,len,flags);
+						}
+					}
+					else if(j==size-1){
+						if(start!=0){
+							block.setSpan(span,0,end,flags);
+						}
+					}
+					else if(start!=0 || end!=len){
+					    block.setSpan(span,0,len,flags);
+					}
+				}
 			}
 		}
 	}
