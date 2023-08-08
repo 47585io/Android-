@@ -11,7 +11,7 @@ import java.util.*;
 public class SpannableStringBuilderTemplete implements CharSequence, GetChars, Spannable, Editable, Appendable 
 {
 	
-	private final static String TAG = "SpannableStringBuilder";
+	private final static String TAG = "SpannableStringBuilderTemplete";
 	
 	/** 创建一个包含空内容的新SpannableStringBuilder */
 	public SpannableStringBuilderTemplete() {

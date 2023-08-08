@@ -368,7 +368,6 @@ public class EditableList extends Object implements Editable
 						break;
 					}
 				}
-				
 			}
 		}
 	}

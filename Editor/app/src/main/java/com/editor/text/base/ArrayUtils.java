@@ -128,29 +128,50 @@ public class ArrayUtils
 		return count;
 	}
 
-	protected static<T> int getMiddle(List<T> list, int low, int high, Comparator<T> com)
+	/* 快速排序 */
+	public static <T> void quickSort(T[] list, int size, Comparator<T> com)
 	{
-		T tmp = list.get(low); // 数组的第一个值作为中轴（分界点或关键数据）
+		if (size > 0 && size < list.length){
+			//查看数组是否为空
+			//开始分裂排序
+			unckSort(list, 0, size - 1, com);
+		}
+	}
+	
+	private static <T> void unckSort(T[] list, int low, int high, Comparator<T> com)
+	{
+		if (low < high){
+			int middle = getMiddle(list, low, high, com);    // 将list数组一分为二
+			unckSort(list, low, middle - 1, com);    // 对左边进行递归排序
+			unckSort(list, middle + 1, high, com);    // 对右边进行递归排序
+		}
+		//继续递归分裂，直至每个小数组只有两个元素
+		//则只有low<high，才能继续
+		//当一个数组只有两个元素，则此时排序，只是比较两个元素大小
+		//因为整个数组都是按序分的
+		//所以每个小数组排好序，则大数组也排好了
+	}
+	
+	private static <T> int getMiddle(T[] list, int low, int high, Comparator<T> com)
+	{
+		T tmp = list[low]; // 数组的第一个值作为中轴（分界点或关键数据）
 		while (low < high)
 		{
-			while (low < high && com.compare(list.get(high), tmp) >= 0)
-			{
+			while (low < high && com.compare(list[high], tmp) >= 0){
 				high--;
 			}
 			//从右边开始找一个小于中点的数
 			//如果已经大于中点，则不用挪
 			//如果有小于中点的数，挪至左边
-			list.set(low, list.get(high)); 
+			list[low] = list[high]; 
 			// 将其移动到list[low],此时list[low]必然小于中点,并且list[low]==list[high]
-			while (low < high && com.compare(list.get(low), tmp) <= 0)
-			{
+			while (low < high && com.compare(list[low], tmp) <= 0){
 				low++;
 			}
 			//从list[low]开始找一个大于中点的数，必然不可能是当前list[low]		
-			list.set(high, list.get(low)); 
+			list[high] = list[low]; 
 			//将这个大于中点的list[low]挪至右边
 			//可以挪到list[high]，因为list[high]已经挪到左边了
-
 			//那原来的list[low]的值不要了吗？list[high]挪到的那个
 
 			//别急，让我们看下次循环，
@@ -165,34 +186,30 @@ public class ArrayUtils
 			//high：我右边都比tmp大
 			//所以可以把tmp插入这里,这样tmp就移动到中间了 
 		}
-		list.set(low, tmp); // 中点位置
+		list[low] = tmp; // 中点位置
 		return low; // 返回中点的位置
 	}
 
-	protected static<T> void unckSort(List<T> list, int low, int high, Comparator<T> com)
+	/* 二分查找 */
+	public static <T> int binarySearch(T[] list, T value, int size, Comparator<T> com)
 	{
-		if (low < high)
-		{
-			int middle = getMiddle(list, low, high, com);    // 将list数组一分为二
-			unckSort(list, low, middle - 1, com);    // 对左边进行递归排序
-			unckSort(list, middle + 1, high, com);    // 对右边进行递归排序
+		if (size <= 0 || size > list.length){
+			return -1;
 		}
-		//继续递归分裂，直至每个小数组只有两个元素
-		//则只有low<high，才能继续
-		//当一个数组只有两个元素，则此时排序，只是比较两个元素大小
-		//因为整个数组都是按序分的
-		//所以每个小数组排好序，则大数组也排好了
-	}
-
-	/* 推荐使用ArrayList，它是最快的，因为我们不需要add或remove，只要get和set */
-	public static<T> void quickSort(List<T> list, Comparator<T> com)
-	{
-		if (list.size() > 0)
-		{
-			// 查看数组是否为空
-			//开始分裂排序
-			unckSort(list, 0, list.size() - 1, com);
-		}
+		
+		int low = 0;   
+		int high = size - 1;   
+		while (low <= high)
+		{   
+			int middle = (low + high) / 2;   
+			if (com.compare(list[middle],value)==0) 
+				return middle;   
+			else if (com.compare(list[middle],value)<0)
+				high = middle - 1;   
+			else 
+				low = middle + 1;
+		}  
+		return -1;  
 	}
 	
 }
