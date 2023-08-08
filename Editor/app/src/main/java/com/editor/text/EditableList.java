@@ -23,7 +23,7 @@ public class EditableList extends Object implements Editable
 	private int mTextWatcherDepth;
 	
 	private int MaxCount;
-	private static final int Default_MaxCount = 100000;
+	private static final int Default_MaxCount = 100;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -70,7 +70,7 @@ public class EditableList extends Object implements Editable
 		mBlockSize++;
 		sendBlockAdded(i);
 	}
-	/* 添加文本块的同时，填充它的文本*/
+	/* 添加文本块的同时，填充它的文本 */
 	private void addBlock(int i ,CharSequence tb, int start, int end)
 	{
 		addBlock(i);
@@ -80,9 +80,9 @@ public class EditableList extends Object implements Editable
 	private void removeBlock(int i)
 	{
 		replaceSpan(i,0,mBlocks[i].length(),"",0,0);
-		mIndexOfBlocks.remove(i);
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
+		mIndexOfBlocks.remove(i);
 		mBlockSize--;
 		sendBlockRemoved(i);
 	}
@@ -96,7 +96,6 @@ public class EditableList extends Object implements Editable
 				addBlock(id,tb,tbStart,tbEnd);
 				break;
 			}
-			
 			addBlock(id,tb,tbStart,tbStart+MaxCount);
 			tbStart+=MaxCount;
 			++id;
@@ -116,15 +115,15 @@ public class EditableList extends Object implements Editable
 		//找到临近的位置，然后从此处开始
 		int id = index/MaxCount;
 		if(id>mBlockSize-1){
-			id = mBlockSize;
+			id = mBlockSize-1;
 		}
 		int nowIndex = mBlockStarts[id];
 
 		if(nowIndex<index){
-			for(;mBlockStarts[id]+mBlocks[id].length()<index;++id){}
+			for(;id<mBlockSize && mBlockStarts[id]+mBlocks[id].length()<index;++id){}
 		}
 		else if(nowIndex>index){
-			for(;mBlockStarts[id]>index;--id){}
+			for(;id>-1 && mBlockStarts[id]>index;--id){}
 		}
 		return id;
 	}
@@ -169,6 +168,7 @@ public class EditableList extends Object implements Editable
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//文本变化前，调用文本监视器的方法
+		int st = start;
 		int before = end-start;
 		int after = tbEnd-tbStart;
 		sendBeforeTextChanged(start,before,after);
@@ -204,7 +204,7 @@ public class EditableList extends Object implements Editable
 		
 		//最后统计长度，并调用文本监视器的方法
 		mLength += -before+after;
-		sendTextChanged(start,before,after);
+		sendTextChanged(st,before,after);
 		sendAfterTextChanged();
 		return this;
 	}
@@ -309,9 +309,9 @@ public class EditableList extends Object implements Editable
 	/* 替换指定文本块的span的绑定 */
 	private void replaceSpan(int i, int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
-		//先移除指定文本块start~end范围内的span与其的绑定
+		//先移除指定文本块start~end范围内的span与block的绑定
 		Editable block = mBlocks[i];
-		if(end>start)
+		if(end > start)
 		{
 			Object[] spans = block.getSpans(start,end,Object.class);
 			for(int j=0;j<spans.length;++j)
@@ -332,20 +332,43 @@ public class EditableList extends Object implements Editable
 				}
 			}
 		}
-		//如果要替换的文本是Spanned，editor需要与其范围内的span建立新的绑定
-		if(tb instanceof Spanned)
+		
+		//如果要替换的文本是Spanned，范围内的span需要与block建立新的绑定
+		if(tbEnd>tbStart && tb instanceof Spanned)
 		{
 			Object[] spans = ((Spanned)tb).getSpans(tbStart,tbEnd,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
 				List<Editable> blocks = mSpanInBlocks.get(span);
-				//一个全新的span，需要映射到一个新的列表，并加入editor
-				if(blocks==null){
+				//一个全新的span，需要映射到一个新的列表，并加入block
+				if(blocks==null)
+				{
 					blocks = new ArrayList<>();
+					blocks.add(block);
 					mSpanInBlocks.put(span,blocks);
+					continue;
 				}
-				blocks.add(block);
+				
+				if(blocks.indexOf(block)!=-1){
+					//相同的文本块不用再次放入
+					continue;
+				}
+				//若span绑定的blocks不为null，意味着它至少还有一个元素
+				//为block寻找一个合适位置并插入，blocks之前的文本块都顺序排列
+				for(int k=blocks.size()-1;k>-1;--k)
+			    {
+					int id = mIndexOfBlocks.get(blocks.get(k));
+					if(id<i){
+						blocks.add(k+1,block);
+						break;
+					}
+					if(k==0){
+						blocks.add(k,block);
+						break;
+					}
+				}
+				
 			}
 		}
 	}
@@ -360,7 +383,6 @@ public class EditableList extends Object implements Editable
 	{
 		List<Editable> blocks = mSpanInBlocks.get(span);
 		int size = blocks.size();	
-		
 		//如果span绑定了多个文本块
 		if(blocks!=null && size>1)
 		{
@@ -416,7 +438,7 @@ public class EditableList extends Object implements Editable
 		for(;i<mBlockSize;++i)
 		{
 			Editable block = mBlocks[i];
-			mBlockStarts[i] = i>0 ? mBlockStarts[i-1]+block.length() : 0;
+			mBlockStarts[i] = i>0 ? mBlockStarts[i-1]+mBlocks[i-1].length() : 0;
 			Integer index = mIndexOfBlocks.get(block);
 			if(index==null || index!=i){
 				mIndexOfBlocks.put(block,i);
@@ -431,6 +453,8 @@ public class EditableList extends Object implements Editable
 		//所有内容全部清空
 		mLength = 0;
 		mBlockSize = 0;
+		mBlocks = EmptyArray.emptyArray(Editable.class);
+		mBlockStarts = EmptyArray.INT;
 		mIndexOfBlocks.clear();
 		mSpanInBlocks.clear();
 	}
@@ -449,7 +473,6 @@ public class EditableList extends Object implements Editable
 	public void setFilters(InputFilter[] p1){
 		mFilters = p1;
 	}
-	
 	@Override
 	public InputFilter[] getFilters(){
 		return mFilters;
@@ -668,6 +691,7 @@ public class EditableList extends Object implements Editable
 		public void onBlocksInsertAfter(int i, int j, int iStart, int jEnd)
 	}
 	
+	/* 发送文本块事件 */
 	private void sendBlockAdded(int i){
 		if(mBlockListener!=null){
 			mBlockListener.onAddBlock(i);	
@@ -694,6 +718,7 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
+	/* 发送文本事件 */
 	private void sendBeforeTextChanged(int start, int before, int after) {
         mTextWatcherDepth++;
         if(mTextWatcher!=null){

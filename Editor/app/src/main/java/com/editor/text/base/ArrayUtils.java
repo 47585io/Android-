@@ -76,7 +76,7 @@ public class ArrayUtils
 	/* 在数组中向后寻找指定元素，找到了返回它的下标，从index开始 */
 	public static <T> int indexOf(T[] array, T value, int index)
 	{
-        if (array == null) return -1;
+        if (array == null || index<0) return -1;
         for (; index < array.length; index++) {
             if (Objects.equals(array[index], value)) return index;
         }
@@ -103,7 +103,7 @@ public class ArrayUtils
 	
 	public static int indexOf(char[] array, char value, int index)
 	{
-        if (array == null) return -1;
+        if (array == null || index<0) return -1;
         for (; index < array.length; index++) {
             if (array[index]==value) return index;
         }
@@ -128,32 +128,71 @@ public class ArrayUtils
 		return count;
 	}
 
-	/* 在数组中寻找元素，与indexOf不同，它只比较它们的地址值，也即找到的元素必然是唯一的内存相同的元素 */
-	public static<T> int indexOfHashCode(T[] array, T value, int index)
+	protected static<T> int getMiddle(List<T> list, int low, int high, Comparator<T> com)
 	{
-        if (array == null) return -1;
-        for (; index < array.length; index++) {
-            if (array[index]==value) return index;
-        }
-        return -1;
-    }
+		T tmp = list.get(low); // 数组的第一个值作为中轴（分界点或关键数据）
+		while (low < high)
+		{
+			while (low < high && com.compare(list.get(high), tmp) >= 0)
+			{
+				high--;
+			}
+			//从右边开始找一个小于中点的数
+			//如果已经大于中点，则不用挪
+			//如果有小于中点的数，挪至左边
+			list.set(low, list.get(high)); 
+			// 将其移动到list[low],此时list[low]必然小于中点,并且list[low]==list[high]
+			while (low < high && com.compare(list.get(low), tmp) <= 0)
+			{
+				low++;
+			}
+			//从list[low]开始找一个大于中点的数，必然不可能是当前list[low]		
+			list.set(high, list.get(low)); 
+			//将这个大于中点的list[low]挪至右边
+			//可以挪到list[high]，因为list[high]已经挪到左边了
 
-	public static<T> int lastIndexOfHashCode(T[] array, T value, int index)
-	{
-        if (array == null || index>=array.length) return -1;
-        for (;index>=0; index--) {
-            if (array[index]==value) return index;
-        }
-        return -1;
-    }
+			//那原来的list[low]的值不要了吗？list[high]挪到的那个
 
-	public static<T> int CountHashCode(T[] array, T value, int start, int end)
-	{
-		int count = 0;
-		for(;start<end;++start){
-			if(array[start]==value) ++count;
+			//别急，让我们看下次循环，
+			//当在右边找到一个，是不是又移动到左边，那么此时移动到？
+			//代码显示是当前的low
+			//那么这个low其实上次就已移动到high了，所以新的high可以移动到low，并且是安全的
+			//之后又一个low，移动到上次的high，high刚移左边
+			//这一步步衔接的太妙了吧
+			//不难发现，当最后一次循环，row移动到high，那么此时row并无用，完全可以把tmp（中点）插入这里
+			//那么row和high相遇，
+			//row说：我左边都比tmp小
+			//high：我右边都比tmp大
+			//所以可以把tmp插入这里,这样tmp就移动到中间了 
 		}
-		return count;
+		list.set(low, tmp); // 中点位置
+		return low; // 返回中点的位置
+	}
+
+	protected static<T> void unckSort(List<T> list, int low, int high, Comparator<T> com)
+	{
+		if (low < high)
+		{
+			int middle = getMiddle(list, low, high, com);    // 将list数组一分为二
+			unckSort(list, low, middle - 1, com);    // 对左边进行递归排序
+			unckSort(list, middle + 1, high, com);    // 对右边进行递归排序
+		}
+		//继续递归分裂，直至每个小数组只有两个元素
+		//则只有low<high，才能继续
+		//当一个数组只有两个元素，则此时排序，只是比较两个元素大小
+		//因为整个数组都是按序分的
+		//所以每个小数组排好序，则大数组也排好了
+	}
+
+	/* 推荐使用ArrayList，它是最快的，因为我们不需要add或remove，只要get和set */
+	public static<T> void quickSort(List<T> list, Comparator<T> com)
+	{
+		if (list.size() > 0)
+		{
+			// 查看数组是否为空
+			//开始分裂排序
+			unckSort(list, 0, list.size() - 1, com);
+		}
 	}
 	
 }

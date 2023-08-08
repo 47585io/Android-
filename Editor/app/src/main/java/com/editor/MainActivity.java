@@ -8,6 +8,7 @@ import com.editor.text.*;
 import java.io.*;
 import android.text.*;
 import android.text.style.*;
+import android.widget.*;
 
 public class MainActivity extends Activity 
 {
@@ -20,7 +21,7 @@ public class MainActivity extends Activity
 		//getWindow().setBackgroundDrawable(null);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-        loadFileInThread("/storage/emulated/0/Linux/1.java");
+        loadFileInThread("/storage/emulated/0/Linux/2.java");
     }
 	
 	public void loadFileInThread(String path)

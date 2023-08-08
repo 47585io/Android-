@@ -678,7 +678,7 @@ public class Edit extends View implements TextWatcher
 			for(;startLine<=endLine && now<len;++startLine)
 			{
 				//获取行的起始和末尾
-				next = tryLine_End(now);
+				next = tryLine_End(spanString,now);
 				//测量并保存每个字符的宽
 				int count = next-now;
 				fillChars((GetChars)spanString,now,next);
@@ -798,7 +798,7 @@ public class Edit extends View implements TextWatcher
 			while(start<e)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = CharArrHelper.indexOf(FN,chars,start);
+				end = ArrayUtils.indexOf(chars,FN,start);
 				if(end>=e || end<0)
 				{
 					//start~end之间的内容不会换行，画完就走
@@ -827,7 +827,7 @@ public class Edit extends View implements TextWatcher
 			while(start<e)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = CharArrHelper.indexOf(FN,chars,start);
+				end = ArrayUtils.indexOf(chars,FN,start);
 				if(end>=e || end<0)
 				{
 					//start~end之间的内容不会换行，画完就走
