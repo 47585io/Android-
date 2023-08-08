@@ -140,6 +140,21 @@ public final class GrowingArrayUtils
         return newArray;
     }
 	
+	public static float[] insert(float[] array, int currentSize, int index, float element) 
+	{
+        assert currentSize <= array.length;
+        if (currentSize + 1 <= array.length) {
+            System.arraycopy(array, index, array, index + 1, currentSize - index);
+            array[index] = element;
+            return array;
+        }
+        float[] newArray = ArrayUtils.newUnpaddedFloatArray(growSize(currentSize));
+        System.arraycopy(array, 0, newArray, 0, index);
+        newArray[index] = element;
+        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        return newArray;
+    }
+	
 	/** 
 	 *在数组中的指定索引处删除一个元素
 	 * @param array要删除元素的数组，不得为空
@@ -176,6 +191,14 @@ public final class GrowingArrayUtils
 		assert currentSize <= array.length;
 		System.arraycopy(array,index+1,array,index,currentSize-index-1);
 		array[currentSize-1] = false;
+		return array;
+	}
+	
+	public static float[] remove(float[] array, int currentSize, int index)
+	{
+		assert currentSize <= array.length;
+		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = 0;
 		return array;
 	}
 	

@@ -29,14 +29,18 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	//记录属性
 	private int lineCount;
 	private float maxWidth;
+	private int mBlockSize;
+	
+	private int AverageLine;
 	private float cursorWidth;
 	private float lineSpacing;
 	private float scaleLayout;
 
 	//每个文本块，每个块的行数，每个块的宽度
 	private EditableList mText;
-	private List<Integer> mLines;
-	private List<Float> mWidths;
+	private int[] mLines;
+	private int[] mStartLines;
+	private float[] mWidths;
 	
 
 	public BlockLayout(EditableList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
@@ -44,8 +48,8 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 		super(text,paint,width,align,spacingmult,spacingadd);
 		
 		mText = text;
-		mLines = new ArrayList<>();
-		mWidths = new ArrayList<>();
+		mLines = EmptyArray.INT;
+		mWidths = EmptyArray.FLOAT;
 		int size = text.getBlockSize();
 		//测量所有文本块以初始化数据
 		for(int i=0;i<size;++i){
@@ -64,17 +68,21 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	public void onAddBlock(int i)
 	{
 		//每次添加文本块，都同步对应的行数和宽度
-		mLines.add(i,0);
-		mWidths.add(i,0f);
+		mLines = GrowingArrayUtils.insert(mLines,mBlockSize,i,0);
+		mStartLines = GrowingArrayUtils.insert(mStartLines,mBlockSize,i,0);
+		mWidths = GrowingArrayUtils.insert(mWidths,mBlockSize,i,0);
+		mBlockSize++;
 	}
 
 	@Override
 	public void onRemoveBlock(int i)
 	{
 		//每次移除文本块，都同步对应的行数和宽度
-		lineCount-=mLines.get(i);
-		mLines.remove(i);
-		mWidths.remove(i);
+		lineCount -= mLines[i];
+		mLines = GrowingArrayUtils.remove(mLines,mBlockSize,i);
+		mStartLines = GrowingArrayUtils.remove(mStartLines,mBlockSize,i);
+		mWidths = GrowingArrayUtils.remove(mWidths,mBlockSize,i);
+		mBlockSize--;
 		maxWidth = checkMaxWidth();
 	}
 
@@ -122,6 +130,20 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 		//文本块在添加时并不测量
 		measureInsertBlocksAfter(i,j,iStart,jEnd);
 	}
+
+	@Override
+	public void afterBlocksChanged(int i, int iStart)
+	{
+		refreshInvariants(i);
+	}
+	
+	private void refreshInvariants(int i)
+	{
+		for(;i<mBlockSize;++i){
+			mStartLines[i] = i==0 ? 0:mStartLines[i-1]+mLines[i-1];
+		}
+		AverageLine = lineCount/mBlockSize;
+	}
 	
 /*
 _______________________________________
@@ -157,13 +179,13 @@ _______________________________________
 			//如果出现了一个更大的宽，就记录它
 			maxWidth = width;
 		}
-		if(width>mWidths.get(id)){
-			mWidths.set(id,width);
+		if(width>mWidths[id]){
+			mWidths[id] = width;
 		}
 		if(line>0){
 			//在插入字符串后，计算增加的行
 			lineCount+=line;
-			mLines.set(id,mLines.get(id)+line);
+			mLines[id] = mLines[id]+line;
 		}
 	}
 	/* 在删除前测量指定文本块的指定范围内的文本的宽和行数，并做出删除决策 */
@@ -176,14 +198,14 @@ _______________________________________
 		{
 			float width = measureBlockWidth(id,start,end);
 			int line = cacheLine;
-			if(width>=mWidths.get(id)){
+			if(width>=mWidths[id]){
 				//如果删除字符串是当前的块的最大宽度，重新测量当前整个块
 				is = true;
 			}
 			if(line>0){
 				//在删除文本前，计算删除的行
 				lineCount-=line;    
-				mLines.set(id,mLines.get(id)-line);
+				mLines[id] = mLines[id]-line;
 			}
 		}
 		return is;
@@ -192,19 +214,19 @@ _______________________________________
 	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText)
 	{
 		float width;
-		float w = mWidths.get(id);
+		float w = mWidths[id];
 		GetChars text = mText.getBlock(id);
 		if(needMeasureAllText){
 			//如果需要全部测量
 			width = measureBlockWidth(id,0,text.length());
-			mWidths.set(id,width);
+			mWidths[id] = width;
 		}
 		else{
 			//删除文本后，两行连接为一行，测量这行的宽度
 			width = measureBlockWidth(id,start,start);
-			if(width>mWidths.get(id)){
+			if(width>mWidths[id]){
 				//如果连接成一行的文本比当前的块的最大宽度还宽，就重新设置宽度，并准备与maxWidth比较
-				mWidths.set(id,width);
+				mWidths[id] = width;
 			}
 		}
 		if(width>=maxWidth || w>=maxWidth){
@@ -283,131 +305,33 @@ _______________________________________
 _______________________________________
   
 */
-	
-	/* 寻找index所指定的文本块，并记录文本块的起始下标 */
-	private int findBlockIdForIndex(int index)
-	{
-		int size = mText.getBlockSize();
-		int start = 0;
-		int i = 0;
-		for(;i<size;++i)
-		{
-			int nowLen = mText.getBlock(i).length();
-			if(start+nowLen>=index){
-				break;
-			}
-			start+=nowLen;
-		}
-		cacheLen = start;
-		return i;
-	}
-	/* 寻找line所指定的文本块，并记录文本块的起始行 */
-	private int findBlockIdForLine(int line)
-	{
-		int size = mText.getBlockSize();
-		int start = 0;
-		int i = 0;
-		for(;i<size;++i)
-		{
-			int nowLine = mLines.get(i);
-			if(start+nowLine>=line){
-				break;
-			}
-			start+=nowLine;
-		}
-		cacheLine = start;
-		return i;
-	}
-	/* 获取指定块的起始行 */
-	private int getBlockStartLine(int id)
-	{
-		int line = 0;
-		for(int i=0;i<id;++i){
-			line+= mLines.get(i);
-		}
-		return line;
-	}
-	/* 获取指定块的起始下标 */
-	private int getBlockStartIndex(int id)
-	{
-		int line = 0;
-		for(int i=0;i<id;++i){
-			line+= mText.getBlock(i).length();
-		}
-		return line;
-	}
-	/* 移动到index指定的块，移动完成后，会设置cacheLine, cacheLen, cacheId */
-	private void moveToIndexBlock(int index)
-	{
-		int i, size = mText.getBlockSize();
-		int startIndex = 0,startLine = 0;
-		CharSequence text = null;
 
-		for(i=0;i<size;++i)
-		{
-			text = mText.getBlock(i);
-			int nowLen = text.length();
-			int nowLine = mLines.get(i);
-			if(startIndex+nowLen>=index){
-				break;
-			}
-			startIndex+=nowLen;
-			startLine+=nowLine;
-		}
-		cacheId = i;
-		cacheLen = startIndex;
-		cacheLine = startLine;
-	}
-	/* 移动到line指定的块，移动完成后，会设置cacheLine, cacheLen, cacheId */
-	private void moveToLineBlock(int line)
+    /* 寻找行数所在的文本块 */
+    public int findBlockIdForLine(int line)
 	{
-		int i, size = mText.getBlockSize();
-		int startIndex = 0,startLine = 0;
-		CharSequence text = null;
-
-		for(i=0;i<size;++i)
-		{
-			text = mText.getBlock(i);
-			int nowLen = text.length();
-			int nowLine = mLines.get(i);
-			if(startLine+nowLine>=line){
-				break;
-			}
-			startIndex+=nowLen;
-			startLine+=nowLine;
+		int id = line/AverageLine;
+		if(id>mBlockSize-1){
+			id = mBlockSize-1;
 		}
-		cacheId = i;
-		cacheLen = startIndex;
-		cacheLine = startLine;
-	}
-	/* 移动到id指定的块，移动完成后，会设置cacheLine, cacheLen, cacheId */
-	private void moveToIdBlock(int id)
-	{
-		int i;
-		int startIndex = 0,startLine = 0;
-		CharSequence text = null;
+		int nowLine = mStartLines[id];
 
-		for(i=0;i<id;++i)
-		{
-			text = mText.getBlock(i);
-			int nowLen = text.length();
-			int nowLine = mLines.get(i);
-			startIndex+=nowLen;
-			startLine+=nowLine;
+		if(nowLine<line){
+			for(;id<mBlockSize && mStartLines[id]+mLines[id]<line;++id){}
 		}
-		cacheId = i;
-		cacheLen = startIndex;
-		cacheLine = startLine;
+		else if(nowLine>line){
+			for(;id>-1 && mStartLines[id]>line;--id){}
+		}
+		return id;
 	}
 	
 	/* 检查最大的宽度 */
-	private float checkMaxWidth()
+	public float checkMaxWidth()
 	{
 		int j;
 		float width = 0;
-		for(j=mWidths.size()-1;j>=0;--j)
+		for(j=mBlockSize-1;j>=0;--j)
 		{
-			float w = mWidths.get(j);
+			float w = mWidths[j];
 			if(w>width){
 				width = w;
 			}
@@ -451,13 +375,11 @@ _______________________________________
 	public int getLineStart(int p1)
 	{
 		//获取第p1个'\n'所在的块
-		moveToLineBlock(p1);
-		int id = cacheId;
-		int startLine = cacheLine;
-		int startIndex = cacheLen;
-
+		int id = findBlockIdForLine(p1);
+		int startLine = mStartLines[id];
+		int startIndex = mText.getBlockStartIndex(id);
 		int toLine = p1-startLine;
-		int hasLine = mLines.get(id);
+		int hasLine = mLines[id];
 
 		//寻找剩余的行数的位置
 		GetChars str = mText.getBlock(id);
@@ -491,11 +413,9 @@ _______________________________________
 	@Override
 	public int getLineForOffset(int offset)
 	{
-		moveToIndexBlock(offset);
-		int id = cacheId;
-		int startLine = cacheLine;
-		int startIndex = cacheLen;
-
+		int id = mText.findBlockIdForIndex(offset);
+		int startLine = mStartLines[id];
+		int startIndex = mText.getBlockStartIndex(id);
 		GetChars text = mText.getBlock(id);
 		startLine+= Count(FN,text,0,offset-startIndex);
 		return startLine;
@@ -652,7 +572,7 @@ _______________________________________
 	@Override
 	public float getPrimaryHorizontal(int offset)
 	{
-		CharSequence text = getText();
+		CharSequence text = mText;
 		int start = tryLine_Start(text,offset);
 		return measureText(text,start,offset,getPaint());
 	}
@@ -691,13 +611,12 @@ _______________________________________
 */
 
 	/* 获取光标坐标 */
-	final public void getCursorPos(int offset,pos pos)
+	final public void getCursorPos(int offset, pos pos)
 	{  
 	    //找到index所指定的块
-		moveToIndexBlock(offset);
-		int id = cacheId;
-		int startLine = cacheLine;
-		int startIndex = cacheLen;
+		int id = mText.findBlockIdForIndex(offset);
+		int startLine = mStartLines[id];
+		int startIndex = mText.getBlockStartIndex(id);
 		GetChars text = mText.getBlock(id);
 
 		//我们仍需要去获取全部文本去测量宽，但是只测量到offset的上一行，然后我们计算它们之间的宽

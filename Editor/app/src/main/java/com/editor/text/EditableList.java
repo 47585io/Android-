@@ -79,10 +79,11 @@ public class EditableList extends Object implements Editable
 	/* 移除文本块 */
 	private void removeBlock(int i)
 	{
-		replaceSpan(i,0,mBlocks[i].length(),"",0,0);
+		Editable block = mBlocks[i];
+		replaceSpan(i,0,block.length(),"",0,0);
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
-		mIndexOfBlocks.remove(i);
+		mIndexOfBlocks.remove(block);
 		mBlockSize--;
 		sendBlockRemoved(i);
 	}
@@ -202,8 +203,9 @@ public class EditableList extends Object implements Editable
 			correctSpan(spans[i]);
 		}
 		
-		//最后统计长度，并调用文本监视器的方法
+		//最后统计长度，并调用文本和文本块监视器的方法
 		mLength += -before+after;
+		sendAfterBlocksChanged(i,start);
 		sendTextChanged(st,before,after);
 		sendAfterTextChanged();
 		return this;
@@ -688,6 +690,8 @@ public class EditableList extends Object implements Editable
 		public void onBlocksDeleteAfter(int i, int j, int iStart, int jEnd)
 		
 		public void onBlocksInsertAfter(int i, int j, int iStart, int jEnd)
+		
+		public void afterBlocksChanged(int i, int iStart)
 	}
 	
 	/* 发送文本块事件 */
@@ -714,6 +718,11 @@ public class EditableList extends Object implements Editable
 	private void sendBlocksInsertAfter(int i, int j, int iStart, int jEnd){
 		if(mBlockListener!=null){
 			mBlockListener.onBlocksInsertAfter(i,j,iStart,jEnd);
+		}
+	}
+	private void sendAfterBlocksChanged(int i, int iStart){
+		if(mBlockListener!=null){
+			mBlockListener.afterBlocksChanged(i,iStart);
 		}
 	}
 	
