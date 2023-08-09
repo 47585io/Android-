@@ -1183,7 +1183,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//我更愿意称nextSpanTransitionRec是二分查找法的升级版，原二分查找法是找数组中指定的值，这个函数就是在指定范围内找数组中的值
 	//注意，每个节点包含st和en，虽然mSpanStarts可以这样找，但mSpanEnds是未预料的，因此无论如何仍要遍历所有节点
 	
-	//可以理解为它就是将数组分为一个个的二分区间，然后从最大的区间开始，遍历之下的区间
+	//可以理解为它就是将数组分为一个个的二分范围，然后从最大的范围开始，遍历之下的范围(及范围内的节点)
 	//由于先遍历左子节点，再遍历右子节点，并且是先分下去，然后返回，遍历顺序实际是按数组顺序进行的
 	/*  
 	  例如一列数 0，1，2，3，4，5，6
@@ -1537,14 +1537,14 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private int mGapLength; //空闲间隙的长度
   
 	//用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
-	//mSpanStarts是最重要的，其总是正序排列，而节点的最大区间是用mSpanMax表示的
+	//mSpanStarts是最重要的，其总是正序排列，而节点之下的最大区间是用mSpanMax表示的
 	//虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
 	//另外二叉树的顺序是从mSpanCount/2这个下标开始二分得到的
 	
 	private Object[] mSpans; //存储每个节点所代表的span
     private int[] mSpanStarts; //存储每个节点在文本中的起始位置
     private int[] mSpanEnds; //存储每个节点在文本中的末尾位置
-    private int[] mSpanMax;  //存储此节点及其子节点最大的范围
+    private int[] mSpanMax;  //存储此节点及其子节点最大的范围(也就是最大的mSpanEnd)
     private int[] mSpanFlags; //存储每个节点的flags
     private int[] mSpanOrder;  //存储节点插入的顺序
     

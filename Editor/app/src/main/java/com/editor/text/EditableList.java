@@ -352,7 +352,7 @@ public class EditableList extends Object implements Editable
 					continue;
 				}
 				
-				if(blocks.indexOf(block)!=-1){
+				if(blocks.contains(block)){
 					//相同的文本块不用再次放入
 					continue;
 				}
