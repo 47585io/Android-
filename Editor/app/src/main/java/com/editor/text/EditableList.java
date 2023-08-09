@@ -44,7 +44,7 @@ public class EditableList extends Object implements Editable
 		mBlockStarts = EmptyArray.INT;
 		mIndexOfBlocks = new IdentityHashMap<>();
 		mSpanInBlocks = new IdentityHashMap<>();
-		
+
 		dispatchTextBlock(0,text,start,end);
 		refreshInvariants(0);
 		mLength = end-start;
@@ -471,35 +471,6 @@ public class EditableList extends Object implements Editable
 	}
 
 	@Override
-	public void setFilters(InputFilter[] p1){
-		mFilters = p1;
-	}
-	@Override
-	public InputFilter[] getFilters(){
-		return mFilters;
-	}
-
-	private int getChars;
-	
-	@Override
-	public void getChars(int start, int end, final char[] arr, final int index)
-	{
-		//收集范围内所有文本块的字符，存储到arr中
-		getChars = 0;
-		Do d = new Do()
-		{
-			@Override
-			public void dothing(int id, int start, int end)
-			{
-				mBlocks[id].getChars(start,end,arr,index+getChars);
-				getChars+=end-start;
-				//累计已经获取的字符数，便于计算下块的字符在arr的起始获取位置
-			}
-		};
-		DoThing(start,end,d);
-	}
-
-	@Override
 	public void setSpan(final Object span, int start, int end, final int flag)
 	{
 		if(mSpanInBlocks.get(span)!=null){
@@ -542,7 +513,7 @@ public class EditableList extends Object implements Editable
 	public <T extends Object> T[] getSpans(int start, int end, final Class<T> type)
 	{
 		//收集范围内所有文本块的span，并不包含重复的span
-		final Set<T> spanSet = new LinkedHashSet<>();
+		final Set<T> spanSet = new TreeSet<>();
 		Do d = new Do()
 		{
 			@Override
@@ -619,6 +590,26 @@ public class EditableList extends Object implements Editable
 		return mBlocks[i].charAt(p1-start);
 	}
 
+	private int getChars;
+
+	@Override
+	public void getChars(int start, int end, final char[] arr, final int index)
+	{
+		//收集范围内所有文本块的字符，存储到arr中
+		getChars = 0;
+		Do d = new Do()
+		{
+			@Override
+			public void dothing(int id, int start, int end)
+			{
+				mBlocks[id].getChars(start,end,arr,index+getChars);
+				getChars+=end-start;
+				//累计已经获取的字符数，便于计算下块的字符在arr的起始获取位置
+			}
+		};
+		DoThing(start,end,d);
+	}
+	
 	@Override
 	public CharSequence subSequence(int start, int end)
 	{
@@ -636,17 +627,30 @@ public class EditableList extends Object implements Editable
 		DoThing(start,end,d);
 		return b;
 	}
+	
+	public String subString(int start, int end)
+	{ 
+		char[] buf = new char[end - start];
+        getChars(start, end, buf, 0);
+        return new String(buf);
+	}
 
 	@Override
 	public String toString()
 	{
-		//累计所有文本块的字符串
-		StringBuilder builder = new StringBuilder();
-		int size = mBlockSize;
-		for(int i = 0;i<size;++i){
-			builder.append(mBlocks[i]);
-		}
-		return builder.toString();
+		int len = length();
+        char[] buf = new char[len];
+        getChars(0, len, buf, 0);
+        return new String(buf);
+	}
+
+	@Override
+	public void setFilters(InputFilter[] p1){
+		mFilters = p1;
+	}
+	@Override
+	public InputFilter[] getFilters(){
+		return mFilters;
 	}
 	
 	

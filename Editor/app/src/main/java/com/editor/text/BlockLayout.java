@@ -23,7 +23,7 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	protected pos tmp = new pos(), tmp2 = new pos();
 	protected Paint.FontMetrics font = new Paint.FontMetrics();
 	
-	private int cacheLine, cacheLen, cacheId;
+	private int cacheLine;
 	private boolean isStart,isEnd;
 
 	//记录属性
@@ -31,7 +31,6 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	private float maxWidth;
 	private int mBlockSize;
 	
-	private int AverageLine;
 	private float cursorWidth;
 	private float lineSpacing;
 	private float scaleLayout;
@@ -134,15 +133,10 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void afterBlocksChanged(int i, int iStart)
 	{
-		refreshInvariants(i);
-	}
-	
-	private void refreshInvariants(int i)
-	{
+		//在本次文本块变化后，需要刷新数据
 		for(;i<mBlockSize;++i){
 			mStartLines[i] = i==0 ? 0:mStartLines[i-1]+mLines[i-1];
 		}
-		AverageLine = lineCount/mBlockSize;
 	}
 	
 /*
@@ -309,7 +303,7 @@ _______________________________________
     /* 寻找行数所在的文本块 */
     public int findBlockIdForLine(int line)
 	{
-		int id = line/AverageLine;
+		int id = line/(lineCount/mBlockSize);
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
 		}

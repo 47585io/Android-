@@ -82,9 +82,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     }
 	
 	//编辑器通常会在连续的光标位置插入字符，因此为了提升文本插入效率，使用Gap Buffer(间隙缓冲区)
-	//Gap缓冲区使用GapStart和GapLenght表示文本数组中空闲的间隙位置，当有文本插入间隙时，不用将整个数组扩展，而是将指针偏移缩小间隙缓冲区
-	//为了达到这种效果，每次插入新的字符，就将Gap缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
-	//Gap缓冲区中的内容总是无效的，它不被计入总文本之中，若Gap缓冲区长度不足，需要进行扩展
+	//间隙缓冲区使用GapStart和GapLenght表示文本数组中空闲的间隙位置，当有文本插入间隙时，不用将整个数组扩展，而是将指针偏移缩小间隙缓冲区
+	//为了达到这种效果，每次插入新的字符，就将间隙缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
+	//间隙缓冲区中的内容总是无效的，它不被计入总文本之中(总文本实际上是处于间隙缓冲区之前和之后的文本)，若间隙缓冲区长度不足，需要进行扩展
 
     /**返回文本中指定偏移量处的字符*/
     public char charAt(int where) 
@@ -95,7 +95,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         } else if (where >= len) {
             throw new IndexOutOfBoundsException("charAt: " + where + " >= length " + len);
         }
-		//在间隙缓冲区之后的字符的真实位置总是where + mGapLength
+		//在间隙缓冲区之后的字符的真实位置总是加上一个间隙缓冲区长度
         if (where >= mGapStart)
             return mText[where + mGapLength];
         else
