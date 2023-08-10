@@ -8,8 +8,8 @@ public class ArrayUtils
 	private static final int ALIGNMENT_AMOUNT = 8;
 	
 	/* 创建一个新的指定元素个数的数组，可能比size更大，但这会利用空闲的空间 */
-	public static<T> T[] newUnpaddedArray(Class<T> type, int size){
-		return (T[])Array.newInstance(type,getAlignmentMinimumSize(type,size));
+	public static<T> T[] newUnpaddedArray(Class<T> kind, int size){
+		return (T[])Array.newInstance(kind,getAlignmentMinimumSize(kind,size));
 	}
 	
 	public static boolean[] newUnpaddedBooleanArray(int size){

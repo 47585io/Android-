@@ -23,7 +23,7 @@ public class EditableList extends Object implements Editable
 	private int mTextWatcherDepth;
 	
 	private int MaxCount;
-	private static final int Default_MaxCount = 100;
+	private static final int Default_MaxCount = 400;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -115,16 +115,19 @@ public class EditableList extends Object implements Editable
 	{
 		//找到临近的位置，然后从此处开始
 		int id = index/MaxCount;
+		if(id<0){
+			id=0;
+		}
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
 		}
 		int nowIndex = mBlockStarts[id];
 
 		if(nowIndex<index){
-			for(;id<mBlockSize && mBlockStarts[id]+mBlocks[id].length()<index;++id){}
+			for(;id<mBlockSize-1 && mBlockStarts[id+1]<index;++id){}
 		}
 		else if(nowIndex>index){
-			for(;id>-1 && mBlockStarts[id]>index;--id){}
+			for(;id>0 && mBlockStarts[id]>index;--id){}
 		}
 		return id;
 	}
@@ -199,8 +202,8 @@ public class EditableList extends Object implements Editable
 		//在修正范围前必须刷新数据
 		refreshInvariants(i);
 		//遍历所有的span，修正它们绑定的文本块，并修正它们在文本块中的范围
-		for(i=0;i<spans.length;++i){
-			correctSpan(spans[i]);
+		for(j=0;j<spans.length;++j){
+			correctSpan(spans[j]);
 		}
 		
 		//最后统计长度，并调用文本和文本块监视器的方法
@@ -325,11 +328,14 @@ public class EditableList extends Object implements Editable
 				if(s>=start && e<=end)
 				{
 					List<Editable> blocks = mSpanInBlocks.get(span);
-					if(blocks.size()==1){
-						//如果span只在这一个文本块中，可以直接移除span
-						mSpanInBlocks.remove(span);
-					}else{
-				    	blocks.remove(block);
+					if(blocks!=null)
+					{
+						if(blocks.size()==1){
+							//如果span只在这一个文本块中，可以直接移除span
+							mSpanInBlocks.remove(span);
+						}else{
+							blocks.remove(block);
+						}
 					}
 				}
 			}
@@ -383,10 +389,10 @@ public class EditableList extends Object implements Editable
 	private void correctSpan(Object span)
 	{
 		List<Editable> blocks = mSpanInBlocks.get(span);
-		int size = blocks.size();	
 		//如果span绑定了多个文本块
-		if(blocks!=null && size>1)
+		if(blocks!=null && blocks.size()>1)
 		{
+			int size = blocks.size();	
 			//先修正span绑定的文本块，使它们连续排列
 			for(int j=0;j<size-1;++j)
 			{
@@ -471,7 +477,7 @@ public class EditableList extends Object implements Editable
 	}
 
 	@Override
-	public void setSpan(final Object span, int start, int end, final int flag)
+	public void setSpan(final Object span, int start, int end, final int flags)
 	{
 		if(mSpanInBlocks.get(span)!=null){
 			//如果已有这个span，先移除它，无论如何再添加一个新的
@@ -487,7 +493,7 @@ public class EditableList extends Object implements Editable
 			public void dothing(int id, int start, int end)
 			{
 				Editable editor = mBlocks[id];
-				editor.setSpan(span,start,end,flag);
+				editor.setSpan(span,start,end,flags);
 				editors.add(editor);
 			}
 		};
@@ -499,27 +505,30 @@ public class EditableList extends Object implements Editable
 	{
 		//移除span与editors的绑定，并将span从这些文本块中移除
 		List<Editable> blocks = mSpanInBlocks.remove(p1);
-		int size = blocks.size();
-		for(int i=0;i<size;++i)
+		if(blocks!=null)
 		{
-			Editable block = blocks.get(i);
-			if(block!=null){
-				block.removeSpan(p1);
+			int size = blocks.size();
+			for(int i=0;i<size;++i)
+			{
+				Editable block = blocks.get(i);
+				if(block!=null){
+					block.removeSpan(p1);
+				}
 			}
 		}
 	}
 
 	@Override
-	public <T extends Object> T[] getSpans(int start, int end, final Class<T> type)
+	public <T extends Object> T[] getSpans(int start, int end, final Class<T> kind)
 	{
 		//收集范围内所有文本块的span，并不包含重复的span
-		final Set<T> spanSet = new TreeSet<>();
+		final Set<T> spanSet = new HashSet<>();
 		Do d = new Do()
 		{
 			@Override
 			public void dothing(int id, int start, int end)
 			{
-				T[] spans = mBlocks[id].getSpans(start,end,type);
+				T[] spans = mBlocks[id].getSpans(start,end,kind);
 				for(int i=0;i<spans.length;++i){
 					spanSet.add(spans[i]);
 				}
@@ -527,7 +536,7 @@ public class EditableList extends Object implements Editable
 		};
 		DoThing(start,end,d);
 		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
-		T[] spans = (T[]) Array.newInstance(type,spanSet.size());
+		T[] spans = (T[]) Array.newInstance(kind,spanSet.size());
 		spanSet.toArray(spans);
 		return spans;
 	}
@@ -538,7 +547,11 @@ public class EditableList extends Object implements Editable
 		//在设置span后，span绑定的所有文本块正序排列
 		//即使replace后，所有文本块仍正序排列
 		//获取span所绑定的第一个文本块，然后获取文本块的起始位置，并附加span在此文本块的起始位置
-		Editable editor = mSpanInBlocks.get(p1).get(0);
+		List<Editable> editors = mSpanInBlocks.get(p1);
+		if(editors==null){
+			return -1;
+		}
+		Editable editor = editors.get(0);
 		int id = mIndexOfBlocks.get(editor);
 		int start = editor.getSpanStart(p1);
 		return mBlockStarts[id]+start;
@@ -549,6 +562,9 @@ public class EditableList extends Object implements Editable
 	{
 		//获取span所绑定的最后一个文本块，然后获取文本块的起始位置，并附加span在此文本块的末尾位置
 		List<Editable> editors = mSpanInBlocks.get(p1);
+		if(editors==null){
+			return -1;
+		}
 		Editable editor = editors.get(editors.size()-1);
 		int id = mIndexOfBlocks.get(editor);
 		int end = editor.getSpanEnd(p1);
@@ -556,18 +572,23 @@ public class EditableList extends Object implements Editable
 	}
 
 	@Override
-	public int getSpanFlags(Object p1){
-		return mSpanInBlocks.get(p1).get(0).getSpanFlags(p1);
+	public int getSpanFlags(Object p1)
+	{
+		List<Editable> editors = mSpanInBlocks.get(p1);
+		if(editors==null){
+			return -1;
+		}
+		return editors.get(0).getSpanFlags(p1);
 	}
 
 	@Override
-	public int nextSpanTransition(int start, int end, Class type)
+	public int nextSpanTransition(int start, int end, Class kind)
 	{
 		//先走到start指定的文本块，并获取文本块start后的span位置
 		int i = findBlockIdForIndex(start);
 		Editable editor = mBlocks[i];
 		int blockStart = mBlockStarts[i];
-		int next = editor.nextSpanTransition(start-blockStart,end-blockStart,type);
+		int next = editor.nextSpanTransition(start-blockStart,end-blockStart,kind);
 		return next+blockStart;
 	}
 

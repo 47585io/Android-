@@ -48,13 +48,16 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 		
 		mText = text;
 		mLines = EmptyArray.INT;
+		mStartLines = EmptyArray.INT;
 		mWidths = EmptyArray.FLOAT;
+		
 		int size = text.getBlockSize();
 		//测量所有文本块以初始化数据
 		for(int i=0;i<size;++i){
 			onAddBlock(i);
 			measureInsertBlockAfter(i,0,text.getBlock(i).length());
 		}
+		afterBlocksChanged(0,0);
 		
 		//等待后续的测量
 		text.setBlockListener(this);
@@ -88,7 +91,7 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onBlocksDeleteBefore(int i, int j, int iStart, int jEnd)
 	{
-		//在一段连续文本被删除前，测量要删除的起始文本和末尾文本块
+		//在一段连续文本被删除前，测量要删除的起始文本块和末尾文本块
 		//若文本被全删，不测量，而是等待移除文本块时同步
 		if(i==j){
 			//只有一个文本块
@@ -125,9 +128,20 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	@Override
 	public void onBlocksInsertAfter(int i, int j, int iStart, int jEnd)
 	{
-		//在一段连续文本被插入后，测量它们
-		//文本块在添加时并不测量
-		measureInsertBlocksAfter(i,j,iStart,jEnd);
+		//在一段连续文本被插入后，测量它们，文本块在添加时并不测量
+		if(i==j){
+			//只插入了一个
+			measureInsertBlockAfter(i,iStart,jEnd);
+		}
+		else
+		{
+			//插入的文本跨越了多个文本块，我们应该全部测量
+			measureInsertBlockAfter(i,iStart,mText.getBlock(i).length());
+			for(++i;i<=j;++i){
+				measureInsertBlockAfter(i,0,mText.getBlock(i).length());
+			}
+			measureInsertBlockAfter(j,0,jEnd);
+		}
 	}
 
 	@Override
@@ -146,24 +160,7 @@ _______________________________________
 _______________________________________
 
 */
-	
-	/* 在插入后测量指定范围内的文本和文本块 */
-	private void measureInsertBlocksAfter(int i, int j, int iStart, int jEnd)
-	{
-		if(i==j){
-			//只插入了一个
-			measureInsertBlockAfter(i,iStart,jEnd);
-		}
-		else
-		{
-			//插入的文本跨越了多个文本块，我们应该全部测量
-			measureInsertBlockAfter(i,iStart,mText.getBlock(i).length());
-			for(++i;i<=j;++i){
-				measureInsertBlockAfter(i,0,mText.getBlock(i).length());
-			}
-			measureInsertBlockAfter(j,0,jEnd);
-		}
-	}
+
 	/* 在插入后测量指定文本块的指定范围内的文本的宽和行数，并做出插入决策 */
 	private void measureInsertBlockAfter(int id, int start, int end)
 	{
@@ -304,16 +301,19 @@ _______________________________________
     public int findBlockIdForLine(int line)
 	{
 		int id = line/(lineCount/mBlockSize);
+		if(id<0){
+			id = 0;
+		}
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
 		}
 		int nowLine = mStartLines[id];
 
 		if(nowLine<line){
-			for(;id<mBlockSize && mStartLines[id]+mLines[id]<line;++id){}
+			for(;id<mBlockSize-1 && mStartLines[id+1]<line;++id){}
 		}
 		else if(nowLine>line){
-			for(;id>-1 && mStartLines[id]>line;--id){}
+			for(;id>0 && mStartLines[id]>line;--id){}
 		}
 		return id;
 	}

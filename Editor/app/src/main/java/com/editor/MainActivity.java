@@ -9,20 +9,28 @@ import java.io.*;
 import android.text.*;
 import android.text.style.*;
 import android.widget.*;
+import java.util.*;
 
-public class MainActivity extends Activity 
+public class MainActivity extends Activity implements Runnable
 {
+	
+	private static final Handler mHamdler = new Handler();
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
-		//getWindow().setBackgroundDrawable(null);
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-        loadFileInThread("/storage/emulated/0/Linux/2.java");
+        mHamdler.postDelayed(this,50);
     }
+
+	@Override
+	public void run()
+	{
+		loadFileInThread("/storage/emulated/0/Linux/1.java");
+	}
 	
 	public void loadFileInThread(String path)
 	{
@@ -33,9 +41,12 @@ public class MainActivity extends Activity
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		
+		Random rand = new Random();
 		Editable editor = E.getText();
-		editor.setSpan(new BackgroundColorSpan(0xffcccccc),0,editor.length(),0);
-		E.scrollTo(0,(int)E.getVScrollRange());
+		for(int i=0;i<20000;++i){
+			editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+1,0);
+		}
+		//E.scrollTo(0,(int)E.getVScrollRange());
 	}
 	
 }

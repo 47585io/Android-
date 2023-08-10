@@ -4,7 +4,8 @@ import java.io.*;
 
 public class myReader
 {
-	public static int GC_Meomry = 5*1024*1024;
+	
+	private static final int GC_Meomry = 5*1024*1024;
 	
 	private FileInputStream reader;
 	private File f;
