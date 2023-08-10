@@ -812,17 +812,17 @@ public class Edit extends View implements TextWatcher
 			while(start<en)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = ArrayUtils.indexOf(chars,FN,start);
+				end = ArrayUtils.indexOf(array,FN,start);
 				if(end>=en || end<0)
 				{
 					//start~end之间的内容不会换行，画完就走
-					canvas.drawText(chars,start,en-start,x,y,paint);		
+					canvas.drawText(array,start,en-start,x,y,paint);		
 					break;
 				}
 				else
 				{
 					//start~end之间的内容会换行，之后继续下行
-					canvas.drawText(chars,start,end-start,x,y,paint);
+					canvas.drawText(array,start,end-start,x,y,paint);
 					x = leftPadding;
 					y += lineHeight;
 				}
@@ -839,18 +839,18 @@ public class Edit extends View implements TextWatcher
 			while(start<en)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
-				end = ArrayUtils.indexOf(chars,FN,start);
+				end = ArrayUtils.indexOf(array,FN,start);
 				if(end>=en || end<0)
 				{
 					//start~end之间的内容不会换行，画完就走
-					float add = measureText(chars,start,en,paint);
+					float add = measureText(array,start,en,paint);
 					canvas.drawRect(x,y,x+add,y+lineHeight,paint);
 					break;	
 				}
 				else
 				{	
 				    //start~end之间的内容会换行，之后继续下行
-					float add = measureText(chars,start,end,paint);
+					float add = measureText(array,start,end,paint);
 				    canvas.drawRect(x,y,x+add,y+lineHeight,paint);
 					x = leftPadding;
 					y += lineHeight;
