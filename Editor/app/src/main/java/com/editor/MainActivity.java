@@ -14,7 +14,7 @@ import java.util.*;
 public class MainActivity extends Activity implements Runnable
 {
 	
-	private static final Handler mHamdler = new Handler();
+	public static Handler mHamdler;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -30,6 +30,7 @@ public class MainActivity extends Activity implements Runnable
 	public void run()
 	{
 		loadFileInThread("/storage/emulated/0/Linux/1.java");
+		mHamdler = new Handler();
 	}
 	
 	public void loadFileInThread(String path)
@@ -43,8 +44,8 @@ public class MainActivity extends Activity implements Runnable
 		
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i=0;i<20000;++i){
-			editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+1,0);
+		for(int i=0;i<10000;++i){
+			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,0);
 		}
 		//E.scrollTo(0,(int)E.getVScrollRange());
 	}

@@ -7,22 +7,22 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-/** 这是内容和标记都可以更改的文本类 */
-public class SpannableStringBuilderTemplete implements CharSequence, GetChars, Spannable, Editable, Appendable 
+/** 这是内容和标记都可以更改的文本类，但删除了事件发送，修正flags这些拖效率的功能 */
+public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable 
 {
-	
+
 	private final static String TAG = "SpannableStringBuilderTemplete";
-	
+
 	/** 创建一个包含空内容的新SpannableStringBuilder */
-	public SpannableStringBuilderTemplete() {
+	public SpannableStringBuilderLite() {
 		this("");
 	}
 	/** 创建一个包含指定文本的新SpannableStringBuilder，包括其范围(如果有) */
-    public SpannableStringBuilderTemplete(CharSequence text) {
+    public SpannableStringBuilderLite(CharSequence text) {
         this(text, 0, text.length());
     }
 	/** 创建一个新的SpannableStringBuilder，其中包含指定文本的指定部分，包括其范围(如果有) */
-    public SpannableStringBuilderTemplete(CharSequence text, int start, int end) 
+    public SpannableStringBuilderLite(CharSequence text, int start, int end) 
 	{
         int srclen = end - start;
         if (srclen < 0) throw new StringIndexOutOfBoundsException();
@@ -31,7 +31,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mGapStart = srclen;
         mGapLength = mText.length - srclen;
         TextUtils.getChars(text, start, end, mText, 0);
-  
+
 		mSpanCount = 0;
         mSpanInsertCount = 0;
         mSpans = EmptyArray.OBJECT;
@@ -40,7 +40,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mSpanFlags = EmptyArray.INT;
         mSpanMax = EmptyArray.INT;
         mSpanOrder = EmptyArray.INT;
-		
+
         if (text instanceof Spanned) 
 		{
 			//如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
@@ -51,12 +51,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 if (spans[i] instanceof NoCopySpan) {
                     continue;
                 }
-				
+
 				//将span在原字符串中较start的偏移量获取，并偏移到自身中的位置
                 int st = sp.getSpanStart(spans[i]) - start;
                 int en = sp.getSpanEnd(spans[i]) - start;
                 int fl = sp.getSpanFlags(spans[i]);
-               
+
 				//范围不可超过自己的大小
 				if (st < 0)
                     st = 0;
@@ -80,7 +80,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             return new SpannableStringBuilderTemplete(source);
         }
     }
-	
+
 	//编辑器通常会在连续的光标位置插入字符，因此为了提升文本插入效率，使用Gap Buffer(间隙缓冲区)
 	//间隙缓冲区使用GapStart和GapLenght表示文本数组中空闲的间隙位置，当有文本插入间隙时，不用将整个数组扩展，而是将指针偏移缩小间隙缓冲区
 	//为了达到这种效果，每次插入新的字符，就将间隙缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
@@ -106,12 +106,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     public int length() {
         return mText.length - mGapLength;
     }
-	
+
 	/*如果此偏移量在间隙缓冲区之后，那么它的原本位置应减去间隙缓冲区长度*/
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
-	
+
 	/*修改数组的长度的同时修改间隙缓冲区的大小*/
 	private void resizeFor(int size) 
 	{
@@ -165,7 +165,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             int overlap = where - mGapStart;
             System.arraycopy(mText, where + mGapLength - overlap, mText, mGapStart, overlap);
         }
-		
+
         // 聪明一点(虽然赢的真的没那么大)
         if (mSpanCount != 0) 
 		{
@@ -174,7 +174,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			{
                 int start = mSpanStarts[i];
                 int end = mSpanEnds[i];
-				
+
 				//下面的代码分为两步理解
 				//先认为我们把间隙缓冲区移除了，因此在间隙缓冲区之后的span的真实位置都前移mGapLength
 				//之后又把间隙缓冲区插入到where的位置，因此在where之后的span的真实位置都后移mGapLength
@@ -187,7 +187,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
                         start += mGapLength;
                 }
-				
+
                 if (end > mGapStart)
                     end -= mGapLength;
                 if (end > where)
@@ -197,7 +197,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
                         end += mGapLength;
                 }
-				
+
                 mSpanStarts[i] = start;
                 mSpanEnds[i] = end;
             }
@@ -207,123 +207,61 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//最后才将mGapStart修改
         mGapStart = where;
     }
-	
-	public SpannableStringBuilderTemplete append(CharSequence text){
+
+	public SpannableStringBuilderLite append(CharSequence text){
         int length = length();
         return replace(length, length, text, 0, text.length());
     }
-    public SpannableStringBuilderTemplete append(CharSequence text, Object what, int flags){
+    public SpannableStringBuilderLite append(CharSequence text, Object what, int flags){
         int start = length();
         append(text);
         setSpan(what, start, length(), flags);
         return this;
     }
-    public SpannableStringBuilderTemplete append(CharSequence text, int start, int end) {
+    public SpannableStringBuilderLite append(CharSequence text, int start, int end) {
         int length = length();
         return replace(length, length, text, start, end);
     }
-    public SpannableStringBuilderTemplete append(char text) {
+    public SpannableStringBuilderLite append(char text) {
         return append(String.valueOf(text));
     }
-	
-	public SpannableStringBuilderTemplete insert(int where, CharSequence tb, int start, int end) {
+
+	public SpannableStringBuilderLite insert(int where, CharSequence tb, int start, int end) {
         return replace(where, where, tb, start, end);
     }
-    public SpannableStringBuilderTemplete insert(int where, CharSequence tb) {
+    public SpannableStringBuilderLite insert(int where, CharSequence tb) {
         return replace(where, where, tb, 0, tb.length());
     }
-    public SpannableStringBuilderTemplete delete(int start, int end) {
-        SpannableStringBuilderTemplete ret = replace(start, end, "", 0, 0);
+    public SpannableStringBuilderLite delete(int start, int end) {
+        SpannableStringBuilderLite ret = replace(start, end, "", 0, 0);
         //删除文本后，间隙缓冲区大小过大，重新调整大小
 		if (mGapLength > 2 * length())
             resizeFor(length());
         return ret; 
     }
-	public SpannableStringBuilderTemplete replace(int start, int end, CharSequence tb) {
+	public SpannableStringBuilderLite replace(int start, int end, CharSequence tb) {
         return replace(start, end, tb, 0, tb.length());
     }
-	
+
 	/** 
 	 * 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置
 	 * 若范围内设置了SpanWatcher和TextWatcher，则会连带发送事件
 	 * 若范围内设置了光标的Span，则连带改变光标位置
 	 */
-    public SpannableStringBuilderTemplete replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
+    public SpannableStringBuilderLite replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
 	{
         checkRange("replace", start, end);
-        int filtercount = mFilters.length;
-		//过滤文本
-        for (int i = 0; i < filtercount; i++) 
-		{
-            CharSequence repl = mFilters[i].filter(tb, tbstart, tbend, this, start, end);
-            if (repl != null) {
-                tb = repl;
-                tbstart = 0;
-                tbend = repl.length();
-            }
-        }
-		
         final int origLen = end - start;
         final int newLen = tbend - tbstart;
         if (origLen == 0 && newLen == 0 && !hasNonExclusiveExclusiveSpanAt(tb, tbstart)) {
             //如果tb中没有要添加的跨度(长度为0)，提前退出，以便文本观察器不会得到通知
 			return this;
         }
-        TextWatcher[] textWatchers = getSpans(start, start + origLen, TextWatcher.class);
-        sendBeforeTextChanged(textWatchers, start, origLen, newLen);
-		
-		//在文本替换过程中，尽量将光标选择保持在相同的相对位置
-		//如果replaced或replacement text length为0，则已经处理了这个
-		boolean adjustSelection = origLen != 0 && newLen != 0;
-        int selectionStart = 0;
-        int selectionEnd = 0;
-        if (adjustSelection) {
-			//获取光标的Span在文本中的起始和末尾位置
-            selectionStart = Selection.getSelectionStart(this);
-            selectionEnd = Selection.getSelectionEnd(this);
-        }
-		
 		//改变文本和span
         change(start, end, tb, tbstart, tbend);
-		
-        if (adjustSelection)
-		{
-            boolean changed = false;
-            if (selectionStart > start && selectionStart < end) 
-			{
-				//如果当前的光标位置正好在删除的文本之间，我们需要保留光标的Span
-				//光标要变化的offset是新添加文本相对于原文本的倍数
-				//原光标位置是 start + diff
-				//新光标位置是 start + diff * (newLen/origLen)
-                final long diff = selectionStart - start;
-                final int offset = Math.toIntExact(diff * newLen / origLen);
-                selectionStart = start + offset;
-                changed = true;
-                setSpan(false, Selection.SELECTION_START, selectionStart, selectionStart,
-                        Spanned.SPAN_POINT_POINT, true/*强制执行段落*/);
-            }
-            if (selectionEnd > start && selectionEnd < end) 
-			{
-                final long diff = selectionEnd - start;
-                final int offset = Math.toIntExact(diff * newLen / origLen);
-                selectionEnd = start + offset;
-                changed = true;
-                setSpan(false, Selection.SELECTION_END, selectionEnd, selectionEnd,
-                        Spanned.SPAN_POINT_POINT, true/*强制执行段落*/);
-            }
-            if (changed) {
-				//光标位置变化了，刷新
-                restoreInvariants();
-            }
-        }
-		
-        sendTextChanged(textWatchers, start, origLen, newLen);
-        sendAfterTextChanged(textWatchers);
-        // Span观察器需要在文本观察器之后调用，这可能会更新布局
-        sendToSpanWatchers(start, end, newLen - origLen);
         return this;
     }
-	
+
 	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
 	private void change(int start, int end, CharSequence cs, int csStart, int csEnd) 
 	{
@@ -331,58 +269,6 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         final int replacedLength = end - start;
         final int replacementLength = csEnd - csStart;
         final int nbNewChars = replacementLength - replacedLength;
-		boolean changed = false;
-		
-		//遍历所有的span，修正它们的flags，如果flags是SPAN_PARAGRAPH，则还会修正范围
-        for (int i = mSpanCount - 1; i >= 0; i--)
-		{
-			//获取span位置，并移动到原本的位置(而不是附加上间隙缓冲区之后的真实位置)
-            int spanStart = mSpanStarts[i];
-            if (spanStart > mGapStart){
-                spanStart -= mGapLength;
-			}
-            int spanEnd = mSpanEnds[i];
-            if (spanEnd > mGapStart){
-                spanEnd -= mGapLength;
-			}
-			
-			//如果flags是SPAN_PARAGRAPH，则还会修正范围
-            if ((mSpanFlags[i] & SPAN_PARAGRAPH) == SPAN_PARAGRAPH) 
-			{
-                int ost = spanStart;
-                int oen = spanEnd;
-                int clen = length();
-				//如果span位置在删除范围内，它需要跳至下个段落？
-                if (spanStart > start && spanStart <= end) {
-                    for (spanStart = end; spanStart < clen; spanStart++)
-                        if (spanStart > end && charAt(spanStart - 1) == '\n')
-                            break;
-                }
-                if (spanEnd > start && spanEnd <= end) {
-                    for (spanEnd = end; spanEnd < clen; spanEnd++)
-                        if (spanEnd > end && charAt(spanEnd - 1) == '\n')
-                            break;
-                }
-				//如果span的范围变化了，就重新设置它的位置，但暂时不用刷新所有span，而是等之后刷新
-                if (spanStart != ost || spanEnd != oen) {
-                    setSpan(false, mSpans[i], spanStart, spanEnd, mSpanFlags[i],
-                            true);
-                    changed = true;
-                }
-            }
-			
-			//无论怎样，都修正span的flags
-            int flags = 0;
-            if (spanStart == start) flags |= SPAN_START_AT_START;
-            else if (spanStart == end + nbNewChars) flags |= SPAN_START_AT_END;
-            if (spanEnd == start) flags |= SPAN_END_AT_START;
-            else if (spanEnd == end + nbNewChars) flags |= SPAN_END_AT_END;
-            mSpanFlags[i] |= flags;
-        }
-        if (changed) {
-			//如果span的范围变化了，需要刷新
-            restoreInvariants();
-        }
 		
 		//将间隙缓冲区移动到删除文本的末尾
         moveGapTo(end);
@@ -390,16 +276,16 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//间隙缓冲区不足以容纳溢出的文本，需要扩展间隙缓冲区
             resizeFor(mText.length + nbNewChars - mGapLength);
         }
-		
+
         final boolean textIsRemoved = replacementLength == 0;
 		//需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
         if (replacedLength > 0){ 
 		    //纯插入时不需要span移除
             while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
-				  //根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
+				//根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
             }
         }
-		
+
 		//插入文本并不需要扩展数组，仅需将间隙缓冲区缩小
 		//另一个情况是，nbNewChars是负数，说明要替换的文本太短，此时等同于扩展间隙缓冲区
 		//无论怎样，都将间隙缓冲区对齐到替换(到我之内的)文本的末尾
@@ -409,7 +295,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             new Exception("mGapLength < 1").printStackTrace();
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
 		//然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
-        
+
 		if (replacedLength > 0)
 		{ 
 		    //修正所有在删除文本范围和插入文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
@@ -419,7 +305,6 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
 			//另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
 			//即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
-			//注意，span的起始和末尾位置必然不在间隙缓冲区中
             //潜在优化:仅更新相交跨度的界限
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
             for (int i = 0; i < mSpanCount; i++)
@@ -434,7 +319,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             //潜在优化:仅在边界实际更改时刷新
             restoreInvariants();
         }
-			
+
         if (cs instanceof Spanned) 
 		{
 			//如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
@@ -447,15 +332,14 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 //span的位置不可超过截取的范围
 				if (st < csStart) st = csStart;
                 if (en > csEnd) en = csEnd;
-				
+
                 //已有的span不会重复添加
                 if (getSpanStart(spans[i]) < 0)
 				{
 					//将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
-                    int copySpanFlags = sp.getSpanFlags(spans[i]) | SPAN_ADDED;
-					//刚刚添加的span附加上SPAN_ADDED标志
+                    int copySpanFlags = sp.getSpanFlags(spans[i]);
                     setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
                 }
             }
@@ -463,7 +347,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             restoreInvariants();
         }
     }
-	
+
 	/* 在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了返回true */
 	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
 	{
@@ -494,7 +378,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return false;
     }
-	
+
 	/* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
@@ -535,116 +419,28 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return offset;
     }
-    
-	/* 在修改文本后，发送span的改变事件 */
-    private void sendToSpanWatchers(int replaceStart, int replaceEnd, int nbNewChars) 
-	{
-		//此循环仅处理修改的(非添加的)跨度
-        for (int i = 0; i < mSpanCount; i++) 
-		{
-            int spanFlags = mSpanFlags[i];
-			//刚刚添加的span不处理
-            if ((spanFlags & SPAN_ADDED) != 0) continue;
-            int spanStart = mSpanStarts[i];
-            int spanEnd = mSpanEnds[i];
 
-			if (spanStart > mGapStart) spanStart -= mGapLength;
-            if (spanEnd > mGapStart) spanEnd -= mGapLength;
-			//替换文本的末尾位置就是删除文本的末尾加上较原来增加的字符数，nbNewChars可能是负数
-            int newReplaceEnd = replaceEnd + nbNewChars;
-            boolean spanChanged = false;
-            int previousSpanStart = spanStart;
-
-            if (spanStart > newReplaceEnd) {
-				//如果spanStart在替换文本之后，旧的spanStart则应该减去新增的字符数
-                if (nbNewChars != 0) {
-                    previousSpanStart -= nbNewChars;
-                    spanChanged = true;
-                }
-            }
-			else if (spanStart >= replaceStart) {
-                //如果spanStart在替换之前已经位于替换间隔边界，则不改变
-                if ((spanStart != replaceStart ||
-					((spanFlags & SPAN_START_AT_START) != SPAN_START_AT_START)) &&
-					(spanStart != newReplaceEnd ||
-					((spanFlags & SPAN_START_AT_END) != SPAN_START_AT_END))) {
-                    //此时无法计算正确的previousSpanStart
-					//在替换之前需要保存所有先前跨度的位置
-					//使用无效的-1值来传达这将破坏broacast范围
-					spanChanged = true;
-                }
-            }
-            int previousSpanEnd = spanEnd;
-            if (spanEnd > newReplaceEnd) {
-                if (nbNewChars != 0) {
-                    previousSpanEnd -= nbNewChars;
-                    spanChanged = true;
-                }
-            } 
-			else if (spanEnd >= replaceStart) {
-                //如果span start在替换之前已经位于替换间隔边界，则不改变
-                if ((spanEnd != replaceStart ||
-					((spanFlags & SPAN_END_AT_START) != SPAN_END_AT_START)) &&
-					(spanEnd != newReplaceEnd ||
-					((spanFlags & SPAN_END_AT_END) != SPAN_END_AT_END))) {
-                    //与上面的previousSpanEnd相同
-                    spanChanged = true;
-                }
-            }
-            if (spanChanged) {
-				//发送span改变事件
-                sendSpanChanged(mSpans[i], previousSpanStart, previousSpanEnd, spanStart, spanEnd);
-            }
-            mSpanFlags[i] &= ~SPAN_START_END_MASK;
-        }
-        //此循环仅处理添加的跨度
-        for (int i = 0; i < mSpanCount; i++) 
-		{
-            int spanFlags = mSpanFlags[i];
-            if ((spanFlags & SPAN_ADDED) != 0)
-			{
-				//如果是新添加的span，处理后需要清除SPAN_ADDED标志
-                mSpanFlags[i] &= ~SPAN_ADDED;
-                int spanStart = mSpanStarts[i];
-                int spanEnd = mSpanEnds[i];
-                if (spanStart > mGapStart) spanStart -= mGapLength;
-                if (spanEnd > mGapStart) spanEnd -= mGapLength;
-				//发送span添加事件
-                sendSpanAdded(mSpans[i], spanStart, spanEnd);
-            }
-        }
-    }
-	
     public void clear() 
 	{
 		//删除所有的文本，并发送文本事件
         replace(0, length(), "", 0, 0);
         mSpanInsertCount = 0;
     }
-    
+
     public void clearSpans() 
 	{
 		//遍历所有的span并删除，每删除一个发送一次事件
-        for (int i = mSpanCount - 1; i >= 0; i--) 
-		{
-            Object what = mSpans[i];
-            int ostart = mSpanStarts[i];
-            int oend = mSpanEnds[i];
-			//span的原本位置是真实位置减去缓冲区大小
-            if (ostart > mGapStart)
-                ostart -= mGapLength;
-            if (oend > mGapStart)
-                oend -= mGapLength;
-            mSpanCount = i;
+		//只有mSpans中存储的是span的引用，因此将它置为null来释放span对象的空间，而其它的都是基本类型
+        for (int i = mSpanCount - 1; i >= 0; i--) {
             mSpans[i] = null;
-            sendSpanRemoved(what, ostart, oend);
         }
         if (mIndexOfSpan != null) {
             mIndexOfSpan.clear();
         }
+		mSpanCount = 0;
         mSpanInsertCount = 0;
     }
-    
+
     private static boolean hasNonExclusiveExclusiveSpanAt(CharSequence text, int offset) 
 	{
         if (text instanceof Spanned)
@@ -662,47 +458,20 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return false;
     }
-	
+
     /** 用指定对象标记指定范围的文本 */
     public void setSpan(Object what, int start, int end, int flags) {
         setSpan(true, what, start, end, flags, true);
     }
-	
+
 	//注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
 	//因为新增的span默认在最后，不影响前面节点的顺序，所以可以暂时不刷新
     private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforceParagraph)
 	{
         checkRange("setSpan", start, end);
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
-        if (isInvalidParagraph(start, flagsStart)) {
-            if (!enforceParagraph) {
-                //不要设置跨度
-                return;
-            }
-            throw new RuntimeException("PARAGRAPH span must start at paragraph boundary"
-									   + " (" + start + " follows " + charAt(start - 1) + ")");
-        }
         int flagsEnd = flags & END_MASK;
-        if (isInvalidParagraph(end, flagsEnd)) {
-            if (!enforceParagraph) {
-                //不要设置跨度
-                return;
-            }
-            throw new RuntimeException("PARAGRAPH span must end at paragraph boundary"
-									   + " (" + end + " follows " + charAt(end - 1) + ")");
-        }
-        //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (flagsStart == POINT && flagsEnd == MARK && start == end) {
-            if (send) {
-                Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
-            }
-			//从该类创建无效跨度时，自动忽略无效跨度。
-			//这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
-            return;
-        }
-		
-        int nstart = start;
-        int nend = end;
+  
 		//如果设置span的位置在缓冲区之后，它的真实位置应加上mGapLength
         if (start > mGapStart) {
             start += mGapLength;
@@ -716,7 +485,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             if (flagsEnd == POINT || (flagsEnd == PARAGRAPH && end == length()))
                 end += mGapLength;
         }
-		
+
         if (mIndexOfSpan != null) 
 		{
 			//如果已有该span，则修改它的范围和flags
@@ -736,12 +505,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 if (send) {
 					//是否要立刻修正index在map中的位置错误，或等待以后一并修正
                     restoreInvariants();
-                    sendSpanChanged(what, ostart, oend, nstart, nend);
                 }
                 return;
             }
         }
-		
+
 		//如果没有该span，就添加一个span
         mSpans = GrowingArrayUtils.append(mSpans, mSpanCount, what);
         mSpanStarts = GrowingArrayUtils.append(mSpanStarts, mSpanCount, start);
@@ -751,7 +519,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         invalidateIndex(mSpanCount);
         mSpanCount++;
         mSpanInsertCount++;
-     
+
 		//确保有足够的空间容纳空的内部节点
 		//这个神奇的公式计算出最小的完美二叉树的大小，可能大于mSpanCount
 		int sizeOfMax = 2 * treeRoot() + 1;
@@ -761,14 +529,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (send) {
 			//需要发送事件，则更新数据，使用原本的start和end传递事件
             restoreInvariants();
-            sendSpanAdded(what, nstart, nend);
         }
     }
-	//检查是否是无效段落
-    private boolean isInvalidParagraph(int index, int flag) {
-        return flag == PARAGRAPH && index != 0 && index != length() && charAt(index - 1) != '\n';
-    }
-	
+
 	/**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) {
         removeSpan(what, 0);
@@ -806,11 +569,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mSpans[mSpanCount] = null;
         //在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
         restoreInvariants();
-        if ((flags & Spanned.SPAN_INTERMEDIATE) == 0) {
-            sendSpanRemoved(object, start, end);
-        }
     }
-	
+
 	/**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
     public int getSpanStart(Object what) 
 	{
@@ -832,29 +592,29 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         Integer i = mIndexOfSpan.get(what);
         return i == null ? 0 : mSpanFlags[i];
     }
-	
+
     /**返回指定类型的范围的数组，这些范围与指定的文本范围重叠。
-	  种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
+	 种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
 	 */
     @SuppressWarnings("unchecked")
     public <T> T[] getSpans(int queryStart, int queryEnd, Class<T> kind) {
         return getSpans(queryStart, queryEnd, kind, true);
     }
-	
+
 	/*** 返回指定类型跨度的数组，这些范围与指定的文本范围重叠。 
-	   种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
-	   * * @param querystart 开始索引。 
-	   * @Param QueryEnd 结束索引。 
-	   * @param kind 类类型进行搜索。
-	   * @Param SortByInsertionOrder 如果为 true 结果按插入顺序排序。
-	   * @param <t> * @return 跨度数组。
-	   如果找不到结果，则为空数组。 
+	 种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
+	 * * @param querystart 开始索引。 
+	 * @Param QueryEnd 结束索引。 
+	 * @param kind 类类型进行搜索。
+	 * @Param SortByInsertionOrder 如果为 true 结果按插入顺序排序。
+	 * @param <t> * @return 跨度数组。
+	 如果找不到结果，则为空数组。 
 	 **/
     public <T> T[] getSpans(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder) 
 	{
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
-		
+
 		//统计范围内节点个数，并创建指定大小的数组
 		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {
@@ -863,11 +623,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         T[] ret = (T[]) Array.newInstance(kind, count);
         final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
         final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-		
+
 		//从根节点开始，找到范围内的所有节点
         getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
 					orderSortBuffer, 0, sortByInsertionOrder);
-       
+
 		//如果需要排序，则按插入顺序排序
 		if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
@@ -876,7 +636,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return ret;
     }
-	
+
 	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
     private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
 	{
@@ -921,20 +681,20 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return count;
     }
-	
+
     /** * 使用当前区间树节点下找到的跨度填充结果数组。 * 
-	* @param querystart 间隔查询的起始索引。 
-	* @Param QueryEnd 间隔查询的结束索引。
-	* @param kind 类类型进行搜索。
-	* @param i 当前树节点的索引。 
-	* @param ret 数组将被填充结果。
-	* @param priority buffer 记录找到的跨度优先级。
-	* @param insertionOrder 记录找到的跨度的插入顺序。
-	* @param count 找到的跨度数。
-	* @param sort flag 填充优先级和插入顺序。 
-	如果 false 则 * 具有优先级标志的跨度将在结果数组中进行排序。 
-	* @param <t> * @return 找到的跨度总数。 
-	*/
+	 * @param querystart 间隔查询的起始索引。 
+	 * @Param QueryEnd 间隔查询的结束索引。
+	 * @param kind 类类型进行搜索。
+	 * @param i 当前树节点的索引。 
+	 * @param ret 数组将被填充结果。
+	 * @param priority buffer 记录找到的跨度优先级。
+	 * @param insertionOrder 记录找到的跨度的插入顺序。
+	 * @param count 找到的跨度数。
+	 * @param sort flag 填充优先级和插入顺序。 
+	 如果 false 则 * 具有优先级标志的跨度将在结果数组中进行排序。 
+	 * @param <t> * @return 找到的跨度总数。 
+	 */
     @SuppressWarnings("unchecked")
     private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, T[] ret, int[] priority, int[] insertionOrder, int count, boolean sort)
 	{
@@ -954,7 +714,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         if (i >= mSpanCount) return count;
 		//i已经在有效元素之后，其右子节点的下标更大，因此不用找了
-		
+
         int spanStart = mSpanStarts[i];
         if (spanStart > mGapStart) {
             spanStart -= mGapLength;
@@ -1001,11 +761,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return count;
     }
-	
+
     /** 获取临时排序数组
-	* @param elementCount要返回的int[]的大小
-	* @返回一个长度至少为elementCount的int[]
-	*/
+	 * @param elementCount要返回的int[]的大小
+	 * @返回一个长度至少为elementCount的int[]
+	 */
     private static int[] obtain(final int elementCount)
 	{
         int[] result = null;
@@ -1033,11 +793,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         result = checkSortBuffer(result, elementCount);
         return result;
     }
-	
+
     /** 
-	* 回收排序数组
-	* @param buffer要回收的数组
-	*/
+	 * 回收排序数组
+	 * @param buffer要回收的数组
+	 */
     private static void recycle(int[] buffer)
 	{
         synchronized (sCachedIntBuffer)
@@ -1051,13 +811,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             }
         }
     }
-	
+
 	/** 检查数组的大小，并根据需要进行扩展
-	* @param buffer要检查的数组。
-	* @param size所需的大小。
-	* @如果当前大小大于所需大小，则返回相同的数组实例。
-	  否则，将创建并返回一个*新实例。
-	*/
+	 * @param buffer要检查的数组。
+	 * @param size所需的大小。
+	 * @如果当前大小大于所需大小，则返回相同的数组实例。
+	 否则，将创建并返回一个*新实例。
+	 */
     private static int[] checkSortBuffer(int[] buffer, int size)
 	{
         if (buffer == null || size > buffer.length) {
@@ -1065,7 +825,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return buffer;
     }
-	
+
 	//将数组表示为堆，堆的每个节点最多有两个子节点，节点从按层次从上至下，从左至右，按数组中的顺序排列
 	//将下标为0的元素作为根节点，而根节点的左右子节点下标分别为1，2，并且下层的子节点下标为3，4，5，6，一直这样排列下去
 	//一般地，堆中的任意节点i的父节点下标为i/2-1，而任意节点i的左子节点下标为i*2+1，而任意节点i的右子节点下标为i*2+2
@@ -1074,16 +834,16 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//要使用堆排序，需要将乱序的堆的路径全部按照大顶堆的方式排序，即从最后一个节点开始向上排序，最后到第一个节点时，所有路径都排好序，并且第一个节点最大
 	//然后将第一个节点与最后一个节点交换位置，也就是将最大的节点踢出堆(实际放到数组最后)，并且需要维护刚刚交换的根节点，使其之下的路径顺序排列
 	//之后再从剩下的最后一个节点开始，按相同的方式排序，每次都将剩下的最大节点移至末尾，最后所有节点按升序排列
-	
+
     /** 迭代堆排序实现。它将首先按照优先级，然后按照插入顺序对跨度进行排序
-	优先级较高的范围将在优先级较低的范围之前。
-	如果优先级相同，跨度将按照插入顺序排序。
-	具有较低插入顺序的*范围将在具有较高插入顺序的范围之前。*
-	* @param array跨度要排序的数组。
-	* @ param priority的优先级
-	* @ param insertionOrder对象类型的插入顺序。
-	* @param <T> 
-	*/
+	 优先级较高的范围将在优先级较低的范围之前。
+	 如果优先级相同，跨度将按照插入顺序排序。
+	 具有较低插入顺序的*范围将在具有较高插入顺序的范围之前。*
+	 * @param array跨度要排序的数组。
+	 * @ param priority的优先级
+	 * @ param insertionOrder对象类型的插入顺序。
+	 * @param <T> 
+	 */
     private static final <T> void sort(T[] array, int[] priority, int[] insertionOrder) 
 	{
         int size = array.length;
@@ -1104,19 +864,19 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             final int tmpOrder =  insertionOrder[0];
             insertionOrder[0] = insertionOrder[i];
             insertionOrder[i] = tmpOrder;
-			
+
 			//交换完成后，需要维护堆的顺序，仅需维护根节点的路径，并且堆的节点个数少1
             siftDown(0, array, i, priority, insertionOrder);
         }
     }
-    
+
 	/** 堆的维护函数
-	* @param index 要维护的元素的索引。
-	* @param array 要排序的数组。
-	* @param size当前堆大小。
-	* @ param priority 数组元素的优先级。
-	* @ param insertionOrder 数组元素的插入顺序。
-	*/
+	 * @param index 要维护的元素的索引。
+	 * @param array 要排序的数组。
+	 * @param size当前堆大小。
+	 * @ param priority 数组元素的优先级。
+	 * @ param insertionOrder 数组元素的插入顺序。
+	 */
 	private static final <T> void siftDown(int index, T[] array, int size, int[] priority, int[] insertionOrder) 
 	{
 		//从index的左子节点开始
@@ -1131,7 +891,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 				//将index节点与其左右子节点中最大的节点比较，若此节点比它的子节点都大，则路径下的顺序已经正确了，不用比较了
                 break;
             }
-			
+
 			//将index指向的节点与其左右子节点中最大的节点交换位置
             final T tmpSpan =  array[index];
             array[index] = array[left];
@@ -1142,20 +902,20 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             final int tmpOrder =  insertionOrder[index];
             insertionOrder[index] = insertionOrder[left];
             insertionOrder[left] = tmpOrder;
-			
+
 			//向下走到最大的子节点，并在之后与其左右子节点比较
             index = left;
             left = 2 * index + 1;
         }
     }
-	
+
 	/** *比较数组中的两个span元素。比较首先基于区间的优先级标志，然后是区间的插入顺序。*
-	* @param left 要比较的元素的左索引。
-	* @param right 要比较的其他元素的右索引。
-	* @param priority span优先级
-	* @param insertionOrder span插入顺序
-	* @return 0代表两元素相等，-1代表左元素小于右元素，1代表左元素大于右元素
-	*/
+	 * @param left 要比较的元素的左索引。
+	 * @param right 要比较的其他元素的右索引。
+	 * @param priority span优先级
+	 * @param insertionOrder span插入顺序
+	 * @return 0代表两元素相等，-1代表左元素小于右元素，1代表左元素大于右元素
+	 */
     private static final int compareSpans(int left, int right, int[] priority, int[] insertionOrder)
 	{
         int priority1 = priority[left];
@@ -1166,8 +926,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//因为高优先级必须在低优先级之前，所以要比较的参数与插入顺序检查相反
         return Integer.compare(priority2, priority1);
     }
-	
-	
+
+
 	/**返回start之后但小于或等于limit的下一个偏移量，其中指定节点的类型和范围*/
     public int nextSpanTransition(int start, int limit, Class kind)
 	{
@@ -1178,40 +938,40 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//从根节点开始找
         return nextSpanTransitionRec(start, limit, kind, treeRoot());
     }
-	
+
 	//此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
 	//由于二叉树是用数组表示的，因此对树的遍历类似于递归二分数组
 	//我更愿意称nextSpanTransitionRec是二分查找法的升级版，原二分查找法是找数组中指定的值，这个函数就是在指定范围内找数组中的值
 	//注意，每个节点包含st和en，虽然mSpanStarts可以这样找，但mSpanEnds是未预料的，因此无论如何仍要遍历所有节点
-	
+
 	//可以理解为它就是将数组分为一个个的二分范围，然后从最大的范围开始，遍历之下的范围(及范围内的节点)
 	//由于先遍历左子节点，再遍历右子节点，并且是先分下去，然后返回，遍历顺序实际是按数组顺序进行的
 	/*  
-	  例如一列数 0，1，2，3，4，5，6
-	  若表示为二叉树则是如下的结果:
-              3
-            ↙  ↘
-          1        5
-        ↙  ↘    ↙  ↘
-       0     2   4     6
-	   
-	  1、找到整个数组中点3，从3开始向左分发
-	  2、找到0~3区间内的中点1，从1开始向左分发
-	  3、找到0~1区间内的中点0，0被执行！
-	  4、从0返回到1，1被执行！
-	  5、1继续向右分发到2，2被执行！
-	  6、从2返回到1返回到3，3被执行！
-	  7、从3开始向右分发，找到3~6区间的中点5，从5开始向左分发
-	  8、找到3~5区间的中点4，4被执行！
-	  9、从4返回到5，5被执行！
-	  10、5继续向右分发到6，6被执行！
-	  11、最后从6返回到5返回到3，递归遍历完成
-	*/
-	
+	 例如一列数 0，1，2，3，4，5，6
+	 若表示为二叉树则是如下的结果:
+	 3
+	 ↙  ↘
+	 1        5
+	 ↙  ↘    ↙  ↘
+	 0     2   4     6
+
+	 1、找到整个数组中点3，从3开始向左分发
+	 2、找到0~3区间内的中点1，从1开始向左分发
+	 3、找到0~1区间内的中点0，0被执行！
+	 4、从0返回到1，1被执行！
+	 5、1继续向右分发到2，2被执行！
+	 6、从2返回到1返回到3，3被执行！
+	 7、从3开始向右分发，找到3~6区间的中点5，从5开始向左分发
+	 8、找到3~5区间的中点4，4被执行！
+	 9、从4返回到5，5被执行！
+	 10、5继续向右分发到6，6被执行！
+	 11、最后从6返回到5返回到3，递归遍历完成
+	 */
+
 	//虽然函数相当于顺序遍历节点i之下的所有节点，但会利用已有条件来判断并舍弃遍历某部分的节点，并把st或en在范围内的节点的limit边界记录下来
 	//每次遍历一个节点，就返回它的limit边界，此limit边界可以是自己的st或en，但大于start并且不超过上个节点的limit，并且此limit边界会限制之后的节点的limit边界
 	//每次limit边界都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
-	
+
 	//从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
     private int nextSpanTransitionRec(int start, int limit, Class kind, int i) 
 	{
@@ -1243,7 +1003,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         return limit;
     }
-    
+
 	/** 返回一个新的CharSequence，它包含本对象的字符数组指定范围的字符，包括重叠范围 */
     public CharSequence subSequence(int start, int end) {
         return new SpannableStringBuilderTemplete(this, start, end);
@@ -1280,62 +1040,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         getChars(start, end, buf, 0);
         return new String(buf);
     }
-	
-	/** 返回TextWatcher回调的深度，当对象没有处理TextWatchers时返回0，大于1的返回值意味着TextWatcher导致了递归触发TextWatcher的更改 */
-    public int getTextWatcherDepth() {
-        return mTextWatcherDepth;
-    }
-	/* 发送文本事件 */
-    private void sendBeforeTextChanged(TextWatcher[] watchers, int start, int before, int after) {
-        int n = watchers.length;
-        mTextWatcherDepth++;
-        for (int i = 0; i < n; i++) {
-            watchers[i].beforeTextChanged(this, start, before, after);
-        }
-        mTextWatcherDepth--;
-    }
-    private void sendTextChanged(TextWatcher[] watchers, int start, int before, int after) {
-        int n = watchers.length;
-        mTextWatcherDepth++;
-        for (int i = 0; i < n; i++) {
-            watchers[i].onTextChanged(this, start, before, after);
-        }
-        mTextWatcherDepth--;
-    }
-    private void sendAfterTextChanged(TextWatcher[] watchers) {
-        int n = watchers.length;
-        mTextWatcherDepth++;
-        for (int i = 0; i < n; i++) {
-            watchers[i].afterTextChanged(this);
-        }
-        mTextWatcherDepth--;
-    }
-	
-	/* 要发送span事件，会获取范围内的所有SpanWatcher并发送事件 */
-    private void sendSpanAdded(Object what, int start, int end) {
-        SpanWatcher[] recip = getSpans(start, end, SpanWatcher.class);
-        int n = recip.length;
-        for (int i = 0; i < n; i++) {
-            recip[i].onSpanAdded(this, what, start, end);
-        }
-    }
-    private void sendSpanRemoved(Object what, int start, int end) {
-		//在调用此方法之前，保证设置了可能的SpanWatcher的边界，以便span的顺序不会影响此事件
-		SpanWatcher[] recip = getSpans(start, end, SpanWatcher.class);
-        int n = recip.length;
-        for (int i = 0; i < n; i++) {
-            recip[i].onSpanRemoved(this, what, start, end);
-        }
-    }
-    private void sendSpanChanged(Object what, int oldStart, int oldEnd, int start, int end) {
-       SpanWatcher[] spanWatchers = getSpans(Math.min(oldStart, start),
-											  Math.min(Math.max(oldEnd, end), length()), SpanWatcher.class);
-        int n = spanWatchers.length;
-        for (int i = 0; i < n; i++) {
-            spanWatchers[i].onSpanChanged(this, what, oldStart, oldEnd, start, end);
-        }
-    }
-	
+
 	/* 检查范围，并抛出异常 */
     private static String region(int start, int end) {
         return "(" + start + " ... " + end + ")";
@@ -1351,7 +1056,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 												region(start, end) + " ends beyond length " + len);
         }
 	}
-	
+
 	/* 设置文本过滤器，它在文本改变前被调用，过滤器返回的文本将真正被插入 */
     public void setFilters(InputFilter[] filters)
 	{
@@ -1363,8 +1068,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     public InputFilter[] getFilters() {
         return mFilters;
     }
-  
-	
+
+
 	//树的基本术语:
 	//Tree 树是由节点和边组成的且不存在着任何环的一种数据结构
 	//Node 节点，节点是组成树的每一个元素
@@ -1384,23 +1089,23 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//Height of tree 树的高度是其根节点的高度
 	//Depth of node 节点的 深度 是从树的根节点到该节点的边的个数。（注：树的深度指的是树中节点的最大层次。）
 	//Forest 森林是n(>=0)棵互不相交的树的集合
-	
+
 	//若将顺序排列的一组数无限二分，可构成一颗二叉树，而二叉树的根节点必然在数组中间，从根节点分发出来的左子节点和右子节点便是二分的结果
 	/*
-	  例如一列数 0，1，2，3，4，5，6
-	  若表示为二叉树则是如下的结果:
-                3
-              ↙  ↘
-            1        5
-          ↙  ↘    ↙  ↘
-         0     2   4     6
-	*/
-	
+	 例如一列数 0，1，2，3，4，5，6
+	 若表示为二叉树则是如下的结果:
+	 3
+	 ↙  ↘
+	 1        5
+	 ↙  ↘    ↙  ↘
+	 0     2   4     6
+	 */
+
 	//这里将跨度列表视为二叉树的跨度(以及开始和结束偏移量和标志)存储在按开始偏移量排序的线性数组中
 	//为了快速搜索，这些数组采用了二分搜索法结构，这种结构是对一棵完美二叉树的有序遍历，这是一种有点不寻常但很有利的方法
 	//包含值的节点的索引为0 <= i < n(其中n = mSpanCount)，从而将访问值的逻辑保留为连续数组
 	//其他平衡二叉树方法(例如完全二叉树)需要对节点索引进行一些洗牌
-	
+
 	//这个结构的基本性质:
 	//整颗树像一个等腰三角形
 	//对于一棵高度为m的完美二叉树，树有2^(m+1) - 1个总节点，树根的索引是2^m - 1
@@ -1409,7 +1114,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//高度为h的节点i的左子节点是i - 2^(h - 1)
 	//高度为h的节点i的右子节点是i + 2^(h - 1)
 	//任意节点的所有左子节点(及其索引)都小于它，所有右子节点都大于它
-	
+
 	//获取数组中间数，此下标是二叉树根节点的下标
 	private int treeRoot() {
 		//使用mSpanCount而不是arr.len，目的是让根节点保持在有效范围的中间位置
@@ -1425,13 +1130,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private static int rightChild(int i) {
         return i + (((i + 1) & ~i) >> 1);
     }
-	
+
 	//span数组还增加了mSpanMax[]数组，该数组表示上述二叉树结构上的区间树
 	//对于每个节点，mSpanMax[]数组包含该节点及其后代的mSpanEnds的最大值
 	//因此，遍历可以轻松地拒绝不包含与感兴趣区域重叠的跨度的子树
 	//请注意，mSpanMax[]对于索引 >=n 的内部节点也有有效值，但这些节点有索引 <n 的后代
 	//在这些情况下，它只表示其后代的最大跨度端，这是完美二叉树结构的结果，你也可以称它为二分区间树
-  
+
 	//注意，此函数总是递归更新节点i及其之下的所有子节点的mSpanMax值
 	//注意，对于任意n，此树的内部节点可能 >= n，因此，节点i的递归遍历的一般结构是:
 	//若i不是叶子节点，则计算所有左侧子节点的最大值
@@ -1457,12 +1162,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mSpanMax[i] = max;
         return max;
     }
-	
+
     //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少刷新会越快)
 	private void restoreInvariants() 
 	{
         if (mSpanCount == 0) return;
-		
+
 		//不变1: span starts按顺序排列
 		//这是一个简单的插入排序，因为我们希望它大部分已被排序
 		//每次向后从数组中拿出一个元素，并与其之前的元素比较，直到找到一个正确的位置，将其插入这里，这样每次排序之后，在i之前的内容都是排好序的	
@@ -1478,7 +1183,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 int flags = mSpanFlags[i];
                 int insertionOrder = mSpanOrder[i];
                 int j = i;
-             
+
 				//将j之前的元素与其比较，直到找到一个比它还小的元素才停止，并将其插入到这里
 				do {
 					//由于此span必然在j之前，所以最后需要将其插入到正确位置，并还需要之前的元素顺序不变
@@ -1491,7 +1196,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                     j--;
 					//之后判断j-2位置的元素是否小于start，如果是就break
                 } while (j > 0 && start < mSpanStarts[j - 1]);
-                
+
 				//最后将span插入这里(也就是j-1的位置)
 				mSpans[j] = span;
                 mSpanStarts[j] = start;
@@ -1501,11 +1206,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 invalidateIndex(j);
             }
         }
-		
+
         //不变量2: 使max是每个节点及其后代的最大跨度端点
 		//从根节点开始，修正所有子节点的max值
         calcMax(treeRoot());
-       
+
 		//不变量3: mIndexOfSpan映射的索引修正
         if (mIndexOfSpan == null) {
             mIndexOfSpan = new IdentityHashMap<Object, Integer>();
@@ -1522,40 +1227,37 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//修改完后mLowWaterMark置为无限大，意为所有的span都刷新了
         mLowWaterMark = Integer.MAX_VALUE;
     }
-	
+
     //对mSpans的任何更新调用此函数，以便mIndexOfSpan可以被更新
     private void invalidateIndex(int i) {
 		//更新mLowWaterMark的值，表示此之前的span没有刷新
         mLowWaterMark = Math.min(i, mLowWaterMark);
     }
-   
+
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
     private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
 	private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
-	
+
 	private char[] mText; //文本数组
     private int mGapStart; //数组中空闲间隙的起始位置
     private int mGapLength; //空闲间隙的长度
-  
+
 	//用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
 	//mSpanStarts是最重要的，其总是正序排列，而节点之下的最大区间是用mSpanMax表示的
 	//虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
 	//另外二叉树的顺序是从mSpanCount/2这个下标开始二分得到的
-	
+
 	private Object[] mSpans; //存储每个节点所代表的span
     private int[] mSpanStarts; //存储每个节点在文本中的起始位置
     private int[] mSpanEnds; //存储每个节点在文本中的末尾位置
     private int[] mSpanMax;  //存储此节点及其子节点最大的范围(也就是最大的mSpanEnd)
     private int[] mSpanFlags; //存储每个节点的flags
     private int[] mSpanOrder;  //存储节点插入的顺序
-    
+
 	private int mSpanInsertCount;  //节点插入计数器
     private int mSpanCount;  //节点个数
     private IdentityHashMap<Object, Integer> mIndexOfSpan; //存储节点在数组中的下标
 	private int mLowWaterMark;  //在此之前的索引没有被触及
-	
-	//TextWatcher回调可能会触发更改，从而触发更多回调，这记录了回调的深度，以防死循环
-    private int mTextWatcherDepth;
 
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
     private static final int MARK = 1;
@@ -1564,7 +1266,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private static final int START_MASK = 0xF0;
     private static final int END_MASK = 0x0F;
     private static final int START_SHIFT = 4;
- 
+
 	//这些位(当前)没有被跨越标志使用
     private static final int SPAN_ADDED = 0x800;
     private static final int SPAN_START_AT_START = 0x1000;
@@ -1572,5 +1274,5 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private static final int SPAN_END_AT_START = 0x4000;
     private static final int SPAN_END_AT_END = 0x8000;
     private static final int SPAN_START_END_MASK = 0xF000;
-	
+
 }

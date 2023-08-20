@@ -14,7 +14,7 @@ import com.editor.text.base.*;
 import java.util.*;
 
 
-public class Edit extends View implements TextWatcher
+public class Edit extends View implements TextWatcher,SelectionWatcher
 { 
 
 	private Cursor mCursor;
@@ -495,7 +495,7 @@ public class Edit extends View implements TextWatcher
 
 			//计算可视区域的范围
 			int start = getLineStart(startLine);
-			int end = getLineStart(endLine);
+			int end = getLineStart(endLine+1);
 
 			//只绘制可视区域的内容
 			RectF See = rectF;
@@ -559,7 +559,6 @@ public class Edit extends View implements TextWatcher
 		protected void onDrawBackground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
-			//pos tmp = null;
 			fillChars((GetChars)spanString,start,end);
 			int st = start, en = end;
 
@@ -608,7 +607,6 @@ public class Edit extends View implements TextWatcher
 		protected void onDrawForeground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
-			//pos tmp = null;
 			fillChars((GetChars)spanString,start,end);
 			int st = start, en = end;
 			paint.getFontMetrics(font);
@@ -623,6 +621,7 @@ public class Edit extends View implements TextWatcher
 					CharacterStyle span = (CharacterStyle) spans[i];
 					start = spanStarts[i];
 					end = spanEnds[i];
+					//超出范围的内容不绘制
 					if (start < st)
 						start = st;
 					if (start > en)
@@ -630,8 +629,7 @@ public class Edit extends View implements TextWatcher
 					if (end < st)
 						end = st;
 					if (end > en)
-						end = en;	
-					//超出范围的内容不绘制
+						end = en;		
 
 					//计算光标坐标
 					if(tmp==null){
@@ -806,9 +804,9 @@ public class Edit extends View implements TextWatcher
 		/* 从x,y开始绘制指定范围内的文本，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight */
 		public void drawText(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
-			x+=leftPadding;
 			int en = end;
-
+			x+=leftPadding;
+			
 			while(start<en)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
@@ -833,9 +831,9 @@ public class Edit extends View implements TextWatcher
 		/* 从x,y开始绘制指定范围内的文本的块，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight */
 		public void drawBlock(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
-			x+=leftPadding;
 			int en = end;
-			
+			x+=leftPadding;
+				
 			while(start<en)
 			{
 				//每次从start开始向后找一个换行，把之间的文本画上
@@ -1006,7 +1004,7 @@ public class Edit extends View implements TextWatcher
 			}
 			int line = mLayout.getLineForVertical((int)startPos.y);
 			mLayout.getLineBounds(line,mLineBounds);
-			Edit.this.onSelectionChanged(start,end);
+			Edit.this.onSelectionChanged(start,end,0,0,mText);
 		}
 
 		public void setCursorDrawable(Drawable draw){
@@ -1165,7 +1163,8 @@ public class Edit extends View implements TextWatcher
 		mSelectionWatcher = li;
 	}
 
-	protected void onSelectionChanged(int start, int end)
+	@Override
+	public void onSelectionChanged(int start, int end, int oldStart, int oldEnd, Spannable editor)
 	{
 		//光标移动到超出范围的地方，需要滚动视图
 		int x = getScrollX();

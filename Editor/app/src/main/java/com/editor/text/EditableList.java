@@ -19,11 +19,12 @@ public class EditableList extends Object implements Editable
 
 	private Factory mEditableFactory;
 	private TextWatcher mTextWatcher;
+	private SelectionWatcher mSelectionWatcher;
 	private BlockListener mBlockListener;
-	private int mTextWatcherDepth;
 	
+	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 400;
+	private static final int Default_MaxCount = 10000;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -56,6 +57,9 @@ public class EditableList extends Object implements Editable
 	public void setTextWatcher(TextWatcher wa){
 		mTextWatcher = wa;
 	}
+	public void setSelectionWatcher(SelectionWatcher wa){
+		mSelectionWatcher = wa;
+	}
 	public void setBlockListener(BlockListener li){
 		mBlockListener = li;
 	}
@@ -63,7 +67,7 @@ public class EditableList extends Object implements Editable
 	/* 在指定位置添加文本块 */
 	private void addBlock(int i)
 	{
-		Editable block = mEditableFactory==null ? new SpannableStringBuilderTemplete() : mEditableFactory.newEditable("");
+		Editable block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -171,6 +175,16 @@ public class EditableList extends Object implements Editable
 	@Override
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
+		//过滤文本
+        for (int i = 0; i < mFilters.length; i++) {
+            CharSequence repl = mFilters[i].filter(tb, tbStart, tbEnd, this, start, end);
+            if (repl != null) {
+                tb = repl;
+                tbStart = 0;
+                tbEnd = repl.length();
+            }
+        }
+		
 		//文本变化前，调用文本监视器的方法
 		int st = start;
 		int before = end-start;
@@ -206,10 +220,16 @@ public class EditableList extends Object implements Editable
 			correctSpan(spans[j]);
 		}
 		
-		//最后统计长度，并调用文本和文本块监视器的方法
+		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
 		mLength += -before+after;
+		//int selectionStart = Selection.getSelectionStart(this);
+		//int selectionEnd = Selection.getSelectionEnd(this);
+		//int index = st+after;
+		//Selection.setSelection(this,index);
+		
 		sendAfterBlocksChanged(i,start);
 		sendTextChanged(st,before,after);
+		//sendSelectionChanged(index,index,selectionStart,selectionEnd);
 		sendAfterTextChanged();
 		return this;
 	}
@@ -322,10 +342,10 @@ public class EditableList extends Object implements Editable
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
-				int s = block.getSpanStart(span);
-				int e = block.getSpanEnd(span);
+				int st = block.getSpanStart(span);
+				int en = block.getSpanEnd(span);
 				//如果span完全被移除，则可以与文本块解除绑定
-				if(s>=start && e<=end)
+				if(st>=start && en<=end)
 				{
 					List<Editable> blocks = mSpanInBlocks.get(span);
 					if(blocks!=null)
@@ -518,26 +538,44 @@ public class EditableList extends Object implements Editable
 		}
 	}
 
+	private static final Set spanSet = new LinkedHashSet<>();
+	private static final List spanList = new LinkedList<>();
+	
 	@Override
 	public <T extends Object> T[] getSpans(int start, int end, final Class<T> kind)
 	{
+		int i = findBlockIdForIndex(start);
+		int j = findBlockIdForIndex(end);
+		start -= mBlockStarts[i];
+		end -= mBlockStarts[j];
+		if(i==j){
+			//如果在同一文本块，则可以直接返回
+			return mBlocks[i].getSpans(start,end,kind);
+		}
+		
 		//收集范围内所有文本块的span，并不包含重复的span
-		final Set<T> spanSet = new HashSet<>();
+		spanSet.clear();
+		spanList.clear();
 		Do d = new Do()
 		{
 			@Override
 			public void dothing(int id, int start, int end)
 			{
 				T[] spans = mBlocks[id].getSpans(start,end,kind);
-				for(int i=0;i<spans.length;++i){
-					spanSet.add(spans[i]);
+				for(int k=0;k<spans.length;++k)
+				{
+					if(spanSet.add(spans[k])){
+						//span仍应保持顺序
+						spanList.add(spans[k]);
+					}
 				}
 			}
 		};
-		DoThing(start,end,d);
+		DoThing(i,j,start,end,d);
+		
 		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
-		T[] spans = (T[]) Array.newInstance(kind,spanSet.size());
-		spanSet.toArray(spans);
+		T[] spans = (T[]) Array.newInstance(kind,spanList.size());
+		spanList.toArray(spans);
 		return spans;
 	}
 
@@ -547,13 +585,13 @@ public class EditableList extends Object implements Editable
 		//在设置span后，span绑定的所有文本块正序排列
 		//即使replace后，所有文本块仍正序排列
 		//获取span所绑定的第一个文本块，然后获取文本块的起始位置，并附加span在此文本块的起始位置
-		List<Editable> editors = mSpanInBlocks.get(p1);
-		if(editors==null){
+		List<Editable> blocks = mSpanInBlocks.get(p1);
+		if(blocks==null){
 			return -1;
 		}
-		Editable editor = editors.get(0);
-		int id = mIndexOfBlocks.get(editor);
-		int start = editor.getSpanStart(p1);
+		Editable block = blocks.get(0);
+		int id = mIndexOfBlocks.get(block);
+		int start = block.getSpanStart(p1);
 		return mBlockStarts[id]+start;
 	}
 
@@ -561,34 +599,34 @@ public class EditableList extends Object implements Editable
 	public int getSpanEnd(Object p1)
 	{
 		//获取span所绑定的最后一个文本块，然后获取文本块的起始位置，并附加span在此文本块的末尾位置
-		List<Editable> editors = mSpanInBlocks.get(p1);
-		if(editors==null){
+		List<Editable> blocks = mSpanInBlocks.get(p1);
+		if(blocks==null){
 			return -1;
 		}
-		Editable editor = editors.get(editors.size()-1);
-		int id = mIndexOfBlocks.get(editor);
-		int end = editor.getSpanEnd(p1);
+		Editable block = blocks.get(blocks.size()-1);
+		int id = mIndexOfBlocks.get(block);
+		int end = block.getSpanEnd(p1);
 		return mBlockStarts[id]+end;
 	}
 
 	@Override
 	public int getSpanFlags(Object p1)
 	{
-		List<Editable> editors = mSpanInBlocks.get(p1);
-		if(editors==null){
+		List<Editable> blocks = mSpanInBlocks.get(p1);
+		if(blocks==null){
 			return -1;
 		}
-		return editors.get(0).getSpanFlags(p1);
+		return blocks.get(0).getSpanFlags(p1);
 	}
 
 	@Override
-	public int nextSpanTransition(int start, int end, Class kind)
+	public int nextSpanTransition(int start, int limit, Class kind)
 	{
 		//先走到start指定的文本块，并获取文本块start后的span位置
 		int i = findBlockIdForIndex(start);
-		Editable editor = mBlocks[i];
+		Editable block = mBlocks[i];
 		int blockStart = mBlockStarts[i];
-		int next = editor.nextSpanTransition(start-blockStart,end-blockStart,kind);
+		int next = block.nextSpanTransition(start-blockStart,limit-blockStart,kind);
 		return next+blockStart;
 	}
 
@@ -602,9 +640,9 @@ public class EditableList extends Object implements Editable
 	{
 		//先走到start指定的文本块
 		int i = findBlockIdForIndex(p1);
-		Editable editor = mBlocks[i];
+		Editable block = mBlocks[i];
 		int start = mBlockStarts[i];
-		if(p1-start >= editor.length()){
+		if(p1-start >= block.length()){
 			//刚好在最后，理应是下一块的起始位置
 			return mBlocks[i+1].charAt(0);
 		}
@@ -634,19 +672,7 @@ public class EditableList extends Object implements Editable
 	@Override
 	public CharSequence subSequence(int start, int end)
 	{
-		//累计范围内的所有文本块的字符序列
-		final SpannableStringBuilderTemplete b = new SpannableStringBuilderTemplete();
-		Do d = new Do()
-		{
-			@Override
-			public void dothing(int id, int start, int end)
-			{
-				CharSequence text = mBlocks[id];
-				b.append(text,start,end);
-			}
-		};
-		DoThing(start,end,d);
-		return b;
+		return new SpannableStringBuilderLite(this,start,end);
 	}
 	
 	public String subString(int start, int end)
@@ -690,6 +716,11 @@ public class EditableList extends Object implements Editable
 		end -= mBlockStarts[j];
 
 		//从起始块开始，调至末尾块
+		DoThing(i,j,start,end,d);
+	}
+	private void DoThing(int i, int j, int start, int end, Do d)
+	{
+		//从起始块开始，调至末尾块
 		if(i==j){
 			d.dothing(i,start,end);
 		}
@@ -702,7 +733,6 @@ public class EditableList extends Object implements Editable
 			d.dothing(i,0,end);
 		}
 	}
-	
 	
 	public static interface BlockListener
 	{
@@ -776,5 +806,11 @@ public class EditableList extends Object implements Editable
 	public int getTextWatcherDepth() {
         return mTextWatcherDepth;
     }
+	
+	private void sendSelectionChanged(int st, int en, int ost, int oen){
+		if(mSelectionWatcher!=null){
+			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);
+		}
+	}
 	
 }
