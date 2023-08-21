@@ -353,7 +353,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 int ost = spanStart;
                 int oen = spanEnd;
                 int clen = length();
-				//如果span位置在删除范围内，它需要跳至下一行
+				//如果span位置在删除范围内，它需要跳至end之后的下一行
                 if (spanStart > start && spanStart <= end) {
                     for (spanStart = end; spanStart < clen; spanStart++)
                         if (spanStart > end && charAt(spanStart - 1) == '\n')
