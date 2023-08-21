@@ -14,7 +14,7 @@ import java.util.*;
 public class MainActivity extends Activity implements Runnable
 {
 	
-	public static Handler mHamdler;
+	public static final Handler mHamdler = new Handler();
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -30,7 +30,6 @@ public class MainActivity extends Activity implements Runnable
 	public void run()
 	{
 		loadFileInThread("/storage/emulated/0/Linux/1.java");
-		mHamdler = new Handler();
 	}
 	
 	public void loadFileInThread(String path)

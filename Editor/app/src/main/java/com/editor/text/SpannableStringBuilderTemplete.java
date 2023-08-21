@@ -185,6 +185,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 else if (start == where) {
                     int flag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
+						//点的span应悬停在缓冲区末尾等待扩展
                         start += mGapLength;
                 }
 				
@@ -346,13 +347,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 spanEnd -= mGapLength;
 			}
 			
-			//如果flags是SPAN_PARAGRAPH，则还会修正范围
+			//如果flags是行的标记，则还会修正范围
             if ((mSpanFlags[i] & SPAN_PARAGRAPH) == SPAN_PARAGRAPH) 
 			{
                 int ost = spanStart;
                 int oen = spanEnd;
                 int clen = length();
-				//如果span位置在删除范围内，它需要跳至下个段落？
+				//如果span位置在删除范围内，它需要跳至下一行
                 if (spanStart > start && spanStart <= end) {
                     for (spanStart = end; spanStart < clen; spanStart++)
                         if (spanStart > end && charAt(spanStart - 1) == '\n')
@@ -503,8 +504,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-                //位于替换范围内的点应该移动到替换文本的末尾
-				//例外情况是，当该点位于范围的开始处，并且我们正在进行文本替换(与删除相反):该点停留在那里。
+				//位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
+				//自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
+				//例外情况是，当该点位于范围的开始处，并且我们正在进行文本替换(与删除相反):该点停留在那里
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -512,6 +514,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			else 
 			{
                 if (flag == PARAGRAPH) {
+					//同上
                     if (atEnd) {
                         return mGapStart + mGapLength;
                     }
@@ -519,16 +522,15 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 				else
 				{ 
 				    //下面分为两步理解
-					//假设我们先把start~end之间的内容删除了
-				    //由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
-                    if (textIsRemoved || offset < mGapStart - nbNewChars) {
+					if (textIsRemoved || offset < mGapStart - nbNewChars) {
+						//假设我们先把start~end之间的内容删除了
+						//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
                         return start;
                     } else {
 						//我们再把要替换的文本插入start的位置
 						//若标记在删除范围内，它的位置还是start
-						//若标记在删除范围之后并且在替换文本范围内，上面的if没有处理它，它应该被替换文本挤到末尾，因此移动到替换文本的末尾(如果nbNewChars！= 0)
-						//由于mGapLength大于0，因此该标记应该< mGapStart + mGapLength，其原本位置在mGapStart之前，但在mGapStart - nbNewChars之后
-                        return mGapStart;
+						//若标记不在删除范围内(也就是位于范围结尾的标记)，上面的if没有处理它，它应该被插入文本挤到后面(该span不存在于插入文本中，若没有删除，应该挤到新添加文本后)，因此移动到插入文本的末尾，即mGapStart
+						return mGapStart;
                     }
                 }
             }
