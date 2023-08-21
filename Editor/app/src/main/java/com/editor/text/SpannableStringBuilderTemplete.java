@@ -328,7 +328,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
 	private void change(int start, int end, CharSequence cs, int csStart, int csEnd) 
 	{
-		//删除文本的长度，替换的文本长度，溢出文本的长度(可以是负数)
+		//删除文本的长度，插入的文本长度，溢出文本的长度(可以是负数)
         final int replacedLength = end - start;
         final int replacementLength = csEnd - csStart;
         final int nbNewChars = replacementLength - replacedLength;
@@ -347,7 +347,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 spanEnd -= mGapLength;
 			}
 			
-			//如果flags是行的标记，则还会修正范围
+			//如果flags是段落的标志，则还会修正范围
             if ((mSpanFlags[i] & SPAN_PARAGRAPH) == SPAN_PARAGRAPH) 
 			{
                 int ost = spanStart;
@@ -402,8 +402,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
 		
 		//插入文本并不需要扩展数组，仅需将间隙缓冲区缩小
-		//另一个情况是，nbNewChars是负数，说明要替换的文本太短，此时等同于扩展间隙缓冲区
-		//无论怎样，都将间隙缓冲区对齐到替换(到我之内的)文本的末尾
+		//另一个情况是，nbNewChars是负数，说明要插入的文本太短，此时等同于扩展间隙缓冲区
+		//无论怎样，都将间隙缓冲区对齐到插入文本的末尾
         mGapStart += nbNewChars;
         mGapLength -= nbNewChars;
         if (mGapLength < 1)
@@ -499,8 +499,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	/* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
-		//此时mGapStart实际上是替换文本的end，并且mGapStart + mGapLength必然最大
-		//若offset的原本位置处于删除文本和替换文本的范围内，才需要计算位置
+		//此时mGapStart实际上是插入文本的end
+		//若offset的原本位置处于修改范围内，才需要计算位置
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
@@ -514,7 +514,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			else 
 			{
                 if (flag == PARAGRAPH) {
-					//同上
+					//段落标记的span位置应该保持在末尾
                     if (atEnd) {
                         return mGapStart + mGapLength;
                     }
