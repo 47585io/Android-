@@ -370,9 +370,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
 			//下面分为两步理解
-			//假设我们先把start~end之间的内容删除了
-			//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
 			if (textIsRemoved || offset < mGapStart - nbNewChars) {
+				//假设我们先把start~end之间的内容删除了
+				//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
+				//这对于spanStart和spanEnd都适用
 				return start;
 			} else {
 				//我们再把要替换的文本插入start的位置
