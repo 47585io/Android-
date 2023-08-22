@@ -413,7 +413,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         
 		if (replacedLength > 0)
 		{ 
-		    //修正所有在删除文本范围和插入文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
+		    //修正所有在删除文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
 			//我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
 			//但由于我们引入了间隙缓冲区，所以每次获取间隙缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
 			//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于间隙缓冲区之后的span的位置增大
@@ -524,6 +524,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 					if (textIsRemoved || offset < mGapStart - nbNewChars) {
 						//假设我们先把start~end之间的内容删除了
 						//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
+						//这对于spanStart和spanEnd都适用，可以自己想一下
                         return start;
                     } else {
 						//我们再把要替换的文本插入start的位置
@@ -1529,7 +1530,6 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		//更新mLowWaterMark的值，表示此之前的span没有刷新
         mLowWaterMark = Math.min(i, mLowWaterMark);
     }
-   
 	
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
     private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
