@@ -421,7 +421,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
 			//即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
 			//注意，span的起始和末尾位置必然不在间隙缓冲区中
-            //潜在优化:仅更新相交跨度的界限
+            //潜在优化:仅更新范围之内的span的位置
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
             for (int i = 0; i < mSpanCount; i++)
 			{
@@ -432,7 +432,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 mSpanEnds[i] = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag,
 													atEnd, textIsRemoved);
             }
-            //潜在优化:仅在边界实际更改时刷新
+            //潜在优化:仅在范围实际更改时刷新
             restoreInvariants();
         }
 			
@@ -506,7 +506,6 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             if (flag == POINT) {
 				//位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
 				//自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
-				//例外情况是，当该点位于范围的开始处，并且我们正在进行文本替换(与删除相反):该点停留在那里
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -1531,6 +1530,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mLowWaterMark = Math.min(i, mLowWaterMark);
     }
    
+	
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
     private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
 	private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
