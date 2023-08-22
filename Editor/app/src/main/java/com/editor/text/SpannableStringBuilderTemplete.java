@@ -372,7 +372,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 }
             }
 			
-			//无论怎样，都修正span的flags
+			//无论怎样，都修正span的flags，以等待之后的sendToSpanWatchers来处理它们
             int flags = 0;
             if (spanStart == start) flags |= SPAN_START_AT_START;
             else if (spanStart == end + nbNewChars) flags |= SPAN_START_AT_END;
