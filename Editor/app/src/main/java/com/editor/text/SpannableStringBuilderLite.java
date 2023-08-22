@@ -7,7 +7,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-/** 这是内容和标记都可以更改的文本类，但删除了事件发送，修正flags这些拖效率的功能 */
+/** 这是内容和标记都可以更改的文本类，但删除了事件发送，修正flags这些拖效率的功能。说实话，EditableList根本不需要这些 */
 public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable 
 {
 

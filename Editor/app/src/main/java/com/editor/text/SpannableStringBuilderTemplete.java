@@ -420,7 +420,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
 			//另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
 			//即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
-			//注意，span的起始和末尾位置必然不在间隙缓冲区中
+			//另外一个很重要的概念，每次修正后，span的真实位置(start和end)不可能在间隙缓冲区中
             //潜在优化:仅更新范围之内的span的位置
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
             for (int i = 0; i < mSpanCount; i++)
@@ -1459,12 +1459,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return max;
     }
 	
-    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少刷新会越快)
+    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少恢复会越快)
 	private void restoreInvariants() 
 	{
         if (mSpanCount == 0) return;
 		
-		//不变1: span starts按顺序排列
+		//不变量1: span starts按顺序排列
 		//这是一个简单的插入排序，因为我们希望它大部分已被排序
 		//每次向后从数组中拿出一个元素，并与其之前的元素比较，直到找到一个正确的位置，将其插入这里，这样每次排序之后，在i之前的内容都是排好序的	
         for (int i = 1; i < mSpanCount; i++) 
