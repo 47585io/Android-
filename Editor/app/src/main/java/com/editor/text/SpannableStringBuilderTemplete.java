@@ -185,7 +185,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 else if (start == where) {
                     int flag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
-						//点的span应悬停在缓冲区末尾等待扩展
+						//点的span应向后移，而其它的span悬停在这里进行扩展
                         start += mGapLength;
                 }
 				
@@ -499,13 +499,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	/* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
-		//此时mGapStart实际上是插入文本的end
-		//若offset的原本位置处于修改范围内，才需要计算位置
+		//此时mGapStart实际上是插入文本的end，若offset的原本位置处于删除范围内，才需要计算位置
+		//而删除范围此时已不知道，但其实它必然在start ~ mGapStart+mGapLength之中
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-				//位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
-				//自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
+				//位于删除范围内的点应移动到插入文本的末尾
+				//另一个情况是当点位于范围的开头并且我们正在进行文本替换（而不是删除）时，该点保持在那里以进行扩展(即包含了刚插入的文本)
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -1568,6 +1568,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private int mTextWatcherDepth;
 
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
+	//每个span有spanStart和spanEnd，而我们可以给两端各设置MARK，POINT，PARAGRAPH其中的一个标志
+	//spanFlags中，用1~4位存储spanEnd的标志，用5~8位存储spanStart的标志
+	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符
+	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端也会扩展并包含插入的字符
+	//而POINT标志正好相反，若正好在span的一端插入字符时，则不会扩展
+	//PARAGRAPH标志更特殊，它永远保证span的一端是一个段落的结尾，即这一端永远在换行符的位置或文本末尾
     private static final int MARK = 1;
     private static final int POINT = 2;
     private static final int PARAGRAPH = 3;
@@ -1576,6 +1582,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private static final int START_SHIFT = 4;
  
 	//这些位(当前)没有被跨越标志使用
+	//它们仅在发送span改变事件时使用，以判断该span的状态
     private static final int SPAN_ADDED = 0x800;
     private static final int SPAN_START_AT_START = 0x1000;
     private static final int SPAN_START_AT_END = 0x2000;

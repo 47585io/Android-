@@ -252,21 +252,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     public SpannableStringBuilderLite replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
     {
         checkRange("replace", start, end);
-		int filtercount = mFilters.length;
-		//过滤文本
-        for (int i = 0; i < filtercount; i++) 
-		{
-            CharSequence repl = mFilters[i].filter(tb, tbstart, tbend, this, start, end);
-            if (repl != null) {
-                tb = repl;
-                tbstart = 0;
-                tbend = repl.length();
-            }
-        }
-		
         final int origLen = end - start;
         final int newLen = tbend - tbstart;
-        if (origLen == 0 && newLen == 0 && !hasNonExclusiveExclusiveSpanAt(tb, tbstart)) {
+        if (origLen == 0 && newLen == 0) {
             //如果tb中没有要添加的跨度(长度为0)，提前退出，以便文本观察器不会得到通知
             return this;
         }     
@@ -282,59 +270,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final int replacedLength = end - start;
         final int replacementLength = csEnd - csStart;
         final int nbNewChars = replacementLength - replacedLength;
-        boolean changed = false;
-
-        //遍历所有的span，修正它们的flags，如果flags是SPAN_PARAGRAPH，则还会修正范围
-        for (int i = mSpanCount - 1; i >= 0; i--)
-        {
-            //获取span位置，并移动到原本的位置(而不是附加上间隙缓冲区之后的真实位置)
-            int spanStart = mSpanStarts[i];
-            if (spanStart > mGapStart){
-                spanStart -= mGapLength;
-            }
-            int spanEnd = mSpanEnds[i];
-            if (spanEnd > mGapStart){
-                spanEnd -= mGapLength;
-            }
-
-            //如果flags是段落的标志，则还会修正范围
-            if ((mSpanFlags[i] & SPAN_PARAGRAPH) == SPAN_PARAGRAPH) 
-            {
-                int ost = spanStart;
-                int oen = spanEnd;
-                int clen = length();
-                //如果span位置在删除范围内，它需要跳至end之后的下一行
-                if (spanStart > start && spanStart <= end) {
-                    for (spanStart = end; spanStart < clen; spanStart++)
-                        if (spanStart > end && charAt(spanStart - 1) == '\n')
-                            break;
-                }
-                if (spanEnd > start && spanEnd <= end) {
-                    for (spanEnd = end; spanEnd < clen; spanEnd++)
-                        if (spanEnd > end && charAt(spanEnd - 1) == '\n')
-                            break;
-                }
-                //如果span的范围变化了，就重新设置它的位置，但暂时不用刷新所有span，而是等之后刷新
-                if (spanStart != ost || spanEnd != oen) {
-                    setSpan(false, mSpans[i], spanStart, spanEnd, mSpanFlags[i],
-                            true);
-                    changed = true;
-                }
-            }
-
-            //无论怎样，都修正span的flags
-            int flags = 0;
-            if (spanStart == start) flags |= SPAN_START_AT_START;
-            else if (spanStart == end + nbNewChars) flags |= SPAN_START_AT_END;
-            if (spanEnd == start) flags |= SPAN_END_AT_START;
-            else if (spanEnd == end + nbNewChars) flags |= SPAN_END_AT_END;
-            mSpanFlags[i] |= flags;
-        }
-        if (changed) {
-            //如果span的范围变化了，需要刷新
-            restoreInvariants();
-        }
-
+        
         //将间隙缓冲区移动到删除文本的末尾
         moveGapTo(end);
         if (nbNewChars >= mGapLength) {
@@ -372,18 +308,35 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
             //另外一个很重要的概念，每次修正后，span的真实位置(start和end)不可能在间隙缓冲区中
             //潜在优化:仅更新范围之内的span的位置
+			boolean changed = false;
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
             for (int i = 0; i < mSpanCount; i++)
             {
-                final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
-                mSpanStarts[i] = updatedIntervalBound(mSpanStarts[i], start, nbNewChars, startFlag,
-                                                      atEnd, textIsRemoved);
-                final int endFlag = (mSpanFlags[i] & END_MASK);
-                mSpanEnds[i] = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag,
-                                                    atEnd, textIsRemoved);
+				int ost = mSpanStarts[i];
+				int oen = mSpanEnds[i];
+				if (ost >= start && ost < mGapStart + mGapLength) 
+				{
+					final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
+					int nst = updatedIntervalBound(mSpanStarts[i], start, nbNewChars, startFlag, atEnd, textIsRemoved);
+					if(nst!=ost){
+						mSpanStarts[i] = nst;
+						changed = true;
+					}
+				}
+				if (oen >= start && oen < mGapStart + mGapLength) 
+				{
+					final int endFlag = (mSpanFlags[i] & END_MASK);
+					int nen = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag, atEnd, textIsRemoved);
+					if(nen!=oen){
+						mSpanEnds[i] = nen;
+						changed = true;
+					}
+				}
             }
             //潜在优化:仅在范围实际更改时刷新
-            restoreInvariants();
+			if(changed){
+				restoreInvariants();
+			}  
         }
 
         if (cs instanceof Spanned) 
@@ -448,42 +401,37 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     /* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
     private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
     {
-        //此时mGapStart实际上是插入文本的end
-        //若offset的原本位置处于修改范围内，才需要计算位置
-        if (offset >= start && offset < mGapStart + mGapLength) 
-        {
-            if (flag == POINT) {
-                //位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
-                //自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
-                if (textIsRemoved || offset > start) {
-                    return mGapStart + mGapLength;
-                }
-            } 
-            else 
-            {
-                if (flag == PARAGRAPH) {
-                    //段落标记的span位置应该保持在末尾
-                    if (atEnd) {
-                        return mGapStart + mGapLength;
-                    }
-                }
-                else
-                { 
-                    //下面分为两步理解
-                    if (textIsRemoved || offset < mGapStart - nbNewChars) {
-                        //假设我们先把start~end之间的内容删除了
-                        //由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
-                        //这对于spanStart和spanEnd都适用，可以自己想一下
-                        return start;
-                    } else {
-                        //我们再把要替换的文本插入start的位置
-                        //若标记在删除范围内，它的位置还是start
-                        //若标记不在删除范围内(也就是位于范围结尾的标记)，上面的if没有处理它，它应该被插入文本挤到后面(该span不存在于插入文本中，若没有删除，应该挤到新添加文本后)，因此移动到插入文本的末尾，即mGapStart
-                        return mGapStart;
-                    }
-                }
-            }
-        }
+		if (flag == POINT) {
+			//位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
+			//自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
+			if (textIsRemoved || offset > start) {
+				return mGapStart + mGapLength;
+			}
+		} 
+		else 
+		{
+			if (flag == PARAGRAPH) {
+				//段落标记的span位置应该保持在末尾
+				if (atEnd) {
+					return mGapStart + mGapLength;
+				}
+			}
+			else
+			{ 
+				//下面分为两步理解
+				if (textIsRemoved || offset < mGapStart - nbNewChars) {
+					//假设我们先把start~end之间的内容删除了
+					//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
+					//这对于spanStart和spanEnd都适用，可以自己想一下
+					return start;
+				} else {
+					//我们再把要替换的文本插入start的位置
+					//若标记在删除范围内，它的位置还是start
+					//若标记不在删除范围内(也就是位于范围结尾的标记)，上面的if没有处理它，它应该被插入文本挤到后面(该span不存在于插入文本中，若没有删除，应该挤到新添加文本后)，因此移动到插入文本的末尾，即mGapStart
+					return mGapStart;
+				}
+			}
+		}
         return offset;
     }
 	
@@ -505,24 +453,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 		mSpanCount = 0;
         mSpanInsertCount = 0;
-    }
-
-    private static boolean hasNonExclusiveExclusiveSpanAt(CharSequence text, int offset) 
-    {
-        if (text instanceof Spanned)
-        {
-            Spanned spanned = (Spanned) text;
-            Object[] spans = spanned.getSpans(offset, offset, Object.class);
-            final int length = spans.length;
-            for (int i = 0; i < length; i++) 
-            {
-                Object span = spans[i];
-                int flags = spanned.getSpanFlags(span);
-                if (flags != Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) 
-                    return true;
-            }
-        }
-        return false;
     }
 
     /** 用指定对象标记指定范围的文本 */
