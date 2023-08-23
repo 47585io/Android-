@@ -497,7 +497,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return false;
     }
 	
-	/* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
+	/* 文本删除后，在删除范围内的span端点应该移动到哪里，在删除范围外的span端点实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
 		//此时mGapStart实际上是插入文本的end，若offset的原本位置处于删除范围内，才需要计算位置
@@ -505,8 +505,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-				//若span的一端为POINT标志，位于删除范围内的这一端应移动到插入文本的末尾
-				//另一个情况是当点位于范围的开头并且我们正在进行文本替换（而不是删除）时，该点保持在那里
+				//若span的端点为POINT标志，该端点应相对于原文本(而不包含插入文本)进行变化
+				//位于删除范围内的端点应移动到插入文本的末尾，即mGapStart
+				//另一个情况是当端点位于start并且我们正在进行文本替换（而不是删除）时，该端点保持在start
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -514,23 +515,22 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			else 
 			{
                 if (flag == PARAGRAPH) {
-					//段落标记的span位置应该保持在末尾
+					//如果可以，段落标志的span位置应该保持在文本末尾
                     if (atEnd) {
                         return mGapStart + mGapLength;
                     }
                 }
 				else
 				{ 
-				    //下面分为两步理解
+				    //如果span端点为MARK标志，该端点应相对于原文本(而不包含插入文本)保持不变
+					//提示: 若不包含插入文本，start和mGapStart对原文本来说是紧挨着的，start+1 = mGapStart
 					if (textIsRemoved || offset < mGapStart - nbNewChars) {
-						//假设我们先把start~end之间的内容删除了
-						//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
-						//这对于spanStart和spanEnd都适用，可以自己想一下
+						//假设我们先把start~end之间的内容删除了，由于mGapStart - nbNewChars实际等于删除文本的end
+						//应该将删除范围内的端点移动到开头(相对于原文本的位置)，但位于范围结尾end的端点除外	
                         return start;
                     } else {
 						//我们再把要替换的文本插入start的位置
-						//若标记在删除范围内，它的位置还是start
-						//若标记不在删除范围内(也就是位于范围结尾的标记)，上面的if没有处理它，它应该被插入文本挤到后面(该span不存在于插入文本中，若没有删除，应该挤到新添加文本后)，因此移动到插入文本的末尾，即mGapStart
+						//位于范围结尾的端点，它应该被插入文本挤到后面(相对于原文本的位置)，因此移动到插入文本的末尾，即mGapStart
 						return mGapStart;
                     }
                 }
@@ -1569,12 +1569,19 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     private int mTextWatcherDepth;
 
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
-	//每个span有spanStart和spanEnd，而我们可以给两端各设置MARK，POINT，PARAGRAPH其中的一个标志
+	//每个span有spanStart和spanEnd，而我们可以给两端点各设置MARK，POINT，PARAGRAPH其中的一个标志
 	//spanFlags中，用1~4位存储spanEnd的标志，用5~8位存储spanStart的标志
-	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符(由间隔缓冲区管理)
-	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置保持不变
-	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(见之前的代码)
+
+	//我喜欢解释MARK vs POINT的方式是将它们表示为方括号，以及它们在一系列文本中存在的任何偏移量，括号指向的方向显示标记或点“附加”到的字符
+	//对于下面的例子，两个端点位置相等
+	//因此对于POINT，您将使用开括号 - 它附加到它后面的字符上  hello[world!
+	//对于MARK，您可以使用闭括号 - 它附加在它前面的字符上  hello]world!
+	
+	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符(由间隙缓冲区管理)
+	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置将跟随原文本之前的内容(保持不变)
+	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(跟随原文本之后的内容)
 	//PARAGRAPH标志更特殊，它永远保证span的一端是一个段落的结尾，即这一端永远在换行符的位置或文本末尾
+	
     private static final int MARK = 1;
     private static final int POINT = 2;
     private static final int PARAGRAPH = 3;
