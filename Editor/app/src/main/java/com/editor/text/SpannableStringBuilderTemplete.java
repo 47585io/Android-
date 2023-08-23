@@ -183,9 +183,10 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 if (start > where)
                     start += mGapLength;
                 else if (start == where) {
+					//当在span的一端插入缓冲区
                     int flag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
-						//点的span应向后移，而其它的span悬停在这里进行扩展
+						//POINT标志的span应随着向后移，而MARK标志的span悬停在这里，PARAGRAPH标志的span移动到文本末尾
                         start += mGapLength;
                 }
 				
@@ -504,8 +505,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-				//位于删除范围内的点应移动到插入文本的末尾
-				//另一个情况是当点位于范围的开头并且我们正在进行文本替换（而不是删除）时，该点保持在那里以进行扩展(即包含了刚插入的文本)
+				//若span的一端为POINT标志，位于删除范围内的这一端应移动到插入文本的末尾
+				//另一个情况是当点位于范围的开头并且我们正在进行文本替换（而不是删除）时，该点保持在那里
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -1570,9 +1571,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
 	//每个span有spanStart和spanEnd，而我们可以给两端各设置MARK，POINT，PARAGRAPH其中的一个标志
 	//spanFlags中，用1~4位存储spanEnd的标志，用5~8位存储spanStart的标志
-	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符
-	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端也会扩展并包含插入的字符
-	//而POINT标志正好相反，若正好在span的一端插入字符时，则不会扩展
+	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符(由间隔缓冲区管理)
+	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置保持不变
+	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(见之前的代码)
 	//PARAGRAPH标志更特殊，它永远保证span的一端是一个段落的结尾，即这一端永远在换行符的位置或文本末尾
     private static final int MARK = 1;
     private static final int POINT = 2;
