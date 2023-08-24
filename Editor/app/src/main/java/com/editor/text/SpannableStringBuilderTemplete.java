@@ -186,7 +186,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 					//当在span的一端插入缓冲区
                     int flag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
-						//POINT标志的span应随着向后移，而MARK标志的span悬停在这里，PARAGRAPH标志的span移动到文本末尾
+						//POINT标志的端点应将缓冲区排除在前面(自己向后移)
+						//而MARK标志的端点应将缓冲区排除在后面(保持不变)
+						//PARAGRAPH标志的span移动到文本末尾
                         start += mGapLength;
                 }
 				
@@ -479,13 +481,14 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (i < mSpanCount) 
 		{
 			//此时mGapStart实际上是删除范围的end
+			//整个节点的左端点flag为POINT，右端点flag为MARK (SPAN_EXCLUSIVE_EXCLUSIVE == SPAN_POINT_MARK)
 			//整个节点原本在start~end之间，但可能两端衔接在start和end上
-			//要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
+			//要替换的文本长度为0，或者spanStart没有衔接在start上(POINT排除文本到前面)，或者spanEnd没有衔接在end上(MARK排除文本到后面)
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
 				(textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
-				//如果整个节点在删除范围内，移除此节点
+				//那么移除此节点
                 mIndexOfSpan.remove(mSpans[i]);
                 removeSpan(i, 0);
                 return true;
@@ -505,9 +508,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
-				//若span的端点为POINT标志，该端点应相对于原文本(而不包含插入文本)进行变化
-				//位于删除范围内的端点应移动到插入文本的末尾，即mGapStart
-				//另一个情况是当端点位于start并且我们正在进行文本替换（而不是删除）时，该端点保持在start
+				//若span的端点为POINT标志，该端点应将插入文本排除在前面。也就是说，位于删除范围内的端点应移动到插入文本的末尾，即mGapStart
+				//另一个情况是当端点位于start并且我们正在进行文本替换（而不是删除）时，该端点保持在start(意为将span之内的内容替换为另一个内容，span要包含替换的内容)
 				if (textIsRemoved || offset > start) {
                     return mGapStart + mGapLength;
                 }
@@ -522,15 +524,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 }
 				else
 				{ 
-				    //如果span端点为MARK标志，该端点应相对于原文本(而不包含插入文本)保持不变
-					//提示: 若不包含插入文本，start和mGapStart对原文本来说是紧挨着的，start+1 = mGapStart
 					if (textIsRemoved || offset < mGapStart - nbNewChars) {
-						//假设我们先把start~end之间的内容删除了，由于mGapStart - nbNewChars实际等于删除文本的end
-						//应该将删除范围内的端点移动到开头(相对于原文本的位置)，但位于范围结尾end的端点除外	
+						//如果span端点为MARK标志，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到开头(mGapStart - nbNewChars实际等于删除文本的end)
                         return start;
                     } else {
-						//我们再把要替换的文本插入start的位置
-						//位于范围结尾的端点，它应该被插入文本挤到后面(相对于原文本的位置)，因此移动到插入文本的末尾，即mGapStart
+						//若offset刚好是位于范围结尾的端点，它应该包含替换的文本。因此移动到插入文本的末尾，即mGapStart
 						return mGapStart;
                     }
                 }

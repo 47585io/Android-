@@ -43,8 +43,8 @@ public class MainActivity extends Activity implements Runnable
 		
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i=0;i<10000;++i){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_POINT_POINT);
+		for(int i=0;i<1;++i){
+			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+100,Spanned.SPAN_POINT_POINT);
 		}
 		//E.scrollTo(0,(int)E.getVScrollRange());
 	}
