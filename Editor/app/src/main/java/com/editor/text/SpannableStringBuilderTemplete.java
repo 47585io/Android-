@@ -1572,16 +1572,48 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//每个span有spanStart和spanEnd，而我们可以给两端点各设置MARK，POINT，PARAGRAPH其中的一个标志
 	//spanFlags中，用1~4位存储spanEnd的标志，用5~8位存储spanStart的标志
 
-	//我喜欢解释MARK vs POINT的方式是将它们表示为方括号，以及它们在一系列文本中存在的任何偏移量，括号指向的方向显示标记或点“附加”到的字符
-	//对于下面的例子，两个端点位置相等
+	//我喜欢解释MARK 和 POINT的方式是将它们表示为方括号，以及它们在一系列文本中存在的任何偏移量，括号指向的方向显示标记或端点“附加”到的字符
 	//因此对于POINT，您将使用开括号 - 它附加到它后面的字符上  hello[world!
 	//对于MARK，您可以使用闭括号 - 它附加在它前面的字符上  hello]world!
 	
 	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符(由间隙缓冲区管理)
-	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置将跟随原文本之前的内容(保持不变)
-	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(跟随原文本之后的内容)
+	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置将跟随原文本之前的内容(保持不变)，而新插入的文本被端点排除在后面
+	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(跟随原文本之后的内容)，而新插入的文本被端点排除在前面
 	//PARAGRAPH标志更特殊，它永远保证span的一端是一个段落的结尾，即这一端永远在换行符的位置或文本末尾
+	//下面的例子，我们给不同的字符串插入字符，注意端点变化
 	
+	/*
+	  SPAN_MARK_MARK 在0长度范围(spanStart == spanEnd)的偏移处插入"INSERT"：标记保持固定(也就是被spanStart和spanEnd排除在后面)
+	  Before: Lorem ]]ipsum dolor sit.
+	  After:  Lorem ]]INSERTipsum dolor sit.
+
+	  在非0长度范围(spanStart和spanEnd包含着"ipsum")的开头插入：插入的文本包含在span的范围内(也就是被spanStart排除在后面)
+	  Before: Lorem ]ipsum] dolor sit.
+	  After:  Lorem ]INSERTipsum] dolor sit.
+
+	  在非0长度范围的末尾插入：插入的文本从span的范围中排除(也就是被spanEnd排除在后面)
+	  Before: Lorem ]ipsum] dolor sit.
+	  After:  Lorem ]ipsum]INSERT dolor sit.
+
+	  您可以从最后两个示例中看到，为什么SPAN_MARK_MARK标志与SPAN_INCLUSIVE_EXCLUSIVE标志同义
+	  在范围开始处插入的文本包含在范围内，而排除在末尾插入的文本
+	*/
+	/*
+	  SPAN_POINT_POINT 在0长度范围的偏移处插入"INSERT"：向前推动点(也就是被spanStart和spanEnd排除在前面)
+	  Before: Lorem [[ipsum dolor sit.
+	  After:  Lorem INSERT[[ipsum dolor sit.
+
+	  在非0长度范围的开头插入：插入的文本从span的范围中排除(也就是被spanStart排除在前面)
+	  Before: Lorem [ipsum[ dolor sit.
+	  After:  Lorem INSERT[ipsum[ dolor sit.
+
+	  在非0长度范围的末尾插入：插入的文本包含在span的范围内(也就是被spanEnd排除在前面)
+	  Before: Lorem [ipsum[ dolor sit.
+	  After:  Lorem [ipsumINSERT[ dolor sit.
+
+	  您可以从最后两个示例中看到为什么SPAN_POINT_POINT标志与SPAN_EXCLUSIVE_INCLUSIVE标志同义
+	  在范围开始处插入的文本将从范围中排除，而包含在末尾插入的文本
+	*/
     private static final int MARK = 1;
     private static final int POINT = 2;
     private static final int PARAGRAPH = 3;
