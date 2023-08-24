@@ -307,34 +307,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
             //即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
             //另外一个很重要的概念，每次修正后，span的真实位置(start和end)不可能在间隙缓冲区中
-            //潜在优化:仅更新范围之内的span的位置
-			boolean changed = false;
             final boolean atEnd = (mGapStart + mGapLength == mText.length);
-            for (int i = 0; i < mSpanCount; i++)
-            {
-				int ost = mSpanStarts[i];
-				int oen = mSpanEnds[i];
-				if (ost >= start && ost < mGapStart + mGapLength) 
-				{
-					final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
-					int nst = updatedIntervalBound(mSpanStarts[i], start, nbNewChars, startFlag, atEnd, textIsRemoved);
-					if(nst!=ost){
-						mSpanStarts[i] = nst;
-						changed = true;
-					}
-				}
-				if (oen >= start && oen < mGapStart + mGapLength) 
-				{
-					final int endFlag = (mSpanFlags[i] & END_MASK);
-					int nen = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag, atEnd, textIsRemoved);
-					if(nen!=oen){
-						mSpanEnds[i] = nen;
-						changed = true;
-					}
-				}
-            }
-            //潜在优化:仅在范围实际更改时刷新
-			if(changed){
+            if(updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,treeRoot())){
 				restoreInvariants();
 			}  
         }
@@ -367,7 +341,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
     }
 
-    /* 在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了返回true */
+    /* 文本变化后，在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了一个就立即返回true
+	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
+	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除所有范围内的节点
+	*/
     private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
     {
         if ((i & 1) != 0) {
@@ -396,6 +373,50 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 removeSpansForChange(start, end, textIsRemoved, rightChild(i));
         }
         return false;
+    }
+	
+	/* 文本修改后，修正在修改范围内的span位置，如果真的修正了，就返回true */
+    private boolean updatedIntervalBounds(int start, int nbNewChars, boolean atEnd, boolean textIsRemoved, int i)
+    {
+		boolean updated = false;
+		if ((i & 1) != 0) {
+            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			if(mSpanMax[i]>=start){
+				updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,leftChild(i));
+			}
+		}
+		if(i < mSpanCount)
+		{
+			if ((i & 1) != 0) {
+				//节点i不是叶子节点，若它的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
+				if(mSpanStarts[i]<mGapStart+mGapLength){
+					updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,rightChild(i)) || updated;
+				}
+			}
+			
+			//节点i自己在范围内，就修正它的位置
+			int ost = mSpanStarts[i];
+			int oen = mSpanEnds[i];
+			if (ost >= start && ost < mGapStart + mGapLength) 
+			{
+				final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
+				int nst = updatedIntervalBound(mSpanStarts[i], start, nbNewChars, startFlag, atEnd, textIsRemoved);
+				if(nst!=ost){
+					mSpanStarts[i] = nst;
+					updated = true;
+				}
+			}
+			if (oen >= start && oen < mGapStart + mGapLength) 
+			{
+				final int endFlag = (mSpanFlags[i] & END_MASK);
+				int nen = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag, atEnd, textIsRemoved);
+				if(nen!=oen){
+					mSpanEnds[i] = nen;
+					updated = true;
+				}
+			}
+		}
+		return updated;
     }
 
     /* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */

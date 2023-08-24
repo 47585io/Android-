@@ -157,7 +157,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             return;
         boolean atEnd = (where == length());
         if (where < mGapStart) {
-			//如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与其位置置换
+			//如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与where~mGapStart之间的内容的位置置换
             int overlap = mGapStart - where;
             System.arraycopy(mText, where, mText, mGapStart + mGapLength - overlap, overlap);
         } else {
@@ -188,7 +188,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                     if (flag == POINT || (atEnd && flag == PARAGRAPH))
 						//POINT标志的端点应将缓冲区排除在前面(自己向后移)
 						//而MARK标志的端点应将缓冲区排除在后面(保持不变)
-						//PARAGRAPH标志的span移动到文本末尾
+						//如果缓冲区移动到全部文本末尾，PARAGRAPH标志的span移动到文本末尾
                         start += mGapLength;
                 }
 				
@@ -468,7 +468,10 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
     }
 	
-	/* 在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了返回true */
+	/* 文本变化后，在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了一个就立即返回true
+	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
+	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除范围内的所有节点
+	*/
 	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
 	{
         if ((i & 1) != 0) {
@@ -481,14 +484,13 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (i < mSpanCount) 
 		{
 			//此时mGapStart实际上是删除范围的end
-			//整个节点的左端点flag为POINT，右端点flag为MARK (SPAN_EXCLUSIVE_EXCLUSIVE == SPAN_POINT_MARK)
 			//整个节点原本在start~end之间，但可能两端衔接在start和end上
-			//要替换的文本长度为0，或者spanStart没有衔接在start上(POINT排除文本到前面)，或者spanEnd没有衔接在end上(MARK排除文本到后面)
+			//要替换的文本长度为0就直接移除此节点，否则节点的两端都要衔接在start和end上才不会被移除(实际是为了等之后在updatedIntervalBound中，对span进行扩展)
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
 				(textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
-				//那么移除此节点
+				//满足条件的节点i会被移除
                 mIndexOfSpan.remove(mSpans[i]);
                 removeSpan(i, 0);
                 return true;
@@ -500,7 +502,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return false;
     }
 	
-	/* 文本删除后，在删除范围内的span端点应该移动到哪里，在删除范围外的span端点实际不变 */
+	/* 文本修改后，在删除范围内的span端点应该移动到哪里，在删除范围外的span端点实际不变 */
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
 		//此时mGapStart实际上是插入文本的end，若offset的原本位置处于删除范围内，才需要计算位置
@@ -517,7 +519,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			else 
 			{
                 if (flag == PARAGRAPH) {
-					//如果可以，段落标志的span位置应该保持在文本末尾
+					//如果删除范围在全部文本最后，在其中的段落标志的span端点应该保持在文本末尾
                     if (atEnd) {
                         return mGapStart + mGapLength;
                     }
@@ -525,7 +527,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 				else
 				{ 
 					if (textIsRemoved || offset < mGapStart - nbNewChars) {
-						//如果span端点为MARK标志，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到开头(mGapStart - nbNewChars实际等于删除文本的end)
+						//如果span端点为MARK标志(无标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到开头(mGapStart - nbNewChars实际等于删除文本的end)
                         return start;
                     } else {
 						//若offset刚好是位于范围结尾的端点，它应该包含替换的文本。因此移动到插入文本的末尾，即mGapStart
@@ -735,7 +737,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 mSpanEnds[i] = end;
                 mSpanFlags[i] = flags;
                 if (send) {
-					//是否要立刻修正index在map中的位置错误，或等待以后一并修正
+					//是否要立刻修正span的位置错误，或等待以后一并修正
                     restoreInvariants();
                     sendSpanChanged(what, ostart, oend, nstart, nend);
                 }
@@ -1411,7 +1413,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//其他平衡二叉树方法(例如完全二叉树)需要对节点索引进行一些洗牌
 	
 	//这个结构的基本性质:
-	//整颗树像一个等腰三角形
+	//整颗树像一个等腰三角形，所有内部节点都有两个子节点
 	//对于一棵高度为m的完美二叉树，树有2^(m+1) - 1个总节点，树根的索引是2^m - 1
 	//所有叶子节点的索引都是偶数，所有内部节点的索引都是奇数，因此(i & 1) != 0可判断其是不是叶子节点
 	//索引i的一个节点的高度是i的二进制表示中尾部的连续的1的个数
