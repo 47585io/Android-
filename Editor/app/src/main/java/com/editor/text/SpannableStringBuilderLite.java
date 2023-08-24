@@ -280,11 +280,21 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
         final boolean textIsRemoved = replacementLength == 0;
         //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
-        if (replacedLength > 0){ 
+        if (replacedLength > 0)
+		{ 
             //纯插入时不需要span移除
-            while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
-				//根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
-            }
+			if(replacedLength >= length()/2){
+				//如果删除的文本太长，就遍历所有节点，一次性全部删除并刷新
+				if(removeSpansForChange(start,end,textIsRemoved)){
+					restoreInvariants();
+				}
+			}
+			else{
+				//否则一个个删除并刷新
+				while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
+					//根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
+				}
+			}
         }
 
         //插入文本并不需要扩展数组，仅需将间隙缓冲区缩小
@@ -318,6 +328,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
+			if(spans.length==0){
+				return;
+			}
             for (int i = 0; i < spans.length; i++) 
             {
                 int st = sp.getSpanStart(spans[i]);
@@ -341,6 +354,29 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
     }
 
+	/* 文本变化后，删除在start~end范围内的文本中全部节点，删除了返回true
+	   注意: 恢复不变量是调用者的责任
+	*/
+	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved)
+	{
+		boolean removed = false;
+		//遍历所有节点，并移除在范围内的节点
+		for(int i=0;i<mSpanCount;++i)
+		{
+			if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
+                mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
+                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
+                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
+				//如果整个节点在删除范围内，移除此节点，下标前移一位
+				mIndexOfSpan.remove(mSpans[i]);
+				removeSpan(i,0,false);
+				removed = true;
+				i--;
+			}
+		}
+		return removed;
+	}
+	
     /* 文本变化后，在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了一个就立即返回true
 	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
 	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除所有范围内的节点
@@ -349,6 +385,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     {
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			//一个有意思的问题: 在getSpansRec和nextSpanTransitionRec中都是直接判断左右子节点是否在范围内，从而决定是否遍历左右子节点
+			//而这里却是用节点i的值判断是否需要遍历左右子节点，很简单，因为该函数对于节点的判断条件很复杂，无法直接决定，仍需要等节点自己去判断
             if (resolveGap(mSpanMax[i]) >= start &&
                 removeSpansForChange(start, end, textIsRemoved, leftChild(i))) {
                 return true;
@@ -365,7 +403,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
                 //如果整个节点在删除范围内，移除此节点
                 mIndexOfSpan.remove(mSpans[i]);
-                removeSpan(i, 0);
+                removeSpan(i, 0, true);
                 return true;
             }
             //若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
@@ -375,22 +413,27 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return false;
     }
 	
-	/* 文本修改后，修正在修改范围内的span位置，如果真的修正了，就返回true */
+	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，如果真的修正了，就返回true */
     private boolean updatedIntervalBounds(int start, int nbNewChars, boolean atEnd, boolean textIsRemoved, int i)
     {
+		//resolveGap的使用时机是，保证所有节点的端点都不在间隙缓冲区中
+		//由于在删除后，间隙缓冲区移动了，因此此时可能有一部分端点错误地分布在间隙缓冲区中
+		//此函数正是应该将它们都移动到正确的位置(也就是间隙缓冲区两端)
 		boolean updated = false;
 		if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			if(mSpanMax[i]>=start){
-				updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,leftChild(i));
+            //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			int left = leftChild(i);
+			if(mSpanMax[left]>=start){
+				updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,left);
 			}
 		}
 		if(i < mSpanCount)
 		{
 			if ((i & 1) != 0) {
-				//节点i不是叶子节点，若它的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
-				if(mSpanStarts[i]<mGapStart+mGapLength){
-					updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,rightChild(i)) || updated;
+				//节点i不是叶子节点，若它的右子节点的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
+				int right = rightChild(i);
+				if(mSpanStarts[right]<mGapStart+mGapLength){
+					updated = updatedIntervalBounds(start,nbNewChars,atEnd,textIsRemoved,right) || updated;
 				}
 			}
 			
@@ -574,20 +617,20 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
     /**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) {
-        removeSpan(what, 0);
+        removeSpan(what, 0, true);
     }
-    public void removeSpan(Object what, int flags)
+    public void removeSpan(Object what, int flags, boolean send)
     {
         if (mIndexOfSpan == null) return;
         //获取span的下标，并移除它
         Integer i = mIndexOfSpan.remove(what);
         if (i != null) {
-            removeSpan(i.intValue(), flags);
+            removeSpan(i.intValue(), flags, send);
         }
     }
     //注意:调用者负责删除mIndexOfSpan条目
     //与setSpan相反，移除span会打乱前面的索引，因此需要立刻刷新
-    private void removeSpan(int i, int flags) 
+    private void removeSpan(int i, int flags, boolean send) 
     {
         //要移除此span，其实就是把此span之后的span全部往前挪一位
         int count = mSpanCount - (i + 1);
@@ -599,9 +642,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
         mSpanCount--;
         invalidateIndex(i);
-        mSpans[mSpanCount] = null;
-        //在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
-        restoreInvariants();
+        mSpans[mSpanCount] = null;  
+		//在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
+        if(send){
+			restoreInvariants();
+		}
     }
 
     /**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/

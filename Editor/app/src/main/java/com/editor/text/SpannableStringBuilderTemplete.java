@@ -476,6 +476,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	{
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			//一个有意思的问题: 在getSpansRec和nextSpanTransitionRec中都是直接判断左右子节点是否在范围内，从而决定是否遍历左右子节点
+			//而这里却是用节点i的值判断是否需要遍历左右子节点，很简单，因为该函数对于节点的判断条件很复杂，无法直接决定，仍需要等节点自己去判断
             if (resolveGap(mSpanMax[i]) >= start &&
 				removeSpansForChange(start, end, textIsRemoved, leftChild(i))) {
                 return true;
@@ -484,7 +486,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (i < mSpanCount) 
 		{
 			//此时mGapStart实际上是删除范围的end
-			//整个节点原本在start~end之间，但可能两端衔接在start和end上
+			//整个节点原本在start~end之间，但可能两端衔接在start和end上 (由于mGapStart >= start，所以这里的start亦可以是真实和原本的位置，而end也不超过mGapStart + mGapLength)
 			//要替换的文本长度为0就直接移除此节点，否则节点的两端都要衔接在start和end上才不会被移除(实际是为了等之后在updatedIntervalBound中，对span进行扩展)
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
@@ -506,7 +508,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean atEnd, boolean textIsRemoved)
 	{
 		//此时mGapStart实际上是插入文本的end，若offset的原本位置处于删除范围内，才需要计算位置
-		//而删除范围此时已不知道，但其实它必然在start ~ mGapStart+mGapLength之中
+		//而删除范围此时已不知道，但其实它必然在start ~ mGapStart+mGapLength之中(由于mGapStart >= start，所以这里的start亦可以是真实和原本的位置，而end也不超过mGapStart + mGapLength)
+		//由于在删除后，间隙缓冲区移动了，因此此时可能还有一部分端点错误地分布在间隙缓冲区中，此函数正是应该将它们都移动到正确的位置(也就是间隙缓冲区两端)
+		//还要注意，resolveGap的使用时机是，保证所有节点的端点都不在间隙缓冲区中，此函数是不可能使用resolveGap的
         if (offset >= start && offset < mGapStart + mGapLength) 
 		{
             if (flag == POINT) {
