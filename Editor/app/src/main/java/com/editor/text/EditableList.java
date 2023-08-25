@@ -24,7 +24,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 2048;
+	private static final int Default_MaxCount = 1024;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	

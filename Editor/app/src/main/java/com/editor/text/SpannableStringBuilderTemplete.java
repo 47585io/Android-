@@ -145,7 +145,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
                 if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
             }
-			//重新计算节点最大范围
+			//节点顺序不变，仅需重新计算节点最大范围
             calcMax(treeRoot());
         }
     }

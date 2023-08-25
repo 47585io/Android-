@@ -316,7 +316,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
             //即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
             //另外一个很重要的概念，每次修正后，span的真实位置(start和end)不可能在间隙缓冲区中  
-            if(updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot())){
+            if(mSpanCount > 0 && updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot())){
 				restoreInvariants();
 			}  
         }
@@ -416,23 +416,22 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private boolean updatedIntervalBounds(int start, int nbNewChars, boolean textIsRemoved, int i)
     {
 		//resolveGap的使用时机是，保证所有节点的端点都不在间隙缓冲区中
-		//由于在删除后，间隙缓冲区移动了，因此此时可能有一部分端点错误地分布在间隙缓冲区中
+		//由于在删除后，间隙缓冲区移动了，但节点没有移动，因此此时可能有一部分端点错误地分布在间隙缓冲区中
 		//此函数正是应该将它们都移动到正确的位置(也就是间隙缓冲区两端)
 		boolean updated = false;
 		if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			int left = leftChild(i);
-			if(mSpanMax[left]>=start){
-				updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,left);
+            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			//这里为什么用i，因为先修改后，再向下是错误的
+			if(mSpanMax[i]>=start){
+				updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,leftChild(i));
 			}
 		}
 		if(i < mSpanCount)
 		{
 			if ((i & 1) != 0) {
-				//节点i不是叶子节点，若它的右子节点的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
-				int right = rightChild(i);
-				if(mSpanStarts[right]<mGapStart+mGapLength){
-					updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,right) || updated;
+				//节点i不是叶子节点，若它的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
+				if(mSpanStarts[i]<mGapStart+mGapLength){
+					updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,rightChild(i)) || updated;
 				}
 			}
 			
