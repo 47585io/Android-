@@ -281,8 +281,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final boolean textIsRemoved = replacementLength == 0;
         //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
         if (replacedLength > 0)
-		{ 
-            //纯插入时不需要span移除
+		{ //纯插入时不需要span移除
 			if(replacedLength >= length()/2){
 				//如果删除的文本太长，就遍历所有节点，一次性全部删除并刷新
 				if(removeSpansForChange(start,end,textIsRemoved)){
@@ -291,7 +290,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
 			else{
 				while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
-					//根据需要不断删除范围内的spans，每次删除后从根重新开始，因为删除会使索引失效
+					//根据需要不断删除范围内的节点，每次删除后从根重新开始，因为删除会使索引失效
 				}
 			}
         }
@@ -466,24 +465,19 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean textIsRemoved)
     {
 		if (flag == POINT) {
-			//位于替换范围内的点应该移动到间隙缓冲区末尾，以便之后在span的边界插入文本时，span可以进行扩展
-			//自己想一下，mGapStart+mGapLength 和 mGapStart 虽然原本位置一样，但若之后在mGapStart插入文本，位于mGapStart+mGapLength的点可以自己后移(相对于文本)，而位于mGapStart的点不会
+			//若span的端点为POINT标志，该端点应将插入文本排除在前面。也就是说，位于删除范围内的端点应移动到插入文本的末尾，即mGapStart
+			//另一个情况是当端点位于start并且我们正在进行文本替换（而不是删除）时，该端点保持在start(意为将span之内的内容替换为另一个内容，span要包含替换的内容)
 			if (textIsRemoved || offset > start) {
 				return mGapStart + mGapLength;
 			}
 		} 
 		else 
 		{
-			//下面分为两步理解
 			if (textIsRemoved || offset < mGapStart - nbNewChars) {
-				//假设我们先把start~end之间的内容删除了
-				//由于mGapStart - nbNewChars实际等于删除文本的end，应该将删除范围内的标记移动到开头，但位于范围结尾的标记除外
-				//这对于spanStart和spanEnd都适用，可以自己想一下
+				//如果span端点为MARK标志(无标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到开头(mGapStart - nbNewChars实际等于删除文本的end)
 				return start;
 			} else {
-				//我们再把要替换的文本插入start的位置
-				//若标记在删除范围内，它的位置还是start
-				//若标记不在删除范围内(也就是位于范围结尾的标记)，上面的if没有处理它，它应该被插入文本挤到后面(该span不存在于插入文本中，若没有删除，应该挤到新添加文本后)，因此移动到插入文本的末尾，即mGapStart
+				//若offset刚好是位于范围结尾的端点，它应该包含替换的文本。因此移动到插入文本的末尾，即mGapStart
 				return mGapStart;
 			}
 		}
