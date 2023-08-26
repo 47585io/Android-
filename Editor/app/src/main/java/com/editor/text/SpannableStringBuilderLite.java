@@ -281,7 +281,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final boolean textIsRemoved = replacementLength == 0;
         //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
         if (replacedLength > 0)
-		{ //纯插入时不需要span移除
+		{
+			//纯插入时不需要span移除
 			if(replacedLength >= length()/2){
 				//如果删除的文本太长，就遍历所有节点，一次性全部删除并刷新
 				if(removeSpansForChange(start,end,textIsRemoved)){
@@ -763,7 +764,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
         if (spanStart <= queryEnd) 
         {
-            //若节点i是叶子节点，并且自己在范围内，将自己添加到数组中
+            //若节点i自己在范围内，将自己添加到数组中
             int spanEnd = mSpanEnds[i];
             if (spanEnd > mGapStart) {
                 spanEnd -= mGapLength;

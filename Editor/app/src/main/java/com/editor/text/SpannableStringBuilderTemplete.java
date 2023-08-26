@@ -968,7 +968,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         }
         if (spanStart <= queryEnd) 
 		{
-			//若节点i是叶子节点，并且自己在范围内，将自己添加到数组中
+			//若节点i自己在范围内，将自己添加到数组中
             int spanEnd = mSpanEnds[i];
             if (spanEnd > mGapStart) {
                 spanEnd -= mGapLength;

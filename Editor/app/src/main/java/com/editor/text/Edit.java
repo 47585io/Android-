@@ -507,7 +507,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		 我不知道哪个方案更省时，所以您可以更改draw中调用的onDraw函数，可以为以下两个方案之一 
 
 		 onDraw1方案:  此方案尽可能地少遍历区间树，只获取一次可见范围内的所有Span并获取它们各自的范围，然后只遍历两次Span数组(第一次是背景，第二次是前景)，由于Span是乱序的，需要计算出Span的坐标后进行绘制
-		 如果不是特殊情况，只有获取每个Span各自的范围时才消耗时间(更确切地说，我害怕获取范围是需要遍历整个树的)，每个Span只绘制一次(即使跨越几行)，计算坐标基本不耗时(可以忽略)，并且不会绘制超出范围的部分
+		 每个Span只绘制一次(即使跨越几行)，计算坐标基本不耗时(可以忽略)，并且不会绘制超出范围的部分
 
 		 onDraw2方案:  此方案尽可能地缩小范围，遍历所有可见的行，并计算出本行的可见范围，每行只绘制这么一点点，在每行的绘制中为了避免获取单个Span的范围，使用nextSpanTransition来顺序获取下个区间，然后把区间内的Span全部获取并绘制，这样行行绘制下去
 		 如果Span的重叠很严重(例如会跨越几行，或者几个Span挤在一起)，那么会很麻烦，因为这样就会把同一个Span的不同位置遍历几次，这个Span也要连带着被绘制几次		
@@ -536,7 +536,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				spanStarts[i] = spanString.getSpanStart(spans[i]);
 				spanEnds[i] = spanString.getSpanEnd(spans[i]);
 			}
-
+			
 			//绘制背景的Span
 			onDrawBackground(spanString,start,end,spans,spanStarts,spanEnds,0,lineHeight,tmp2,canvas,spanPaint,See);
 
@@ -565,7 +565,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//遍历span
 			for(int i=0;i<spans.length;++i)
 			{
-				if(spans[i] instanceof BackgroundColorSpan)
+				if(spanStarts[i]>0 && spans[i] instanceof BackgroundColorSpan)
 				{
 					//只绘制背景
 					BackgroundColorSpan span = (BackgroundColorSpan) spans[i];
@@ -615,7 +615,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//遍历span
 			for(int i=0;i<spans.length;++i)
 			{
-				if(!(spans[i] instanceof BackgroundColorSpan) && spans[i] instanceof CharacterStyle)
+				if(spanStarts[i]>0 && !(spans[i] instanceof BackgroundColorSpan) && spans[i] instanceof CharacterStyle)
 				{
 					//不绘制背景
 					CharacterStyle span = (CharacterStyle) spans[i];
@@ -695,8 +695,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				next = tryLine_End(spanString,now);
 				//测量并保存每个字符的宽
 				int count = next-now;
-				fillChars((GetChars)spanString,now,next);
-				fillWidths(chars,0,count,textPaint);
+				fillWidths((GetChars)spanString,now,next,textPaint);
 				
 				int i = 0;
 				float w = x;
@@ -766,7 +765,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				CharacterStyle[] spans = spanString.getSpans(i, next, CharacterStyle.class);		
 
 				//遍历Span，首先绘制背景
-				for(j = 0; j < spans.length; ++j)
+				for(j = spans.length-1; j >= 0; --j)
 				{
 					if(spans[j] instanceof BackgroundColorSpan)
 					{
@@ -775,11 +774,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						spanPaint.setColor(span.getBackgroundColor());
 						span.updateDrawState(spanPaint);
 						canvas.drawRect(xStart, y, xEnd, y+lineHeight, spanPaint);
+						//已经将优先级最高的span绘制了，之前的span不用绘制了
+						break;
 					}
 				}
 
 				//然后遍历Span，只绘制前景
-				for(j = 0; j < spans.length; ++j)
+				for(j = spans.length-1; j >= 0; --j)
 				{
 					if(!(spans[j] instanceof BackgroundColorSpan))
 					{
@@ -788,6 +789,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						span.updateDrawState(spanPaint);
 						canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, spanPaint);
 						isDrawText = true; 
+						break;
 					}
 				}
 
@@ -854,6 +856,40 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					y += lineHeight;
 				}
 				start = end+1;
+			}
+		}
+		
+		private void replaceOverlappingSpansRange(Object[] spans, int[] spanStarts, int[] spanEnds)
+		{
+			for(int i=0;i<spans.length;++i)
+			{
+				int start = spanStarts[i];
+				int end = spanEnds[i];
+				Class kind = spans[i].getClass();
+				for(int j=i+1;j<spans.length;++j)
+				{
+					//仅处理相同类型的span
+					if(kind.isInstance(spans[j]))
+					{
+						//在后面span范围内的部分不用绘制
+						if(spanStarts[j]<=start && spanEnds[j]>=end){
+							//若后面的span跨越整个当前span，此span已无范围
+							start = -1;
+							end = -1;
+							break;
+						}
+						else if(spanStarts[j]<=start && spanEnds[j]>start){
+							//否则若其仅包含当前span左边，那么左侧范围内的内容不用绘制
+							start = spanEnds[j];
+						}
+						else if(spanEnds[j]>=end && spanStarts[j]<end){
+							//否则若其仅包含当前span右边，那么右侧范围内的内容不用绘制
+							end = spanStarts[j];
+						}
+					}
+				}
+				spanStarts[i] = start;
+				spanEnds[i] = end;
 			}
 		}
 

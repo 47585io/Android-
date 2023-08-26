@@ -91,15 +91,6 @@ public class ArrayUtils
         }
         return -1;
     }
-	/* 统计数组中指定范围内的指定元素个数 */
-	public static <T> int Count(T[] array, T value, int start, int end)
-	{
-		int count = 0;
-		for(;start<end;++start){
-			if(Objects.equals(array[start],value)) ++count;
-		}
-		return count;
-	}
 	
 	public static int indexOf(char[] array, char value, int index)
 	{
@@ -118,15 +109,24 @@ public class ArrayUtils
         }
         return -1;
     }
-
-	public static int Count(char[] array, char value, int start, int end)
+	
+	public static int indexOf(int[] array, int value, int index)
 	{
-		int count = 0;
-		for(;start<end;++start){
-			if(array[start]==value) ++count;
-		}
-		return count;
-	}
+        if (array == null || index<0) return -1;
+        for (; index < array.length; index++) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
+
+	public static int lastIndexOf(int[] array, int value, int index)
+	{
+        if (array == null || index>=array.length) return -1;
+        for (;index>=0; index--) {
+            if (array[index]==value) return index;
+        }
+        return -1;
+    }
 
 	/* 快速排序 */
 	public static <T> void quickSort(T[] list, int size, Comparator<T> com)

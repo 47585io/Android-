@@ -722,7 +722,7 @@ _______________________________________
 	final public int Count(char c, GetChars text, int start, int end)
 	{
 		fillChars(text,start,end);
-		return ArrayUtils.Count(chars,c,0,end-start);
+		return Count(chars,c,0,end-start);
 	}
 	final public int NIndex(char c,GetChars text,int index, int n)
 	{
@@ -749,7 +749,6 @@ _______________________________________
 		}
 		return -1;
 	}
-
 	final public static int lastNIndex(char c,char[] arr,int index,int n)
 	{
 		if (arr == null || index>=arr.length) return -1;
@@ -764,7 +763,14 @@ _______________________________________
 		}
 		return -1;
 	}
-	
+	final public static int Count(char[] array, char value, int start, int end)
+	{
+		int count = 0;
+		for(;start<end;++start){
+			if(array[start]==value) ++count;
+		}
+		return count;
+	}
 	
 	/* 安全地获取数据 */
 	final protected void fillChars(GetChars text, int start, int end)
@@ -781,6 +787,11 @@ _______________________________________
 	{
 		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
 		paint.getTextWidths(text,start,end,widths);
+	}
+	final protected void fillWidths(GetChars text, int start, int end, TextPaint paint)
+	{
+		fillChars(text,start,end);
+		fillWidths(chars,0,end-start,paint);
 	}
 	
 	//试探当前下标所在行的起始
