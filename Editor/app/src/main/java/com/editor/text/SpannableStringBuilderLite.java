@@ -140,11 +140,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             new Exception("mGapLength < 1").printStackTrace();
         if (mSpanCount != 0) 
         {
-            //遍历所有span，在间隙缓冲区之后的span的范围会增加delta
-            for (int i = 0; i < mSpanCount; i++) {
-                if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
-                if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
-            }
+			if(mGapStart>length()>>1){
+				//遍历在间隙缓冲区之后的span，并将范围增加delta
+				resizeForSpans(delta,treeRoot());
+			}
+			else{
+				//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
+				for (int i = 0; i < mSpanCount; i++) {
+					if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
+					if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
+				}
+			}
             //重新计算节点最大范围
             calcMax(treeRoot());
         }
@@ -153,10 +159,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	/* 递归增大缓冲区之后的span */
 	private void resizeForSpans(int delta, int i) 
 	{
-		if((i & 1) != 0){
+		if((i & 1) != 0)
+		{
 			//左子节点需要在mGapStart后面
-			if(mSpanMax[i] > mGapStart){
-				resizeForSpans(delta,leftChild(i));
+			int left = leftChild(i);
+			if(mSpanMax[left] > mGapStart){
+				resizeForSpans(delta,left);
 			}
 		}
 		if(i<mSpanCount)
@@ -205,7 +213,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 else if (start == where) {
                     int flag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
                     if (flag == POINT)
-					//点的span应悬停在缓冲区末尾等待扩展
                         start += mGapLength;
                 }
 
@@ -442,15 +449,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//此函数正是应该将它们都移动到正确的位置(也就是间隙缓冲区两端)
 		boolean updated = false;
 		if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			if(mSpanMax[i]>=start){
-				updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,leftChild(i));
+            //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			int left = leftChild(i);
+			if(mSpanMax[left]>=start){
+				updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,left);
 			}
 		}
 		if(i < mSpanCount)
 		{
 			if ((i & 1) != 0) {
 				//节点i不是叶子节点，若它的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
+				//与遍历左子节点不同，注意这里为什么用节点i的spanStart判断是否需要遍历右子节点呢，因为右子节点的左子节点的spanStart可能小于右子节点的spanStart，但一定大于节点i的spanStart
 				if(mSpanStarts[i]<mGapStart+mGapLength){
 					updated = updatedIntervalBounds(start,nbNewChars,textIsRemoved,rightChild(i)) || updated;
 				}

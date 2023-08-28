@@ -15,6 +15,7 @@ public class EditableList extends Object implements Editable
 
 	private int mLength;
 	private int mBlockSize;
+	private int mSelectionStart, mSelectionEnd;
 	
 	private Editable[] mBlocks;
 	private int[] mBlockStarts;
@@ -118,6 +119,9 @@ public class EditableList extends Object implements Editable
 	public int getBlockSize(){
 		return mBlockSize;
 	}
+	public int getBlockStartIndex(int id){
+		return mBlockStarts[id];
+	}
 	/* 寻找指定下标所在的文本块 */
 	public int findBlockIdForIndex(int index)
 	{
@@ -139,10 +143,6 @@ public class EditableList extends Object implements Editable
 		}
 		return id;
 	}
-	public int getBlockStartIndex(int id){
-		return mBlockStarts[id];
-	}
-	
 	
 	@Override
 	public Editable replace(int p1, int p2, CharSequence p3){
@@ -226,14 +226,9 @@ public class EditableList extends Object implements Editable
 		
 		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
 		mLength += -before+after;
-		//int selectionStart = Selection.getSelectionStart(this);
-		//int selectionEnd = Selection.getSelectionEnd(this);
-		//int index = st+after;
-		//Selection.setSelection(this,index);
-		
 		sendAfterBlocksChanged(i,start);
 		sendTextChanged(st,before,after);
-		//sendSelectionChanged(index,index,selectionStart,selectionEnd);
+		setSelection(st+after,st+after);
 		sendAfterTextChanged();
 		return this;
 	}
@@ -328,11 +323,10 @@ public class EditableList extends Object implements Editable
 	/* 替换指定文本块的文本及span的绑定 */
 	private void repalceWithSpan(int i, int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
-		Editable block = mBlocks[i];
 		//在删除文本前，替换span的绑定
 		replaceSpan(i,start,end,tb,tbStart,tbEnd);
 		//最后将实际文本替换
-		block.replace(start,end,tb,tbStart,tbEnd);
+		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
 	}
 
 	/* 替换指定文本块的span的绑定 */
@@ -477,7 +471,6 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
-	
 	@Override
 	public void clear()
 	{
@@ -532,12 +525,9 @@ public class EditableList extends Object implements Editable
 		if(blocks!=null)
 		{
 			int size = blocks.size();
-			for(int i=0;i<size;++i)
-			{
+			for(int i=0;i<size;++i){
 				Editable block = blocks.get(i);
-				if(block!=null){
-					block.removeSpan(p1);
-				}
+				block.removeSpan(p1);
 			}
 		}
 	}
@@ -557,17 +547,16 @@ public class EditableList extends Object implements Editable
 			return mBlocks[i].getSpans(start,end,kind);
 		}
 		
-		//收集范围内所有文本块的span，并不包含重复的span
 		spanSet.clear();
 		spanList.clear();
+		//收集范围内所有文本块的span，并不包含重复的span
 		Do d = new Do()
 		{
 			@Override
 			public void dothing(int id, int start, int end)
 			{
 				T[] spans = mBlocks[id].getSpans(start,end,kind);
-				for(int k=0;k<spans.length;++k)
-				{
+				for(int k=0;k<spans.length;++k){
 					if(spanSet.add(spans[k])){
 						//span仍应保持顺序
 						spanList.add(spans[k]);
@@ -674,18 +663,15 @@ public class EditableList extends Object implements Editable
 	}
 	
 	@Override
-	public CharSequence subSequence(int start, int end)
-	{
+	public CharSequence subSequence(int start, int end){
 		return new SpannableStringBuilderLite(this,start,end);
 	}
-	
 	public String subString(int start, int end)
 	{ 
 		char[] buf = new char[end - start];
         getChars(start, end, buf, 0);
         return new String(buf);
 	}
-
 	@Override
 	public String toString()
 	{
@@ -811,14 +797,23 @@ public class EditableList extends Object implements Editable
         return mTextWatcherDepth;
     }
 	
-	public void setSelection(int start, int end){
-		
+	/* 对光标的处理 */
+	public void setSelection(int start, int end)
+	{
+		if(start!=mSelectionStart || end!=mSelectionEnd)
+		{
+			int ost = mSelectionStart;
+			int oen = mSelectionEnd;
+			mSelectionStart = start;
+			mSelectionEnd = end;
+			sendSelectionChanged(start,end,ost,oen);
+		}
 	}
 	public int getSelectionStart(){
-		return 0;
+		return mSelectionStart;
 	}
 	public int getSelectionEnd(){
-		return 0;
+		return mSelectionEnd;
 	}
 	private void sendSelectionChanged(int st, int en, int ost, int oen){
 		if(mSelectionWatcher!=null){

@@ -421,8 +421,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		//在点击编辑器时，在performClick中计算点击位置，遍历spanStarts, spanEnds，确定它在mSpans中的下标，拿出来并回调Click方法
 		Object[] mSpans;
 		int[] spanStarts, spanEnds;
+		
+		//在绘制时，将已绘制的范围在表中填充，后续span绘制时不可绘制表中已填充的范围
+		//-1代表位置空闲，1代表位置已使用
+		int[] ForegroundSpanRangeTable, BackgroundSpanRangeTable;
 
-
+		
 		public myLayout(EditableList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
