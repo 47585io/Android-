@@ -7,6 +7,7 @@ import java.util.*;
 import android.text.Layout.*;
 
 
+/* 对分块文本容器进行测量的类 */
 public abstract class BlockLayout extends Layout implements EditableList.BlockListener
 {
 

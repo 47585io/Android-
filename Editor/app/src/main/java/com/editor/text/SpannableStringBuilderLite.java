@@ -7,7 +7,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-/** 这是内容和标记都可以更改的文本类，删除了监视器，过滤器，PARAGRAPH标志 */
+/** 这是内容和标记都可以更改的文本类，删除了监视器，过滤器，PARAGRAPH标志，并优化效率 */
 public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable 
 {
 

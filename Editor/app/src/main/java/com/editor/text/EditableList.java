@@ -6,6 +6,10 @@ import java.lang.reflect.*;
 import com.editor.text.base.*;
 
 
+/* 将大的数据分块/分区是一个很棒的思想，
+   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，
+   此类是分块文本容器的实现 
+*/
 public class EditableList extends Object implements Editable
 {
 
@@ -383,7 +387,7 @@ public class EditableList extends Object implements Editable
 					continue;
 				}
 				//若span绑定的blocks不为null，意味着它至少还有一个元素
-				//为block寻找一个合适位置并插入，blocks之前的文本块都顺序排列
+				//为block寻找一个合适位置并插入，使blocks之中的文本块都顺序排列
 				for(int k=blocks.size()-1;k>-1;--k)
 			    {
 					int id = mIndexOfBlocks.get(blocks.get(k));
@@ -807,6 +811,15 @@ public class EditableList extends Object implements Editable
         return mTextWatcherDepth;
     }
 	
+	public void setSelection(int start, int end){
+		
+	}
+	public int getSelectionStart(){
+		return 0;
+	}
+	public int getSelectionEnd(){
+		return 0;
+	}
 	private void sendSelectionChanged(int st, int en, int ost, int oen){
 		if(mSelectionWatcher!=null){
 			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);

@@ -525,7 +525,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//我们只能管理CharacterStyle及其子类的span，抱歉
 			textPaint.getFontMetrics(font);
 			float ascent = font.ascent; 
-			Object[] spans = spanString.getSpans(start,end,CharacterStyle.class);
+			CharacterStyle[] spans = spanString.getSpans(start,end,CharacterStyle.class);
 			mSpans = spans; //保存本次展示的Span
 
 			//getSpans的Span不保证顺序，因此需要获取每个Span的范围
@@ -535,6 +535,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			{
 				spanStarts[i] = spanString.getSpanStart(spans[i]);
 				spanEnds[i] = spanString.getSpanEnd(spans[i]);
+				//超出范围的内容不绘制
+				if(spanStarts[i] < start){
+					spanStarts[i] = start;
+				}
+				if(spanEnds[i] > end){
+					spanEnds[i] = end;
+				}
 			}
 			
 			//绘制背景的Span
@@ -556,7 +563,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 在绘制文本前绘制背景 */
-		protected void onDrawBackground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawBackground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
 			fillChars((GetChars)spanString,start,end);
@@ -571,15 +578,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					BackgroundColorSpan span = (BackgroundColorSpan) spans[i];
 					start = spanStarts[i];
 					end = spanEnds[i];
-					//超出范围的内容不绘制
-					if (start < st)
-						start = st;
-					if (start > en)
-						start = en;
-					if (end < st)
-						end = st;
-					if (end > en)
-						end = en;	
 
 					//计算光标坐标
 					if(tmp==null){
@@ -604,7 +602,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 在绘制文本后绘制前景 */
-		protected void onDrawForeground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawForeground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
 		{
 			int index = start;
 			fillChars((GetChars)spanString,start,end);
@@ -621,15 +619,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					CharacterStyle span = (CharacterStyle) spans[i];
 					start = spanStarts[i];
 					end = spanEnds[i];
-					//超出范围的内容不绘制
-					if (start < st)
-						start = st;
-					if (start > en)
-						start = en;
-					if (end < st)
-						end = st;
-					if (end > en)
-						end = en;		
 
 					//计算光标坐标
 					if(tmp==null){
@@ -652,7 +641,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 在绘制文本后绘制行 */
-		protected void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = measureText(line,0,line.length(),paint);
@@ -765,7 +754,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				CharacterStyle[] spans = spanString.getSpans(i, next, CharacterStyle.class);		
 
 				//遍历Span，首先绘制背景
-				for(j = spans.length-1; j >= 0; --j)
+				for(j = 0; j < spans.length; --j)
 				{
 					if(spans[j] instanceof BackgroundColorSpan)
 					{
@@ -774,13 +763,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						spanPaint.setColor(span.getBackgroundColor());
 						span.updateDrawState(spanPaint);
 						canvas.drawRect(xStart, y, xEnd, y+lineHeight, spanPaint);
-						//已经将优先级最高的span绘制了，之前的span不用绘制了
-						break;
 					}
 				}
 
 				//然后遍历Span，只绘制前景
-				for(j = spans.length-1; j >= 0; --j)
+				for(j = 0; j < spans.length; --j)
 				{
 					if(!(spans[j] instanceof BackgroundColorSpan))
 					{
@@ -789,7 +776,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						span.updateDrawState(spanPaint);
 						canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, spanPaint);
 						isDrawText = true; 
-						break;
 					}
 				}
 
