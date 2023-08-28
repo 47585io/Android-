@@ -140,7 +140,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             new Exception("mGapLength < 1").printStackTrace();
         if (mSpanCount != 0) 
 		{
-			//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
+			//遍历所有span，在间隙缓冲区之后的span的范围会增加delta(移到间隙缓冲区之后)
             for (int i = 0; i < mSpanCount; i++) {
                 if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
                 if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
@@ -157,11 +157,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             return;
         boolean atEnd = (where == length());
         if (where < mGapStart) {
-			//如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与where~mGapStart之间的内容的位置置换
+			//如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与前面的内容(where~mGapStart之间的内容)的位置置换
             int overlap = mGapStart - where;
             System.arraycopy(mText, where, mText, mGapStart + mGapLength - overlap, overlap);
         } else {
-			//否则，按相反的顺序置换
+			//否则，和后面的内容的位置置换
             int overlap = where - mGapStart;
             System.arraycopy(mText, where + mGapLength - overlap, mText, mGapStart, overlap);
         }
@@ -205,7 +205,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 mSpanStarts[i] = start;
                 mSpanEnds[i] = end;
             }
-			//重新计算节点最大范围
+			//节点顺序不变，仅需重新计算节点最大范围
             calcMax(treeRoot());
         }
 		//最后才将mGapStart修改
@@ -476,8 +476,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	{
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			//一个有意思的问题: 在getSpansRec和nextSpanTransitionRec中都是直接判断左右子节点是否在范围内，从而决定是否遍历左右子节点
-			//而这里却是用节点i的值判断是否需要遍历左右子节点，很简单，因为该函数对于节点的判断条件很复杂，无法直接决定，仍需要等节点自己去判断
+			//在getSpansRec和nextSpanTransitionRec中都是直接判断左子节点是否在范围内，从而决定是否遍历左子节点
+			//而这里却是用节点i的值判断是否需要遍历左子节点，是因为该函数对于节点的判断条件很复杂，无法直接决定吗？(疑惑)
             if (resolveGap(mSpanMax[i]) >= start &&
 				removeSpansForChange(start, end, textIsRemoved, leftChild(i))) {
                 return true;
@@ -497,7 +497,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 removeSpan(i, 0);
                 return true;
             }
-			//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
+			//若节点i的spanStart在end之前，并且有右子节点，处理右子节点(右子节点spanStart>=节点i的spanStart)
             return resolveGap(mSpanStarts[i]) <= end && (i & 1) != 0 &&
                 removeSpansForChange(start, end, textIsRemoved, rightChild(i));
         }
@@ -652,6 +652,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         mSpanInsertCount = 0;
     }
     
+	/* 检查文本中的指定位置是否没有SPAN_EXCLUSIVE_EXCLUSIVE标志的span，没有就返回true */
     private static boolean hasNonExclusiveExclusiveSpanAt(CharSequence text, int offset) 
 	{
         if (text instanceof Spanned)
@@ -920,7 +921,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 					(Object.class == kind || kind.isInstance(mSpans[i]))) {
                     count++;
                 }
-				//若节点i有右子节点，并且spanStart <= queryEnd，则从右子节点开始找(因为右子节点spanStart大于或等于i)
+				//若节点i有右子节点，则从右子节点开始找(因为右子节点spanStart大于或等于节点i的spanStart)
                 if ((i & 1) != 0) {
                     count += countSpans(queryStart, queryEnd, kind, rightChild(i));
                 }
@@ -1000,7 +1001,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
                 ret[target] = (T) mSpans[i];
                 count++;
             }
-			//若节点i有右子节点，并且spanStart <= queryEnd，则还可以从右子节点开始找(因为右子节点spanStart大于或等于i)
+			//若节点i有右子节点，则还可以从右子节点开始找(因为右子节点及其子节点spanStart大于或等于节点i的spanStart)
             if (count < ret.length && (i & 1) != 0) {
                 count = getSpansRec(queryStart, queryEnd, kind, rightChild(i), ret, priority,
 									insertionOrder, count, sort);
@@ -1234,8 +1235,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 		{
             //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-            if (resolveGap(mSpanMax[left]) > start)
-			{
+            if (resolveGap(mSpanMax[left]) > start){
 				//左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
 				//因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点的最小limit边界
                 limit = nextSpanTransitionRec(start, limit, kind, left);
@@ -1248,11 +1248,12 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             int st = resolveGap(mSpanStarts[i]);
             int en = resolveGap(mSpanEnds[i]);
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
-                limit = st;
+				limit = st;
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
                 limit = en;
             if (st < limit && (i & 1) != 0) {
-				//若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点的spanStart大于或等于i的spanStart)
+				//若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点的spanStart大于或等于节点i的spanStart)
+				//(着重强调！)与遍历左子节点不同，注意这里为什么不用右子节点的spanStart判断是否需要遍历右子节点呢，因为右子节点的左子节点的spanStart可能小于右子节点的spanStart，但一定大于或等于节点i的spanStart
                 limit = nextSpanTransitionRec(start, limit, kind, rightChild(i));
             }
         }

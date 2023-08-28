@@ -6,8 +6,8 @@ import java.lang.reflect.*;
 import com.editor.text.base.*;
 
 
-/* 将大的数据分块/分区是一个很棒的思想，
-   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，
+/* 将大的数据分块/分区是一个很棒的思想
+   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
    此类是分块文本容器的实现 
 */
 public class EditableList extends Object implements Editable
