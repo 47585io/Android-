@@ -18,8 +18,8 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	public static int TabSize = 4;
 
 	//临时变量
-	protected char[] chars;
-	protected float[] widths;
+	protected char[] chars = EmptyArray.CHAR;
+	protected float[] widths = EmptyArray.FLOAT;
 	protected RectF rectF = new RectF();
 	protected pos tmp = new pos(), tmp2 = new pos();
 	protected Paint.FontMetrics font = new Paint.FontMetrics();
@@ -315,6 +315,9 @@ _______________________________________
 		}
 		else if(nowLine>line){
 			for(;id>0 && mStartLines[id]>line;--id){}
+		}
+		else if(nowLine==line){
+			id = id==0 ? 0 : id-1;
 		}
 		return id;
 	}

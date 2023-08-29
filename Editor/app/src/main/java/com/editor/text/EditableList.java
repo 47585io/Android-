@@ -144,6 +144,9 @@ public class EditableList extends Object implements Editable
 		return id;
 	}
 	
+	public Editable replace(int del, CharSequence p1, int p2, int p3){
+		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
+	}
 	@Override
 	public Editable replace(int p1, int p2, CharSequence p3){
 		return replace(p1,p2,p3,0,p3.length());
@@ -619,6 +622,11 @@ public class EditableList extends Object implements Editable
 		int i = findBlockIdForIndex(start);
 		Editable block = mBlocks[i];
 		int blockStart = mBlockStarts[i];
+		if(i<mBlockSize-1 && start-blockStart==block.length()){
+			//刚好在最后，理应是下一块的起始位置
+			block = mBlocks[i+1];
+			blockStart = mBlockStarts[i+1];
+		}
 		int next = block.nextSpanTransition(start-blockStart,limit-blockStart,kind);
 		return next+blockStart;
 	}
@@ -635,7 +643,7 @@ public class EditableList extends Object implements Editable
 		int i = findBlockIdForIndex(p1);
 		Editable block = mBlocks[i];
 		int start = mBlockStarts[i];
-		if(p1-start >= block.length()){
+		if(i<mBlockSize-1 && p1-start >= block.length()){
 			//刚好在最后，理应是下一块的起始位置
 			return mBlocks[i+1].charAt(0);
 		}
