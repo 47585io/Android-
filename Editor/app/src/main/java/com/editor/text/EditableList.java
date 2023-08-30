@@ -144,9 +144,6 @@ public class EditableList extends Object implements Editable
 		return id;
 	}
 	
-	public Editable replace(int del, CharSequence p1, int p2, int p3){
-		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
-	}
 	@Override
 	public Editable replace(int p1, int p2, CharSequence p3){
 		return replace(p1,p2,p3,0,p3.length());
@@ -348,7 +345,7 @@ public class EditableList extends Object implements Editable
 				//如果span完全被移除，则可以与文本块解除绑定
 				if(st>=start && en<=end)
 				{
-					List<Editable> blocks = mSpanInBlocks.get(span);
+					List<Editable> blocks = mSpanInBlocks.get(span);		
 					if(blocks!=null)
 					{
 						if(blocks.size()==1){
@@ -827,6 +824,10 @@ public class EditableList extends Object implements Editable
 		if(mSelectionWatcher!=null){
 			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);
 		}
+	}
+	/* 用当前光标的位置进行修改 */
+	public Editable replaceBySelection(int del, CharSequence p1, int p2, int p3){
+		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
 	}
 	
 }

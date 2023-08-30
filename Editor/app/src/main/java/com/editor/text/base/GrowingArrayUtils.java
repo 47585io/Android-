@@ -199,10 +199,17 @@ public final class GrowingArrayUtils
 	
 	/** 
 	 * 给定数组的当前大小，返回数组应该增长到的理想大小。
-	 * 这通常是给定大小的两倍，但在未来不应依赖。
+	 * 这通常是给定大小的1.2倍，但在未来不应依赖。
 	 */
-    public static int growSize(int currentSize) {
-        return currentSize <= 4 ? 8 : currentSize * 2;
+    public static int growSize(int currentSize) 
+	{
+		if(currentSize<=4){
+			return 8;
+		}
+		if(currentSize<1024){
+			return currentSize*2;
+		}
+        return currentSize * 12/10;
 	}
 	
 }
