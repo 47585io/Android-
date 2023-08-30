@@ -430,6 +430,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private int[] mBackgroundSpanRangeTable;
 		private static final int USE = 1;
 		private static final int FREE = 0;
+		
+		//临时变量
+		private char[] sCharBuffer = EmptyArray.CHAR;
+		private RectF sRectF = new RectF();
+		private pos sTmp = new pos(), sTmp2 = new pos();
+		private Paint.FontMetrics sFont = new Paint.FontMetrics();
 
 		
 		public myLayout(EditableList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
@@ -514,30 +520,25 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int end = getLineStart(endLine+1);
 
 			//只绘制可视区域的内容
-			RectF See = rectF;
+			RectF See = sRectF;
 			See.set(x,y,x+width,y+height);
-			onDraw1(spanString,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
+			onDraw(spanString,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
 		}
 
-		/* 
-		 我不知道哪个方案更省时，所以您可以更改draw中调用的onDraw函数，可以为以下两个方案之一 
-
-		 onDraw1方案:  此方案尽可能地少遍历区间树，只获取一次可见范围内的所有Span并获取它们各自的范围，然后只遍历两次Span数组(第一次是背景，第二次是前景)，由于Span是乱序的，需要计算出Span的坐标后进行绘制
-		 每个Span只绘制一次(即使跨越几行)，计算坐标基本不耗时(可以忽略)，并且不会绘制超出范围的部分
-
-		 onDraw2方案:  此方案尽可能地缩小范围，遍历所有可见的行，并计算出本行的可见范围，每行只绘制这么一点点，在每行的绘制中为了避免获取单个Span的范围，使用nextSpanTransition来顺序获取下个区间，然后把区间内的Span全部获取并绘制，这样行行绘制下去
-		 如果Span的重叠很严重(例如会跨越几行，或者几个Span挤在一起)，那么会很麻烦，因为这样就会把同一个Span的不同位置遍历几次，这个Span也要连带着被绘制几次		
-		 */
-
-		/* 方案1，会调用onDrawBackground，onDrawForeground，onDrawLine */
-		protected void onDraw1(Spanned spanString, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
+		/* 绘制文本和span */
+	    protected void onDraw(Spanned spanString, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
 		{
-			//重新计算位置，刷新数据
+			//重新计算位置
+			pos tmp = sTmp;
+			pos tmp2 = sTmp2;
 			tmp.set(0,startLine*lineHeight);
 			tmp2.set(tmp);
-			textPaint.getFontMetrics(font);
-			float ascent = font.ascent; 
-			fillChars((GetChars)spanString,start,end);
+			
+			//刷新数据
+			textPaint.getFontMetrics(sFont);
+			float ascent = sFont.ascent; 
+			sCharBuffer = getChars(spanString,start,end,sCharBuffer,0);
+			char[] chars = sCharBuffer;
 			
 			//我们只能管理CharacterStyle及其子类的span，抱歉
 			getSpans(spanString,start,end,CharacterStyle.class);
@@ -549,37 +550,35 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//绘制背景的Span
 			if(spanCount>0){
 				spanPaint.set(textPaint);
-			    onDrawBackground(spanString,start,end,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp2,canvas,spanPaint,See);
+			    onDrawBackground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp2,canvas,spanPaint);
 			}
 
 			//绘制文本和行数
 			drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
 			int saveColor = textPaint.getColor();
 			textPaint.setColor(mLineColor);
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See.left);
 			textPaint.setColor(saveColor);
 
 			//绘制前景的Span
 			if(spanCount>0){
 				spanPaint.set(textPaint);
-				onDrawForeground(spanString,start,end,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp,canvas,spanPaint,See);
+				onDrawForeground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp,canvas,spanPaint);
 			}
 		}
-
+		
 		/* 在绘制文本前绘制背景 */
-		private void onDrawBackground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawBackground(char[] array, int begin, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint)
 		{
-			int index = start;
-			int st = start;
-
+			int index = begin;
 			//遍历span，只绘制背景
 			for(int i=0;i<spans.length;++i)
 			{
 				if(spanEnds[i]>spanStarts[i] && spans[i] instanceof BackgroundColorSpan)
 				{
 					BackgroundColorSpan span = (BackgroundColorSpan) spans[i];
-					start = spanStarts[i];
-					end = spanEnds[i];
+					int start = spanStarts[i];
+					int end = spanEnds[i];
 
 					//计算光标坐标
 					if(tmp==null){
@@ -594,26 +593,24 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					//绘制span范围内的文本的背景
 					paint.setColor(span.getBackgroundColor());
 					span.updateDrawState(paint);
-					drawBlock(chars,start-st,end-st,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint);
+					drawBlock(array,start-begin,end-begin,tmp.x,tmp.y,leftPadding,lineHeight,canvas,paint);
 				}
 		   	}
 		}
 
 		/* 在绘制文本后绘制前景 */
-		private void onDrawForeground(Spanned spanString, int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawForeground(char[] array, int begin, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint)
 		{
-			int index = start;
-			int st = start;
-			float ascent = font.ascent;  
-
+			int index = begin;
+			float ascent = sFont.ascent;  
 			//遍历span，只绘制前景
 			for(int i=0;i<spans.length;++i)
 			{
 				if(spanEnds[i]>spanStarts[i] && !(spans[i] instanceof BackgroundColorSpan) && spans[i] instanceof CharacterStyle)
 				{
 					CharacterStyle span = (CharacterStyle) spans[i];
-					start = spanStarts[i];
-					end = spanEnds[i];
+					int start = spanStarts[i];
+					int end = spanEnds[i];
 
 					//计算光标坐标
 					if(tmp==null){
@@ -627,24 +624,23 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 
 					//覆盖绘制span范围内的文本
 					span.updateDrawState(paint);
-					drawText(chars,start-st,end-st,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint);
+					drawText(array,start-begin,end-begin,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint);
 				}
 		   	}
 		}
 
 		/* 在绘制文本后绘制行 */
-		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, RectF See)
+		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, float seeLeft)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = paint.measureText(line,0,line.length());
-			if(See.left > lineWidth+leftPadding){
+			if(seeLeft > lineWidth+leftPadding){
 				//如果x位置已经超出了行的宽度，就不用绘制了
 				return ;
 			}
 
 			float y = startLine*lineHeight;
-			y -= font.ascent;  
-			
+			y -= sFont.ascent;  
 			//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
 			for(;startLine<=endLine;++startLine)
 			{
@@ -653,7 +649,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				y+=lineHeight;
 			}
 		}
-
+		
 		/* 从x,y开始绘制指定范围内的文本，如果遇到了换行符会自动换行，每行的x坐标会追加leftPadding，每多一行y坐标会追加lineHeight */
 		public void drawText(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
@@ -782,135 +778,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			spanEnds[i] = end+begin;
 		}
 		
-
-		/* 方案2，会调用drawSingleLineText，onDrawLine */
-		protected void onDraw2(Spanned spanString, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
-		{
-			//先将行数绘制在左侧
-			int saveColor = textPaint.getColor();
-			textPaint.setColor(mLineColor);
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See);
-			textPaint.setColor(saveColor);
-
-			float x = 0;
-			float y = startLine*lineHeight;
-			int now = start, next;
-			int len = spanString.length();
-
-			//遍历可见的行
-			for(;startLine<=endLine && now<len;++startLine)
-			{
-				//获取行的起始和末尾
-				next = tryLine_End(spanString,now);
-				//测量并保存每个字符的宽
-				int count = next-now;
-				fillWidths((GetChars)spanString,now,next,textPaint);
-
-				int i = 0;
-				float w = x;
-
-				//从第一个字符开始，向后遍历每个字符
-				for(;i<count;++i)
-				{
-					if(w+widths[i]>See.left){
-						//如果已经到达了可视区域左边，已经可以确定这行起始下标和坐标了
-						break;
-					}
-					w += widths[i];
-					++now;
-					//每次下标都加1，坐标加上字符的宽
-				}	
-				start = now;
-				x = w;
-				//记录当前行的起始下标和坐标
-
-				//从上次的位置开始，继续向后遍历每个字符
-				for(;i<count;++i)
-				{
-					if(w>=See.right){
-						//如果已经到达了可视区域右边，已经可以确定这行末尾下标和坐标了
-						break;
-					}
-					w += widths[i];
-					++now;
-					//每次下标都加1，坐标加上字符的宽
-				}	
-				end = now;
-				//记录当前行的末尾下标
-
-				drawSingleLineText(spanString,start,end,x,y,lineHeight,canvas,spanPaint,textPaint);
-				//绘制这行的可见范围内的文本
-
-				now = next+1;
-				x = 0;
-				y += lineHeight;
-				//之后继续下行
-			}
-		}
-
-		/* 从(x,y)处开始绘制start和end之间的字符串，并附带Span，但start和end必须在同一行 */
-		public void drawSingleLineText(Spanned spanString, int start, int end, float x, float y, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint)
-		{
-			int next;
-			float xStart = x;
-			float xEnd;
-			//当使用一个成员多次，我们希望在前面声明它，便于以后修改
-			Paint.FontMetrics font = this.font;
-			textPaint.getFontMetrics(font);
-
-			//正序遍历start~end范围内的区间，并获取区间的Span，计算坐标后绘制它们
-			for (int i = start; i < end; i = next) 
-			{
-				//寻找在当前位置之后，在end之前的下个区间的起始位置
-				next = spanString.nextSpanTransition(i, end, CharacterStyle.class);
-				//获取区间内的文本
-				fillChars((GetChars)spanString, i, next);
-				//计算当前区间的末尾坐标
-				xEnd = xStart + textPaint.measureText(chars, 0, next-i);
-
-				int j;
-				boolean isDrawText = false;
-				//获取当前区间内的Span，抱歉，我们只能管理CharacterStyle类型的Span
-				CharacterStyle[] spans = spanString.getSpans(i, next, CharacterStyle.class);		
-
-				//遍历Span，首先绘制背景
-				for(j = spans.length-1; j >= 0; --j)
-				{
-					if(spans[j] instanceof BackgroundColorSpan)
-					{
-						//如果有背景的Span，刷新画笔状态后画上矩形
-						BackgroundColorSpan span = (BackgroundColorSpan) spans[j];
-						spanPaint.setColor(span.getBackgroundColor());
-						span.updateDrawState(spanPaint);
-						canvas.drawRect(xStart, y, xEnd, y+lineHeight, spanPaint);
-						break;
-					}
-				}
-
-				//然后遍历Span，只绘制前景
-				for(j = spans.length-1; j >= 0; --j)
-				{
-					if(!(spans[j] instanceof BackgroundColorSpan))
-					{
-						//如果有前景的Span，使用Span的颜色绘制文本
-						CharacterStyle span = spans[j];
-						span.updateDrawState(spanPaint);
-						canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, spanPaint);
-						isDrawText = true; 
-						break;
-					}
-				}
-
-				if(!isDrawText){
-					//如果没有绘制前景，则使用默认颜色绘制
-					canvas.drawText(chars, 0, next-i, xStart, y-font.ascent, textPaint);
-				}
-
-				//继续寻找下个区间
-				xStart = xEnd;
-			}
-		}
-
 		/* 获取应该预留给行数的宽度 */
 		public float getLeftPadding()
 		{

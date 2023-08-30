@@ -18,11 +18,11 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	public static int TabSize = 4;
 
 	//临时变量
-	protected char[] chars = EmptyArray.CHAR;
-	protected float[] widths = EmptyArray.FLOAT;
-	protected RectF rectF = new RectF();
-	protected pos tmp = new pos(), tmp2 = new pos();
-	protected Paint.FontMetrics font = new Paint.FontMetrics();
+	private char[] chars = EmptyArray.CHAR;
+	private float[] widths = EmptyArray.FLOAT;
+	private RectF rectF = new RectF();
+	private pos tmp = new pos(), tmp2 = new pos();
+	private Paint.FontMetrics font = new Paint.FontMetrics();
 	
 	private int cacheLine;
 	private boolean isStart,isEnd;
@@ -138,7 +138,7 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 		{
 			//插入的文本跨越了多个文本块，我们应该全部测量
 			measureInsertBlockAfter(i,iStart,mText.getBlock(i).length());
-			for(++i;i<=j;++i){
+			for(++i;i<j;++i){
 				measureInsertBlockAfter(i,0,mText.getBlock(i).length());
 			}
 			measureInsertBlockAfter(j,0,jEnd);
@@ -180,6 +180,7 @@ _______________________________________
 			mLines[id] = mLines[id]+line;
 		}
 	}
+	
 	/* 在删除前测量指定文本块的指定范围内的文本的宽和行数，并做出删除决策 */
 	private boolean measureDeleteBlockBefore(int id, int start, int end)
 	{
@@ -202,6 +203,7 @@ _______________________________________
 		}
 		return is;
 	}
+	
 	/* 在删除后测量指定文本块的指定位置的文本的宽，对应measureDeleteBlockBefore，并对其返回值做出回应 */
 	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText)
 	{
@@ -251,6 +253,7 @@ _______________________________________
 		}	
 		return startWidth;
 	}
+	
 	private float measureBlockJoinTextEnd(int i)
 	{
 		int start, end;
@@ -272,6 +275,7 @@ _______________________________________
 		}
 		return endWidth;
 	}
+	
 	/* 测量指定文本块的指定范围内的文本的宽，并考虑连接处的宽 */
 	private float measureBlockWidth(int i,int start,int end)
 	{
@@ -636,7 +640,7 @@ _______________________________________
 	/* 获取临近光标坐标，可能会更快 */
 	final public void nearOffsetPos(int oldOffset, float x, float y, int newOffset, pos target)
 	{
-		GetChars text = (GetChars) getText();
+		CharSequence text = mText;
 		int index = tryLine_Start(text,newOffset);
 		target.x = measureText(text,index,newOffset,getPaint());
 
@@ -684,14 +688,8 @@ _______________________________________
 	/* 测量单行文本宽度，非常精确 */
 	final public float measureText(CharSequence text,int start,int end,TextPaint paint)
 	{
-		float width = 0;
-		int count = end-start;
-		fillWidths(text,start,end,paint);
-		
-		for(int i = 0;i<count;++i){
-			width+=widths[i];
-		}
-		return width;
+		fillChars(text,start,end);
+		return measureText(chars,0,end-start,paint);
 	}
 	final public float measureText(char[] chars,int start,int end,TextPaint paint)
 	{
@@ -723,17 +721,17 @@ _______________________________________
 	}
 		
 	/* 统计和测量下标 */
-	final public int Count(char c, GetChars text, int start, int end)
+	final public int Count(char c, CharSequence text, int start, int end)
 	{
 		fillChars(text,start,end);
 		return Count(chars,c,0,end-start);
 	}
-	final public int NIndex(char c,GetChars text,int index, int n)
+	final public int NIndex(char c,CharSequence text,int index, int n)
 	{
 		fillChars(text,index,text.length());
 		return index+NIndex(c,chars,0,n);	
 	}
-	final public int lastNIndex(char c,GetChars text,int index, int n)
+	final public int lastNIndex(char c,CharSequence text,int index, int n)
 	{
 		fillChars(text,0,index+1);
 		return lastNIndex(c,chars,index,n);
@@ -776,26 +774,40 @@ _______________________________________
 		return count;
 	}
 	
+	private char[] fillChars(CharSequence text, int start, int end){
+		chars = getChars(text,start,end,chars,0);
+		return chars;
+	}
+	private float[] fillWidths(char[] chars, int start, int end, TextPaint paint){
+		widths = getWidths(chars,start,end,paint,widths);
+		return widths;
+	}
+	private float[] fillWidths(CharSequence text, int start, int end, TextPaint paint){
+		widths = getWidths(text,start,end,paint,widths);
+		return widths;
+	}
+	
 	/* 安全地获取数据 */
-	final protected void fillChars(GetChars text, int start, int end)
+	final public static char[] getChars(CharSequence text, int start, int end, char[] array, int begin)
 	{
-		chars = chars==null || chars.length<end-start ? new char[end-start]:chars;
-		text.getChars(start,end,chars,0);
+		if(array==null || array.length < end-start){
+			array = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(end-start));
+		}
+		TextUtils.getChars(text,start,end,array,begin);
+		return array;
 	}
-	final protected void fillWidths(char[] chars, int start, int end, TextPaint paint)
+	final public static float[] getWidths(char[] chars, int start, int end, TextPaint paint, float[] widths)
 	{
-		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
-		paint.getTextWidths(chars,start,end-start,widths);
+		if(widths==null || widths.length < end-start){
+			widths = ArrayUtils.newUnpaddedFloatArray(GrowingArrayUtils.growSize(end-start));
+		}
+		paint.getTextWidths(chars,start,end,widths);
+		return widths;
 	}
-	final protected void fillWidths(CharSequence text, int start, int end, TextPaint paint)
+	final public float[] getWidths(CharSequence text, int start, int end, TextPaint paint, float[] array)
 	{
-		widths = widths==null || widths.length<end-start ? new float[end-start]:widths;
-		paint.getTextWidths(text,start,end,widths);
-	}
-	final protected void fillWidths(GetChars text, int start, int end, TextPaint paint)
-	{
-		fillChars(text,start,end);
-		fillWidths(chars,0,end-start,paint);
+		chars = getChars(text,start,end,chars,0);
+		return getWidths(chars,0,end-start,paint,array);
 	}
 	
 	//试探当前下标所在行的起始
