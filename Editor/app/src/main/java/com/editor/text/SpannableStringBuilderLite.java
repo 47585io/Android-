@@ -391,7 +391,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//遍历所有节点，并移除在范围内的节点
 		for(int i=0;i<mSpanCount;++i)
 		{
-			if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
+			if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
                 mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
                 mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
                 (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
@@ -425,7 +425,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //此时mGapStart实际上是删除范围的end
             //整个节点原本在start~end之间，但可能两端衔接在start和end上
             //要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
-            if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
+            if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
                 mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
                 mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
                 (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
@@ -546,7 +546,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         int flagsEnd = flags & END_MASK;
         //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (flagsStart == POINT && flagsEnd == MARK && start == end) {
+        if (/*flagsStart == POINT && flagsEnd == MARK &&*/ start == end) {
             if (send) {
                 Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
             }

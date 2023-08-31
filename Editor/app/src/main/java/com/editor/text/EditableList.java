@@ -78,6 +78,7 @@ public class EditableList extends Object implements Editable
 		mIndexOfBlocks.put(block,i);
 		mBlockSize++;
 		sendBlockAdded(i);
+		refreshInvariants(i);
 	}
 	/* 添加文本块的同时，填充它的文本 */
 	private void addBlock(int i ,CharSequence tb, int start, int end)
@@ -95,6 +96,7 @@ public class EditableList extends Object implements Editable
 		mIndexOfBlocks.remove(block);
 		mBlockSize--;
 		sendBlockRemoved(i);
+		refreshInvariants(i);
 	}
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
 	private int dispatchTextBlock(int id, CharSequence tb,int tbStart,int tbEnd)
@@ -336,14 +338,16 @@ public class EditableList extends Object implements Editable
 		Editable block = mBlocks[i];
 		if(end > start)
 		{
+			//int length = block.length();
 			Object[] spans = block.getSpans(start,end,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
 				int st = block.getSpanStart(span);
 				int en = block.getSpanEnd(span);
-				//如果span完全被移除，则可以与文本块解除绑定
-				if(st>=start && en<=end)
+				//int flags = block.getSpanFlags(span);
+				//如果span完全被移除或文本块会被移除，则可以与文本块解除绑定
+				if((st>=start && en<=end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE) || (st==0 && en==length*/))
 				{
 					List<Editable> blocks = mSpanInBlocks.get(span);		
 					if(blocks!=null)
@@ -384,6 +388,7 @@ public class EditableList extends Object implements Editable
 				//为block寻找一个合适位置并插入，使blocks之中的文本块都顺序排列
 				for(int k=blocks.size()-1;k>-1;--k)
 			    {
+					//bug: 未刷新的mIndexOfBlocks，导致挤到后面的block下标错误，应该在replaceSpan之前刷新
 					int id = mIndexOfBlocks.get(blocks.get(k));
 					if(id<i){
 						blocks.add(k+1,block);
@@ -496,6 +501,10 @@ public class EditableList extends Object implements Editable
 	@Override
 	public void setSpan(final Object span, int start, int end, final int flags)
 	{
+		if(start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/){
+			//从该类创建无效跨度时，自动忽略无效跨度
+			return;
+		}
 		if(mSpanInBlocks.get(span)!=null){
 			//如果已有这个span，先移除它，无论如何再添加一个新的
 			removeSpan(span);
@@ -509,6 +518,10 @@ public class EditableList extends Object implements Editable
 			@Override
 			public void dothing(int id, int start, int end)
 			{
+				if(start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/){
+					//从该类创建无效跨度时，自动忽略无效跨度
+					return;
+				}
 				Editable editor = mBlocks[id];
 				editor.setSpan(span,start,end,flags);
 				editors.add(editor);
@@ -826,7 +839,7 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	/* 用当前光标的位置进行修改 */
-	public Editable replaceBySelection(int del, CharSequence p1, int p2, int p3){
+	public Editable replaceUseSelection(int del, CharSequence p1, int p2, int p3){
 		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
 	}
 	

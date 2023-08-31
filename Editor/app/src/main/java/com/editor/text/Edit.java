@@ -759,6 +759,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		/* 下标为i的span在表中的范围还有多少 (或者说是可视范围) */
 		private void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, int[] table, int begin)
 		{
+			/*if(spanStarts[i]>=spanEnds[i]){
+				Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]");
+				return;
+			}*/
+			
 			int start = spanStarts[i]-begin;
 			int end = spanEnds[i]-begin;
 			//两端点尽可能地往内缩
