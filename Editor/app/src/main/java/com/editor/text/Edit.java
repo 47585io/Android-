@@ -760,7 +760,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, int[] table, int begin)
 		{
 			if(spanStarts[i]>=spanEnds[i]){
-				Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]");
+				//Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]"+"，The spanInBlocks: "+mText.printSpanInBlocks(mSpans[i]));
 				return;
 			}
 			

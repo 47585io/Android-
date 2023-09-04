@@ -9,6 +9,10 @@ import com.editor.text.base.*;
 /* 将大的数据分块/分区是一个很棒的思想
    它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
    此类是分块文本容器的实现类
+   
+   bug: span重叠时绘制会闪烁
+   很简单，因为不断截取和修正范围时，会重新设置span，此时span的优先级发生了变化，故在获取span时，顺序是乱的
+   而之前没发现是因为把MaxCount设置较大，导致文本覆盖了全屏，所以span的变化不可见
 */
 public class EditableList extends Object implements Editable
 {
@@ -70,7 +74,7 @@ public class EditableList extends Object implements Editable
 	/* 在指定位置添加文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
 	private void addBlock(int i, boolean send)
 	{
-		Editable block = mEditableFactory==null ? new SpannableStringBuilderTemplete() : mEditableFactory.newEditable("");
+		Editable block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -217,24 +221,21 @@ public class EditableList extends Object implements Editable
 		int j = findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
-		
-		//只要是插入，都需要扩展可能衔接在两端的span
-		//若是纯删除，其实并不用扩展，也不能扩展
-		//在删除后，span的位置是正确的，但插入后就不一定了
 		Object[] spans = EmptyArray.OBJECT;
-			
+		
 		if(before>0){
 			//删除范围内的文本和文本块
 		    deleteForBlocks(i,j,start,end);
 		}
 		if(after>0){
-			//插入前，获取可能衔接在两端的span
+			//插入前，获取衔接在两端的span
 			spans = mBlocks[i].getSpans(start,start,Object.class);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
-		//遍历所有的span，修正它们绑定的文本块，并修正它们在文本块中的范围
+		//刷新后，修正两端的span
+		refreshInvariants(0);
 		for(j=0;j<spans.length;++j){
 			correctSpan(spans[j]);
 		}
@@ -340,10 +341,15 @@ public class EditableList extends Object implements Editable
 	/* 替换指定文本块的文本及span的绑定，若send为false，则刷新mBlockStarts是调用者的责任 */
 	private void repalceWithSpan(int i, int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{
-		//在删除文本前，替换span的绑定
-		replaceSpan(i,start,end,tb,tbStart,tbEnd);
-		//最后将实际文本替换
+		if(end > start){
+			//需要在删除文本前，替换span的绑定
+			replaceSpan(i,start,end,"",0,0);
+		}
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
+		if(tbEnd > tbStart){
+			//但需要在插入文本后，才修正span的绑定
+			replaceSpan(i,start,start,tb,tbStart,tbEnd);
+		}
 		//刷新数据
 		if(send){
 			refreshInvariants(i);
@@ -426,6 +432,8 @@ public class EditableList extends Object implements Editable
 						break;
 					}
 				}
+				//span变化后，需要修正span
+				correctSpan(span);
 			}
 		}
 	}
@@ -692,7 +700,7 @@ public class EditableList extends Object implements Editable
 		return mBlocks[i].charAt(p1-start);
 	}
 
-	private int getChars;
+	private static int getChars;
 
 	@Override
 	public void getChars(int start, int end, final char[] arr, final int index)
@@ -875,32 +883,64 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 回收不使用的List，便于复用 */
-	private static final int sBufferCount = 10;
-	private final List<Editable>[] sCachedBuffer = new List[sBufferCount];
+	private static int sBufferCount = -1;
+	private static final int sMaxBufferCount = 10000;
+	private static List<Editable>[] sCachedBuffer = new List[10];
 	
-	private List<Editable> obtainList()
+	private static List<Editable> obtainList()
 	{
-		for (int i = 0; i < sCachedBuffer.length; i++) 
-		{
-			if (sCachedBuffer[i] != null) {
-				List<Editable> buffer = sCachedBuffer[i];
-				sCachedBuffer[i] = null;
-				return buffer;
-			}
+		if(sBufferCount>-1){
+			return sCachedBuffer[sBufferCount--];
 		}
-		//一个小心机: 所有人都调用obtainList和recyleList，因此更改返回的实例类型，可以改变所有位置的实例类型
 		return new ArrayList<Editable>();
 	}
-	private void recyleList(List<Editable> buffer)
+	private static void recyleList(List<Editable> buffer)
 	{
-		for (int i = 0; i < sCachedBuffer.length; i++) 
-		{
-			if (sCachedBuffer[i] == null) {
-				sCachedBuffer[i] = buffer;
-				buffer.clear();
-				break;
-			}
+		buffer.clear();
+		if(sBufferCount<=sMaxBufferCount){
+			GrowingArrayUtils.append(sCachedBuffer,++sBufferCount,buffer);
 		}
 	}
 	
+	/*
+	private static final StringBuilder b = new StringBuilder();
+	
+	public String printSpanInBlocks(Object span)
+	{
+		b.delete(0,b.length());
+		b.append("[");
+		List<Editable> blocks = mSpanInBlocks.get(span);
+		if(blocks!=null){
+			for(Editable block:blocks){
+				int id = mIndexOfBlocks.get(block);
+				b.append("("+id+","+block.length()+","+mBlockStarts[id]+"+"+block.getSpanStart(span)+"~"+block.getSpanEnd(span)+")，");
+			}
+		}
+		b.append("]");
+		return b.toString();
+	}
+	
+	public String printIndexOfBlocks()
+	{
+		b.delete(0,b.length());
+		b.append("[");
+		for(int i=0;i<mBlockSize;++i){
+			int id = mIndexOfBlocks.get(mBlocks[i]);
+			b.append(id+",");
+		}
+		b.append("]");
+		return b.toString();
+	}
+	
+	public String printBlockStarts()
+	{
+		b.delete(0,b.length());
+		b.append("[");
+		for(int i=0;i<mBlockSize;++i){
+			b.append(mBlockStarts[i]+",");
+		}
+		b.append("]");
+		return b.toString();
+	}
+	*/
 }
