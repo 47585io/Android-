@@ -801,7 +801,7 @@ _______________________________________
 		if(widths==null || widths.length < end-start){
 			widths = ArrayUtils.newUnpaddedFloatArray(GrowingArrayUtils.growSize(end-start));
 		}
-		paint.getTextWidths(chars,start,end,widths);
+		paint.getTextWidths(chars,start,end-start,widths);
 		return widths;
 	}
 	final public float[] getWidths(CharSequence text, int start, int end, TextPaint paint, float[] array)

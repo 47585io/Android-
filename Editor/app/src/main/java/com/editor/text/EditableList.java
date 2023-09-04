@@ -898,7 +898,7 @@ public class EditableList extends Object implements Editable
 	{
 		buffer.clear();
 		if(sBufferCount<=sMaxBufferCount){
-			GrowingArrayUtils.append(sCachedBuffer,++sBufferCount,buffer);
+			sCachedBuffer = GrowingArrayUtils.append(sCachedBuffer,++sBufferCount,buffer);
 		}
 	}
 	

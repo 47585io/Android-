@@ -709,9 +709,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int length = mSpans.length;
 			if(mSpanStarts.length<length){
 				mSpanStarts = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
+				mCopySpanStarts = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
 			}
 			if(mSpanEnds.length<length){
 				mSpanEnds = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
+				mCopySpanEnds = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
 			}
 			
 			for(int i=0;i<length;++i)
@@ -725,6 +727,8 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				if(mSpanEnds[i] > end){
 					mSpanEnds[i] = end;
 				}
+				mCopySpanStarts[i] = mSpanStarts[i];
+				mCopySpanEnds[i] = mSpanEnds[i];
 			}
 			return (T[])mSpans;
 		}
@@ -798,7 +802,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			for(int i=0;i<mSpans.length;++i)
 			{
 				if(mSpans[i] instanceof ClickableSpan && 
-				   mSpanStarts[i]<=offset && mSpanEnds[i]>=offset){
+				   mCopySpanStarts[i]<=offset && mCopySpanEnds[i]>=offset){
 						((ClickableSpan)mSpans[i]).onClick(Edit.this);
 				}
 			}
