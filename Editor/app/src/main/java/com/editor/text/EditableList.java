@@ -4,6 +4,7 @@ import android.text.*;
 import java.util.*;
 import java.lang.reflect.*;
 import com.editor.text.base.*;
+import android.util.*;
 
 
 /* 将大的数据分块/分区是一个很棒的思想
@@ -13,6 +14,9 @@ import com.editor.text.base.*;
    bug: span重叠时绘制会闪烁
    很简单，因为不断截取和修正范围时，会重新设置span，此时span的优先级发生了变化，故在获取span时，顺序是乱的
    而之前没发现是因为把MaxCount设置较大，导致文本覆盖了全屏，所以span的变化不可见
+   
+   bug: span的范围不连续
+   目前还不知道在插入后怎样获取两端的span并修正
 */
 public class EditableList extends Object implements Editable
 {
@@ -238,6 +242,11 @@ public class EditableList extends Object implements Editable
 		for(j=0;j<spans.length;++j){
 			correctSpan(spans[j]);
 		}
+		spans = getSpans(st+after+1,st+after+1,Object.class);
+		for(j=0;j<spans.length;++j){
+			correctSpan(spans[j]);
+		}
+		printSpans();
 		
 		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
 		mLength += -before+after;
@@ -283,7 +292,7 @@ public class EditableList extends Object implements Editable
 			}
 		}
 		else{
-			//无论如何都需要刷新
+			//如果没有刷新，就刷新
 			refreshInvariants(i);
 		}
 	}
@@ -344,16 +353,9 @@ public class EditableList extends Object implements Editable
 	/* 替换指定文本块的文本及span的绑定，若send为false，则刷新mBlockStarts是调用者的责任 */
 	private void repalceWithSpan(int i, int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{
-		if(end > start){
-			//需要在删除文本前，替换span的绑定
-			replaceSpan(i,start,end,"",0,0);
-		}
+		//需要在删除文本前，替换span的绑定
+		replaceSpan(i,start,end,tb,tbStart,tbEnd);
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
-		if(tbEnd > tbStart){
-			//但需要在插入文本后，才修正span的绑定
-			replaceSpan(i,start,start,tb,tbStart,tbEnd);
-		}
-		//刷新数据
 		if(send){
 			refreshInvariants(i);
 		}
@@ -435,8 +437,6 @@ public class EditableList extends Object implements Editable
 						break;
 					}
 				}
-				//span变化后，需要修正span
-				correctSpan(span);
 			}
 		}
 	}
@@ -905,7 +905,7 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
-	/*
+	/* 测试代码 */
 	private static final StringBuilder b = new StringBuilder();
 	
 	public String printSpanInBlocks(Object span)
@@ -916,34 +916,17 @@ public class EditableList extends Object implements Editable
 		if(blocks!=null){
 			for(Editable block:blocks){
 				int id = mIndexOfBlocks.get(block);
-				b.append("("+id+","+block.length()+","+mBlockStarts[id]+"+"+block.getSpanStart(span)+"~"+block.getSpanEnd(span)+")，");
+				b.append("("+id+","+block.getSpanStart(span)+"~"+block.getSpanEnd(span)+")，");
 			}
 		}
 		b.append("]");
 		return b.toString();
 	}
 	
-	public String printIndexOfBlocks()
-	{
-		b.delete(0,b.length());
-		b.append("[");
-		for(int i=0;i<mBlockSize;++i){
-			int id = mIndexOfBlocks.get(mBlocks[i]);
-			b.append(id+",");
+	public void printSpans(){
+		for(Object span:mSpanInBlocks.keySet()){
+			Log.w("Span",printSpanInBlocks(span));
 		}
-		b.append("]");
-		return b.toString();
 	}
 	
-	public String printBlockStarts()
-	{
-		b.delete(0,b.length());
-		b.append("[");
-		for(int i=0;i<mBlockSize;++i){
-			b.append(mBlockStarts[i]+",");
-		}
-		b.append("]");
-		return b.toString();
-	}
-	*/
 }
