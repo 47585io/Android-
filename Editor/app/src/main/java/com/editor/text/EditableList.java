@@ -234,8 +234,7 @@ public class EditableList extends Object implements Editable
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
-		//刷新后，修正两端的span
-		refreshInvariants(0);
+		//修正两端的span
 		for(j=0;j<spans.length;++j){
 			correctSpan(spans[j]);
 		}
@@ -252,7 +251,7 @@ public class EditableList extends Object implements Editable
 	/* 从指定文本块的指定位置插入文本 */
 	private void insertForBlocks(final int i, int index, CharSequence tb, int tbStart, int tbEnd)
 	{
-		//先插入文本，让在此范围内的span进行扩展(插入文本仅需保证mIndexOfBlocks正确，因此对单块文本的插入无需刷新)
+		//先插入文本，让在此范围内的span进行扩展
 		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,false);
 		sendBlocksInsertAfter(i,i,index,index+tbEnd-tbStart);
 		
@@ -282,6 +281,10 @@ public class EditableList extends Object implements Editable
 				int j = dispatchTextBlock(i+1,text,0,overLen);
 				sendBlocksInsertAfter(i+1,j,0,mBlocks[j].length());
 			}
+		}
+		else{
+			//无论如何都需要刷新
+			refreshInvariants(i);
 		}
 	}
 	
