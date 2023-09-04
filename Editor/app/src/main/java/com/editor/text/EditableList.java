@@ -242,7 +242,7 @@ public class EditableList extends Object implements Editable
 		for(j=0;j<spans.length;++j){
 			correctSpan(spans[j]);
 		}
-		spans = getSpans(st+after+1,st+after+1,Object.class);
+		spans = getSpans(st+after,st+after,Object.class);
 		for(j=0;j<spans.length;++j){
 			correctSpan(spans[j]);
 		}
