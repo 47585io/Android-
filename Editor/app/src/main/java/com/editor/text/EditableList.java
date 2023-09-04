@@ -886,22 +886,22 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 回收不使用的List，便于复用 */
-	private static int sBufferCount = -1;
+	private static int sBufferCount = 0;
 	private static final int sMaxBufferCount = 10000;
-	private static List<Editable>[] sCachedBuffer = new List[10];
+	private static List<Editable>[] sCachedBuffer = new List[100];
 	
 	private static List<Editable> obtainList()
 	{
-		if(sBufferCount>-1){
-			return sCachedBuffer[sBufferCount--];
+		if(sBufferCount>0){
+			return sCachedBuffer[--sBufferCount];
 		}
 		return new ArrayList<Editable>();
 	}
 	private static void recyleList(List<Editable> buffer)
 	{
 		buffer.clear();
-		if(sBufferCount<=sMaxBufferCount){
-			sCachedBuffer = GrowingArrayUtils.append(sCachedBuffer,++sBufferCount,buffer);
+		if(sBufferCount<sMaxBufferCount){
+			sCachedBuffer = GrowingArrayUtils.append(sCachedBuffer,sBufferCount++,buffer);
 		}
 	}
 	
