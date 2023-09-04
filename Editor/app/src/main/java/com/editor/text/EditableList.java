@@ -8,7 +8,7 @@ import com.editor.text.base.*;
 
 /* 将大的数据分块/分区是一个很棒的思想
    它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
-   此类是分块文本容器的实现 
+   此类是分块文本容器的实现类
 */
 public class EditableList extends Object implements Editable
 {
@@ -29,7 +29,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 1000;
+	private static final int Default_MaxCount = 1024;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -50,9 +50,7 @@ public class EditableList extends Object implements Editable
 		mBlockStarts = EmptyArray.INT;
 		mIndexOfBlocks = new IdentityHashMap<>();
 		mSpanInBlocks = new IdentityHashMap<>();
-
 		dispatchTextBlock(0,text,start,end);
-		refreshInvariants(0);
 		mLength = end-start;
 	}
 	
@@ -72,7 +70,7 @@ public class EditableList extends Object implements Editable
 	/* 在指定位置添加文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
 	private void addBlock(int i, boolean send)
 	{
-		Editable block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
+		Editable block = mEditableFactory==null ? new SpannableStringBuilderTemplete() : mEditableFactory.newEditable("");
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -369,7 +367,7 @@ public class EditableList extends Object implements Editable
 				int en = block.getSpanEnd(span);
 				//int flags = block.getSpanFlags(span);
 				//如果span完全被移除或文本块会被移除，则可以与文本块解除绑定
-				if((st>=start && en<=end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE) || (st==0 && en==length*/))
+				if(st>=start && en<=end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE) || (st==0 && en==length)*/)
 				{
 					List<Editable> blocks = mSpanInBlocks.get(span);		
 					if(blocks!=null)
@@ -377,6 +375,7 @@ public class EditableList extends Object implements Editable
 						if(blocks.size()==1){
 							//如果span只在这一个文本块中，可以直接移除span
 							mSpanInBlocks.remove(span);
+							recyleList(blocks);
 						}else{
 							blocks.remove(block);
 						}
@@ -389,15 +388,20 @@ public class EditableList extends Object implements Editable
 		//插入时，mIndexOfBlocks必须是正确的
 		if(tbEnd>tbStart && tb instanceof Spanned)
 		{
-			Object[] spans = ((Spanned)tb).getSpans(tbStart,tbEnd,Object.class);
+			Spanned spanString = (Spanned) tb;
+			Object[] spans = spanString.getSpans(tbStart,tbEnd,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
+				if(isInvalidSpan(spanString.getSpanStart(span),spanString.getSpanEnd(span),spanString.getSpanFlags(span))){
+					//忽略无效跨度
+					continue;
+				}
 				List<Editable> blocks = mSpanInBlocks.get(span);
 				//一个全新的span，需要映射到一个新的列表，并加入block
 				if(blocks==null)
 				{
-					blocks = new ArrayList<>();
+					blocks = obtainList();
 					blocks.add(block);
 					mSpanInBlocks.put(span,blocks);
 					continue;
@@ -499,6 +503,10 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
+	private static final boolean isInvalidSpan(int start, int end, int flags){
+		return start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/;
+	}
+	
 	@Override
 	public void clear()
 	{
@@ -524,7 +532,7 @@ public class EditableList extends Object implements Editable
 	@Override
 	public void setSpan(final Object span, int start, int end, final int flags)
 	{
-		if(start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/){
+		if(isInvalidSpan(start,end,flags)){
 			//从该类创建无效跨度时，自动忽略无效跨度
 			return;
 		}
@@ -532,7 +540,7 @@ public class EditableList extends Object implements Editable
 			//如果已有这个span，先移除它，无论如何再添加一个新的
 			removeSpan(span);
 		}
-		final List<Editable> editors = new ArrayList<>();
+		final List<Editable> editors = obtainList();
 		mSpanInBlocks.put(span,editors);
 		
 		//将范围内的所有文本块都设置span，并建立绑定
@@ -541,7 +549,7 @@ public class EditableList extends Object implements Editable
 			@Override
 			public void dothing(int id, int start, int end)
 			{
-				if(start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/){
+				if(isInvalidSpan(start,end,flags)){
 					//从该类创建无效跨度时，自动忽略无效跨度
 					return;
 				}
@@ -565,6 +573,7 @@ public class EditableList extends Object implements Editable
 				Editable block = blocks.get(i);
 				block.removeSpan(p1);
 			}
+			recyleList(blocks);
 		}
 	}
 
@@ -643,7 +652,7 @@ public class EditableList extends Object implements Editable
 	{
 		List<Editable> blocks = mSpanInBlocks.get(p1);
 		if(blocks==null){
-			return -1;
+			return 0;
 		}
 		return blocks.get(0).getSpanFlags(p1);
 	}
@@ -861,9 +870,37 @@ public class EditableList extends Object implements Editable
 			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);
 		}
 	}
-	/* 用当前光标的位置进行修改 */
 	public Editable replaceUseSelection(int del, CharSequence p1, int p2, int p3){
 		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
+	}
+	
+	/* 回收不使用的List，便于复用 */
+	private static final int sBufferCount = 10;
+	private final List<Editable>[] sCachedBuffer = new List[sBufferCount];
+	
+	private List<Editable> obtainList()
+	{
+		for (int i = 0; i < sCachedBuffer.length; i++) 
+		{
+			if (sCachedBuffer[i] != null) {
+				List<Editable> buffer = sCachedBuffer[i];
+				sCachedBuffer[i] = null;
+				return buffer;
+			}
+		}
+		//一个小心机: 所有人都调用obtainList和recyleList，因此更改返回的实例类型，可以改变所有位置的实例类型
+		return new ArrayList<Editable>();
+	}
+	private void recyleList(List<Editable> buffer)
+	{
+		for (int i = 0; i < sCachedBuffer.length; i++) 
+		{
+			if (sCachedBuffer[i] == null) {
+				sCachedBuffer[i] = buffer;
+				buffer.clear();
+				break;
+			}
+		}
 	}
 	
 }

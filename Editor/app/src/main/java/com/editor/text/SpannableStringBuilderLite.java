@@ -637,6 +637,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mSpanCount--;
         invalidateIndex(i);
         mSpans[mSpanCount] = null;  
+		//将其置为null，以释放对象的空间
 		//在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
         if(send){
 			restoreInvariants();
