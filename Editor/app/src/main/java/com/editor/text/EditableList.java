@@ -461,7 +461,7 @@ public class EditableList extends Object implements Editable
 	 */
 	private void correctSpan(Object span)
 	{
-		List<Editable> blocks = mSpanInBlocks.get(span);
+		final List<Editable> blocks = mSpanInBlocks.get(span);
 		//如果span绑定了多个文本块
 		if(blocks!=null && blocks.size()>1)
 		{
@@ -893,8 +893,8 @@ public class EditableList extends Object implements Editable
 			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);
 		}
 	}
-	public Editable replaceUseSelection(int del, CharSequence p1, int p2, int p3){
-		return replace(mSelectionStart-del,mSelectionEnd,p1,p2,p3);
+	public Editable replaceUseSelection(int before, int after, CharSequence p1, int p2, int p3){
+		return replace(mSelectionStart-before,mSelectionEnd+after,p1,p2,p3);
 	}
 	
 	/* 回收不使用的List，便于复用 */
@@ -905,7 +905,9 @@ public class EditableList extends Object implements Editable
 	private static List<Editable> obtainList()
 	{
 		if(sBufferCount>0){
-			return sCachedBuffer[--sBufferCount];
+			List<Editable> buffer = sCachedBuffer[--sBufferCount];
+			sCachedBuffer[sBufferCount] = null;
+			return buffer;
 		}
 		return new ArrayList<Editable>();
 	}

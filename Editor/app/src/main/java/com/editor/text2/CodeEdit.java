@@ -12,7 +12,6 @@ public class CodeEdit extends Edit
 	
 	private Stack<token> mLast, mNext;
 	
-	private int IsModify;
 	private int mPrivateFlags;
 	public static int mPublicFlags;
 	
@@ -76,13 +75,11 @@ public class CodeEdit extends Edit
 	{
 		if(mLast.size()>0 && !IsUR())
 		{
-			++IsModify;
 			IsUR(true);
 			token token = mLast.pop();
 			doAndCastToken(token);
 			mNext.push(token);
 			IsUR(false);
-			--IsModify;
 		}
 	}
 
@@ -91,13 +88,11 @@ public class CodeEdit extends Edit
 	{
 		if(mNext.size()>0 && !IsUR())
 		{
-			++IsModify;
 			IsUR(true);
 		    token token = mNext.pop();
 			doAndCastToken(token);
 			mLast.push(token);
 			IsUR(false);
-			--IsModify;
 		}
 	}
 
@@ -249,7 +244,7 @@ public class CodeEdit extends Edit
 	}
 
 	public boolean IsModify(){
-		return (mPrivateFlags&ModifyMask) == ModifyMask || IsModify!=0 || (mPublicFlags&ModifyMask) == ModifyMask;
+		return (mPrivateFlags&ModifyMask) == ModifyMask || ((EditableList)getText()).getTextWatcherDepth()!=0 || (mPublicFlags&ModifyMask) == ModifyMask;
 	}
 	public boolean IsUR(){
 		return (mPrivateFlags&URMask) == URMask || (mPublicFlags&URMask) == URMask ;

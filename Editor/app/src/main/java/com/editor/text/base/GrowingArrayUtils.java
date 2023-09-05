@@ -166,6 +166,7 @@ public final class GrowingArrayUtils
 	{
 		assert currentSize <= array.length;
 		System.arraycopy(array,index+1,array,index,currentSize-index-1);
+		array[currentSize-1] = null;
 		return array;
 	}
 	

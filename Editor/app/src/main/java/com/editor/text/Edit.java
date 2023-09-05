@@ -178,7 +178,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 
 			//根据要输入的文本，进行输入
-			mCursor.sendInputText(text,newCursorPosition,0,0);
+			onInputContent(text,newCursorPosition,0,0);
 			return true;
 		}
 
@@ -191,7 +191,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 
 			//准备删除字符
-			mCursor.sendInputText(null,0,beforeLength,afterLength);	
+			onInputContent(null,0,beforeLength,afterLength);	
 			return true;
 		}
 
@@ -290,6 +290,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		@Override
 		public void closeConnection(){}
 
+	}
+	
+	/* 输入内容时调用 */
+	protected void onInputContent(CharSequence text, int newCursorPosition, int beforeLength, int afterLength){
+		mCursor.sendInputText(text,newCursorPosition,beforeLength,afterLength);
 	}
 
 	/* 是否启用输入 */

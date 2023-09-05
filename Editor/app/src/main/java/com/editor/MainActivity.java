@@ -29,7 +29,7 @@ public class MainActivity extends Activity implements Runnable
 	@Override
 	public void run()
 	{
-		loadFileInThread("/storage/emulated/0/Linux/3.java");
+		loadFileInThread("/storage/emulated/0/Linux/1.java");
 	}
 	
 	public void loadFileInThread(String path)
@@ -44,7 +44,7 @@ public class MainActivity extends Activity implements Runnable
 		Random rand = new Random();
 		Editable editor = E.getText();
 		for(int i=0;i<2000;i+=1){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		//E.scrollTo(0,(int)E.getVScrollRange());
