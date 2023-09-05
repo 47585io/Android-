@@ -17,6 +17,7 @@ import android.util.*;
    
    bug: span的范围不连续
    目前还不知道在插入后怎样获取两端的span并修正
+   应该是每次截取时获取两端的span
 */
 public class EditableList extends Object implements Editable
 {
@@ -225,28 +226,18 @@ public class EditableList extends Object implements Editable
 		int j = findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
-		Object[] spans = EmptyArray.OBJECT;
 		
 		if(before>0){
 			//删除范围内的文本和文本块
 		    deleteForBlocks(i,j,start,end);
 		}
 		if(after>0){
-			//插入前，获取衔接在两端的span
-			spans = mBlocks[i].getSpans(start,start,Object.class);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
-		//修正两端的span
-		for(j=0;j<spans.length;++j){
-			correctSpan(spans[j]);
-		}
-		spans = getSpans(st+after,st+after,Object.class);
-		for(j=0;j<spans.length;++j){
-			correctSpan(spans[j]);
-		}
-		printSpans();
+		//测试代码
+		//printSpans();
 		
 		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
 		mLength += -before+after;
@@ -351,13 +342,33 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 替换指定文本块的文本及span的绑定，若send为false，则刷新mBlockStarts是调用者的责任 */
-	private void repalceWithSpan(int i, int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean send)
+	private void repalceWithSpan(final int i, final int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{
-		//需要在删除文本前，替换span的绑定
+		//需要在插入文本前，获取端点处无法扩展的span或会挤到后面的span
+		final int after = tbEnd-tbStart;
+		Object[] spans = EmptyArray.OBJECT;
+		if(after>0){
+			spans = mBlocks[i].getSpans(start,start,Object.class);
+		}
+		
+		//需要在删除文本前，替换span的绑定。删除文本不需要修正span
 		replaceSpan(i,start,end,tb,tbStart,tbEnd);
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
 		if(send){
 			refreshInvariants(i);
+		}
+		
+		//需要在插入后，修正端点处的span
+		if(after>0)
+		{
+			for(int j=0;j<spans.length;++j){
+				correctSpan(spans[j]);
+			}
+			//在插入后，修正插入文本末尾的span (dispatchTextBlock)
+			spans = mBlocks[i].getSpans(start+after,start+after,Object.class);
+			for(int j=0;j<spans.length;++j){
+				correctSpan(spans[j]);
+			}
 		}
 	}
 
@@ -366,7 +377,7 @@ public class EditableList extends Object implements Editable
 	{
 		//先移除指定文本块start~end范围内的span与block的绑定
 		//纯删除时，mIndexOfBlocks和mBlockStarts均可不正确
-		Editable block = mBlocks[i];
+		final Editable block = mBlocks[i];
 		if(end > start)
 		{
 			//int length = block.length();
@@ -446,6 +457,7 @@ public class EditableList extends Object implements Editable
 	 * 若删除了一个span，并把它前半部分删了，因此在插入文本时会被挤至后面，这也没什么
 	 * 若删除了一个span，并把它后半部分删了，因此在插入文本时仍保持在前面，这都没什么
 	 * 若删除了一个span，并把它中间删了，两端保留，在插入文本后span应该扩展并包含中间所有文本块，而不是仅悬停在两端
+	 * 注意！mIndexOfBlocks必须是正确的！
 	 */
 	private void correctSpan(Object span)
 	{
@@ -925,7 +937,7 @@ public class EditableList extends Object implements Editable
 	
 	public void printSpans(){
 		for(Object span:mSpanInBlocks.keySet()){
-			Log.w("Span",printSpanInBlocks(span));
+			Log.w("Span At "+getSpanStart(span) ,printSpanInBlocks(span));
 		}
 	}
 	
