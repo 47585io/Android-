@@ -76,7 +76,7 @@ public class CodeEdit extends Edit
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		//reDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		reDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
 		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
 	}
 	

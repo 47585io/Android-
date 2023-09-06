@@ -19,7 +19,7 @@ import android.util.*;
    目前还不知道在插入后怎样获取两端的span并修正
    应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
    
-   已解决bug3: span重叠时绘制会闪烁
+   未解决bug3: span重叠时绘制会闪烁
    SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
@@ -45,7 +45,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 1024;
+	private static final int Default_MaxCount = 100;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	

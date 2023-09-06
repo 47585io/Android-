@@ -67,7 +67,7 @@ public class MainActivity extends Activity implements Runnable
 		
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i=0;i<10;i+=1){
+		for(int i=0;i<1000;i+=1){
 			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
