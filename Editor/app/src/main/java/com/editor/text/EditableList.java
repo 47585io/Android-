@@ -549,14 +549,20 @@ public class EditableList extends Object implements Editable
 		return spans;
 	}
 	
-	/* 将重复的span在src中的位置转换为在dst中的位置 */
+	/* 将重复的span在src中的起始位置转换为在dst中的起始位置 */
 	private void correctRepeatSpans(Spannable src, Spanned dst, Object[] spans)
 	{
 		for(int i=0;i<spans.length;++i)
 		{
-			if(spans[i] != null){
+			if(spans[i] != null)
+			{
 				Object span = spans[i];
-				src.setSpan(span,dst.getSpanStart(span),dst.getSpanEnd(span),dst.getSpanFlags(span));
+				int ost = src.getSpanStart(span);
+				int nst = dst.getSpanStart(span);
+				if(ost!=nst){
+					//重复的span将衔接在上次的位置之前，spanEnd已在插入时修正
+					src.setSpan(span,nst,dst.getSpanEnd(span),dst.getSpanFlags(span));
+				}
 			}
 		}
 	}

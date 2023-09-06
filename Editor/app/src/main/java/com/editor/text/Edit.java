@@ -551,6 +551,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			if(spanCount>0){
 			    replaceOverlappingSpansRange(start,end,mSpans,mSpanStarts,mSpanEnds);
 			}
+			Log.w("Span", mText.printSpanOrders(mSpans));
 			
 			//绘制背景的Span
 			if(spanCount>0){
