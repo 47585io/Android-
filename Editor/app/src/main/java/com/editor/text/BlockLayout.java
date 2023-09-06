@@ -653,6 +653,9 @@ _______________________________________
 			int line = Count(FN,text,newOffset,oldOffset);
 			target.y = y-getLineHeight()*line;
 		}
+		else{
+			target.y = y;
+		}
 	}
 	
 	/* 与任意内容无关的进行计算坐标，文本可以是一个文本切片，仅用有限的文本计算累计坐标，从上个位置开始 */
@@ -669,6 +672,9 @@ _______________________________________
 		else if(oldOffset>newOffset){
 			int line = Count(array,FN,newOffset,oldOffset);
 			target.y = y-getLineHeight()*line;
+		}
+		else{
+			target.y = y;
 		}
 	}
 	

@@ -505,7 +505,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//初始化文本和笔
 			TextPaint textPaint = getPaint();
 			TextPaint spanPaint = mSpanPaint;
-
+			
 			//计算可视区域
 			int x = getScrollX();
 			int y = getScrollY();
@@ -551,7 +551,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			if(spanCount>0){
 			    replaceOverlappingSpansRange(start,end,mSpans,mSpanStarts,mSpanEnds);
 			}
-			Log.w("Span", mText.printSpanOrders(mSpans));
+			//Log.w("Span", mText.printSpanOrders(mSpans));
 			
 			//绘制背景的Span
 			if(spanCount>0){
@@ -559,7 +559,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			    onDrawBackground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp2,canvas,spanPaint);
 			}
 
-			//绘制文本
+			//绘制文本，由于画笔的混合模式，所以在文本范围变化时，部分span会改变亮度
 			if(spanCount>0){
 				onDrawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
 			}else{
