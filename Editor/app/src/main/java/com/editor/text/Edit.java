@@ -545,13 +545,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			sCharBuffer = getChars(spanString,start,end,sCharBuffer,0);
 			char[] chars = sCharBuffer;
 			
-			//我们只能管理CharacterStyle及其子类的span，抱歉
+			//获取Spans并清除重叠范围
 			getSpans(spanString,start,end,CharacterStyle.class);
 			int spanCount = mSpans.length;
 			if(spanCount>0){
 			    replaceOverlappingSpansRange(start,end,mSpans,mSpanStarts,mSpanEnds);
 			}
-			Log.w("Span", mText.printSpanOrders(mSpans));
 			
 			//绘制背景的Span
 			if(spanCount>0){
@@ -559,8 +558,14 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			    onDrawBackground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp2,canvas,spanPaint);
 			}
 
-			//绘制文本和行数
-		    drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
+			//绘制文本
+			if(spanCount>0){
+				onDrawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
+			}else{
+				drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
+			}
+		    
+			//绘制行数
 			int saveColor = textPaint.getColor();
 			textPaint.setColor(mLineColor);
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See.left);
@@ -635,15 +640,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		   	}
 		}
 		
-		/* 绘制文本 */
+		/* 绘制文本，没有span时，无法保证表中的内容为空，此时不要调用 */
 		private void onDrawText(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
 		{
-			if(mSpans.length==0){
-				//没有span时，无法保证表中的内容为空，所以进行默认绘制
-				drawText(array,start,end,x,y,leftPadding,lineHeight,canvas,paint);
-				return;
-			}
-			
 			int begin = start;
 			pos tmp3 = sTmp3;
 			//检查还剩下的范围，只绘制范围内的文本

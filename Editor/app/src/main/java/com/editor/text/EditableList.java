@@ -45,7 +45,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 10;
+	private static final int Default_MaxCount = 1024;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -673,9 +673,10 @@ public class EditableList extends Object implements Editable
 			public void dothing(int id, int start, int end)
 			{
 				T[] spans = mBlocks[id].getSpans(start,end,kind);
-				for(int k=0;k<spans.length;++k){
+				for(int k=0;k<spans.length;++k)
+				{
+					//span仍应尽量保持顺序
 					if(spanSet.add(spans[k])){
-						//span仍应保持顺序
 						spanList.add(spans[k]);
 					}
 				}
