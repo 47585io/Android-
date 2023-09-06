@@ -561,7 +561,7 @@ public class EditableList extends Object implements Editable
 				int nst = dst.getSpanStart(span);
 				if(ost!=nst){
 					//重复的span将衔接在上次的位置之前，spanEnd已在插入时修正
-					src.setSpan(span,nst,dst.getSpanEnd(span),dst.getSpanFlags(span));
+					src.setSpan(span,nst,src.getSpanEnd(span),src.getSpanFlags(span));
 				}
 			}
 		}
