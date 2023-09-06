@@ -19,10 +19,15 @@ import android.util.*;
    目前还不知道在插入后怎样获取两端的span并修正
    应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
    
-   未解决bug3: span重叠时绘制会闪烁
+   已解决bug3: span重叠时绘制会闪烁
    SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
+   
+   未解决bug4: span插入顺序错误
+   在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
+   但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
+   另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
 */
 public class EditableList extends Object implements Editable
 {
@@ -31,6 +36,7 @@ public class EditableList extends Object implements Editable
 	private int mBlockSize;
 	private int mInsertionOrder;
 	private int mSelectionStart, mSelectionEnd;
+	private boolean isInsert;
 	
 	private Editable[] mBlocks;
 	private int[] mBlockStarts;
@@ -45,7 +51,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 100;
+	private static final int Default_MaxCount = 20;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -267,7 +273,9 @@ public class EditableList extends Object implements Editable
 			//将超出的文本截取出来
 			CharSequence text = mBlocks[i].subSequence(MaxCount,srcLen);
 			int overLen = srcLen-MaxCount;
+			isInsert=true;
 			deleteForBlocks(i,i,MaxCount,srcLen);
+			isInsert=false;
 			
 			//如果超出的文本小于或等于MaxCount
 			if(overLen<=MaxCount)
@@ -405,8 +413,9 @@ public class EditableList extends Object implements Editable
 					List<Editable> blocks = mSpanInBlocks.get(span);		
 					if(blocks!=null)
 					{
-						if(blocks.size()==1){
+						if(blocks.size()==1 && !isInsert){
 							//如果span只在这一个文本块中，可以直接移除span
+							//另一个情况是，本次截取是为了接下来的插入，此时该span仍保留
 							mSpanInBlocks.remove(span);
 							mSpanOrders.remove(span);
 							recyleList(blocks);
@@ -432,13 +441,17 @@ public class EditableList extends Object implements Editable
 					continue;
 				}
 				List<Editable> blocks = mSpanInBlocks.get(span);
-				//一个全新的span，需要映射到一个新的列表，并加入block
-				if(blocks==null)
-				{
+				if(blocks==null){
+					//一个全新的span，需要映射到一个新的列表，并加入block
 					blocks = obtainList();
 					blocks.add(block);
 					mSpanInBlocks.put(span,blocks);
 					mSpanOrders.put(span,mInsertionOrder++);
+					continue;
+				}
+				if(blocks.size()==0){
+					//此特殊span表示在刚才的文本块中移除，但将在现在的文本块中加入
+					blocks.add(block);
 					continue;
 				}
 				
