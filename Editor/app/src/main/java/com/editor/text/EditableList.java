@@ -592,22 +592,27 @@ public class EditableList extends Object implements Editable
 	public void clear()
 	{
 		//所有内容全部清空
-		mLength = 0;
-		mBlockSize = 0;
-		mBlocks = EmptyArray.emptyArray(Editable.class);
-		mBlockStarts = EmptyArray.INT;
+		for(int i=0;i<mBlockSize;++i){
+			mBlocks[i] = null;
+		}
 		mIndexOfBlocks.clear();
 		mSpanInBlocks.clear();
+		mSpanOrders.clear();
+		mLength = 0;
+		mBlockSize = 0;
+		mInsertionOrder = 0;
 	}
 
 	@Override
 	public void clearSpans()
 	{
 		//移除所有文本块的所有span，并移除所有绑定
-		for(Editable editor:mBlocks){
-			editor.clearSpans();
+		for(int i=0;i<mBlockSize;++i){
+			mBlocks[i].clearSpans();
 		}
 		mSpanInBlocks.clear();
+		mSpanOrders.clear();
+		mInsertionOrder = 0;
 	}
 
 	@Override
@@ -626,7 +631,7 @@ public class EditableList extends Object implements Editable
 		else{
 			mSpanOrders.put(span,mInsertionOrder++);
 		}
-		//无论如何再添加一个新的
+		//无论如何再添加一个新的，我们不能保留已回收的list的指针
 		final List<Editable> editors = obtainList();
 		mSpanInBlocks.put(span,editors);
 		
@@ -688,9 +693,7 @@ public class EditableList extends Object implements Editable
 				public void dothing(int id, int start, int end)
 				{
 					T[] spans = mBlocks[id].getSpans(start,end,kind);
-					for(int k=0;k<spans.length;++k){
-						spanSet.add(spans[k]);
-					}
+					Collections.addAll(spanSet,spans);
 				}
 			};
 			DoThing(i,j,start,end,d);
