@@ -11,13 +11,18 @@ import android.util.*;
    它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
    此类是分块文本容器的实现类
    
-   已解决bug: span重叠时绘制会闪烁
+   已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
+   未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpan之前刷新
+   遗漏在insertForBlocks末尾的refreshInvariants，必须刷新
+   
+   已解决bug2: span的范围不连续
+   目前还不知道在插入后怎样获取两端的span并修正
+   应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
+   
+   已解决bug3: span重叠时绘制会闪烁
    SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
-   
-   已解决bug: span的范围不连续
-   目前还不知道在插入后怎样获取两端的span并修正
-   应该是每次截取时获取两端的span
+   参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
 */
 public class EditableList extends Object implements Editable
 {
@@ -283,7 +288,7 @@ public class EditableList extends Object implements Editable
 				sendBlocksInsertAfter(i+1,i+1,0,overLen);
 			}
 			else{
-				//如果超出的文本大于MaxCount，必须分发
+				//如果超出的文本大于MaxCount，必须分发，分发时不需要修正重复span
 				int j = dispatchTextBlock(i+1,text,0,overLen);
 				sendBlocksInsertAfter(i+1,j,0,mBlocks[j].length());
 			}
@@ -560,7 +565,8 @@ public class EditableList extends Object implements Editable
 				int ost = src.getSpanStart(span);
 				int nst = dst.getSpanStart(span);
 				if(ost!=nst){
-					//重复的span将衔接在上次的位置之前，spanEnd已在插入时修正
+					//此时被插入的文本必然在文本块开头，因此跨越多个文本块的span必然衔接在开头或末尾，已在correctSpan时修正的不用再次修正
+					//另外的，完全被截取至单独的下个文本块且重复的span没有被correctSpan修正，应将它衔接在上次的位置之前，spanEnd已在插入时修正
 					src.setSpan(span,nst,src.getSpanEnd(span),src.getSpanFlags(span));
 				}
 			}
