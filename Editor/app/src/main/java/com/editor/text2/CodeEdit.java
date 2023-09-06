@@ -5,13 +5,15 @@ import android.text.*;
 import com.editor.text.*;
 import com.editor.text2.base.*;
 import java.util.*;
+import com.editor.text2.builder.listener.base.*;
+import com.editor.text2.builder.listener.base.EditDrawerListener.*;
+import android.text.style.*;
 
 
 public class CodeEdit extends Edit
 {
 	
 	private Stack<token> mLast, mNext;
-	
 	private int mPrivateFlags;
 	public static int mPublicFlags;
 	
@@ -19,6 +21,65 @@ public class CodeEdit extends Edit
 	public CodeEdit(Context cont){
 		super(cont);
 	}
+
+	@Override
+	protected void init()
+	{
+		super.init();
+		mLast = new Stack<>();
+		mNext = new Stack<>();
+	}
+	
+	public void reDrawText(int start, int end){
+		String text = ((EditableList)getText()).subString(start,end);
+		D d = new D();
+		d.onFindNodes(0,text.length(),text);
+		d.onDrawNodes(start,end,getText());
+	}
+	
+	class D extends EditDrawerListener
+	{
+
+		@Override
+		protected void OnFindWord(List<EditDrawerListener.DoAnyThing> totalList)
+		{
+			
+		}
+
+		@Override
+		protected void OnFindNodes(List<EditDrawerListener.DoAnyThing> totalList)
+		{
+		}
+
+		@Override
+		protected void OnClearFindWord()
+		{
+			// TODO: Implement this method
+		}
+
+		@Override
+		protected void OnClearFindNodes(int start, int end, CharSequence text, List<wordIndex> nodes)
+		{
+			nodes.add(new wordIndex(start,end,new ForegroundColorSpan(0xff6a6b6c)));
+			// TODO: Implement this method
+		}
+
+		@Override
+		public void onDrawNodes(int start, int end, Spannable editor)
+		{
+			for(wordIndex node: getDrawNodes()){
+				editor.setSpan(node.span,node.start+start,node.end+start,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			}
+		}
+	}
+
+	@Override
+	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
+	{
+		//reDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
+	}
+	
 	
 /*
  ---------------------------------------------------------------
@@ -271,7 +332,6 @@ public class CodeEdit extends Edit
 	public int getFlags(){
 		return mPrivateFlags;
 	}
-	
 	
 	
 }

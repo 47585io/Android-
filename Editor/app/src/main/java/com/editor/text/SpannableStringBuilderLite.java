@@ -839,7 +839,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @param elementCount要返回的int[]的大小
 	 * @返回一个长度至少为elementCount的int[]
 	 */
-    private static int[] obtain(final int elementCount)
+    static int[] obtain(final int elementCount)
     {
         int[] result = null;
         synchronized (sCachedIntBuffer)
@@ -871,7 +871,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * 回收排序数组
 	 * @param buffer要回收的数组
 	 */
-    private static void recycle(int[] buffer)
+    static void recycle(int[] buffer)
     {
         synchronized (sCachedIntBuffer)
         {
@@ -925,7 +925,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @ param insertionOrder对象类型的插入顺序。
 	 * @param <T> 
 	 */
-    private static final <T> void sort(T[] array, int[] priority, int[] insertionOrder) 
+    static final <T> void sort(T[] array, int[] priority, int[] insertionOrder) 
     {
         int size = array.length;
         //从最后一个节点的父节点开始，向前将所有节点排序，构建一个大顶堆

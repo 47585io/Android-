@@ -11,9 +11,9 @@ import android.util.*;
    它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
    此类是分块文本容器的实现类
    
-   bug: span重叠时绘制会闪烁
-   很简单，因为不断截取和修正范围时，会重新设置span，此时span的优先级发生了变化，故在获取span时，顺序是乱的
-   而之前没发现是因为把MaxCount设置较大，导致文本覆盖了全屏，所以span的变化不可见
+   已解决bug: span重叠时绘制会闪烁
+   SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
+   应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    
    已解决bug: span的范围不连续
    目前还不知道在插入后怎样获取两端的span并修正
@@ -24,12 +24,14 @@ public class EditableList extends Object implements Editable
 
 	private int mLength;
 	private int mBlockSize;
+	private int mInsertionOrder;
 	private int mSelectionStart, mSelectionEnd;
 	
 	private Editable[] mBlocks;
 	private int[] mBlockStarts;
 	private Map<Editable,Integer> mIndexOfBlocks;
 	private Map<Object,List<Editable>> mSpanInBlocks;
+	private Map<Object,Integer> mSpanOrders;
 
 	private Factory mEditableFactory;
 	private TextWatcher mTextWatcher;
@@ -38,7 +40,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 1024;
+	private static final int Default_MaxCount = 10;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -54,11 +56,12 @@ public class EditableList extends Object implements Editable
 	}
 	public EditableList(CharSequence text, int start, int end, int count)
 	{
-		MaxCount = count;
+		MaxCount = count<1 ? Default_MaxCount:count;
 		mBlocks = EmptyArray.emptyArray(Editable.class);
 		mBlockStarts = EmptyArray.INT;
 		mIndexOfBlocks = new IdentityHashMap<>();
 		mSpanInBlocks = new IdentityHashMap<>();
+		mSpanOrders = new IdentityHashMap<>();
 		dispatchTextBlock(0,text,start,end);
 		mLength = end-start;
 	}
@@ -236,9 +239,6 @@ public class EditableList extends Object implements Editable
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
 		
-		//测试代码
-		//printSpans();
-		
 		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
 		mLength += -before+after;
 		sendAfterBlocksChanged(i,start);
@@ -272,8 +272,14 @@ public class EditableList extends Object implements Editable
 					//若有下个文本块，但它的字数也不足，那么在我之后添加一个(对于文本块的变化则必须刷新)
 					addBlock(i+1,true);
 				}
+				//插入前需要获取重复的span，插入后修正范围
+				Object[] spans = EmptyArray.OBJECT;
+				if(mBlocks[i+1].length()>0){
+					spans = checkRepeatSpans(mBlocks[i+1],(Spanned)text);
+				}
 				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
 				repalceWithSpan(i+1,0,0,text,0,overLen,true);
+				correctRepeatSpans(mBlocks[i+1],(Spanned)text,spans);
 				sendBlocksInsertAfter(i+1,i+1,0,overLen);
 			}
 			else{
@@ -397,6 +403,7 @@ public class EditableList extends Object implements Editable
 						if(blocks.size()==1){
 							//如果span只在这一个文本块中，可以直接移除span
 							mSpanInBlocks.remove(span);
+							mSpanOrders.remove(span);
 							recyleList(blocks);
 						}else{
 							blocks.remove(block);
@@ -426,6 +433,7 @@ public class EditableList extends Object implements Editable
 					blocks = obtainList();
 					blocks.add(block);
 					mSpanInBlocks.put(span,blocks);
+					mSpanOrders.put(span,mInsertionOrder++);
 					continue;
 				}
 				
@@ -526,6 +534,33 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
+	/* 检查在dst与src中重复的span，spans取自dst */
+	private Object[] checkRepeatSpans(Spanned src, Spanned dst)
+	{
+		Object[] spans = dst.getSpans(0,dst.length(),Object.class);
+		for(int i=0;i<spans.length;++i)
+		{
+			Object span = spans[i];
+			if(src.getSpanStart(span)<0){
+				//不重复的span会被置为null
+				spans[i] = null;
+			}
+		}
+		return spans;
+	}
+	
+	/* 将重复的span在src中的位置转换为在dst中的位置 */
+	private void correctRepeatSpans(Spannable src, Spanned dst, Object[] spans)
+	{
+		for(int i=0;i<spans.length;++i)
+		{
+			if(spans[i] != null){
+				Object span = spans[i];
+				src.setSpan(span,dst.getSpanStart(span),dst.getSpanEnd(span),dst.getSpanFlags(span));
+			}
+		}
+	}
+	
 	private static final boolean isInvalidSpan(int start, int end, int flags){
 		return start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/;
 	}
@@ -565,6 +600,7 @@ public class EditableList extends Object implements Editable
 		}
 		final List<Editable> editors = obtainList();
 		mSpanInBlocks.put(span,editors);
+		mSpanOrders.put(span,mInsertionOrder++);
 		
 		//将范围内的所有文本块都设置span，并建立绑定
 		Do d = new Do()
@@ -597,6 +633,7 @@ public class EditableList extends Object implements Editable
 				block.removeSpan(p1);
 			}
 			recyleList(blocks);
+			mSpanOrders.remove(p1);
 		}
 	}
 
@@ -637,6 +674,16 @@ public class EditableList extends Object implements Editable
 		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
 		T[] spans = (T[]) Array.newInstance(kind,spanList.size());
 		spanList.toArray(spans);
+		//虽然无法保证span优先级，但是我们可以重新排序
+		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
+        final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
+		for(i=0;i<spans.length;++i){
+			prioSortBuffer[i] = getSpanFlags(spans[i]) & SPAN_PRIORITY;
+			orderSortBuffer[i] = mSpanOrders.get(spans[i]);
+		}
+		SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
+		SpannableStringBuilderLite.recycle(prioSortBuffer);
+		SpannableStringBuilderLite.recycle(orderSortBuffer);
 		return spans;
 	}
 
@@ -941,6 +988,18 @@ public class EditableList extends Object implements Editable
 		for(Object span:mSpanInBlocks.keySet()){
 			Log.w("Span At "+getSpanStart(span) ,printSpanInBlocks(span));
 		}
+	}
+	
+	public String printSpanOrders(Object[] spans)
+	{
+		b.delete(0,b.length());
+		b.append("[");
+		for(Object span:spans){
+			int order = mSpanOrders.get(span);
+			b.append("("+order+","+getSpanStart(span)+"~"+getSpanEnd(span)+")"+";");
+		}
+		b.append("]");
+		return b.toString();
 	}
 	
 }

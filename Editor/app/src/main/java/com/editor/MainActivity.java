@@ -10,11 +10,13 @@ import android.text.*;
 import android.text.style.*;
 import android.widget.*;
 import java.util.*;
+import com.editor.text2.*;
 
 public class MainActivity extends Activity implements Runnable
 {
 	
 	public static final Handler mHamdler = new Handler();
+	private CodeEdit E;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -22,29 +24,51 @@ public class MainActivity extends Activity implements Runnable
         super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		//requestWindowFeature(Window.FEATURE_NO_TITLE);
         mHamdler.postDelayed(this,50);
     }
 
 	@Override
-	public void run()
+	public boolean onCreateOptionsMenu(Menu menu)
 	{
-		loadFileInThread("/storage/emulated/0/Linux/1.java");
+		menu.add(0,0,0,"Uedo");
+		menu.add(1,1,1,"Redo");
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item)
+	{
+		int id = item.getItemId();
+		switch(id){
+			case 0:
+				E.Uedo();
+				break;
+			case 1:
+				E.Redo();
+				break;
+		}
+		return super.onMenuItemSelected(featureId, item);
+	}
+
+	@Override
+	public void run(){
+		loadFileInThread("/storage/emulated/0/Linux/3.java");
 	}
 	
 	public void loadFileInThread(String path)
 	{
 		myReader reader = new myReader(path);
 		String text = reader.r("UTF-8");
-	    Edit E = new Edit(this);
+	    E = new CodeEdit(this);
 		E.setText(text,0,text.length());
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i=0;i<2000;i+=1){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(int i=0;i<100;i+=1){
+			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		//E.scrollTo(0,(int)E.getVScrollRange());

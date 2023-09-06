@@ -5,6 +5,7 @@ import android.text.*;
 import com.editor.text.base.*;
 import java.util.*;
 import android.text.Layout.*;
+import android.util.*;
 
 
 /* 对分块文本容器进行测量的类 */
@@ -305,7 +306,8 @@ _______________________________________
     /* 寻找行数所在的文本块 */
     public int findBlockIdForLine(int line)
 	{
-		int id = line/(lineCount/mBlockSize);
+		int div = lineCount/mBlockSize;
+		int id = div>1 ? line/div:line;
 		if(id<0){
 			id = 0;
 		}
@@ -515,7 +517,7 @@ _______________________________________
 			getCursorPos(end,e);
 		}
 		else{
-		    nearOffsetPos(start,s.x,s.y,end,e);
+		    nearOffsetPos(mText,start,s.x,s.y,end,e,getPaint());
 		}
 
 		float w = getDesiredWidth(text,start,end,paint);
@@ -638,11 +640,10 @@ _______________________________________
 	}
 
 	/* 获取临近光标坐标，可能会更快 */
-	final public void nearOffsetPos(int oldOffset, float x, float y, int newOffset, pos target)
+	final public void nearOffsetPos(CharSequence text, int oldOffset, float x, float y, int newOffset, pos target, TextPaint paint)
 	{
-		CharSequence text = mText;
 		int index = tryLine_Start(text,newOffset);
-		target.x = measureText(text,index,newOffset,getPaint());
+		target.x = measureText(text,index,newOffset,paint);
 
 		if(oldOffset<newOffset){
 			int line = Count(FN,text,oldOffset,newOffset);
@@ -654,7 +655,24 @@ _______________________________________
 		}
 	}
 	
-	/* 为了效率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
+	/* 与任意内容无关的进行计算坐标，文本可以是一个文本切片，仅用有限的文本计算累计坐标，从上个位置开始 */
+	final public void nearOffsetPos(char[] array, int oldOffset, float x, float y, int newOffset, pos target, TextPaint paint)
+	{
+		int index = ArrayUtils.lastIndexOf(array,FN,newOffset-1);
+		index = index<0 ? 0:index+1;
+		target.x = measureText(array,index,newOffset,paint);
+
+		if(oldOffset<newOffset){
+			int line = Count(array,FN,oldOffset,newOffset);
+			target.y = y+getLineHeight()*line;
+		}
+		else if(oldOffset>newOffset){
+			int line = Count(array,FN,newOffset,oldOffset);
+			target.y = y-getLineHeight()*line;
+		}
+	}
+	
+	/* 为了效;率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
 	final public float getDesiredWidth(GetChars text, int start, int end, TextPaint paint)
 	{
 		fillChars(text,start,end);

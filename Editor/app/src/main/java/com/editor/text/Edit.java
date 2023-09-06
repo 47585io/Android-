@@ -439,7 +439,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		//临时变量
 		private char[] sCharBuffer = EmptyArray.CHAR;
 		private RectF sRectF = new RectF();
-		private pos sTmp = new pos(), sTmp2 = new pos();
+		private pos sTmp = new pos(), sTmp2 = new pos(), sTmp3 = new pos();
 		private Paint.FontMetrics sFont = new Paint.FontMetrics();
 
 		
@@ -559,7 +559,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 
 			//绘制文本和行数
-			drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
+		    drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
 			int saveColor = textPaint.getColor();
 			textPaint.setColor(mLineColor);
 			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See.left);
@@ -591,7 +591,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						getCursorPos(start,tmp);
 					}
 					else{
-						nearOffsetPos(index,tmp.x,tmp.y,start,tmp);
+						nearOffsetPos(array,index-begin,tmp.x,tmp.y,start-begin,tmp,paint);
 					}
 					index = start;
 
@@ -623,7 +623,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 						getCursorPos(start,tmp);
 					}
 					else{
-						nearOffsetPos(index,tmp.x,tmp.y,start,tmp);
+						nearOffsetPos(array,index-begin,tmp.x,tmp.y,start-begin,tmp,paint);
 					}
 					index = start;
 
@@ -632,6 +632,26 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					drawText(array,start-begin,end-begin,tmp.x,tmp.y-ascent,leftPadding,lineHeight,canvas,paint);
 				}
 		   	}
+		}
+		
+		/* 绘制文本 */
+		private void onDrawText(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
+		{
+			if(mSpans.length==0){
+				//没有span时，无法保证表中的内容为空，所以进行默认绘制
+				drawText(array,start,end,x,y,leftPadding,lineHeight,canvas,paint);
+				return;
+			}
+			
+			int begin = start;
+			pos tmp3 = sTmp3;
+			//检查还剩下的范围，只绘制范围内的文本
+			start = checkSpanStart(start,end,mForegroundSpanRangeTable);
+			end = checkSpanEnd(start,end,mForegroundSpanRangeTable);
+			if(start<end){
+				nearOffsetPos(array,begin,x,y,start,tmp3,paint);
+				drawText(array,start,end,tmp3.x,tmp3.y,leftPadding,lineHeight,canvas,paint);
+			}
 		}
 
 		/* 在绘制文本后绘制行 */
@@ -776,20 +796,32 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int start = spanStarts[i]-begin;
 			int end = spanEnds[i]-begin;
 			//两端点尽可能地往内缩
-			for(;start<end;++start){
-				if(table[start]==FREE){
-					break;
-				}
-			}
-			for(;end>start;--end){
-				if(table[end-1]==FREE){
-					break;
-				}
-			}
+			start = checkSpanStart(start,end,table);
+			end = checkSpanEnd(start,end,table);
+			
 			//设置此span所使用的范围
 			Arrays.fill(table,start,end,USE);
 			spanStarts[i] = start+begin;
 			spanEnds[i] = end+begin;
+		}
+		
+		private int checkSpanStart(int spanStart, int spanEnd, int[] table)
+		{
+			for(;spanStart<spanEnd;++spanStart){
+				if(table[spanStart]==FREE){
+					break;
+				}
+			}
+			return spanStart;
+		}
+		private int checkSpanEnd(int spanStart, int spanEnd, int[] table)
+		{
+			for(;spanEnd>spanStart;--spanEnd){
+				if(table[spanEnd-1]==FREE){
+					break;
+				}
+			}
+			return spanEnd;
 		}
 		
 		/* 获取应该预留给行数的宽度 */
@@ -882,7 +914,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 							mLayout.getCursorPos(end,endPos);
 						}
 						else{
-							mLayout.nearOffsetPos(start,startPos.x,startPos.y,end,endPos);
+							mLayout.nearOffsetPos(mText,start,startPos.x,startPos.y,end,endPos,mPaint);
 						}
 					}
 				}
