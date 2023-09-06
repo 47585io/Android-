@@ -51,7 +51,7 @@ public class EditableList extends Object implements Editable
 	
 	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 1024;
+	private static final int Default_MaxCount = 20;
 	private InputFilter[] mFilters = NO_FILTERS;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -680,27 +680,32 @@ public class EditableList extends Object implements Editable
 		int j = findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
 		end -= mBlockStarts[j];
-		if(i==j){
-			//如果在同一文本块，则可以直接获取
-			spans = mBlocks[i].getSpans(start,end,kind);
-		}
-		else{
-			//收集范围内所有文本块的span，并不包含重复的span
-			spanSet.clear();
-			Do d = new Do()
+		
+		//收集范围内所有文本块的span，并不包含重复的span
+		spanSet.clear();
+		Do d = new Do()
+		{
+			@Override
+			public void dothing(int id, int start, int end)
 			{
-				@Override
-				public void dothing(int id, int start, int end)
-				{
-					T[] spans = mBlocks[id].getSpans(start,end,kind);
-					Collections.addAll(spanSet,spans);
-				}
-			};
-			DoThing(i,j,start,end,d);
-			//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
-			spans = (T[]) Array.newInstance(kind,spanSet.size());
-			spanSet.toArray(spans);
+				T[] spans = mBlocks[id].getSpans(start,end,kind);
+				Collections.addAll(spanSet,spans);
+			}
+		};
+		DoThing(i,j,start,end,d);	
+		
+		//仍要包含两端的span
+		if(start==0 && i>0){
+			spans = mBlocks[i-1].getSpans(mBlocks[i-1].length(),mBlocks[i-1].length(),kind);
+			Collections.addAll(spanSet,spans);
 		}
+		if(end==mBlocks[j].length() && j<mBlockSize-1){
+			spans = mBlocks[j+1].getSpans(0,0,kind);
+			Collections.addAll(spanSet,spans);
+		}
+		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
+		spans = (T[]) Array.newInstance(kind,spanSet.size());
+		spanSet.toArray(spans);
 		
 		//虽然无法保证span优先级，但是我们可以重新排序
 		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);

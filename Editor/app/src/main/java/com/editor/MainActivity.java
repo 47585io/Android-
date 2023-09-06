@@ -71,6 +71,7 @@ public class MainActivity extends Activity implements Runnable
 			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
+		editor.getSpans(1024,2048,Object.class);
 		//E.scrollTo(0,(int)E.getVScrollRange());
 	}
 	
