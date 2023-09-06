@@ -665,44 +665,40 @@ public class EditableList extends Object implements Editable
 		}
 	}
 
-	private static final Set spanSet = new LinkedHashSet<>();
-	private static final List spanList = new LinkedList<>();
+	private static final Set spanSet = new LinkedHashSet();
 	
 	@Override
 	public <T extends Object> T[] getSpans(int start, int end, final Class<T> kind)
 	{
+		T[] spans = EmptyArray.emptyArray(kind);
 		int i = findBlockIdForIndex(start);
 		int j = findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
 		end -= mBlockStarts[j];
 		if(i==j){
-			//如果在同一文本块，则可以直接返回
-			return mBlocks[i].getSpans(start,end,kind);
+			//如果在同一文本块，则可以直接获取
+			spans = mBlocks[i].getSpans(start,end,kind);
 		}
-		
-		spanSet.clear();
-		spanList.clear();
-		//收集范围内所有文本块的span，并不包含重复的span
-		Do d = new Do()
-		{
-			@Override
-			public void dothing(int id, int start, int end)
+		else{
+			//收集范围内所有文本块的span，并不包含重复的span
+			spanSet.clear();
+			Do d = new Do()
 			{
-				T[] spans = mBlocks[id].getSpans(start,end,kind);
-				for(int k=0;k<spans.length;++k)
+				@Override
+				public void dothing(int id, int start, int end)
 				{
-					//span仍应尽量保持顺序
-					if(spanSet.add(spans[k])){
-						spanList.add(spans[k]);
+					T[] spans = mBlocks[id].getSpans(start,end,kind);
+					for(int k=0;k<spans.length;++k){
+						spanSet.add(spans[k]);
 					}
 				}
-			}
-		};
-		DoThing(i,j,start,end,d);
+			};
+			DoThing(i,j,start,end,d);
+			//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
+			spans = (T[]) Array.newInstance(kind,spanSet.size());
+			spanSet.toArray(spans);
+		}
 		
-		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
-		T[] spans = (T[]) Array.newInstance(kind,spanList.size());
-		spanList.toArray(spans);
 		//虽然无法保证span优先级，但是我们可以重新排序
 		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
         final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
