@@ -230,53 +230,6 @@ _______________________________________
 		}
 	}
 	
-	/* 测量文本块连接处的行宽 */
-	private float measureBlockJoinTextStart(int i)
-	{
-		int start, end;
-		float startWidth;
-		TextPaint paint = getPaint();
-		CharSequence now = mText.getBlock(i);
-
-		//先测量自己的开头
-		start = 0;
-		end = tryLine_End(now,0);
-		startWidth = paint.measureText(now,start,end);
-		if(i>0)
-		{
-			//如果可以，我们接着测量上个的末尾
-			CharSequence last = mText.getBlock(i-1);
-			end = last.length();
-			if(end>0 && last.charAt(end-1)!=FN){
-		    	start = tryLine_Start(last,end-1);
-			    startWidth += paint.measureText(last,start,end);
-			}
-		}	
-		return startWidth;
-	}
-	
-	private float measureBlockJoinTextEnd(int i)
-	{
-		int start, end;
-		float endWidth;
-		TextPaint paint = getPaint();
-		CharSequence now = mText.getBlock(i);
-
-		//先测量自己的末尾
-		start = tryLine_Start(now,now.length()-1);
-		end = now.length();
-		endWidth = paint.measureText(now,start,end);
-		if(i<mText.getBlockSize()-1 && end>0 && now.charAt(end-1)!=FN)
-		{
-			//如果可以，我们接着测量下个的开头
-			CharSequence next = mText.getBlock(i+1);
-			start = 0;
-			end = tryLine_End(next,0);
-			endWidth += paint.measureText(next,start,end);
-		}
-		return endWidth;
-	}
-	
 	/* 测量指定文本块的指定范围内的文本的宽，并考虑连接处的宽 */
 	private float measureBlockWidth(int i,int start,int end)
 	{
@@ -293,6 +246,49 @@ _______________________________________
 			width = w>width ? w:width;
 		}
 		return width;
+	}
+	
+	/* 测量文本块连接处的行宽 */
+	private float measureBlockJoinTextStart(int i){
+		return measureBlockLineWidthBefore(i,0)+measureBlockLineWidthAfter(i,0);
+	}
+	
+	private float measureBlockJoinTextEnd(int i){
+		int len = mText.getBlock(i).length();
+		return measureBlockLineWidthBefore(i,len)+measureBlockLineWidthAfter(i,len);
+	}
+
+	private float measureBlockLineWidthBefore(int i, int index)
+	{
+		float startWidth = 0;
+		CharSequence block = mText.getBlock(i);
+		int start = TextUtils.lastIndexOf(block,FN,index);
+		int end = index;
+		if(start<0){
+			//如果本文本块没有FN，去到上个文本块找，前提是i>0
+			start = 0;
+			if(i>0){
+				startWidth = measureBlockLineWidthBefore(i-1,mText.getBlock(i-1).length());
+			}
+		}
+		//最后返回之前的文本块的宽 + 自己的宽
+		return startWidth + getPaint().measureText(block,start,end);
+	}
+	private float measureBlockLineWidthAfter(int i, int index)
+	{
+		float endWidth = 0;
+		CharSequence block = mText.getBlock(i);
+		int start = index;
+		int end = TextUtils.indexOf(block,FN,index);
+		if(end<0){
+			//如果本文本块没有FN，去到下个文本块找，前提是i<size-1
+			end = block.length();
+			if(i<mText.getBlockSize()-1){
+				endWidth = measureBlockLineWidthBefore(i+1,0);
+			}
+		}
+		//最后返回之前的文本块的宽 + 自己的宽
+		return endWidth + getPaint().measureText(block,start,end);
 	}
 
 /*
