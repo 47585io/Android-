@@ -19,7 +19,7 @@ import android.util.*;
    目前还不知道在插入后怎样获取两端的span并修正
    应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
    
-   已解决bug3: span重叠时绘制会闪烁
+   已解决bug3: span重复时范围错误
    SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
@@ -38,7 +38,7 @@ public class EditableList extends Object implements Editable
 	private int mInsertionOrder;
 	private int mSelectionStart, mSelectionEnd;
 	
-	private Editable[] mBlocks;
+	private Editable[] mBlocks; 
 	private int[] mBlockStarts;
 	private Map<Editable,Integer> mIndexOfBlocks;
 	private Map<Object,List<Editable>> mSpanInBlocks;
@@ -49,10 +49,12 @@ public class EditableList extends Object implements Editable
 	private SelectionWatcher mSelectionWatcher;
 	private BlockListener mBlockListener;
 	
-	private int mTextWatcherDepth;
 	private int MaxCount;
-	private static final int Default_MaxCount = 20;
+	private int ReserveCount;
+	private int mTextWatcherDepth;
 	private InputFilter[] mFilters = NO_FILTERS;
+	private static final int Default_MaxCount = 1024;
+	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
 	
@@ -63,11 +65,12 @@ public class EditableList extends Object implements Editable
 		this(text,0,text.length());
 	}
 	public EditableList(CharSequence text, int start, int end){
-		this(text,start,end,Default_MaxCount);
+		this(text,start,end,Default_MaxCount,Default_ReserveCount);
 	}
-	public EditableList(CharSequence text, int start, int end, int count)
+	public EditableList(CharSequence text, int start, int end, int count, int reserveCount)
 	{
-		MaxCount = count<1 ? Default_MaxCount:count;
+		MaxCount = count<10 ? Default_MaxCount:count;
+		ReserveCount = reserveCount>=count ? count*2/10:reserveCount;
 		mBlocks = EmptyArray.emptyArray(Editable.class);
 		mBlockStarts = EmptyArray.INT;
 		mIndexOfBlocks = new IdentityHashMap<>();
@@ -120,7 +123,8 @@ public class EditableList extends Object implements Editable
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
 	private int dispatchTextBlock(int id, CharSequence tb,int tbStart,int tbEnd)
 	{
-		//计算并添加文本块
+		//计算并添加文本块，文本块会多预留一些空间
+		final int MaxCount = this.MaxCount-ReserveCount;
 		final int i = id, start = tbStart;
 		while(true)
 		{
@@ -166,7 +170,7 @@ public class EditableList extends Object implements Editable
 	public int findBlockIdForIndex(int index)
 	{
 		//找到临近的位置，然后从此处开始
-		int id = index/MaxCount;
+		int id = index/(MaxCount-ReserveCount);
 		if(id<0){
 			id=0;
 		}
@@ -268,17 +272,18 @@ public class EditableList extends Object implements Editable
 		
 		//再检查文本块的内容是否超出MaxCount
 		int srcLen = mBlocks[i].length();	
-		if(srcLen > MaxCount)
+		if(srcLen > this.MaxCount)
 		{								   
-			//将超出的文本截取出来
+			//将超出的文本截取出来，需要多预留一些空间以待之后使用
+			final int MaxCount = this.MaxCount-ReserveCount;
 			CharSequence text = mBlocks[i].subSequence(MaxCount,srcLen);
 			int overLen = srcLen-MaxCount;
 			deleteForBlocks(i,i,MaxCount,srcLen,false);
 			
 			//如果超出的文本小于或等于MaxCount
-			if(overLen<=MaxCount)
+			if(overLen <= this.MaxCount)
 			{
-				if (mBlockSize-1 == i || mBlocks[i+1].length()+overLen > MaxCount){
+				if (mBlockSize-1 == i || mBlocks[i+1].length()+overLen > this.MaxCount){
 					//若无下个文本块，则添加一个
 					//若有下个文本块，但它的字数也不足，那么在我之后添加一个(对于文本块的变化则必须刷新)
 					addBlock(i+1,true);
@@ -584,6 +589,7 @@ public class EditableList extends Object implements Editable
 		}
 	}
 	
+	/* 检查是否是无效span，注释的内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
 	private static final boolean isInvalidSpan(int start, int end, int flags){
 		return start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/;
 	}
