@@ -24,7 +24,7 @@ import android.util.*;
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
    
-   未解决bug4: span插入顺序错误
+   已解决bug4: span插入顺序错误
    在上个文本块末尾的span，会优先截取到下个文本块末尾，因此span的优先级会反了，所以我们需要对span重新排序
    在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
    但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
@@ -700,7 +700,8 @@ public class EditableList extends Object implements Editable
 		};
 		DoThing(i,j,start,end,d);	
 		
-		//仍要包含两端的span
+		//仍要包含两端的span，由于每个文本块都不为空，因此不用额外寻找，它们就是上个和下个文本块
+		//插入文本时，新增的文本块都被填充截取的文本，而删除文本时，为空的文本块被移除
 		if(start==0 && i>0){
 			spans = mBlocks[i-1].getSpans(mBlocks[i-1].length(),mBlocks[i-1].length(),kind);
 			Collections.addAll(spanSet,spans);
@@ -729,8 +730,7 @@ public class EditableList extends Object implements Editable
 	@Override
 	public int getSpanStart(Object p1)
 	{
-		//在设置span后，span绑定的所有文本块正序排列
-		//即使replace后，所有文本块仍正序排列
+		//在设置span后，span绑定的所有文本块正序排列，即使replace后，所有文本块仍正序排列
 		//获取span所绑定的第一个文本块，然后获取文本块的起始位置，并附加span在此文本块的起始位置
 		List<Editable> blocks = mSpanInBlocks.get(p1);
 		if(blocks==null){
