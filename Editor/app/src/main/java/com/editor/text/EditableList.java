@@ -652,6 +652,7 @@ public class EditableList extends Object implements EditableBlock
 		setSpan(span,start,end,flags,false);
 	}
 
+	/* 用指定的span标记范围内的文本，enforce表示是否需要强制设置而无视其是否是无效span */
 	private void setSpan(final Object span, int start, int end, final int flags, final boolean enforce)
 	{
 		if(!enforce)
@@ -695,19 +696,19 @@ public class EditableList extends Object implements EditableBlock
 	}
 	
 	@Override
-	public void removeSpan(Object p1)
-	{
-		//移除span与editors的绑定，并将span从这些文本块中移除
-		List<Editable> blocks = mSpanInBlocks.remove(p1);
+	public void removeSpan(Object span)
+	{	
+	    //移除span与editors的绑定，并将span从这些文本块中移除
+		List<Editable> blocks = mSpanInBlocks.remove(span);
 		if(blocks!=null)
 		{
 			int size = blocks.size();
 			for(int i=0;i<size;++i){
 				Editable block = blocks.get(i);
-				block.removeSpan(p1);
+				block.removeSpan(span);
 			}
 			recyleList(blocks);
-			mSpanOrders.remove(p1);
+			mSpanOrders.remove(span);
 		}
 	}
 
@@ -716,9 +717,10 @@ public class EditableList extends Object implements EditableBlock
 		return getSpans(start,end,kind,true);
 	}
 	
+	/* 获取与指定范围重叠的指定类型的span，sort表示是否按优先级和插入顺序排序 */
 	private <T extends Object> T[] getSpans(int start, int end, final Class<T> kind, boolean sort)
 	{
-		final Set<T> spanSet = new LinkedHashSet<>();
+		final Set spanSet = obtainSet();
 		T[] spans = EmptyArray.emptyArray(kind);
 		int i = findBlockIdForIndex(start);
 		int j = findBlockIdForIndex(end);
@@ -750,6 +752,7 @@ public class EditableList extends Object implements EditableBlock
 		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
 		spans = (T[]) Array.newInstance(kind,spanSet.size());
 		spanSet.toArray(spans);
+		recyleSet(spanSet);
 		
 		//虽然无法保证span优先级，但是我们可以重新排序
 		if(sort)
@@ -762,7 +765,7 @@ public class EditableList extends Object implements EditableBlock
 			}
 			SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
 			SpannableStringBuilderLite.recycle(prioSortBuffer);
-			SpannableStringBuilderLite.recycle(orderSortBuffer);	
+			SpannableStringBuilderLite.recycle(orderSortBuffer);
 		}
 		return spans;
 	}
@@ -922,6 +925,7 @@ public class EditableList extends Object implements EditableBlock
 		}
 	}
 	
+	
 	public static interface BlockListener
 	{
 		public void onAddBlock(int i)
@@ -995,6 +999,7 @@ public class EditableList extends Object implements EditableBlock
         return mTextWatcherDepth;
     }
 	
+	
 	/* 对光标的处理 */
 	public void setSelection(int start, int end)
 	{
@@ -1022,12 +1027,13 @@ public class EditableList extends Object implements EditableBlock
 		return replace(mSelectionStart-before,mSelectionEnd+after,p1,p2,p3);
 	}
 	
+	
 	/* 回收不使用的List，便于复用 */
 	private static int sBufferCount = 0;
 	private static final int sMaxBufferCount = 10000;
 	private static List<Editable>[] sCachedBuffer = new List[100];
 	
-	private static List<Editable> obtainList()
+	synchronized private static List<Editable> obtainList()
 	{
 		if(sBufferCount>0){
 			List<Editable> buffer = sCachedBuffer[--sBufferCount];
@@ -1036,7 +1042,7 @@ public class EditableList extends Object implements EditableBlock
 		}
 		return new ArrayList<Editable>();
 	}
-	private static void recyleList(List<Editable> buffer)
+	synchronized private static void recyleList(List<Editable> buffer)
 	{
 		buffer.clear();
 		if(sBufferCount<sMaxBufferCount){
@@ -1044,6 +1050,29 @@ public class EditableList extends Object implements EditableBlock
 		}
 	}
 	
+	/* 这边也是，回收不使用的Set */
+	private static int setCount = 0;
+	private static Set[] setBuffer = new Set[10];
+	
+	synchronized private static Set obtainSet()
+	{
+		if(setCount>0){
+			Set buffer = setBuffer[--setCount];
+			setBuffer[setCount] = null;
+			return buffer;
+		}
+		return new LinkedHashSet();
+	}
+	synchronized private static void recyleSet(Set buffer)
+	{
+		buffer.clear();
+		if(setCount<setBuffer.length){
+			setBuffer[setCount++] = buffer;
+		}
+	}
+	
+	
+	/* 创建EditableBlock的工厂 */
 	public static abstract class BlockFactory extends Factory
 	{
 		public abstract EditableBlock newEditable(CharSequence source)
