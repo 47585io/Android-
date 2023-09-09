@@ -561,8 +561,7 @@ public class EditableList extends Object implements Editable
 		Object[] spans = dst.getSpans(0,dst.length(),Object.class);
 		for(int i=0;i<spans.length;++i)
 		{
-			Object span = spans[i];
-			if(src.getSpanStart(span)<0){
+			if(src.getSpanStart(spans[i])<0){
 				//不重复的span会被置为null
 				spans[i] = null;
 			}

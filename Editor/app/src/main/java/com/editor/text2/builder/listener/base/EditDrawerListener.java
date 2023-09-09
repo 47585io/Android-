@@ -6,14 +6,37 @@ import android.text.style.*;
 import android.util.*;
 import com.editor.text2.base.*;
 import java.util.*;
+import com.editor.text2.base.share.*;
 
 public abstract class EditDrawerListener 
 {
 
 	private List<wordIndex> addNodes;
-	private List<Object> removeNodes;
+	private List<wordIndex> removeNodes;
+	private EPool<wordIndex> mNodes;
 
 	public EditDrawerListener(){
+		mNodes = new EPool<wordIndex>(){
+
+			@Override
+			protected wordIndex creat()
+			{
+				// TODO: Implement this method
+				return null;
+			}
+
+			@Override
+			protected void resetE(wordIndex E)
+			{
+				// TODO: Implement this method
+			}
+
+			@Override
+			protected void init()
+			{
+				// TODO: Implement this method
+			}
+		};
 		addNodes = Collections.synchronizedList(new ArrayList<>());
 		removeNodes = Collections.synchronizedList(new ArrayList<>());
 	}
@@ -21,8 +44,17 @@ public abstract class EditDrawerListener
 	public List<wordIndex> getDrawNodes(){
 		return addNodes;
 	}
-	public List<Object> getRemoveNodes(){
+	public List<wordIndex> getRemoveNodes(){
 		return removeNodes;
+	}
+	public wordIndex getNode(){
+		return mNodes.get();
+	}
+	public void start(){
+		mNodes.start();
+	}
+	public void recyle(){
+		mNodes.stop();
 	}
 
 	abstract protected void OnFindWord(List<DoAnyThing> totalList);
