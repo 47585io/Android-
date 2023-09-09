@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /** 这是内容和标记都可以更改的文本类，删除了监视器，过滤器，PARAGRAPH标志，并优化效率 */
-public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable 
+public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock
 {
 
     private final static String TAG = "SpannableStringBuilderLite";
@@ -532,6 +532,19 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		mSpanCount = 0;
         mSpanInsertCount = 0;
     }
+	
+	@Override
+	public boolean isInvalidSpan(Object span, int start, int end, int flags){
+		return start == end;
+	}
+	@Override
+	public boolean canRemoveSpan(Object span, int flags, boolean textIsRemoved){
+		return true;
+	}
+	@Override
+	public boolean expandByFlags(int flags){
+		return false;
+	}
 
     /** 用指定对象标记指定范围的文本 */
     public void setSpan(Object what, int start, int end, int flags) {

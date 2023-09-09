@@ -29,6 +29,11 @@ import android.util.*;
    在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
    但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
    另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
+   
+   未解决bug集合5: 每次修改时都是先删再插，这和SpannableStringBuilder不同
+   两端的span不扩展，所以基本上只能使用SPAN_EXCLUSIVE_EXCLUSIVE
+   对于不同的文本块，可能有不同的决策，EditableList应在添加，移除，扩展span时先征得文本块的意见，需要与文本块保持同步
+   BlockListener的方法调用时并没有刷新，可能会有bug
 */
 public class EditableList extends Object implements Editable
 {
