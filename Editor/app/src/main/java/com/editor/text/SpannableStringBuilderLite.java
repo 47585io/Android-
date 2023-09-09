@@ -66,7 +66,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     en = 0;
                 if (en > end - start)
                     en = end - start;
-                setSpan(false, spans[i], st, en, fl);
+                setSpan(false, spans[i], st, en, fl, false);
             }
             //设置完span后一并刷新
             restoreInvariants();
@@ -374,7 +374,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
                     int copySpanFlags = sp.getSpanFlags(spans[i]);
-                    setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags);
+                    setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
                 }
             }
             //添加span之后一并刷新
@@ -556,20 +556,23 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		return endFlag == POINT;
 	}
 
+	public void enforceSetSpan(Object what, int start, int end, int flags){
+		setSpan(true, what, start, end, flags, true);
+	}
     /** 用指定对象标记指定范围的文本 */
     public void setSpan(Object what, int start, int end, int flags) {
-        setSpan(true, what, start, end, flags);
+        setSpan(true, what, start, end, flags, false);
     }
-
+	
     //注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
     //因为新增的span默认在最后，不影响前面节点的顺序，所以可以暂时不刷新
-    private void setSpan(boolean send, Object what, int start, int end, int flags)
+    private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforce)
     {
         checkRange("setSpan", start, end);
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         int flagsEnd = flags & END_MASK;
         //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (isInvalidSpan(what,start,end,flags)) {
+        if (!enforce && isInvalidSpan(what,start,end,flags)) {
             if (send) {
                 Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
             }

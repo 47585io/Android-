@@ -13,4 +13,6 @@ public interface EditableBlock extends Editable
 	public boolean needExpandSpanStart(Object span, int flags)
 	
 	public boolean needExpandSpanEnd(Object span, int flags)
+	
+	public void enforceSetSpan(Object span, int start, int end, int flags)
 }

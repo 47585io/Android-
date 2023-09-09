@@ -249,12 +249,14 @@ public class EditableList extends Object implements EditableBlock
 		final int j = findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
+		//Object[] spans = EmptyArray.OBJECT;
 		
 		if(before>0){
 			//删除范围内的文本和文本块
 		    deleteForBlocks(i,j,start,end,true);
 		}
 		if(after>0){
+			//spans = getSpans(st,st,Object.class,false);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 		}
@@ -591,6 +593,11 @@ public class EditableList extends Object implements EditableBlock
 		}
 	}
 	
+	private void expandSpans(Object[] spans, int start, int after)
+	{
+		
+	}
+	
 	/* 检查是否是无效span，注释的内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
 	@Override
 	public boolean isInvalidSpan(Object span, int start, int end, int flags){
@@ -637,13 +644,25 @@ public class EditableList extends Object implements EditableBlock
 	}
 
 	@Override
-	public void setSpan(final Object span, int start, int end, final int flags)
+	public void enforceSetSpan(final Object span, int start, int end, final int flags){
+		setSpan(span,start,end,flags,true);
+	}
+	@Override
+	public void setSpan(final Object span, int start, int end, final int flags){
+		setSpan(span,start,end,flags,false);
+	}
+
+	private void setSpan(final Object span, int start, int end, final int flags, final boolean enforce)
 	{
-		int id = findBlockIdForIndex(start);
-		if(((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
-			//从该类创建无效跨度时，自动忽略无效跨度
-			return;
+		if(!enforce)
+		{
+			int id = findBlockIdForIndex(start);
+			if(((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
+				//从该类创建无效跨度时，自动忽略无效跨度
+				return;
+			}
 		}
+		
 		if(mSpanInBlocks.get(span)!=null){
 			//如果已有这个span，先移除它，但保留它的插入顺序
 			int order = mSpanOrders.get(span);
@@ -656,14 +675,14 @@ public class EditableList extends Object implements EditableBlock
 		//无论如何再添加一个新的，我们不能保留已回收的list的指针
 		final List<Editable> editors = obtainList();
 		mSpanInBlocks.put(span,editors);
-		
+
 		//将范围内的所有文本块都设置span，并建立绑定
 		Do d = new Do()
 		{
 			@Override
 			public void dothing(int id, int start, int end)
 			{
-				if(((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
+				if(!enforce && ((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
 					//从该类创建无效跨度时，自动忽略无效跨度
 					return;
 				}
@@ -674,7 +693,7 @@ public class EditableList extends Object implements EditableBlock
 		};
 		DoThing(start,end,d);
 	}
-
+	
 	@Override
 	public void removeSpan(Object p1)
 	{
@@ -691,9 +710,13 @@ public class EditableList extends Object implements EditableBlock
 			mSpanOrders.remove(p1);
 		}
 	}
- 
+
 	@Override
-	public <T extends Object> T[] getSpans(int start, int end, final Class<T> kind)
+	public <T extends Object> T[] getSpans(int start, int end, Class<T> kind){
+		return getSpans(start,end,kind,true);
+	}
+	
+	private <T extends Object> T[] getSpans(int start, int end, final Class<T> kind, boolean sort)
 	{
 		final Set<T> spanSet = new LinkedHashSet<>();
 		T[] spans = EmptyArray.emptyArray(kind);
@@ -729,15 +752,18 @@ public class EditableList extends Object implements EditableBlock
 		spanSet.toArray(spans);
 		
 		//虽然无法保证span优先级，但是我们可以重新排序
-		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
-        final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
-		for(i=0;i<spans.length;++i){
-			prioSortBuffer[i] = getSpanFlags(spans[i]) & SPAN_PRIORITY;
-			orderSortBuffer[i] = mSpanOrders.get(spans[i]);
+		if(sort)
+		{
+			final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
+			final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
+			for(i=0;i<spans.length;++i){
+				prioSortBuffer[i] = getSpanFlags(spans[i]) & SPAN_PRIORITY;
+				orderSortBuffer[i] = mSpanOrders.get(spans[i]);
+			}
+			SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
+			SpannableStringBuilderLite.recycle(prioSortBuffer);
+			SpannableStringBuilderLite.recycle(orderSortBuffer);	
 		}
-		SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
-		SpannableStringBuilderLite.recycle(prioSortBuffer);
-		SpannableStringBuilderLite.recycle(orderSortBuffer);
 		return spans;
 	}
 
@@ -815,15 +841,14 @@ public class EditableList extends Object implements EditableBlock
 		return mBlocks[i].charAt(p1-start);
 	}
 
-	private static int getChars;
-
 	@Override
 	public void getChars(int start, int end, final char[] arr, final int index)
 	{
 		//收集范围内所有文本块的字符，存储到arr中
-		getChars = 0;
 		Do d = new Do()
 		{
+			private int getChars = 0;
+			
 			@Override
 			public void dothing(int id, int start, int end)
 			{
