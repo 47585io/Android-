@@ -8,7 +8,9 @@ public interface EditableBlock extends Editable
 {
 	public boolean isInvalidSpan(Object span, int start, int end, int flags)
 	
-	public boolean canRemoveSpan(Object span, int flags, boolean textIsRemoved)
+	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved)
 	
-	public boolean expandByFlags(int flags)
+	public boolean needExpandSpanStart(Object span, int flags)
+	
+	public boolean needExpandSpanEnd(Object span, int flags)
 }

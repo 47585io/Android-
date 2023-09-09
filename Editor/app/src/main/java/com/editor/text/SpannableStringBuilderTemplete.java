@@ -486,8 +486,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         if (i < mSpanCount) 
 		{
 			//此时mGapStart实际上是删除范围的end
-			//整个节点原本在start~end之间，但可能两端衔接在start和end上 (由于mGapStart >= start，所以这里的start亦可以是真实和原本的位置，而end也不超过mGapStart + mGapLength)
+			//整个节点原本在start~end之间，但可能两端衔接在start和end上(spanEnd可以在mGapStart上，但不在mGapStart + mGapLength上)
 			//要替换的文本长度为0就直接移除此节点，否则节点的两端都要衔接在start和end上才不会被移除(实际是为了等之后在updatedIntervalBound中，对span进行扩展)
+			//实际上如果满足了mSpanEnds[i] < mGapStart这个条件，就意味着spanEnd在缓冲区之前，它必然是其原本的位置，而由于之前spanEnd在删除范围内，所以可以移除
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&

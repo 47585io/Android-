@@ -393,8 +393,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		{
 			if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
                 mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
-                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
+                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength /*&&
+                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
 				//如果整个节点在删除范围内，移除此节点，下标前移一位
 				mIndexOfSpan.remove(mSpans[i]);
 				removeSpan(i,0,false);
@@ -427,8 +427,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
             if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
                 mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
-                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
+                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength /*&&
+                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
                 //如果整个节点在删除范围内，移除此节点
                 mIndexOfSpan.remove(mSpans[i]);
                 removeSpan(i, 0, true);
@@ -533,17 +533,27 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mSpanInsertCount = 0;
     }
 	
-	@Override
+	/* 实现接口 */
 	public boolean isInvalidSpan(Object span, int start, int end, int flags){
 		return start == end;
 	}
-	@Override
-	public boolean canRemoveSpan(Object span, int flags, boolean textIsRemoved){
-		return true;
-	}
-	@Override
-	public boolean expandByFlags(int flags){
+	public boolean canRemoveSpan(Object span, int start, int end, boolean textIsRemoved)
+	{
+		Integer index = mIndexOfSpan.get(span);
+		if(index!=null){
+			if(resolveGap(mSpanStarts[index])>=start && resolveGap(mSpanEnds[index])<=end){
+				return true;
+			}
+		}
 		return false;
+	}
+	public boolean needExpandSpanStart(Object span, int flags){
+		int startFlag = (flags & START_MASK) >> START_SHIFT;
+		return startFlag == MARK;
+	}
+	public boolean needExpandSpanEnd(Object span, int flags){
+		int endFlag = flags & END_MASK;
+		return endFlag == POINT;
 	}
 
     /** 用指定对象标记指定范围的文本 */
@@ -559,7 +569,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         int flagsEnd = flags & END_MASK;
         //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (/*flagsStart == POINT && flagsEnd == MARK &&*/ start == end) {
+        if (isInvalidSpan(what,start,end,flags)) {
             if (send) {
                 Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
             }

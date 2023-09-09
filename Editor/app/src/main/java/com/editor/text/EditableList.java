@@ -35,7 +35,7 @@ import android.util.*;
    对于不同的文本块，可能有不同的决策，EditableList应在添加，移除，扩展span时先征得文本块的意见，需要与文本块保持同步
    BlockListener的方法调用时并没有刷新，可能会有bug
 */
-public class EditableList extends Object implements Editable
+public class EditableList extends Object implements EditableBlock
 {
 
 	private int mLength;
@@ -85,7 +85,7 @@ public class EditableList extends Object implements Editable
 		mLength = end-start;
 	}
 	
-	public void setEditableFactory(Factory fa){
+	public void setEditableFactory(BlockFactory fa){
 		mEditableFactory = fa;
 	}
 	public void setTextWatcher(TextWatcher wa){
@@ -239,14 +239,14 @@ public class EditableList extends Object implements Editable
         }
 		
 		//文本变化前，调用文本监视器的方法
-		int st = start;
-		int before = end-start;
-		int after = tbEnd-tbStart;
+		final int st = start;
+		final int before = end-start;
+		final int after = tbEnd-tbStart;
 		sendBeforeTextChanged(start,before,after);
 		
 		//找到start和end所指定的文本块，并将它们偏移到文本块的下标
-		int i = findBlockIdForIndex(start);
-		int j = findBlockIdForIndex(end);
+		final int i = findBlockIdForIndex(start);
+		final int j = findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
 		
@@ -269,20 +269,20 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 从指定文本块的指定位置插入文本 */
-	private void insertForBlocks(final int i, int index, CharSequence tb, int tbStart, int tbEnd)
+	private void insertForBlocks(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//先插入文本，让在此范围内的span进行扩展
 		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,false,true);
 		sendBlocksInsertAfter(i,i,index,index+tbEnd-tbStart);
 		
 		//再检查文本块的内容是否超出MaxCount
-		int srcLen = mBlocks[i].length();	
+		final int srcLen = mBlocks[i].length();	
 		if(srcLen > this.MaxCount)
 		{								   
 			//将超出的文本截取出来，需要多预留一些空间以待之后使用
 			final int MaxCount = this.MaxCount-ReserveCount;
 			CharSequence text = mBlocks[i].subSequence(MaxCount,srcLen);
-			int overLen = srcLen-MaxCount;
+			final int overLen = srcLen-MaxCount;
 			deleteForBlocks(i,i,MaxCount,srcLen,false);
 			
 			//如果超出的文本小于或等于MaxCount
@@ -316,7 +316,7 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 删除指定范围内的文本和文本块 */
-	private void deleteForBlocks(int i, int j, int start, int end, boolean textIsRemoved)
+	private void deleteForBlocks(int i, int j, int start, int end, boolean spanIsRemoved)
 	{
 		if(i==j)
 		{
@@ -327,7 +327,7 @@ public class EditableList extends Object implements Editable
 				removeBlock(i,true);
 				i = -1;
 			}else{		
-				repalceWithSpan(i,start,end,"",0,0,true,textIsRemoved);
+				repalceWithSpan(i,start,end,"",0,0,true,spanIsRemoved);
 			}
 			sendBlocksDeleteAfter(i,i,start,start);
 		}
@@ -347,7 +347,7 @@ public class EditableList extends Object implements Editable
 				ii = -1;
 			}else{
 				//否则就删除范围内的文本
-			    repalceWithSpan(i,start,mBlocks[i].length(),"",0,0,false,textIsRemoved);
+			    repalceWithSpan(i,start,mBlocks[i].length(),"",0,0,false,spanIsRemoved);
 			}
 			
 			for(++i;i<j;--j){
@@ -362,14 +362,14 @@ public class EditableList extends Object implements Editable
 				removeBlock(i,true);
 				jj = -1;
 			}else{
-			    repalceWithSpan(i,0,end,"",0,0,true,textIsRemoved);
+			    repalceWithSpan(i,0,end,"",0,0,true,spanIsRemoved);
 			}
 			sendBlocksDeleteAfter(ii,jj,start,0);
 		}
 	}
 	
 	/* 替换指定文本块的文本及span的绑定，若send为false，则刷新mBlockStarts是调用者的责任 */
-	private void repalceWithSpan(final int i, final int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean send, boolean textIsRemoved)
+	private void repalceWithSpan(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean send, boolean spanIsRemoved)
 	{
 		//需要在插入文本前，获取端点处无法扩展的span或会挤到后面的span
 		final int after = tbEnd-tbStart;
@@ -379,7 +379,7 @@ public class EditableList extends Object implements Editable
 		}
 		
 		//需要在删除文本前，替换span的绑定。删除文本不需要修正span
-		replaceSpan(i,start,end,tb,tbStart,tbEnd,textIsRemoved);
+		replaceSpan(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
 		if(send){
 			refreshInvariants(i);
@@ -399,29 +399,27 @@ public class EditableList extends Object implements Editable
 		}
 	}
 
-	/* 替换指定文本块的span的绑定，textIsRemoved为true表示默认行为，只有在insertForBlocks中才传false */
-	private void replaceSpan(final int i, int start, int end, CharSequence tb, int tbStart, int tbEnd, boolean textIsRemoved)
+	/* 替换指定文本块的span的绑定，spanIsRemoved为true表示默认行为，只有在insertForBlocks中才传false */
+	private void replaceSpan(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean spanIsRemoved)
 	{
 		//先移除指定文本块start~end范围内的span与block的绑定
 		//纯删除时，mIndexOfBlocks和mBlockStarts均可不正确
-		final Editable block = mBlocks[i];
+		final EditableBlock block = (EditableBlock) mBlocks[i];
 		if(end > start)
 		{
-			//int length = block.length();
+			final boolean textIsRemoved = (tbEnd-tbStart)==0;
+			final boolean blockIsRemoved = start==0 && end==block.length();
 			Object[] spans = block.getSpans(start,end,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
-				int st = block.getSpanStart(span);
-				int en = block.getSpanEnd(span);
-				//int flags = block.getSpanFlags(span);
-				//如果span完全被移除或文本块会被移除，则可以与文本块解除绑定
-				if(st>=start && en<=end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE) || (st==0 && en==length)*/)
+				//如果span可以被移除或文本块会被移除，则可以与文本块解除绑定
+				if(blockIsRemoved || block.canRemoveSpan(span,start,end,textIsRemoved))
 				{
 					List<Editable> blocks = mSpanInBlocks.get(span);		
 					if(blocks!=null)
 					{
-						if(blocks.size()==1 && textIsRemoved){
+						if(blocks.size()==1 && spanIsRemoved){
 							//如果span只在这一个文本块中，可以直接移除span
 							//另一个情况是，本次截取是为了接下来的插入，此时该span仍保留
 							mSpanInBlocks.remove(span);
@@ -444,7 +442,7 @@ public class EditableList extends Object implements Editable
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
-				if(isInvalidSpan(spanString.getSpanStart(span),spanString.getSpanEnd(span),spanString.getSpanFlags(span))){
+				if(block.isInvalidSpan(span,spanString.getSpanStart(span),spanString.getSpanEnd(span),spanString.getSpanFlags(span))){
 					//忽略无效跨度
 					continue;
 				}
@@ -594,8 +592,21 @@ public class EditableList extends Object implements Editable
 	}
 	
 	/* 检查是否是无效span，注释的内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
-	private static final boolean isInvalidSpan(int start, int end, int flags){
+	@Override
+	public boolean isInvalidSpan(Object span, int start, int end, int flags){
 		return start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/;
+	}
+	@Override
+	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved){
+		return getSpanStart(span)>=delstart && getSpanEnd(span)<=delend;
+	}
+	@Override
+	public boolean needExpandSpanStart(Object span, int flags){
+		return false;
+	}
+	@Override
+	public boolean needExpandSpanEnd(Object span, int flags){
+		return false;
 	}
 	
 	@Override
@@ -628,7 +639,8 @@ public class EditableList extends Object implements Editable
 	@Override
 	public void setSpan(final Object span, int start, int end, final int flags)
 	{
-		if(isInvalidSpan(start,end,flags)){
+		int id = findBlockIdForIndex(start);
+		if(((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
 			//从该类创建无效跨度时，自动忽略无效跨度
 			return;
 		}
@@ -651,7 +663,7 @@ public class EditableList extends Object implements Editable
 			@Override
 			public void dothing(int id, int start, int end)
 			{
-				if(isInvalidSpan(start,end,flags)){
+				if(((EditableBlock)mBlocks[id]).isInvalidSpan(span,start,end,flags)){
 					//从该类创建无效跨度时，自动忽略无效跨度
 					return;
 				}
@@ -679,12 +691,11 @@ public class EditableList extends Object implements Editable
 			mSpanOrders.remove(p1);
 		}
 	}
-
-	private static final Set spanSet = new LinkedHashSet();
-	
+ 
 	@Override
 	public <T extends Object> T[] getSpans(int start, int end, final Class<T> kind)
 	{
+		final Set<T> spanSet = new LinkedHashSet<>();
 		T[] spans = EmptyArray.emptyArray(kind);
 		int i = findBlockIdForIndex(start);
 		int j = findBlockIdForIndex(end);
@@ -692,7 +703,6 @@ public class EditableList extends Object implements Editable
 		end -= mBlockStarts[j];
 		
 		//收集范围内所有文本块的span，并不包含重复的span
-		spanSet.clear();
 		Do d = new Do()
 		{
 			@Override
@@ -1007,6 +1017,11 @@ public class EditableList extends Object implements Editable
 		if(sBufferCount<sMaxBufferCount){
 			sCachedBuffer = GrowingArrayUtils.append(sCachedBuffer,sBufferCount++,buffer);
 		}
+	}
+	
+	public static abstract class BlockFactory extends Factory
+	{
+		public abstract EditableBlock newEditable(CharSequence source)
 	}
 	
 	/* 测试代码 */
