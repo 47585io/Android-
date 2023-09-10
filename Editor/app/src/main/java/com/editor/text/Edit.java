@@ -22,12 +22,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	private TextPaint mPaint;
 	
 	private myLayout mLayout;
-	private EditableList mText;
+	private EditableBlockList mText;
 	private InputConnection mInput;
 	
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
-	private EditableList.BlockFactory mEditableFactory;
+	private EditableBlockList.BlockFactory mEditableFactory;
 
 	
 	public Edit(Context cont)
@@ -64,13 +64,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	
 	public void setText(CharSequence text,int start,int end)
 	{
-		mText = new EditableList(text,start,end);
+		mText = new EditableBlockList(text,start,end);
 		mText.setTextWatcher(this);
 		mText.setEditableFactory(mEditableFactory);
 		mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
 		setLineColor(0xff666666);
 	}
-	public void setEditableFactory(EditableList.BlockFactory fa)
+	public void setEditableFactory(EditableBlockList.BlockFactory fa)
 	{
 		mEditableFactory = fa;
 		mText.setEditableFactory(fa);
@@ -443,7 +443,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private Paint.FontMetrics sFont = new Paint.FontMetrics();
 
 		
-		public myLayout(EditableList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
+		public myLayout(EditableBlockList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			mSpanPaint = new TextPaint(paint);

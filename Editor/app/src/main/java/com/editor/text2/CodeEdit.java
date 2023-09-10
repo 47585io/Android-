@@ -31,7 +31,7 @@ public class CodeEdit extends Edit
 	}
 	
 	public void reDrawText(int start, int end){
-		String text = ((EditableList)getText()).subString(start,end);
+		String text = ((EditableBlockList)getText()).subString(start,end);
 		D d = new D();
 		d.onFindNodes(0,text.length(),text);
 		d.onDrawNodes(start,end,getText());
@@ -305,7 +305,7 @@ public class CodeEdit extends Edit
 	}
 
 	public boolean IsModify(){
-		return (mPrivateFlags&ModifyMask) == ModifyMask || ((EditableList)getText()).getTextWatcherDepth()!=0 || (mPublicFlags&ModifyMask) == ModifyMask;
+		return (mPrivateFlags&ModifyMask) == ModifyMask || ((EditableBlockList)getText()).getTextWatcherDepth()!=0 || (mPublicFlags&ModifyMask) == ModifyMask;
 	}
 	public boolean IsUR(){
 		return (mPrivateFlags&URMask) == URMask || (mPublicFlags&URMask) == URMask ;

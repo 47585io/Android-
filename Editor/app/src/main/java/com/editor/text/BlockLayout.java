@@ -9,7 +9,7 @@ import android.util.*;
 
 
 /* 对分块文本容器进行测量的类 */
-public abstract class BlockLayout extends Layout implements EditableList.BlockListener
+public abstract class BlockLayout extends Layout implements BlockListener
 {
 
 	public static final char FN = '\n', FT = '\t';
@@ -38,13 +38,13 @@ public abstract class BlockLayout extends Layout implements EditableList.BlockLi
 	private float scaleLayout;
 
 	//每个文本块，每个块的行数，每个块的宽度
-	private EditableList mText;
+	private EditableBlockList mText;
 	private int[] mLines;
 	private int[] mStartLines;
 	private float[] mWidths;
 	
 
-	public BlockLayout(EditableList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
+	public BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(text,paint,width,align,spacingmult,spacingadd);
 		
@@ -501,7 +501,7 @@ _______________________________________
 	@Override
 	public void getSelectionPath(int start, int end, Path dest)
 	{
-		EditableList text = mText;
+		EditableBlockList text = mText;
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = rectF;
