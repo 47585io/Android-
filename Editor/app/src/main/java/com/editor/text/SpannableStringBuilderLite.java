@@ -392,8 +392,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		for(int i=0;i<mSpanCount;++i)
 		{
 			if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
-                mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength /*&&
+                mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
+                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength /*&&
                 (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
 				//如果整个节点在删除范围内，移除此节点，下标前移一位
 				mIndexOfSpan.remove(mSpans[i]);
@@ -426,8 +426,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //整个节点原本在start~end之间，但可能两端衔接在start和end上
             //要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
             if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
-                mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength /*&&
+                mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
+                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength /*&&
                 (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
                 //如果整个节点在删除范围内，移除此节点
                 mIndexOfSpan.remove(mSpans[i]);

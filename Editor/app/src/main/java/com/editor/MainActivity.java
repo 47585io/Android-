@@ -60,8 +60,9 @@ public class MainActivity extends Activity implements Runnable
 	{
 		myReader reader = new myReader(path);
 		String text = reader.r("UTF-8");
-	    Edit E = new Edit(this);
+		Edit E = new Edit(this);
 		E.setText(text,0,text.length());
+	
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		
