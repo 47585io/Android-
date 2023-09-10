@@ -30,10 +30,15 @@ import android.util.*;
    但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
    另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
    
-   未解决bug集合5: 每次修改时都是先删再插，这和SpannableStringBuilder不同
-   两端的span不扩展，所以基本上只能使用SPAN_EXCLUSIVE_EXCLUSIVE
-   对于不同的文本块，可能有不同的决策，EditableList应在添加，移除，扩展span时先征得文本块的意见，需要与文本块保持同步
-   BlockListener的方法调用时并没有刷新，可能会有bug
+   已解决bug5: 对于不同的文本块，可能有不同的决策
+   EditableList在修改文本时，进行添加，移除，扩展span应先征得文本块的意见，需要与文本块保持同步
+   借助接口的方法来进行判断，参见replaceSpan，expandSpans
+   
+   已解决bug6: 插入文本时，端点位于上个文本块末尾和下个文本块起始的span不扩展
+   在插入前，先获取即将挤到两边的span，插入后，再将端点扩展包含文本
+   参见getAtPointSpans，expandSpans
+   
+   未解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
 */
 public class EditableList extends Object implements EditableBlock
 {
@@ -249,16 +254,18 @@ public class EditableList extends Object implements EditableBlock
 		final int j = findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
-		//Object[] spans = EmptyArray.OBJECT;
 		
 		if(before>0){
 			//删除范围内的文本和文本块
 		    deleteForBlocks(i,j,start,end,true);
 		}
 		if(after>0){
-			//spans = getSpans(st,st,Object.class,false);
+			//需要在插入前获取端点正好在插入两端的span
+			Object[] spans = getAtPointSpans(st);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
+			//插入后，扩展端点正好处于插入两端的span
+			expandSpans(spans,st,st+after);
 		}
 		
 		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
@@ -283,7 +290,7 @@ public class EditableList extends Object implements EditableBlock
 		{								   
 			//将超出的文本截取出来，需要多预留一些空间以待之后使用
 			final int MaxCount = this.MaxCount-ReserveCount;
-			CharSequence text = mBlocks[i].subSequence(MaxCount,srcLen);
+			final CharSequence text = mBlocks[i].subSequence(MaxCount,srcLen);
 			final int overLen = srcLen-MaxCount;
 			deleteForBlocks(i,i,MaxCount,srcLen,false);
 			
@@ -593,27 +600,86 @@ public class EditableList extends Object implements EditableBlock
 		}
 	}
 	
-	private void expandSpans(Object[] spans, int start, int after)
+	/* 获取端点正好处于index的span，必须在修正后调用 */
+	private Object[] getAtPointSpans(int index)
 	{
-		
+		Object[] spans = getSpans(index,index,Object.class,false);
+		for(int i=0;i<spans.length;++i)
+		{
+			Object span = spans[i];
+			if(getSpanStart(span)!=index && getSpanEnd(span)!=index){
+				//端点不处于index的span会被置为null
+				spans[i] = null;
+			}
+		}
+		return spans;
 	}
 	
-	/* 检查是否是无效span，注释的内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
+	/* 若端点正好处于index的span未进行扩展，我们应该将它扩展到理想的位置，必须在修正后调用 */
+	private void expandSpans(Object[] spans, int start, int end)
+	{
+		for(int i=0;i<spans.length;++i)
+		{
+			if(spans[i] != null)
+			{
+				Object span = spans[i];
+				List<Editable> blocks = mSpanInBlocks.get(span);
+				EditableBlock blockStart = (EditableBlock) blocks.get(0);
+				EditableBlock blockEnd = (EditableBlock) blocks.get(blocks.size()-1);
+				int ost = mBlockStarts[mIndexOfBlocks.get(blockStart)] + blockStart.getSpanStart(span);
+				int oen = mBlockStarts[mIndexOfBlocks.get(blockEnd)] + blockEnd.getSpanEnd(span);
+				int nst = ost;
+				int nen = oen;
+				int flags = blockStart.getSpanFlags(span);
+				
+				//spanStart端点如果处于start，扩展后它应等于start，它的spanEnd端点应大于等于start，spanEnd端点扩展后应大于等于end
+				//spanEnd端点如果处于start，扩展后它应大于等于end，它的spanStart端点应小于或等于start，spanStart端点扩展后应小于等于start
+				if(ost>start && blockStart.needExpandSpanStart(span,flags)){
+					//也就是说spanStart端点处于或不处于start，它扩展后应该保持在start或start之前，包含start~end之间的内容
+					nst = start;
+				}
+				if(oen<end && blockEnd.needExpandSpanEnd(span,flags)){
+					//也就是说spanEnd端点处于或不处于start，它扩展后应该移动到end或end之后，包含start~end之间的内容
+					nen = end;
+				}
+				if(ost!=nst || oen!=nen){
+					//如果确实未扩展，我们应该将它扩展到理想的位置
+					setSpan(span,nst,nen,flags);
+				}
+			}
+		}
+	}
+	
+	/* 检查是否是无效span，内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
 	@Override
 	public boolean isInvalidSpan(Object span, int start, int end, int flags){
-		return start==end /*&& (flags&SPAN_EXCLUSIVE_EXCLUSIVE)==SPAN_EXCLUSIVE_EXCLUSIVE*/;
+		return ((EditableBlock)mBlocks[0]).isInvalidSpan(span,start,end,flags);
 	}
 	@Override
-	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved){
-		return getSpanStart(span)>=delstart && getSpanEnd(span)<=delend;
+	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved)
+	{
+		List<Editable> blocks = mSpanInBlocks.get(span);
+		EditableBlock blockStart = (EditableBlock) blocks.get(0);
+		delstart -= mBlockStarts[mIndexOfBlocks.get(blockStart)];
+		if(blocks.size()==1){
+			return blockStart.canRemoveSpan(span,delstart,delend,textIsRemoved);
+		}
+		EditableBlock blockEnd = (EditableBlock) blocks.get(blocks.size()-1);
+		delend -= mBlockStarts[mIndexOfBlocks.get(blockEnd)];
+		return blockStart.canRemoveSpan(span,delstart,blockStart.length(),textIsRemoved) && blockEnd.canRemoveSpan(span,0,delend,textIsRemoved);
 	}
 	@Override
-	public boolean needExpandSpanStart(Object span, int flags){
-		return false;
+	public boolean needExpandSpanStart(Object span, int flags)
+	{
+		EditableBlock blockStart = (EditableBlock)mSpanInBlocks.get(span).get(0);
+		return blockStart.needExpandSpanStart(span,flags);
 	}
 	@Override
-	public boolean needExpandSpanEnd(Object span, int flags){
-		return false;
+	public boolean needExpandSpanEnd(Object span, int flags)
+	{
+		List<Editable> blocks = mSpanInBlocks.get(span);
+		EditableBlock blockEnd = (EditableBlock) blocks.get(blocks.size()-1);
+		return blockEnd.needExpandSpanEnd(span,flags);
 	}
 	
 	@Override
@@ -688,7 +754,11 @@ public class EditableList extends Object implements EditableBlock
 					return;
 				}
 				Editable editor = mBlocks[id];
-				editor.setSpan(span,start,end,flags);
+				if(!enforce){
+					editor.setSpan(span,start,end,flags);
+				}else{
+					((EditableBlock)editor).enforceSetSpan(span,start,end,flags);
+				}
 				editors.add(editor);
 			}
 		};
@@ -926,6 +996,7 @@ public class EditableList extends Object implements EditableBlock
 	}
 	
 	
+	/* 文本块事件监听器 */
 	public static interface BlockListener
 	{
 		public void onAddBlock(int i)

@@ -60,18 +60,15 @@ public class MainActivity extends Activity implements Runnable
 	{
 		myReader reader = new myReader(path);
 		String text = reader.r("UTF-8");
-	    Edit E = new CodeEdit(this);
+	    Edit E = new Edit(this);
 		E.setText(text,0,text.length());
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i=0;i<1000;i+=1){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-			//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}
-		editor.getSpans(1024,2048,Object.class);
+		editor.setSpan(new ForegroundColorSpan(rand.nextInt()),0,820,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+		//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		//E.scrollTo(0,(int)E.getVScrollRange());
 	}
 	
