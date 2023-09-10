@@ -15,4 +15,6 @@ public interface EditableBlock extends Editable
 	public boolean needExpandSpanEnd(Object span, int flags)
 	
 	public void enforceSetSpan(Object span, int start, int end, int flags)
+	
+	public<T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind)
 }

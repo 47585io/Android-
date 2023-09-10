@@ -311,8 +311,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (replacedLength > 0)
 		{
 			//纯插入时不需要span移除
-			if(replacedLength >= length()>>1){
-				//如果删除的文本太长，就遍历所有节点，一次性全部删除并刷新
+			if(replacedLength >= length()>>2){
+				//如果删除的文本太长(len>>2 = len*0.25)，就遍历所有节点，一次性全部删除并刷新
 				if(removeSpansForChange(start,end,textIsRemoved)){
 					restoreInvariants();
 				}
@@ -699,6 +699,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     public <T> T[] getSpans(int queryStart, int queryEnd, Class<T> kind) {
         return getSpans(queryStart, queryEnd, kind, true);
     }
+	@Override
+	public <T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
+		return getSpans(queryStart, queryEnd, kind, false);
+	}
 
     /*** 返回指定类型跨度的数组，这些范围与指定的文本范围重叠。 
 	 种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
