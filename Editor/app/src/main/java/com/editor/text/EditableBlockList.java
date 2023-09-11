@@ -438,6 +438,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			final boolean textIsRemoved = (tbEnd-tbStart)==0;
 			final boolean blockIsRemoved = start==0 && end==block.length();
 			Object[] spans = block.quickGetSpans(start,end,Object.class);
+			
 			for(int j=0;j<spans.length;++j)
 			{
 				Object span = spans[j];
@@ -595,16 +596,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 检查在dst与src中重复的span，spans取自dst */
 	private Object[] checkRepeatSpans(Spanned src, CharSequence dst)
 	{
-		if(!(dst instanceof Spanned)){
-			return EmptyArray.OBJECT;
-		}
-		Object[] spans = EmptyArray.OBJECT;
-		if(dst instanceof EditableBlock){
-			spans = ((EditableBlock)dst).quickGetSpans(0,dst.length(),Object.class);
-		}else{
-			spans = ((Spanned)dst).getSpans(0,dst.length(),Object.class);
-		} 
-		
+		Object[] spans = SpanUtils.getSpans(dst,0,dst.length(),Object.class);
 		for(int i=0;i<spans.length;++i)
 		{
 			if(src.getSpanStart(spans[i])<0){

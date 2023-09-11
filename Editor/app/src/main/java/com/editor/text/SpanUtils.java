@@ -8,10 +8,10 @@ public class SpanUtils
 	public static<T> T[] getSpans(CharSequence src, int queryStart, int queryEnd, Class<T> kind)
 	{
 		if(src instanceof EditableBlock){
-			return ((EditableBlock)src).quickGetSpans(0,src.length(),kind);
+			return ((EditableBlock)src).quickGetSpans(queryStart,queryEnd,kind);
 		}
 		else if(src instanceof Spanned){
-			return ((Spanned)src).getSpans(0,src.length(),kind);
+			return ((Spanned)src).getSpans(queryStart,queryEnd,kind);
 		} 
 		return EmptyArray.emptyArray(kind);
 	}
