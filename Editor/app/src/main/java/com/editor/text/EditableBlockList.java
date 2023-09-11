@@ -34,11 +34,12 @@ import android.util.*;
    EditableList在修改文本时，进行添加，移除，扩展span应先征得文本块的意见，需要与文本块保持同步
    借助接口的方法来进行判断，参见replaceSpan，expandSpans
    
-   已解决bug6: 插入文本时，端点位于上个文本块末尾和下个文本块起始的span应扩展
-   在插入前，先获取即将挤到两边的span，插入后，再将端点扩展包含文本
+   已解决bug6: 插入文本时，当插入点位于文本块起始或末尾，端点位于上个文本块末尾和下个文本块起始的span应扩展
+   在插入前，先获取即将挤到两边的span，插入后，如果需要扩展，再将端点扩展包含文本
    参见getAtPointSpans，expandSpans
    
-   未解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug(length未刷新，在末尾删除时，测量下标超出界限)
+   已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
+   (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
 */
 public class EditableBlockList extends Object implements EditableBlock
 {
@@ -125,6 +126,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
 		mIndexOfBlocks.remove(block);
 		mBlockSize--;
+		mLength -= block.length();
 		if(send){
 			refreshInvariants(i);
 			sendBlockRemoved(i);
@@ -191,6 +193,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		int nowIndex = mBlockStarts[id];
 
+		//为了方便插入，我们总是尽量将index保持在上一文本块的末尾
 		if(nowIndex<index){
 			for(;id<mBlockSize-1 && mBlockStarts[id+1]<index;++id){}
 		}
@@ -270,8 +273,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			expandSpans(spans,st,st+after);
 		}
 		
-		//最后统计长度和光标位置，并调用文本和文本块和光标监视器的方法
-		mLength += -before+after;
+		//最后计算光标位置，并调用文本和文本块和光标监视器的方法
 		sendAfterBlocksChanged(i,start);
 		sendTextChanged(st,before,after);
 		setSelection(st+after,st+after);
@@ -402,6 +404,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		//需要在删除文本前，替换span的绑定。删除文本不需要修正span
 		replaceSpan(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
+		mLength += -before+after;
 		if(send)
 		{
 			refreshInvariants(i);

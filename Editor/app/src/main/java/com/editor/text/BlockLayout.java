@@ -262,11 +262,13 @@ _______________________________________
 		}
 		int nowLine = mStartLines[id];
 
+		//文本块的起始行数实际上是之前的文本块的行数(例如第二块文本块的起始行数就是第一块的行数)
+		//这意味着，要寻找指定的换行所在的文本块，并且如果它等于某个文本块的起始行数，此换行应该在上一文本块
 		if(nowLine<line){
 			for(;id<mBlockSize-1 && mStartLines[id+1]<line;++id){}
 		}
 		else if(nowLine>line){
-			for(;id>0 && mStartLines[id]>line;--id){}
+			for(;id>0 && mStartLines[id]>=line;--id){}
 		}
 		else if(nowLine==line){
 			id = id==0 ? 0 : id-1;
