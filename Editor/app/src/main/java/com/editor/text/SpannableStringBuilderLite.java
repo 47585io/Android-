@@ -312,7 +312,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		{
 			//纯插入时不需要span移除
 			if(replacedLength >= length()>>2){
-				//如果删除的文本太长(len>>2 = len*0.25)，就遍历所有节点，一次性全部删除并刷新
+				//如果删除的文本太长(len>>2 = len/2/2)，就遍历所有节点，一次性全部删除并刷新
 				if(removeSpansForChange(start,end,textIsRemoved)){
 					restoreInvariants();
 				}
@@ -354,22 +354,27 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
-            Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
+            Object[] spans = EmptyArray.OBJECT;
+			if(sp instanceof EditableBlock){
+				spans = ((EditableBlock)sp).quickGetSpans(csStart, csEnd, Object.class);
+			}else{
+				spans = sp.getSpans(csStart, csEnd, Object.class);
+			}
 			if(spans.length==0){
 				return;
 			}
 			
             for (int i = 0; i < spans.length; i++) 
-            {
-                int st = sp.getSpanStart(spans[i]);
-                int en = sp.getSpanEnd(spans[i]);
-                //span的位置不可超过截取的范围
-                if (st < csStart) st = csStart;
-                if (en > csEnd) en = csEnd;
-
+            {      
                 //已有的span不会重复添加
                 if (getSpanStart(spans[i]) < 0)
                 {
+					int st = sp.getSpanStart(spans[i]);
+					int en = sp.getSpanEnd(spans[i]);
+					//span的位置不可超过截取的范围
+					if (st < csStart) st = csStart;
+					if (en > csEnd) en = csEnd;
+					
                     //将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
