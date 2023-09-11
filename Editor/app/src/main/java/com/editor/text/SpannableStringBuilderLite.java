@@ -354,12 +354,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
-            Object[] spans = EmptyArray.OBJECT;
-			if(sp instanceof EditableBlock){
-				spans = ((EditableBlock)sp).quickGetSpans(csStart, csEnd, Object.class);
-			}else{
-				spans = sp.getSpans(csStart, csEnd, Object.class);
-			}
+            Object[] spans = SpanUtils.getSpans(sp, csStart, csEnd, Object.class);
 			if(spans.length==0){
 				return;
 			}

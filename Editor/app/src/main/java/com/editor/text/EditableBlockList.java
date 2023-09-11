@@ -467,12 +467,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(tbEnd>tbStart && tb instanceof Spanned)
 		{
 			Spanned spanString = (Spanned) tb;
-			Object[] spans = EmptyArray.OBJECT;
-			if(spanString instanceof EditableBlock){
-				spans = ((EditableBlock)spanString).quickGetSpans(tbStart,tbEnd,Object.class);
-			}else{
-				spans = spanString.getSpans(tbStart,tbEnd,Object.class);
-			}
+			Object[] spans = SpanUtils.getSpans(spanString,tbStart,tbEnd,Object.class);
 			
 			for(int j=0;j<spans.length;++j)
 			{
