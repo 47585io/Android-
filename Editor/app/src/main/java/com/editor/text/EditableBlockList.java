@@ -200,6 +200,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		else if(nowIndex>index){
 			for(;id>0 && mBlockStarts[id]>index;--id){}
 		}
+		else if(nowIndex==index){
+			id = id==0 ? 0:id-1;
+		}
 		return id;
 	}
 	
@@ -264,9 +267,13 @@ public class EditableBlockList extends Object implements EditableBlock
 			//删除范围内的文本和文本块
 		    deleteForBlocks(i,j,start,end,true);
 		}
-		if(after>0){
-			//需要在插入前获取端点正好在插入两端的span
-			Object[] spans = getAtPointSpans(st);
+		if(after>0)
+		{
+			Object[] spans = EmptyArray.OBJECT;
+			if(start==0 || start==mBlocks[i].length()){
+				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
+				spans = getAtPointSpans(st);
+			}
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span

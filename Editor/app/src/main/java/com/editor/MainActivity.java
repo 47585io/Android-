@@ -60,12 +60,14 @@ public class MainActivity extends Activity implements Runnable
 	{
 		myReader reader = new myReader(path);
 		String text = reader.r("UTF-8");
-		CodeEdit E = new CodeEdit(this);
+		Edit E = new Edit(this);
 		E.setText(text,0,text.length());
 	
 		setContentView(E);
 		E.getLayoutParams().height=2180;
-		E.reDrawText(0,E.getText().length());
+		//E.reDrawText(0,E.getText().length());
+		
+		E.getText().setSpan(new ForegroundColorSpan(0xffcc80a9),820,830,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 	}
 	
 }
