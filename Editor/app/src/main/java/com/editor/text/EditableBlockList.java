@@ -38,7 +38,7 @@ import android.util.*;
    在插入前，先获取即将挤到两边的span，插入后，再将端点扩展包含文本
    参见getAtPointSpans，expandSpans
    
-   已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
+   未解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug(length未刷新，在末尾删除时，测量下标超出界限)
 */
 public class EditableBlockList extends Object implements EditableBlock
 {
