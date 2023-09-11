@@ -53,24 +53,19 @@ public class MainActivity extends Activity implements Runnable
 
 	@Override
 	public void run(){
-		loadFileInThread("/storage/emulated/0/Linux/3.java");
+		loadFileInThread("/storage/emulated/0/Linux/2.java");
 	}
 	
 	public void loadFileInThread(String path)
 	{
 		myReader reader = new myReader(path);
 		String text = reader.r("UTF-8");
-		Edit E = new Edit(this);
+		CodeEdit E = new CodeEdit(this);
 		E.setText(text,0,text.length());
 	
 		setContentView(E);
 		E.getLayoutParams().height=2180;
-		
-		Random rand = new Random();
-		Editable editor = E.getText();
-		editor.setSpan(new ForegroundColorSpan(rand.nextInt()),0,820,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-		//editor.setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+2,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		//E.scrollTo(0,(int)E.getVScrollRange());
+		E.reDrawText(0,E.getText().length());
 	}
 	
 }

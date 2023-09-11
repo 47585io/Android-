@@ -5,13 +5,19 @@ import android.text.*;
 import com.editor.text.*;
 import com.editor.text2.base.*;
 import java.util.*;
-import com.editor.text2.builder.listener.base.*;
-import com.editor.text2.builder.listener.base.EditDrawerListener.*;
 import android.text.style.*;
+import com.editor.text2.builder.*;
+import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
+import com.editor.text2.builder.words.*;
+import com.editor.text2.builder.listenerInfo.*;
 
 
-public class CodeEdit extends Edit
+public class CodeEdit extends Edit implements EditBuilderUser
 {
+
+	private Words mWordLib;
+	private EditListenerInfo mListenerInfo;
+	private EditBuilder mEditBuilder;
 	
 	private Stack<token> mLast, mNext;
 	private int mPrivateFlags;
@@ -28,49 +34,79 @@ public class CodeEdit extends Edit
 		super.init();
 		mLast = new Stack<>();
 		mNext = new Stack<>();
+		mWordLib = new CodeWords();
+		mListenerInfo = new CodeEditListenerInfo();
+		mEditBuilder = new CodeEditBuilder();
 	}
-	
-	public void reDrawText(int start, int end){
-		String text = ((EditableBlockList)getText()).subString(start,end);
-		D d = new D();
-		d.onFindNodes(0,text.length(),text);
-		d.onDrawNodes(start,end,getText());
-	}
-	
-	class D extends EditDrawerListener
+
+	@Override
+	protected void config()
 	{
+		super.config();
+		mEditBuilder.SwitchLuagua(this,"java");
+	}
+	
+	@Override
+	public Words getWordLib()
+	{
+		return mWordLib;
+	}
 
-		@Override
-		protected void OnFindWord(List<EditDrawerListener.DoAnyThing> totalList)
-		{
-			
-		}
+	@Override
+	public void loadWords()
+	{
+		// TODO: Implement this method
+	}
 
-		@Override
-		protected void OnFindNodes(List<EditDrawerListener.DoAnyThing> totalList)
-		{
-		}
+	@Override
+	public void clearWords()
+	{
+		// TODO: Implement this method
+	}
 
-		@Override
-		protected void OnClearFindWord()
-		{
-			// TODO: Implement this method
-		}
+	@Override
+	public EditListenerInfo getInfo()
+	{
+		return mListenerInfo;
+	}
 
-		@Override
-		protected void OnClearFindNodes(int start, int end, CharSequence text, List<wordIndex> nodes)
-		{
-			nodes.add(new wordIndex(start,end,new ForegroundColorSpan(0xff6a6b6c)));
-			// TODO: Implement this method
-		}
+	@Override
+	public void trimListener()
+	{
+		// TODO: Implement this method
+	}
 
-		@Override
-		public void onDrawNodes(int start, int end, Spannable editor)
-		{
-			for(wordIndex node: getDrawNodes()){
-				editor.setSpan(node.span,node.start+start,node.end+start,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-			}
-		}
+	@Override
+	public void clearListener()
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public EditBuilder getEditBuilder()
+	{
+		// TODO: Implement this method
+		return null;
+	}
+
+	@Override
+	public void setLuagua(String Lua)
+	{
+		// TODO: Implement this method
+	}
+
+	@Override
+	public String getLuagua()
+	{
+		// TODO: Implement this method
+		return null;
+	}
+	
+	public void reDrawText(int start, int end)
+	{
+		EditDrawerListener li = new CodeEditBuilder.DrawerFactory.DefaultDrawer();
+		wordIndex[] nodes = li.onFindNodes(start,end,getText(),mWordLib);
+		li.onDrawNodes(start,end,getText(),nodes);
 	}
 
 	@Override
