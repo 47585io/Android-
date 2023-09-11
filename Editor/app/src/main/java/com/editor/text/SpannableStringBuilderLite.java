@@ -45,7 +45,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) text;
-            Object[] spans = sp.getSpans(start, end, Object.class);
+            Object[] spans = SpanUtils.getSpans(sp, start, end, Object.class);
             for (int i = 0; i < spans.length; i++) 
             {
                 if (spans[i] instanceof NoCopySpan) {

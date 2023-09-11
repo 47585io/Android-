@@ -233,62 +233,12 @@ _______________________________________
 	/* 测量指定文本块的指定范围内的文本的宽，并考虑连接处的宽 */
 	private float measureBlockWidth(int i,int start,int end)
 	{
-		GetChars text = mText.getBlock(i);
-		int s = tryLine_Start(text,start);
-		int e = tryLine_End(text,end);
-		float width = getDesiredWidth(text,s,e,getPaint());
-		if(s==0){
-			float w = measureBlockJoinTextStart(i);
-			width = w>width ? w:width;
-		}
-		if(e==text.length()){
-			float w = measureBlockJoinTextEnd(i);
-			width = w>width ? w:width;
-		}
+		int st = mText.getBlockStartIndex(i);
+		start = tryLine_Start(mText,st+start);
+		end = tryLine_End(mText,st+end);
+		fillChars(mText,start,end);
+		float width = getDesiredWidth(chars,0,end-start,getPaint());
 		return width;
-	}
-	
-	/* 测量文本块连接处的行宽 */
-	private float measureBlockJoinTextStart(int i){
-		return measureBlockLineWidthBefore(i,0)+measureBlockLineWidthAfter(i,0);
-	}
-	
-	private float measureBlockJoinTextEnd(int i){
-		int len = mText.getBlock(i).length();
-		return measureBlockLineWidthBefore(i,len)+measureBlockLineWidthAfter(i,len);
-	}
-
-	private float measureBlockLineWidthBefore(int i, int index)
-	{
-		float startWidth = 0;
-		CharSequence block = mText.getBlock(i);
-		int start = TextUtils.lastIndexOf(block,FN,index);
-		int end = index;
-		if(start<0){
-			//如果本文本块没有FN，去到上个文本块找，前提是i>0
-			start = 0;
-			if(i>0){
-				startWidth = measureBlockLineWidthBefore(i-1,mText.getBlock(i-1).length());
-			}
-		}
-		//最后返回之前的文本块的宽 + 自己的宽
-		return startWidth + getPaint().measureText(block,start,end);
-	}
-	private float measureBlockLineWidthAfter(int i, int index)
-	{
-		float endWidth = 0;
-		CharSequence block = mText.getBlock(i);
-		int start = index;
-		int end = TextUtils.indexOf(block,FN,index);
-		if(end<0){
-			//如果本文本块没有FN，去到下个文本块找，前提是i<size-1
-			end = block.length();
-			if(i<mText.getBlockSize()-1){
-				endWidth = measureBlockLineWidthBefore(i+1,0);
-			}
-		}
-		//最后返回之前的文本块的宽 + 自己的宽
-		return endWidth + getPaint().measureText(block,start,end);
 	}
 
 /*
@@ -675,15 +625,13 @@ _______________________________________
 	}
 	
 	/* 为了效;率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
-	final public float getDesiredWidth(GetChars text, int start, int end, TextPaint paint)
+	final public float getDesiredWidth(char[] chars, int start, int end, TextPaint paint)
 	{
-		fillChars(text,start,end);
-		end = end-start;
-		int last = 0;
+		int last = start;
 		float width = 0, w;
 		int line = 0;
 
-		for(start=0;start<end;++start)
+		for(;start<end;++start)
 		{
 			if(chars[start]==FN)
 			{
@@ -699,9 +647,9 @@ _______________________________________
 		cacheLine = line;
 		return width;
 	}
-	final public float getDesiredHeight(GetChars text, int start, int end)
+	final public float getDesiredHeight(char[] text, int start, int end)
 	{
-		cacheLine = Count(FN,text,start,end);
+		cacheLine = Count(text,FN,start,end);
 		return cacheLine*getLineHeight();
 	}
 	
