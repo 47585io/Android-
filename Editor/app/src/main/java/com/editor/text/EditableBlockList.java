@@ -8,7 +8,7 @@ import android.util.*;
 
 
 /* 将大的数据分块/分区是一个很棒的思想
-   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据
+   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，只要限制每个分块的大小，便可以使效率均衡
    此类是分块文本容器的实现类
    
    已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
@@ -87,8 +87,14 @@ public class EditableBlockList extends Object implements EditableBlock
 		mIndexOfBlocks = new IdentityHashMap<>();
 		mSpanInBlocks = new IdentityHashMap<>();
 		mSpanOrders = new IdentityHashMap<>();
-		dispatchTextBlock(0,text,start,end,true);
-		mLength = end-start;
+		if(end-start==0){
+			//仅仅只是在没有任何span时创建空文本块，待之后插入
+			//而插入文本时，不应创建多余的空文本块
+			//删除文本时，应移除多余的空文本块
+			addBlock(0,true);
+		}else{
+			dispatchTextBlock(0,text,start,end,true);
+		}
 	}
 	
 	public void setEditableFactory(BlockFactory fa){
@@ -135,10 +141,15 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
 	private int dispatchTextBlock(final int id, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{
-		//计算并添加文本块，文本块会多预留一些空间。若是空文本，也将添加一个空文本块
+		if(tbEnd-tbStart==0){
+			//不会添加空文本块，因为之后在空文本块中手动插入文本时，无法修正之前之后的span
+			return id;
+		}
+		
+		//计算并添加文本块，文本块会多预留一些空间
 		final int MaxCount = this.MaxCount-ReserveCount;
 		final int len = tbEnd-tbStart;
-		final int count = len!=0 && len%MaxCount==0 ? len/MaxCount:len/MaxCount+1;
+		final int count = len%MaxCount==0 ? len/MaxCount:len/MaxCount+1;
 
 		int i = id;
 		int j = id+count;
@@ -288,7 +299,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		return this;
 	}
 	
-	/* 从指定文本块的指定位置插入文本 */
+	/* 从指定文本块的指定位置插入文本，超出MaxCount之后的内容被截取到之后的文本块 */
 	private void insertForBlocks(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
@@ -312,7 +323,7 @@ public class EditableBlockList extends Object implements EditableBlock
 					//若有下个文本块，但它的字数也不足，那么在我之后添加一个(对于文本块的变化则必须刷新)
 					addBlock(i+1,true);
 				}
-				//插入前需要获取重复的span，插入后修正范围
+				//插入前需要获取重复的span，插入后再次修正范围(针对完全被截取至下个文本块的span)
 				Object[] spans = EmptyArray.OBJECT;
 				if(mBlocks[i+1].length()>0){
 					//新文本块不用修正span，也不用修正重复span
@@ -330,7 +341,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 	
-	/* 删除指定范围内的文本和文本块 */
+	/* 删除指定范围内的文本和文本块，空文本块被移除 */
 	private void deleteForBlocks(int i, int j, int start, int end, boolean spanIsRemoved)
 	{
 		if(i==j)
@@ -407,8 +418,11 @@ public class EditableBlockList extends Object implements EditableBlock
 		
 		//需要在插入文本前，获取端点处无法扩展的span或会挤到后面的span
 		Object[] spans = EmptyArray.OBJECT;
-		if(after>0 && (start==0 || start==mBlocks[i].length())){
-			//处于文本块内的span会自己扩展和移动，但处于两端的不会
+		if(after>0 && (start==0 || start==mBlocks[i].length()))
+		{
+			//手动插入文本时，处于文本块内的span会自己扩展和移动，但处于两端的不会，因此修正它们之前之后的衔接
+			//截取的文本内包含的span，在下个文本块中可能重复，导致无法设置，因此修正它们之前的衔接
+			//新添加的空文本块，仅用于拷贝截取的文本，不会获取任何span，也不用修正
 			spans = mBlocks[i].quickGetSpans(start,start,Object.class);
 		}
 		
