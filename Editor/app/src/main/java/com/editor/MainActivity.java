@@ -70,8 +70,8 @@ public class MainActivity extends Activity implements Runnable
 		//E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		
 		Random rand = new Random();
-		for(int i = 0;i<1000;++i){
-			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(int i = 0;i<1000;i+=10){
+			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+20,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		
 	}

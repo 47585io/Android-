@@ -27,7 +27,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
-	private EditableBlockList.BlockFactory mEditableFactory;
+	private EditableBlock.BlockFactory mEditableFactory;
 
 	
 	public Edit(Context cont)
@@ -70,7 +70,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
 		setLineColor(0xff666666);
 	}
-	public void setEditableFactory(EditableBlockList.BlockFactory fa)
+	public void setEditableFactory(EditableBlock.BlockFactory fa)
 	{
 		mEditableFactory = fa;
 		mText.setEditableFactory(fa);
