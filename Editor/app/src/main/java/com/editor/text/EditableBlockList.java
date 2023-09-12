@@ -66,7 +66,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int ReserveCount;
 	private int mTextWatcherDepth;
 	private InputFilter[] mFilters = NO_FILTERS;
-	private static final int Default_MaxCount = 20;
+	private static final int Default_MaxCount = 1024;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	

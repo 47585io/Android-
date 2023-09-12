@@ -35,12 +35,6 @@ public class CodeEditBuilder implements EditBuilder
 		{
 
 			@Override
-			public void howToFindWords(int start, int end, CharSequence text, Words lib)
-			{
-			
-			}
-			
-			@Override
 			public wordIndex[] howToFindNodes(int start, int end, CharSequence text, Words lib)
 			{
 				int len = end-start;

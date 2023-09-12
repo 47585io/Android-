@@ -10,6 +10,7 @@ import com.editor.text2.builder.*;
 import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
 import com.editor.text2.builder.listenerInfo.*;
+import java.util.concurrent.*;
 
 
 public class CodeEdit extends Edit implements EditBuilderUser
@@ -23,6 +24,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	private int mPrivateFlags;
 	public static int mPublicFlags;
 	
+	private ThreadPoolExecutor mPool;
 	
 	public CodeEdit(Context cont){
 		super(cont);
@@ -44,6 +46,10 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	{
 		super.config();
 		mEditBuilder.SwitchLuagua(this,"java");
+	}
+	
+	public void setPool(ThreadPoolExecutor pool){
+		mPool = pool;
 	}
 	
 	@Override
@@ -102,10 +108,42 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		return null;
 	}
 	
-	public void reDrawText(int start, int end)
+	public void reDrawText(final int start, final int end)
+	{
+		Runnable runFind = new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				final wordIndex[] nodes = onFindNodes(start,end,getText(),mWordLib);
+				Runnable runDraw = new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						onDrawNodes(start,end,getText(),nodes);
+					}
+				};
+				post(runDraw);
+			}
+		};
+		if(mPool!=null){
+			mPool.execute(runFind);
+		}else{
+			runFind.run();
+		}
+	}
+	
+	private wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
 	{
 		EditDrawerListener li = new CodeEditBuilder.DrawerFactory.DefaultDrawer();
 		wordIndex[] nodes = li.onFindNodes(start,end,getText(),mWordLib);
+		return nodes;
+	}
+	
+	private void onDrawNodes(int start, int end, Spannable text, wordIndex[] nodes)
+	{
+		EditDrawerListener li = new CodeEditBuilder.DrawerFactory.DefaultDrawer();
 		li.onDrawNodes(start,end,getText(),nodes);
 	}
 

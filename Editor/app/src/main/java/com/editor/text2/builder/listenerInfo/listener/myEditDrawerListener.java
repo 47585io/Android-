@@ -29,15 +29,12 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		return node;
 	}
 	
-	public abstract void howToFindWords(int start, int end, CharSequence text, Words lib)
-	
 	public abstract wordIndex[] howToFindNodes(int start, int end, CharSequence text, Words lib)
 	
 	@Override
 	public wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
 	{
 		mNodes.start();
-		howToFindWords(start,end,text,lib);
 		wordIndex[] nodes = howToFindNodes(start,end,text,lib);
 		mNodes.stop();
 		return nodes;
