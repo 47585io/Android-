@@ -291,7 +291,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 从指定文本块的指定位置插入文本 */
 	private void insertForBlocks(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
-		//先插入文本，让在此范围内的span进行扩展
+		//先插入文本，让在此范围内的span进行扩展和修正
 		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,true,true);
 		
 		//再检查文本块的内容是否超出MaxCount
@@ -315,6 +315,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				//插入前需要获取重复的span，插入后修正范围
 				Object[] spans = EmptyArray.OBJECT;
 				if(mBlocks[i+1].length()>0){
+					//新文本块不用修正span，也不用修正重复span
 					spans = checkRepeatSpans(mBlocks[i+1],text);
 				}
 				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
@@ -322,7 +323,8 @@ public class EditableBlockList extends Object implements EditableBlock
 				correctRepeatSpans(mBlocks[i+1],text,spans);
 			}
 			else{
-				//如果超出的文本大于MaxCount，必须分发，分发时不需要修正重复span
+				//如果超出的文本大于MaxCount，必须分发，分发时不需要修正span，也不需要修正重复span
+				//就像是将修正好的文本单独拷贝到新的文本块中，由于没有重复的span，span整体位置保持不变
 				dispatchTextBlock(i+1,text,0,overLen,true);
 			}
 		}
@@ -402,9 +404,11 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(send && before>0){
 			sendBlocksDeleteBefore(i,i,start,end);
 		}
+		
 		//需要在插入文本前，获取端点处无法扩展的span或会挤到后面的span
 		Object[] spans = EmptyArray.OBJECT;
-		if(after>0){
+		if(after>0 && (start==0 || start==mBlocks[i].length())){
+			//处于文本块内的span会自己扩展和移动，但处于两端的不会
 			spans = mBlocks[i].quickGetSpans(start,start,Object.class);
 		}
 		
@@ -412,6 +416,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		replaceSpan(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
 		mBlocks[i].replace(start,end,tb,tbStart,tbEnd);
 		mLength += -before+after;
+		
+		//需要在发送事件前同步length，刷新数据
 		if(send)
 		{
 			refreshInvariants(i);
@@ -424,13 +430,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		
 		//需要在插入后，修正端点处的span
-		if(after>0)
-		{
-			for(int j=0;j<spans.length;++j){
-				correctSpan(spans[j]);
-			}
-			//在插入后，修正插入文本末尾的span (dispatchTextBlock)
-			spans = mBlocks[i].quickGetSpans(start+after,start+after,Object.class);
+		if(after>0){
 			for(int j=0;j<spans.length;++j){
 				correctSpan(spans[j]);
 			}
@@ -538,23 +538,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(blocks!=null && blocks.size()>1)
 		{
 			int size = blocks.size();	
-			//先修正span绑定的文本块，使它们连续排列
-			for(int j=0;j<size-1;++j)
-			{
-				int id = mIndexOfBlocks.get(blocks.get(j));
-				int nextId = mIndexOfBlocks.get(blocks.get(j+1));		
-				//如果当前文本块的下标和下个文本块的下标不连续，需要插入中间的文本块
-				if(id+1<nextId)
-				{
-					//从id+1开始，向nextId前进，将途中的文本块添加到blocks中
-					for(++id;id<nextId;++id){
-						blocks.add(++j,mBlocks[id]);
-						++size;
-					}
-				}
-			}
-				
 			int flags = blocks.get(0).getSpanFlags(span);
+			
 			//遍历所有文本块，修正span在文本块中的范围(请注意，即使绑定正确，也不能代表范围设置正确)
 			for(int j=0;j<size;++j)
 			{
