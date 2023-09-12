@@ -45,7 +45,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) text;
-            Object[] spans = SpanUtils.getSpans(sp, start, end, Object.class);
+            Object[] spans = sp.getSpans(start, end, Object.class);
             for (int i = 0; i < spans.length; i++) 
             {
                 if (spans[i] instanceof NoCopySpan) {
@@ -354,7 +354,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
-            Object[] spans = SpanUtils.getSpans(sp, csStart, csEnd, Object.class);
+            Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
 			if(spans.length==0){
 				return;
 			}
@@ -719,7 +719,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 
         //统计范围内节点个数，并创建指定大小的数组
-        int count = countSpans(queryStart, queryEnd, kind, treeRoot());
+		boolean getAll = queryStart==0 && queryEnd==length() && kind==Object.class;
+        int count = getAll ? mSpanCount:countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {
             return EmptyArray.emptyArray(kind);
         }
@@ -728,9 +729,21 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
 
         //从根节点开始，找到范围内的所有节点
-        getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
-                    orderSortBuffer, 0, sortByInsertionOrder);
-
+        if(getAll)
+		{
+			System.arraycopy(mSpans,0,ret,0,count);
+			if(sortByInsertionOrder){
+				for(int i=0;i<count;++i){
+					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
+					orderSortBuffer[i] = mSpanOrder[i];
+				}
+			}
+		}
+		else{
+			getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
+						orderSortBuffer, 0, sortByInsertionOrder);
+		}
+		
         //如果需要排序，则按插入顺序排序
         if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);

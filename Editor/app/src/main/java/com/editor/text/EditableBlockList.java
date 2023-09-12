@@ -285,6 +285,8 @@ public class EditableBlockList extends Object implements EditableBlock
 				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
 				spans = getAtPointSpans(st);
 			}
+			//插入前还要移除文本中与自身重复的span
+			tb = removeRepeatSpans(tb);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span
@@ -461,6 +463,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		{
 			final boolean textIsRemoved = (tbEnd-tbStart)==0;
 			final boolean blockIsRemoved = start==0 && end==block.length();
+			//移除时不需要保证顺序，直接快速获取乱序的spans
 			Object[] spans = block.quickGetSpans(start,end,Object.class);
 			
 			for(int j=0;j<spans.length;++j)
@@ -491,7 +494,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(tbEnd>tbStart && tb instanceof Spanned)
 		{
 			Spanned spanString = (Spanned) tb;
-			Object[] spans = SpanUtils.getSpans(spanString,tbStart,tbEnd,Object.class);
+			//添加时需要保证顺序，使这些span也像是在spanString中一样
+			Object[] spans = spanString.getSpans(tbStart,tbEnd,Object.class);
 			
 			for(int j=0;j<spans.length;++j)
 			{
@@ -598,7 +602,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	/* 检查在dst与src中重复的span，spans取自dst */
-	private Object[] checkRepeatSpans(Spanned src, CharSequence dst)
+	private static Object[] checkRepeatSpans(Spanned src, CharSequence dst)
 	{
 		Object[] spans = SpanUtils.getSpans(dst,0,dst.length(),Object.class);
 		for(int i=0;i<spans.length;++i)
@@ -612,7 +616,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	/* 将重复的span在src中的起始位置转换为在dst中的起始位置 */
-	private void correctRepeatSpans(EditableBlock src, CharSequence dst, Object[] spans)
+	private static void correctRepeatSpans(EditableBlock src, CharSequence dst, Object[] spans)
 	{
 		if(!(dst instanceof Spanned)){
 			return;
@@ -632,6 +636,25 @@ public class EditableBlockList extends Object implements EditableBlock
 				}
 			}
 		}
+	}
+	
+	/* 移除text中与自己重复的spans */
+	private CharSequence removeRepeatSpans(CharSequence text)
+	{
+		if(text instanceof Spanned)
+		{
+			Spannable editor = text instanceof Spannable ? (Spannable)text:new SpannableStringBuilderLite(text);
+			Object[] spans = SpanUtils.getSpans(editor,0,editor.length(),Object.class);
+			for(int i=0;i<spans.length;++i)
+			{
+				Object span = spans[i];
+				if(mSpanInBlocks.get(span)!=null){
+					editor.removeSpan(span);
+				}
+			}
+			return editor;
+		}
+		return text;
 	}
 	
 	/* 获取端点正好处于index的span，必须在修正后调用 */
