@@ -64,7 +64,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int ReserveCount;
 	private int mTextWatcherDepth;
 	private InputFilter[] mFilters = NO_FILTERS;
-	private static final int Default_MaxCount = 1024;
+	private static final int Default_MaxCount = 20;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -253,9 +253,9 @@ public class EditableBlockList extends Object implements EditableBlock
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//过滤文本
-        for (int i = 0; i < mFilters.length; i++) {
+        for (int i=0;i<mFilters.length;++i) {
             CharSequence repl = mFilters[i].filter(tb, tbStart, tbEnd, this, start, end);
-            if (repl != null) {
+            if (repl!=null) {
                 tb = repl;
                 tbStart = 0;
                 tbEnd = repl.length();
@@ -448,7 +448,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		//需要在插入后，修正端点处的span
 		if(after>0){
 			for(int j=0;j<spans.length;++j){
-				correctSpan(spans[j]);
+				correctSpan(i,spans[j]);
 			}
 		}
 	}
@@ -542,14 +542,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 	
-	/* 在文本修改后，修正空缺span绑定的文本块和其所在文本块中的范围，span样本通常是取自修改范围的两端
-	 * 若删除了一个span，并把它全删了，这倒没什么
-	 * 若删除了一个span，并把它前半部分删了，因此在插入文本时会被挤至后面，这也没什么
-	 * 若删除了一个span，并把它后半部分删了，因此在插入文本时仍保持在前面，这都没什么
-	 * 若删除了一个span，并把它中间删了，两端保留，在插入文本后span应该扩展并包含中间所有文本块，而不是仅悬停在两端
-	 * 注意！mIndexOfBlocks必须是正确的！
-	 */
-	private void correctSpan(Object span)
+	/* 在文本修改后，修正空缺span所在文本块中的范围，span样本通常是取自修改范围的两端
+	   注意！mIndexOfBlocks必须是正确的 */
+	private void correctSpan(final int i, final Object span)
 	{
 		final List<EditableBlock> blocks = mSpanInBlocks.get(span);
 		//如果span绑定了多个文本块
@@ -557,31 +552,35 @@ public class EditableBlockList extends Object implements EditableBlock
 		{
 			int size = blocks.size();	
 			int flags = blocks.get(0).getSpanFlags(span);
-			
-			//遍历所有文本块，修正span在文本块中的范围(请注意，即使绑定正确，也不能代表范围设置正确)
+			//遍历所有文本块，修正span在文本块中的范围
 			for(int j=0;j<size;++j)
 			{
 				int id = mIndexOfBlocks.get(blocks.get(j));
-				EditableBlock block = mBlocks[id];
-				int len = block.length();
-				int start = block.getSpanStart(span);
-				int end = block.getSpanEnd(span);
-					
-				if(j==0){
-					//span应衔接在起始块末尾
-					if(end!=len){
-						block.enforceSetSpan(span,start,len,flags);
+				if(id==i)
+				{
+					//文本刚刚在下标为i的文本中插入，因此span也只可能在此文本块中的范围错误
+					EditableBlock block = mBlocks[id];
+					int len = block.length();
+					int start = block.getSpanStart(span);
+					int end = block.getSpanEnd(span);
+
+					if(j==0){
+						//span应衔接在起始块末尾
+						if(end!=len){
+							block.enforceSetSpan(span,start,len,flags);
+						}
 					}
-				}
-				else if(j==size-1){
-					//span应衔接在末尾块起始
-					if(start!=0){
-						block.enforceSetSpan(span,0,end,flags);
+					else if(j==size-1){
+						//span应衔接在末尾块起始
+						if(start!=0){
+							block.enforceSetSpan(span,0,end,flags);
+						}
 					}
-				}
-				else if(start!=0 || end!=len){
-					//span应附着在整个中间块
-				    block.enforceSetSpan(span,0,len,flags);
+					else if(start!=0 || end!=len){
+						//span应附着在整个中间块
+						block.enforceSetSpan(span,0,len,flags);
+					}
+					break;
 				}
 			}
 		}

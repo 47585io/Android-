@@ -53,7 +53,7 @@ public class MainActivity extends Activity implements Runnable
 
 	@Override
 	public void run(){
-		loadFileInThread("/storage/emulated/0/Linux/2.java");
+		loadFileInThread("/storage/emulated/0/Linux/3.java");
 	}
 	
 	public void loadFileInThread(String path)
@@ -67,7 +67,7 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		//E.reDrawText(0,E.getText().length());
 		
-		E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		//E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		
 		Random rand = new Random();
 		for(int i = 0;i<1000;++i){
