@@ -140,7 +140,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             new Exception("mGapLength < 1").printStackTrace();
         if (mSpanCount != 0) 
         {
-			if(mGapStart>length()>>1){
+			if(mGapStart>length()*0.75){
 				//遍历在间隙缓冲区之后的span，并将范围增加delta
 				resizeForSpans(delta,treeRoot());
 			}
@@ -292,7 +292,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     }
 
     /* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
-    private void change(int start, int end, CharSequence cs, int csStart, int csEnd) 
+    private void change(final int start, final int end, CharSequence cs, int csStart, int csEnd) 
     {
         //删除文本的长度，插入的文本长度，溢出文本的长度(可以是负数)
         final int replacedLength = end - start;
@@ -311,8 +311,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (replacedLength > 0)
 		{
 			//纯插入时不需要span移除
-			if(replacedLength >= length()>>2){
-				//如果删除的文本太长(len>>2 = len/2/2)，就遍历所有节点，一次性全部删除并刷新
+			if(replacedLength >= (length()+replacedLength)>>3){
+				//如果删除的文本太长(len>>2 = len/2/2/2)，就遍历所有节点，一次性全部删除并刷新
 				if(removeSpansForChange(start,end,textIsRemoved)){
 					restoreInvariants();
 				}
@@ -387,6 +387,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     }
 
 	/* 文本变化后，删除在start~end范围内的文本中全部节点，删除了返回true
+	   应该在删除文本太多时调用我，因为当删除的span个数大于2，restoreInvariants消耗的时间比remove本身更多
 	   注意: 恢复不变量是调用者的责任
 	*/
 	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved)
