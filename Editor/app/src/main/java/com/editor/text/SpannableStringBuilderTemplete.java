@@ -189,6 +189,9 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 						//POINT标志的端点应将缓冲区排除在前面(自己向后移)
 						//而MARK标志的端点应将缓冲区排除在后面(保持不变)
 						//如果缓冲区移动到全部文本末尾，PARAGRAPH标志的span移动到文本末尾
+						//这里为什么将POINT标志的端点移到start += mGapLength？ 有两个原因:
+						//1、防止span在removeSpansForChange中被移除，请再看一下移除span的条件
+						//2、span端点在updateIntervalBound中不用再管了，请再看一下span端点修正的条件
                         start += mGapLength;
                 }
 				
@@ -489,6 +492,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//整个节点原本在start~end之间，但可能两端衔接在start和end上(spanEnd可以在mGapStart上，但不在mGapStart + mGapLength上)
 			//要替换的文本长度为0就直接移除此节点，否则节点的两端都要衔接在start和end上才不会被移除(实际是为了等之后在updatedIntervalBound中，对span进行扩展)
 			//实际上如果满足了mSpanEnds[i] < mGapStart这个条件，就意味着spanEnd在缓冲区之前，它必然是其原本的位置，而由于之前spanEnd在删除范围内，所以可以移除
+			//为什么要把Point标志的端点移到mGapStart+mGapLength？ 因为可以防止被删除
             if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
 				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
 				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&

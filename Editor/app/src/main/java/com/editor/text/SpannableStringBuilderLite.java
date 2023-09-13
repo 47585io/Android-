@@ -361,8 +361,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 //只添加不重复的span
                 if (getSpanStart(spans[i]) < 0)
                 {
-					int st = sp.getSpanStart(spans[i]);
-					int en = sp.getSpanEnd(spans[i]);
+					Object span = spans[i];
+					int st = sp.getSpanStart(span);
+					int en = sp.getSpanEnd(span);
 					//span的位置不可超过截取的范围
 					if (st < csStart) st = csStart;
 					if (en > csEnd) en = csEnd;
@@ -370,9 +371,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     //将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
-                    int copySpanFlags = sp.getSpanFlags(spans[i]);
-                    setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
-					changed = true;
+                    int copySpanFlags = sp.getSpanFlags(span);
+					//无效span不添加
+                    if(!isInvalidSpan(span,copySpanStart,copySpanEnd,copySpanFlags)){
+						setSpan(false, span, copySpanStart, copySpanEnd, copySpanFlags, true);
+						changed = true;
+					}
                 }
             }
             //添加span之后一并刷新，如果没有添加则不用(此情况在EditableBlockList中出现概率较大)

@@ -176,7 +176,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
 		Runnable run = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
-		//mPool.execute(run);
+		mPool.execute(run);
 		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
 	}
 	
