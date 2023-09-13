@@ -93,9 +93,9 @@ public class EditableBlockList extends Object implements EditableBlock
 			//仅仅只是在没有任何span时创建空文本块，待之后插入
 			//而插入文本时，不应创建多余的空文本块
 			//删除文本时，应移除多余的空文本块
-			addBlock(0,false);
+			addBlock(0,true);
 		}else{
-			dispatchTextBlock(0,text,start,end,false);
+			dispatchTextBlock(0,text,start,end,true);
 		}
 	}
 	
