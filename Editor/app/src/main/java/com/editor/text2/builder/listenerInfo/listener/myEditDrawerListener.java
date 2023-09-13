@@ -24,7 +24,7 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	}
 	public wordIndex obtainNode(int start, int end, Object span)
 	{
-		wordIndex node = mNodes.get();
+		wordIndex node = new wordIndex();
 		node.set(start,end,span);
 		return node;
 	}

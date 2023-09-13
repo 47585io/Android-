@@ -39,9 +39,7 @@ public class CodeEditBuilder implements EditBuilder
 			{
 				int len = end-start;
 				char[] array = new char[len];
-				boolean[] rangeTable = new boolean[len];
 				TextUtils.getChars(text,start,end,array,0);
-				String str = String.valueOf(array,0,len);
 				List<wordIndex> nodes = new LinkedList<>();
 				
 				//Step1: 检查注释和字符串及字符，优先级最高
@@ -60,10 +58,10 @@ public class CodeEditBuilder implements EditBuilder
 					nodes.add(obtainNode(index,nextIndex+1,new ForegroundColorSpan(0xff98c379)));
 					last = nextIndex+1;
 				}
+				Collection<Character> chars = lib.getACollectionChars(chars_fuhao);
 				
 				//Step2: 检查关键字
 				StringBuilder b = new StringBuilder();
-				Collection<Character> chars = lib.getACollectionChars(chars_fuhao);
 				Collection<Character> S = lib.getACollectionChars(chars_spilt);
 				Collection<CharSequence> words = lib.getACollectionWords(words_key);
 				for(int i=0;i<array.length;++i)
@@ -83,20 +81,16 @@ public class CodeEditBuilder implements EditBuilder
 						b.delete(0,b.length());
 					}
 				}
-				
 				//Step3: 检查变量，函数，类，不可处于关键字范围内
 				
 				//Step4: 检查字符，字符不可处于单词范围内
 				for(int i=array.length-1;i>=0;--i)
 				{
-					if(rangeTable[i]){
-						continue;
-					}
 					char c = array[i];
 					if(c>='0'&&c<='9'){
-						nodes.add(obtainNode(i,i+1,new ForegroundColorSpan(0xffff9090)));
+						//nodes.add(obtainNode(i,i+1,new ForegroundColorSpan(0xffff9090)));
 					}
-					else if(chars.contains(c)){
+					if(chars.contains(c)){
 						nodes.add(obtainNode(i,i+1,new ForegroundColorSpan(0xff57adbb)));
 					}
 				}

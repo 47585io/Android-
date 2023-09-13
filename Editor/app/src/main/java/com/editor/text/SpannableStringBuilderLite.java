@@ -355,13 +355,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
-			if(spans.length==0){
-				return;
-			}
-			
+			boolean changed = false;
             for (int i = 0; i < spans.length; i++) 
             {      
-                //已有的span不会重复添加
+                //只添加不重复的span
                 if (getSpanStart(spans[i]) < 0)
                 {
 					int st = sp.getSpanStart(spans[i]);
@@ -375,10 +372,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     int copySpanEnd = en - csStart + start;
                     int copySpanFlags = sp.getSpanFlags(spans[i]);
                     setSpan(false, spans[i], copySpanStart, copySpanEnd, copySpanFlags, false);
+					changed = true;
                 }
             }
-            //添加span之后一并刷新
-            restoreInvariants();
+            //添加span之后一并刷新，如果没有添加则不用(此情况在EditableBlockList中出现概率较大)
+			if(changed){
+				restoreInvariants();
+			}
         }
     }
 
@@ -719,6 +719,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 
         //统计范围内节点个数，并创建指定大小的数组
+		//若需要全部获取，则直接全部拷贝(此情况在EditableBlockList中出现概率较大)
 		boolean getAll = queryStart==0 && queryEnd==length() && kind==Object.class;
         int count = getAll ? mSpanCount:countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {

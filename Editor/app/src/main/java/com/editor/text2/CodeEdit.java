@@ -11,6 +11,7 @@ import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
 import com.editor.text2.builder.listenerInfo.*;
 import java.util.concurrent.*;
+import com.editor.text2.base.share.*;
 
 
 public class CodeEdit extends Edit implements EditBuilderUser
@@ -110,28 +111,52 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	
 	public void reDrawText(final int start, final int end)
 	{
-		Runnable runFind = new Runnable()
+		final wordIndex[] nodes = onFindNodes(start,end,getText(),mWordLib);
+		Runnable runDraw = new Runnable()
+		{
+			@Override
+			public void run(){
+				onDrawNodes(start,end,getText(),nodes);
+			}
+		};
+		post(runDraw);
+	}
+	
+	public Runnable ReDrawText(final int start, final int end)
+	{
+		return new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				final wordIndex[] nodes = onFindNodes(start,end,getText(),mWordLib);
-				Runnable runDraw = new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						onDrawNodes(start,end,getText(),nodes);
-					}
-				};
-				post(runDraw);
+				reDrawText(start,end);
 			}
 		};
-		if(mPool!=null){
-			mPool.execute(runFind);
-		}else{
-			runFind.run();
+	}
+	
+	public void reDrawTextS(int start, int end)
+	{
+		final int once = 5000;
+		final int len = end-start;
+		final int count = len%once==0 ? len/once:len/once+1;
+		final Editable editor = getText();
+		final Runnable[] totals = new Runnable[count];
+		for(int i = 0;start<end;start+=once)
+		{
+			final int st = start;
+			final int en = start+once>end ? end:start+once;
+			Runnable run = new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					final wordIndex[] nodes = onFindNodes(st,en,editor,mWordLib);
+					onDrawNodes(st,en,editor,nodes);
+				}
+			};	
+			totals[i++] = run;
 		}
+		HandlerQueue.doTotals(totals,getHandler());
 	}
 	
 	private wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
@@ -150,7 +175,8 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
-		reDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		Runnable run = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		//mPool.execute(run);
 		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
 	}
 	

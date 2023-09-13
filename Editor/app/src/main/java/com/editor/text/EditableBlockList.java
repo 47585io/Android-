@@ -41,7 +41,7 @@ import android.util.*;
    已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
    (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
    
-   *此类主要围绕两大内容: 文本和span如何正确分配到文本块中，文本块顺序刷新和事件发送
+   *此类主要围绕两大内容: 文本和span如何正确分配到文本块中并与其建立绑定，文本块顺序刷新和事件发送
 */
 public class EditableBlockList extends Object implements EditableBlock
 {
@@ -93,9 +93,9 @@ public class EditableBlockList extends Object implements EditableBlock
 			//仅仅只是在没有任何span时创建空文本块，待之后插入
 			//而插入文本时，不应创建多余的空文本块
 			//删除文本时，应移除多余的空文本块
-			addBlock(0,true);
+			addBlock(0,false);
 		}else{
-			dispatchTextBlock(0,text,start,end,true);
+			dispatchTextBlock(0,text,start,end,false);
 		}
 	}
 	
@@ -280,6 +280,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		return replace(len,len,String.valueOf(p1),0,1);
 	}
 	
+	/* 先删除start~end之间的文本和文本块，并从start指定的文本块开始插入文本(插入文本中的重复的span会被移除)
+	   若插入点刚好是某些span的端点，并且这些span没有被删除并且需要扩展，应该将它们扩展包含插入的文本
+	*/
 	@Override
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
@@ -333,7 +336,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	/* 从指定文本块的指定位置插入文本，超出MaxCount之后的内容被截取到之后的文本块 
-	   插入文本其实很简单，
+	   插入文本其实很简单，按下面步骤进行，注意必须是此顺序，因为我们要发送文本块事件
 	   
 	   ①首先我们将文本先插入指定文本块index的位置，处于文本块内的span会自己扩展和移动，但处于两端的不会
 	   换句话说，处于文本块末尾的span无法扩展，处于文本块开头的span会挤到后面
