@@ -291,14 +291,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return this;
     }
 
-    /* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
-    private void change(final int start, final int end, CharSequence cs, int csStart, int csEnd) 
+	private void change(final int start, final int end, CharSequence cs, int csStart, int csEnd) 
     {
         //删除文本的长度，插入的文本长度，溢出文本的长度(可以是负数)
         final int replacedLength = end - start;
         final int replacementLength = csEnd - csStart;
         final int nbNewChars = replacementLength - replacedLength;
-        
+
         //将间隙缓冲区移动到删除文本的末尾
         moveGapTo(end);
         if (nbNewChars >= mGapLength) {
@@ -308,19 +307,18 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
         final boolean textIsRemoved = replacementLength == 0;
         //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
-        if (replacedLength > 0)
+        if (replacedLength > 0 && mSpanCount > 0)
 		{
-			//纯插入时不需要span移除
-			if(replacedLength >= (length()+replacedLength)>>3){
-				//如果删除的文本太长(len>>2 = len/2/2/2)，就遍历所有节点，一次性全部删除并刷新
-				if(removeSpansForChange(start,end,textIsRemoved)){
-					restoreInvariants();
-				}
+			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)
+			//要移除的span个数为0时，也不需要span移除
+			final int count = markToBeRemovedSpans(start,end,textIsRemoved,treeRoot());
+			if(count==1){
+				//单个节点的移除，不需要遍历整个数组
+				removeSpanForChange(start, end, textIsRemoved, treeRoot());
 			}
-			else{
-				while (mSpanCount > 0 && removeSpansForChange(start, end, textIsRemoved, treeRoot())) {
-					//根据需要不断删除范围内的节点，每次删除后从根重新开始，因为删除会使索引失效
-				}
+			else if(count>1){
+				//太多数量的span要移除，必须一次性移除后再刷新，因为restore消耗的时间比remove更多
+				removeMarkSpans(count);
 			}
         }
 
@@ -335,27 +333,21 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
         //然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
 
-        if (replacedLength > 0)
+		boolean changed = false;
+        if (replacedLength > 0 && mSpanCount > 0)
         { 
             //修正所有在删除文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
-            //我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
-            //但由于我们引入了间隙缓冲区，所以每次获取间隙缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
-            //因此，若将GapStart移动到前面并将GapLength缩小，实际等同于间隙缓冲区之后的span的位置增大
-            //同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
-            //另外，若将GapStart移到某个span后面，该span会立刻转换为当前的原本位置
-            //即使reSizeFor时GapLength增大，但也连带之后的span增大，它们是同步的
-            //另外一个很重要的概念，每次修正后，span的真实位置(start和end)不可能在间隙缓冲区中  
-            if(mSpanCount > 0 && updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot())){
-				restoreInvariants();
-			}  
+			//修正节点可能导致spanStarts和SpanMax错误，但IndexOfSpan仍是正确的
+			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和SpanMax，最好是在添加span之后一起刷新
+            changed = updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot());
         }
-
-        if (cs instanceof Spanned) 
+		
+		if (cs instanceof Spanned) 
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
-			boolean changed = false;
+			
             for (int i = 0; i < spans.length; i++) 
             {      
                 //只添加不重复的span
@@ -367,7 +359,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 					//span的位置不可超过截取的范围
 					if (st < csStart) st = csStart;
 					if (en > csEnd) en = csEnd;
-					
+
                     //将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
@@ -379,61 +371,32 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 					}
                 }
             }
-            //添加span之后一并刷新，如果没有添加则不用(此情况在EditableBlockList中出现概率较大)
-			if(changed){
-				restoreInvariants();
-			}
         }
+		
+		//添加span之后一并刷新，如果没有添加则不用(此情况在EditableBlockList中出现概率较大)
+		//当然此刷新还可能包含updatedIntervalBounds时未刷新的内容
+		if(changed){
+			restoreInvariants();
+		}
     }
 
-	/* 文本变化后，删除在start~end范围内的文本中全部节点，删除了返回true
-	   应该在删除文本太多时调用我，因为当删除的span个数大于2，restoreInvariants消耗的时间比remove本身更多
-	   注意: 恢复不变量是调用者的责任
-	*/
-	private boolean removeSpansForChange(int start, int end, boolean textIsRemoved)
-	{
-		boolean removed = false;
-		//遍历所有节点，并移除在范围内的节点
-		for(int i=0;i<mSpanCount;++i)
-		{
-			if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
-                mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength /*&&
-                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
-				//如果整个节点在删除范围内，移除此节点，下标前移一位
-				mIndexOfSpan.remove(mSpans[i]);
-				removeSpan(i,0,false);
-				removed = true;
-				i--;
-			}
-		}
-		return removed;
-	}
-	
     /* 文本变化后，在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了一个就立即返回true
 	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
-	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除所有范围内的节点
+	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除范围内的所有节点
 	*/
-    private boolean removeSpansForChange(int start, int end, boolean textIsRemoved, int i)
+    private boolean removeSpanForChange(int start, int end, boolean textIsRemoved, int i)
     {
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			//一个有意思的问题: 在getSpansRec和nextSpanTransitionRec中都是直接判断左右子节点是否在范围内，从而决定是否遍历左右子节点
-			//而这里却是用节点i的值判断是否需要遍历左右子节点，很简单，因为该函数对于节点的判断条件很复杂，无法直接决定，仍需要等节点自己去判断
-            if (resolveGap(mSpanMax[i]) >= start &&
-                removeSpansForChange(start, end, textIsRemoved, leftChild(i))) {
+			if (resolveGap(mSpanMax[i]) >= start &&
+                removeSpanForChange(start, end, textIsRemoved, leftChild(i))) {
                 return true;
             }
         }
         if (i < mSpanCount) 
         {
-            //此时mGapStart实际上是删除范围的end
-            //整个节点原本在start~end之间，但可能两端衔接在start和end上
-            //要替换的文本长度为0，或者spanStart没有衔接在start，或者spanEnd没有衔接在end(spanEnd必然大于spanStart，因此在mGapStart之后的span也不小于start)
-            if (//(mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
-                mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength /*&&
-                (textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)*/){
+            if (mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
+                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength){
                 //如果整个节点在删除范围内，移除此节点
                 mIndexOfSpan.remove(mSpans[i]);
                 removeSpan(i, 0, true);
@@ -441,10 +404,80 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             }
             //若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
             return resolveGap(mSpanStarts[i]) <= end && (i & 1) != 0 &&
-                removeSpansForChange(start, end, textIsRemoved, rightChild(i));
+                removeSpanForChange(start, end, textIsRemoved, rightChild(i));
         }
         return false;
     }
+	
+	/* 标记即将移除的节点 */
+	private int markToBeRemovedSpans(int start, int end, boolean textIsRemoved, int i)
+    {
+		int count = 0;
+        if ((i & 1) != 0) {
+            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			if (resolveGap(mSpanMax[i]) >= start) {
+				count = markToBeRemovedSpans(start, end, textIsRemoved, leftChild(i));
+			}
+        }
+        if (i < mSpanCount) 
+        {
+            if (mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
+                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength){
+                //如果整个节点在删除范围内，标记此节点
+				mIndexOfSpan.remove(mSpans[i]);
+				invalidateIndex(i);
+				mSpans[i] = null;
+				count++;
+            }
+            
+            if((i & 1) != 0){
+				//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
+				if(resolveGap(mSpanStarts[i]) <= end){
+					count += markToBeRemovedSpans(start, end, textIsRemoved, rightChild(i));
+				}
+			}
+	    }
+		return count;
+    }
+	
+	/* 移除标记的节点 */
+	private void removeMarkSpans(int markCount)
+	{
+		if(markCount==0){
+			return;
+		}
+		
+		//这是一个简单的清除标记节点的算法，i为查找索引，j为有效索引
+		int i=0, j=0;
+		for(;i<mSpanCount;++i)
+		{
+			//当没有遇到标记的节点，它们一起向后走
+			if(mSpans[j]==null)
+			{
+				//当遇到标记的节点，i需要向后找一个非标记的节点并移到j的位置
+				for(;i<mSpanCount;++i)
+				{
+					if(mSpans[i]!=null){
+						mSpans[j] = mSpans[i];
+						mSpanStarts[j] = mSpanStarts[i];
+						mSpanEnds[j] = mSpanEnds[i];
+						mSpanFlags[j] = mSpanFlags[i];
+						mSpanOrder[j] = mSpanOrder[i];
+						mSpans[i] = null;
+						break;
+					}
+				}
+			}
+			++j;
+		}
+		
+		mSpanCount-=markCount;
+		if(mSpanCount>0){
+			//在有序的数组中移除一些元素，不会打乱顺序
+			calcMax(treeRoot());
+			correctIndexOfSpan();
+		}
+	}
 	
 	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，如果真的修正了，就返回true */
     private boolean updatedIntervalBounds(int start, int nbNewChars, boolean textIsRemoved, int i)
@@ -671,7 +704,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//将其置为null，以释放对象的空间
 		//在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
         if(send){
-			restoreInvariants();
+			//在有序的数组中移除一个元素，不会打乱顺序
+			if(mSpanCount>0){
+				calcMax(treeRoot());
+				correctIndexOfSpan();
+			}
 		}
     }
 
@@ -1296,16 +1333,33 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mSpanMax[i] = max;
         return max;
     }
-
-    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少恢复会越快)
-    private void restoreInvariants() 
-    {
-        if (mSpanCount == 0) return;
-
-        //不变量1: span starts按顺序排列
+	
+	//mIndexOfSpan映射的索引修正
+	private void correctIndexOfSpan()
+	{
+		if (mIndexOfSpan == null) {
+            mIndexOfSpan = new IdentityHashMap<Object, Integer>();
+        }
+        //从被修改的下标开始，遍历之后的span，将span与正确的index重新绑定
+        for (int i = mLowWaterMark; i < mSpanCount; i++) 
+        {
+            //每次从mIndexOfSpan拿出当前span的index，若没有此span或index是错误的，重新放入正确的span和index
+            Integer existing = mIndexOfSpan.get(mSpans[i]);
+            if (existing == null || existing != i) {
+                mIndexOfSpan.put(mSpans[i], i);
+            }
+        }
+        //修改完后mLowWaterMark置为无限大，意为所有的span都刷新了
+        mLowWaterMark = Integer.MAX_VALUE;
+	}
+	
+	//节点按spanStarts的大小正序排列
+	private void sortNodes()
+	{
+		//不变量1: span starts按顺序排列
         //这是一个简单的插入排序，因为我们希望它大部分已被排序
         //每次向后从数组中拿出一个元素，并与其之前的元素比较，直到找到一个正确的位置，将其插入这里，这样每次排序之后，在i之前的内容都是排好序的    
-        for (int i = 1; i < mSpanCount; i++) 
+		for (int i = 1; i < mSpanCount; i++) 
         {
             //如果当前元素比前面的元素更小，主动进行本次排序
             //注意，i之前的元素必然按顺序排列，因此只用与i-1比较就知道需不需要排序
@@ -1340,26 +1394,23 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 invalidateIndex(j);
             }
         }
+	}
 
+    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少恢复会越快)
+    private void restoreInvariants() 
+    {
+        if (mSpanCount == 0) return;
+
+		//不变量1: span starts按顺序排列
+		//这是一个简单的插入排序，因为我们希望它大部分已被排序
+        sortNodes();
+		
         //不变量2: 使max是每个节点及其后代的最大跨度端点
         //从根节点开始，修正所有子节点的max值
         calcMax(treeRoot());
 
         //不变量3: mIndexOfSpan映射的索引修正
-        if (mIndexOfSpan == null) {
-            mIndexOfSpan = new IdentityHashMap<Object, Integer>();
-        }
-        //从被修改的下标开始，遍历之后的span，将span与正确的index重新绑定
-        for (int i = mLowWaterMark; i < mSpanCount; i++) 
-        {
-            //每次从mIndexOfSpan拿出当前span的index，若没有此span或index是错误的，重新放入正确的span和index
-            Integer existing = mIndexOfSpan.get(mSpans[i]);
-            if (existing == null || existing != i) {
-                mIndexOfSpan.put(mSpans[i], i);
-            }
-        }
-        //修改完后mLowWaterMark置为无限大，意为所有的span都刷新了
-        mLowWaterMark = Integer.MAX_VALUE;
+        correctIndexOfSpan();
     }
 
     //对mSpans的任何更新调用此函数，以便mIndexOfSpan可以被更新

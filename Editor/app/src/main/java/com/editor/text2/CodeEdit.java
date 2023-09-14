@@ -152,6 +152,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 				{
 					final wordIndex[] nodes = onFindNodes(st,en,editor,mWordLib);
 					onDrawNodes(st,en,editor,nodes);
+					invalidate();
 				}
 			};	
 			totals[i++] = run;

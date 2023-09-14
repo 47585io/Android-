@@ -1,10 +1,19 @@
 package com.editor.text2.base.share;
 import android.os.*;
+import android.util.*;
 
 public class HandlerQueue
 {
 	
-	public static void doTotals(Runnable[] totals,Handler handler){
+	public static void doTotals(Runnable[] totals,Handler handler)
+	{
+		if(totals==null || totals.length==0){
+			return;
+		}
+		if(handler==null){
+			handler = new Handler();
+			Log.e("Handler is null","");
+		}
 		doTotal(0,totals,handler);
 	}
 
