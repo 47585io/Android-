@@ -69,7 +69,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 setSpan(false, spans[i], st, en, fl, false);
             }
             //设置完span后一并刷新
-            restoreInvariants();
+            restoreInvariants(1);
         }
     }
     public static SpannableStringBuilderLite valueOf(CharSequence source)
@@ -376,7 +376,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//添加span之后一并刷新，如果没有添加则不用(此情况在EditableBlockList中出现概率较大)
 		//当然此刷新还可能包含updatedIntervalBounds时未刷新的内容
 		if(changed){
-			restoreInvariants();
+			restoreInvariants(1);
 		}
     }
 
@@ -472,11 +472,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
 		
 		mSpanCount-=markCount;
-		if(mSpanCount>0){
-			//在有序的数组中移除一些元素，不会打乱顺序
-			calcMax(treeRoot());
-			correctIndexOfSpan();
-		}
+		//在有序的数组中移除一些元素，不会打乱顺序
+		restoreInvariants(mSpanCount);
 	}
 	
 	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，如果真的修正了，就返回true */
@@ -644,8 +641,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 mSpanEnds[i] = end;
                 mSpanFlags[i] = flags;
                 if (send) {
-                    //是否要立刻修正index在map中的位置错误，或等待以后一并修正
-                    restoreInvariants();
+                    //是否要立刻修正index的位置错误，或等待以后一并修正
+                    restoreInvariants(i);
                 }
                 return;
             }
@@ -668,8 +665,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             mSpanMax = new int[sizeOfMax];
         }
         if (send) {
-            //需要发送事件，则更新数据，使用原本的start和end传递事件
-            restoreInvariants();
+            //需要发送事件，则更新数据，仅需从mSpanCount-1开始排序
+            restoreInvariants(mSpanCount-1);
         }
     }
 
@@ -705,10 +702,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
         if(send){
 			//在有序的数组中移除一个元素，不会打乱顺序
-			if(mSpanCount>0){
-				calcMax(treeRoot());
-				correctIndexOfSpan();
-			}
+			restoreInvariants(mSpanCount);
 		}
     }
 
@@ -1343,12 +1337,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	}
 	
 	//节点按spanStarts的大小正序排列
-	private void sortNodes()
+	private void sortNodes(int i)
 	{
-		//不变量1: span starts按顺序排列
         //这是一个简单的插入排序，因为我们希望它大部分已被排序
         //每次向后从数组中拿出一个元素，并与其之前的元素比较，直到找到一个正确的位置，将其插入这里，这样每次排序之后，在i之前的内容都是排好序的    
-		for (int i = 1; i < mSpanCount; i++) 
+		for (i=i<1 ? 1:i; i < mSpanCount; i++) 
         {
             //如果当前元素比前面的元素更小，主动进行本次排序
             //注意，i之前的元素必然按顺序排列，因此只用与i-1比较就知道需不需要排序
@@ -1386,13 +1379,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	}
 
     //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少恢复会越快)
-    private void restoreInvariants() 
+    private void restoreInvariants(int i) 
     {
         if (mSpanCount == 0) return;
 
 		//不变量1: span starts按顺序排列
 		//这是一个简单的插入排序，因为我们希望它大部分已被排序
-        sortNodes();
+        sortNodes(i);
 		
         //不变量2: 使max是每个节点及其后代的最大跨度端点
         //从根节点开始，修正所有子节点的max值
