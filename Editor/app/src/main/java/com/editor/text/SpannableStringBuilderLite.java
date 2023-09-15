@@ -291,6 +291,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return this;
     }
 
+	/* 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
 	private void change(final int start, final int end, CharSequence cs, int csStart, int csEnd) 
     {
         //删除文本的长度，插入的文本长度，溢出文本的长度(可以是负数)
@@ -347,7 +348,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
-			
             for (int i = 0; i < spans.length; i++) 
             {      
                 //只添加不重复的span
@@ -755,90 +755,78 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @param <t> * @return 跨度数组。
 	 如果找不到结果，则为空数组。 
      **/
-    public <T> T[] getSpans(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder) 
+	private <T> T[] getSpans(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder) 
     {
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
-
-        //统计范围内节点个数，并创建指定大小的数组
-		//若需要全部获取，则直接全部拷贝(此情况在EditableBlockList中出现概率较大)
-		boolean getAll = queryStart==0 && queryEnd==length() && kind==Object.class;
-        int count = getAll ? mSpanCount:countSpans(queryStart, queryEnd, kind, treeRoot());
-        if (count == 0) {
-            return EmptyArray.emptyArray(kind);
-        }
-        T[] ret = (T[]) Array.newInstance(kind, count);
-        final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-
-        //从根节点开始，找到范围内的所有节点
-        if(getAll)
+     
+		//如果要获取全部span，拷贝所有span
+		if(queryStart==0 && queryEnd==length() && kind==Object.class)
 		{
-			System.arraycopy(mSpans,0,ret,0,count);
+			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
+			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+			
+			System.arraycopy(mSpans,0,ret,0,mSpanCount);
 			if(sortByInsertionOrder){
-				for(int i=0;i<count;++i){
+				for(int i=0;i<mSpanCount;++i){
 					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
 					orderSortBuffer[i] = mSpanOrder[i];
 				}
 			}
-		}
-		else{
-			getSpansRec(queryStart, queryEnd, kind, treeRoot(), ret, prioSortBuffer,
-						orderSortBuffer, 0, sortByInsertionOrder);
+			
+			if (sortByInsertionOrder) {
+				sort(ret, prioSortBuffer, orderSortBuffer);
+				recycle(prioSortBuffer);
+				recycle(orderSortBuffer);
+			}
+			return ret;
 		}
 		
-        //如果需要排序，则按插入顺序排序
+		//创建列表，获取span
+		final List<T> retList = EditableBlockList.obtainList();
+		final List<Integer> prioList = sortByInsertionOrder ? EditableBlockList.obtainList():null;
+		final List<Integer> orderList = sortByInsertionOrder ? EditableBlockList.obtainList():null;
+		final int count = getSpansRec(queryStart,queryEnd,kind,treeRoot(),retList,prioList,orderList,0,sortByInsertionOrder);
+		
+	    //没找到span，提前回收列表
+		if(count==0){
+			EditableBlockList.recyleList(retList);
+			if(sortByInsertionOrder){
+				EditableBlockList.recyleList(prioList);
+				EditableBlockList.recyleList(orderList);
+			}
+			return EmptyArray.emptyArray(kind);
+		}
+		
+		//创建数组
+		T[] ret = (T[]) Array.newInstance(kind, count);
+		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+		
+		//将span拷贝到数组中
+		retList.toArray(ret);
+		if(sortByInsertionOrder){
+			for(int i=0;i<count;++i){
+				prioSortBuffer[i] = prioList.get(i);
+				orderSortBuffer[i] = orderList.get(i);
+			}	
+		}
+		
+		//回收列表
+		EditableBlockList.recyleList(retList);
+		if(sortByInsertionOrder){
+			EditableBlockList.recyleList(prioList);
+			EditableBlockList.recyleList(orderList);
+		}
+		
+        //如果需要排序，则按插入顺序排序，回收数组
         if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
             recycle(prioSortBuffer);
             recycle(orderSortBuffer);
         }
         return ret;
-    }
-
-    //从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
-    private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
-    {
-        int count = 0;
-        if ((i & 1) != 0) 
-        {
-            //若节点i不是叶子节点，先遍历其左子节点
-            int left = leftChild(i);
-            int spanMax = mSpanMax[left];
-            if (spanMax > mGapStart) {
-                spanMax -= mGapLength;
-            }
-            //若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
-            if (spanMax >= queryStart) {
-                count = countSpans(queryStart, queryEnd, kind, left);
-            }
-        }
-        if (i < mSpanCount)
-        {
-            //若节点i自己在范围内，count++
-            int spanStart = mSpanStarts[i];
-            if (spanStart > mGapStart) {
-                spanStart -= mGapLength;
-            }
-            if (spanStart <= queryEnd)
-            {
-                int spanEnd = mSpanEnds[i];
-                if (spanEnd > mGapStart) {
-                    spanEnd -= mGapLength;
-                }
-                if (spanEnd >= queryStart &&
-                    (spanStart == spanEnd || queryStart == queryEnd ||
-                    (spanStart != queryEnd && spanEnd != queryStart)) &&
-                    (Object.class == kind || kind.isInstance(mSpans[i]))) {
-                    count++;
-                }
-                //若节点i有右子节点，则从右子节点开始找(因为右子节点spanStart大于或等于i)
-                if ((i & 1) != 0) {
-                    count += countSpans(queryStart, queryEnd, kind, rightChild(i));
-                }
-            }
-        }
-        return count;
     }
 
     /** * 使用当前区间树节点下找到的跨度填充结果数组。 * 
@@ -854,8 +842,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 如果 false 则 * 具有优先级标志的跨度将在结果数组中进行排序。 
 	 * @param <t> * @return 找到的跨度总数。 
 	 */
-    @SuppressWarnings("unchecked")
-    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, T[] ret, int[] priority, int[] insertionOrder, int count, boolean sort)
+	@SuppressWarnings("unchecked")
+    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, List<T> ret, List<Integer> priority, List<Integer> insertionOrder, int count, boolean sort)
     {
         if ((i & 1) != 0) 
         {
@@ -894,26 +882,27 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 int target = count;
                 if (sort) {
                     //如果需要排序，我们还要添加该节点的优先级和插入顺序
-                    priority[target] = spanPriority;
-                    insertionOrder[target] = mSpanOrder[i];
+					priority.add(target,spanPriority);
+					insertionOrder.add(target,mSpanOrder[i]);
                 } 
                 else if (spanPriority != 0) 
                 {
                     //对具有优先级的元素进行插入排序，实际上是为即将添加的元素计算并留出一个位置
                     int j = 0;
                     for (; j < count; j++) {
-                        int p = getSpanFlags(ret[j]) & SPAN_PRIORITY;
+                        int p = getSpanFlags(ret.get(j)) & SPAN_PRIORITY;
                         if (spanPriority > p) break;
                     }
-                    System.arraycopy(ret, j, ret, j + 1, count - j);
                     target = j;
                 }
                 //将自己放入指定位置，但count每次指向最后的下一个元素
-                ret[target] = (T) mSpans[i];
+				ret.add(target,(T) mSpans[i]);
                 count++;
             }
             //若节点i有右子节点，则还可以从右子节点开始找(因为右子节点spanStart大于或等于i)
-            if (count < ret.length && (i & 1) != 0) {
+            if ((i & 1) != 0) {
+				//为什么count直接被赋值？ 因为count是递归累加的，它从传递的count开始，再次加上自己找到的个数后返回
+				//这样做的原因是让count保持在数组当前最后一个元素的位置，以此按顺序放入元素
                 count = getSpansRec(queryStart, queryEnd, kind, rightChild(i), ret, priority,
                                     insertionOrder, count, sort);
             }

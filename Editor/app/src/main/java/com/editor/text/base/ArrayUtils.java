@@ -183,7 +183,7 @@ public class ArrayUtils
 			//不难发现，当最后一次循环，row移动到high，那么此时row并无用，完全可以把tmp（中点）插入这里
 			//那么row和high相遇，
 			//row说：我左边都比tmp小
-			//high：我右边都比tmp大
+			//high说：我右边都比tmp大
 			//所以可以把tmp插入这里,这样tmp就移动到中间了 
 		}
 		list[low] = tmp; // 中点位置

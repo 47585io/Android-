@@ -1009,6 +1009,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             }
 			//若节点i有右子节点，则还可以从右子节点开始找(因为右子节点及其子节点spanStart大于或等于节点i的spanStart)
             if (count < ret.length && (i & 1) != 0) {
+				//为什么count直接被赋值？ 因为count是递归累加的，它从传递的count开始，再次加上自己找到的个数后返回
+				//这样做的原因是让count保持在数组当前最后一个元素的位置，以此按顺序放入元素
                 count = getSpansRec(queryStart, queryEnd, kind, rightChild(i), ret, priority,
 									insertionOrder, count, sort);
             }

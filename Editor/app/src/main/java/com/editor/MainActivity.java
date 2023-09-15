@@ -57,11 +57,11 @@ public class MainActivity extends Activity implements Runnable
 	@Override
 	public void run()
 	{
-		//LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		//mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
+		LinkedBlockingQueue queue = new LinkedBlockingQueue();
+		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
+		loadFileInThread("/storage/emulated/0/Linux/share.html");
 		//test();
 		//test2("/storage/emulated/0/Linux/2.java");
-		//loadFileInThread("/storage/emulated/0/Linux/1.java");
 	}
 	
 	public void loadFileInThread(String path)
@@ -74,8 +74,13 @@ public class MainActivity extends Activity implements Runnable
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		E.setPool(mPool);
-		E.reDrawTextS(0,E.getText().length());
+		//E.reDrawTextS(0,E.getText().length());
 		
+		Random rand = new Random();
+		for(int i = 0;i<1000;i+=1){
+			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 		//E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
 	
@@ -93,6 +98,7 @@ public class MainActivity extends Activity implements Runnable
 			li2.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		li.replace(5,10,li,0,li.length());
+		li.getSpans(0,9,Object.class);
 	}
 	
 	public void test2(String path)

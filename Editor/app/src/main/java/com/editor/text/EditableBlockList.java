@@ -1181,18 +1181,18 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 回收不使用的List，便于复用 */
 	private static int sBufferCount = 0;
 	private static final int sMaxBufferCount = 10000;
-	private static List<EditableBlock>[] sCachedBuffer = new List[100];
+	private static List[] sCachedBuffer = new List[100];
 	
-	synchronized private static List<EditableBlock> obtainList()
+	synchronized static List obtainList()
 	{
 		if(sBufferCount>0){
-			List<EditableBlock> buffer = sCachedBuffer[--sBufferCount];
+			List buffer = sCachedBuffer[--sBufferCount];
 			sCachedBuffer[sBufferCount] = null;
 			return buffer;
 		}
-		return new ArrayList<EditableBlock>();
+		return new ArrayList();
 	}
-	synchronized private static void recyleList(List<EditableBlock> buffer)
+	synchronized static void recyleList(List buffer)
 	{
 		buffer.clear();
 		if(sBufferCount<sMaxBufferCount){
