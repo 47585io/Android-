@@ -636,11 +636,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             Integer index = mIndexOfSpan.get(what);
             if (index != null)
             {
-                int i = index;
+                final int i = index;
+				final int ost = mSpanStarts[i];
+				final int oen = mSpanEnds[i];
                 mSpanStarts[i] = start;
                 mSpanEnds[i] = end;
                 mSpanFlags[i] = flags;
-                if (send) {
+                if (send && (ost!=start || oen!=end)) {
                     //是否要立刻修正index的位置错误，或等待以后一并修正
                     restoreInvariants(i);
                 }

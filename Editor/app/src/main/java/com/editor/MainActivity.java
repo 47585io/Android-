@@ -59,8 +59,8 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		loadFileInThread("/storage/emulated/0/Linux/share.html");
-		//test();
+		//loadFileInThread("/storage/emulated/0/Linux/share.html");
+		test();
 		//test2("/storage/emulated/0/Linux/2.java");
 	}
 	
@@ -88,10 +88,12 @@ public class MainActivity extends Activity implements Runnable
 	{
 		SpannableStringBuilderLite li = new SpannableStringBuilderLite("0123456789");
 		Random rand = new Random();
-		for(int i = 0;i<10;i+=1){
+		for(int i = 9;i>=0;i-=1){
 			li.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
-		li.setSpan(new ForegroundColorSpan(rand.nextInt()),0,6,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		Object span = new ForegroundColorSpan(rand.nextInt());
+		li.setSpan(span,0,6,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		li.setSpan(span,0,6,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		
 		SpannableStringBuilderLite li2 = new SpannableStringBuilderLite("0123456789");
 		for(int i = 0;i<10;i+=1){
