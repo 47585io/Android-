@@ -141,7 +141,7 @@ public class ArrayUtils
 	private static <T> void unckSort(T[] list, int low, int high, Comparator<T> com)
 	{
 		if (low < high){
-			int middle = getMiddle(list, low, high, com);    // 将list数组一分为二
+			int middle = getMiddle(list, low, high, com);    //将list数组一分为二
 			unckSort(list, low, middle - 1, com);    // 对左边进行递归排序
 			unckSort(list, middle + 1, high, com);    // 对右边进行递归排序
 		}
@@ -190,6 +190,36 @@ public class ArrayUtils
 		return low; // 返回中点的位置
 	}
 
+
+	private static int getMiddle(int[] list, int low, int high)
+	{
+		//数组的第一个值作为中点（分界点或关键数据）
+		int tmp = list[low]; 
+		while (low < high)
+		{
+			while (low < high && list[high] >= tmp){
+				high--;
+			}
+			//从右边开始找一个小于中点的数，挪至左边
+			//将其移动到list[low],此时list[low]==list[high]
+			list[low] = list[high]; 
+			
+			while (low < high && list[low] <= tmp){
+				low++;
+			}
+			//从左边开始找一个大于中点的数，将这个大于中点的数挪至右边
+			//可以挪到list[high]，因为list[high]已经挪到左边了
+			list[high] = list[low]; 
+			
+			//一直交换下去，直至row和high相遇，
+			//row说：我左边都比tmp小
+			//high说：我右边都比tmp大
+		}
+		//所以可以把tmp插入这里,这样tmp就移动到中间了
+		list[low] = tmp; 
+		return low; // 返回中点的位置
+	}
+	
 	/* 二分查找 */
 	public static <T> int binarySearch(T[] list, T value, int size, Comparator<T> com)
 	{

@@ -59,8 +59,8 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		//loadFileInThread("/storage/emulated/0/Linux/share.html");
-		test();
+		loadFileInThread("/storage/emulated/0/Linux/1.java");
+		//test();
 		//test2("/storage/emulated/0/Linux/2.java");
 	}
 	
@@ -74,13 +74,13 @@ public class MainActivity extends Activity implements Runnable
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		E.setPool(mPool);
-		//E.reDrawTextS(0,E.getText().length());
+		E.reDrawTextS(0,E.getText().length());
 		
-		Random rand = new Random();
+		/*Random rand = new Random();
 		for(int i = 0;i<1000;i+=1){
 			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}
+		}*/
 		//E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
 	
@@ -95,12 +95,15 @@ public class MainActivity extends Activity implements Runnable
 		li.setSpan(span,0,6,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		li.setSpan(span,0,6,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		
-		SpannableStringBuilderLite li2 = new SpannableStringBuilderLite("0123456789");
-		for(int i = 0;i<10;i+=1){
-			li2.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}
-		li.replace(5,10,li,0,li.length());
-		li.getSpans(0,9,Object.class);
+		try{
+			SpannableStringBuilderLite li2 = new SpannableStringBuilderLite("");
+			li2.replace(0,0,li,0,8);
+			for(int i = 0;i<10;i+=1){
+				li2.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			}
+			li.replace(5,10,li,0,li.length());
+			li.getSpans(0,9,Object.class);
+		}catch(Exception e){}	
 	}
 	
 	public void test2(String path)
