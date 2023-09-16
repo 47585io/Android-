@@ -344,17 +344,18 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
         //然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
 		
-		int changedCount = 0;
+		int updatedCount = 0;
         if (replacedLength > 0 && mSpanCount > 0)
         { 
             //修正所有在删除文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
 			//修正节点可能导致spanStarts和SpanMax错误，但IndexOfSpan仍是正确的
 			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和SpanMax，最好是在添加span之后一起刷新
-            changedCount = updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot());
-			//changedCount可能包含了一部分重复节点的端点，我们粗略地认为spanStart和spanEnd端点数量相同，但当changedCount为1和0时例外
-			changedCount = changedCount>1 ? changedCount/2:changedCount;
+            updatedCount = updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot());
+			//updatedCount可能包含了一部分重复节点的端点，我们粗略地认为spanStart和spanEnd端点数量相同，但当它为1和0时例外
+			updatedCount = updatedCount>1 ? updatedCount/2:updatedCount;
         }
-		
+	
+		int addCount = 0;
 		if (cs instanceof Spanned) 
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
@@ -379,21 +380,25 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 					//无效span不添加
                     if(!isInvalidSpan(span,copySpanStart,copySpanEnd,copySpanFlags)){
 						setSpan(false, span, copySpanStart, copySpanEnd, copySpanFlags, true);
-						changedCount++;
+						addCount++;
 					}
                 }
             }
         }
 		
-		//添加span之后一并刷新，如果没有添加则不用
-		//当然此刷新还可能包含updatedIntervalBounds时未刷新的内容
-		if(changedCount>mSpanCount/4){
+		//添加span之后一并刷新，当然此刷新还可能包含updatedIntervalBounds时未刷新的内容
+		if(updatedCount+addCount>mSpanCount/4){
 			//当大量的节点被修改，我们使用快速排序
 			quickRestoreInvariants();
 		}
-		else if(changedCount>0){
+		else if(updatedCount+addCount>0){
 			//小量节点被修改，使用插入排序
-			restoreInvariants(1);
+			if(updatedCount==0){
+				//纯添加时，被修改的span都在后面
+				restoreInvariants(mSpanCount-addCount);
+			}else{
+				restoreInvariants(1);
+			}
 		}
     }
 
@@ -592,6 +597,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	}
 	public boolean canRemoveSpan(Object span, int start, int end, boolean textIsRemoved)
 	{
+		if(mIndexOfSpan==null){
+			return false;
+		}
 		Integer index = mIndexOfSpan.get(span);
 		if(index!=null){
 			if(resolveGap(mSpanStarts[index])>=start && resolveGap(mSpanEnds[index])<=end){
@@ -773,6 +781,29 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     {
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
+		
+		//如果要获取全部span，拷贝所有span
+		if(queryStart==0 && queryEnd==length() && kind==Object.class)
+		{
+			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
+			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+
+			System.arraycopy(mSpans,0,ret,0,mSpanCount);
+			if(sortByInsertionOrder){
+				for(int i=0;i<mSpanCount;++i){
+					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
+					orderSortBuffer[i] = mSpanOrder[i];
+				}
+			}
+
+			if (sortByInsertionOrder) {
+				sort(ret, prioSortBuffer, orderSortBuffer);
+				recycle(prioSortBuffer);
+				recycle(orderSortBuffer);
+			}
+			return ret;
+		}
 		
 		//创建列表，获取span
 		final List<T> retList = EditableBlockList.obtainList();
@@ -1299,10 +1330,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (i < mSpanCount) 
         {
             //若i在有效的节点范围内，则计算自己的最大值
-            max = Math.max(max, mSpanEnds[i]);
+			max = max>=mSpanEnds[i] ? max:mSpanEnds[i];
             if ((i & 1) != 0){
                 //若i不是叶子节点，则计算右子节点的最大值，右侧子节点的下标必然大于i，因此若不在有效范围内可以不计算
-                max = Math.max(max, calcMax(rightChild(i)));
+				int maxRight = calcMax(rightChild(i));
+                max = max>=maxRight ? max:maxRight;
             }
         }
         //设置自己的最大值，并返回
@@ -1482,7 +1514,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     //对mSpans的任何更新调用此函数，以便mIndexOfSpan可以被更新
     private void invalidateIndex(int i) {
         //更新mLowWaterMark的值，表示此之前的span没有刷新
-        mLowWaterMark = Math.min(i, mLowWaterMark);
+        mLowWaterMark = i<=mLowWaterMark ? i:mLowWaterMark;
     }
 
     private static final InputFilter[] NO_FILTERS = new InputFilter[0];
