@@ -15,7 +15,7 @@ import java.util.*;
 
 
 public class Edit extends View implements TextWatcher,SelectionWatcher
-{ 
+{
 
 	private Cursor mCursor;
 	private ScrollBar mScrollBar;
@@ -515,11 +515,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//计算行高和行宽
 			float lineHeight = getLineHeight();
 			float leftPadding = getLeftPadding();
-
+			
 			//计算可视区域的行
 			int startLine = getLineForVertical(y);
 			int endLine = getLineForVertical(y+height);
-
+			
 			//计算可视区域的范围
 			int start = getLineStart(startLine);
 			int end = getLineStart(endLine+1);
@@ -551,7 +551,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			if(spanCount>0){
 			    replaceOverlappingSpansRange(start,end,mSpans,mSpanStarts,mSpanEnds);
 			}
-			//Log.w("Span", mText.printSpanOrders(mSpans));
 			
 			//绘制背景的Span
 			if(spanCount>0){
@@ -1282,14 +1281,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		public void setVisllble(int flag)
 		{
 			if(flag==GONE){
-				mLastRunnable = new R();
-				postDelayed(mLastRunnable,ScrollGnoeTime);
+				canDraw = false;
 			}
 			else if(flag==VISIBLE){
 				canDraw = true;
-				if(mLastRunnable!=null){
-				    getHandler().removeCallbacks(mLastRunnable);
-				}
 			}
 		}
 
@@ -1301,15 +1296,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 		}
 
-		class R implements Runnable
-		{
-			@Override
-			public void run()
-			{
-				canDraw = false;
-				invalidate();
-			}
-		}
 	}
 
 	@Override

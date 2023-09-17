@@ -1,8 +1,7 @@
 package com.editor.text2.builder.listenerInfo.listener.baselistener;
 
 import android.text.*;
-import com.editor.text2.base.*;
-import java.util.*;
+import com.editor.text2.base.share1.*;
 import com.editor.text2.builder.words.*;
 
 public abstract interface EditDrawerListener extends EditListener

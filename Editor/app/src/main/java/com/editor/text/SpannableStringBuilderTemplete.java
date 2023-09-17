@@ -1434,7 +1434,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//高度为h的节点i的右子节点是i + 2^(h - 1)
 	//任意节点的所有左子节点(及其索引)都小于它，所有右子节点都大于它
 	
-	//获取数组中间数，此下标是二叉树根节点的下标
+	//获取大于或等于mSpanCount的最小二叉树根节点的下标
 	private int treeRoot() {
 		//使用mSpanCount而不是arr.len，目的是让根节点保持在有效范围的中间位置
         return Integer.highestOneBit(mSpanCount) - 1;
@@ -1455,7 +1455,25 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//因此，遍历可以轻松地拒绝不包含与感兴趣区域重叠的跨度的子树
 	//请注意，mSpanMax[]对于索引 >=n 的内部节点也有有效值，但这些节点有索引 <n 的后代
 	//在这些情况下，它只表示其后代的最大跨度端，这是完美二叉树结构的结果，你也可以称它为二分区间树
-  
+	
+	//这个完美二叉树的遍历也是绝了
+	//对于左子节点，使用mSpanMax数组判断，因为它可能超出mSpanCount(也就是大于mSpanCount的内部节点的左子节点)
+	//对于右子节点，使用mSpanStarts数组判断，由于mSpanStarts长度不够，因此只要它超出mSpanCount，就不再遍历了(也没有必要)
+	//这样做的结果是，将只遍历mSpanCount内的节点，超出范围的节点只是作为一个搭手，用于遍历还在范围内的节点
+	//这也是为什么左子节点不用判断是否超出mSpanCount的原因，因为它必须这样才能遍历完成
+	/*
+	  例如一列数 0，1，2，3，4，5，6
+	  若表示为二叉树则是如下的结果:
+	          3
+	        ↙  ↘
+	      1        5
+	    ↙  ↘    ↙  ↘
+	   0     2   4     6
+
+	  又例如，mSpanCount=5，所以，下标为5的节点只是作为一个搭手，用于遍历下标为4的节点
+	  由于其本身已经等于mSpanCount，所以它的右子节点更不可能在范围内了，因此下标为5和6的节点都不需要遍历
+	*/
+	
 	//注意，此函数总是递归更新节点i及其之下的所有子节点的mSpanMax值
 	//注意，对于任意n，此树的内部节点可能 >= n，因此，节点i的递归遍历的一般结构是:
 	//若i不是叶子节点，则计算所有左侧子节点的最大值
@@ -1474,6 +1492,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
             max = Math.max(max, mSpanEnds[i]);
             if ((i & 1) != 0){
 				//若i不是叶子节点，则计算右子节点的最大值，右侧子节点的下标必然大于i，因此若不在有效范围内可以不计算
+				//但是，若i刚好是临近mSpanCount的下标(如mSpanCount-1)，则其右子节点下标将超出mSpanCount
+				//为什么不制止遍历呢，因为对于索引 >=n 的内部节点有索引 <n 的后代，这意味着，此右子节点虽无效，但它有在有效范围内的左子节点
+				//因此，我们只是借右子节点之手，遍历还处于范围内的左子节点，由于右子节点本身>n，因此它自己和自己的右子节点不会遍历
+				//但是，在最后它仍会设置自己的最大值，为了防止下标超出，所以mSpanMax数组的大小应大于mSpanCount，并且至少包含临近mSpanCount的最小右子节点的位置
+				//根据完美二叉树的特性，根节点在treeRoot处，因此treeRoot应该二分了整个mSpanMax数组，所以mSpanMax的最小大小为(2*treeRoot)+1
                 max = Math.max(max, calcMax(rightChild(i)));
             }
         }
@@ -1564,7 +1587,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	//用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
 	//mSpanStarts是最重要的，其总是正序排列，而节点之下的最大区间是用mSpanMax表示的
 	//虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
-	//另外二叉树的顺序是从mSpanCount/2这个下标开始二分得到的
+	//另外二叉树的顺序是从mSpanCount最高位的值这个下标开始二分得到的，可能大于mSpanCount
 	
 	private Object[] mSpans; //存储每个节点所代表的span
     private int[] mSpanStarts; //存储每个节点在文本中的起始位置

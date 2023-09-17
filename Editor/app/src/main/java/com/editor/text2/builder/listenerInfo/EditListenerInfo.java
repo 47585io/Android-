@@ -3,24 +3,16 @@ import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
 
 public abstract interface EditListenerInfo
 {
+	
+	public static final int DrawerIndex = 0;
 
-	public static final int FinderIndex = 0;
+	public static final int FormatorIndex = 1;
+	
+	public static final int CompletorIndex = 2;
 
-	public static final int DrawerIndex = 1;
+	public static final int CanvaserIndex = 3;
 
-	public static final int FormatorIndex = 2;
-
-	public static final int InsertorIndex = 3;
-
-	public static final int CompletorIndex = 4;
-
-	public static final int CanvaserIndex = 5;
-
-	public static final int RunnarIndex = 6;
-
-	public static final int LineCheckerIndex = 7;
-
-	public static final int SelectionSeerIndex = 8;
+	public static final int RunnarIndex = 4;
 
 
 	public abstract boolean addAListener(EditListener li)

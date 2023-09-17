@@ -1,13 +1,11 @@
 package com.editor.text2.builder.listenerInfo.listener;
 
 import android.text.*;
-import android.util.*;
-import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
-import java.util.*;
-import com.editor.text2.base.*;
-import com.editor.text2.builder.words.*;
-import com.editor.text2.base.share.*;
 import com.editor.text.*;
+import com.editor.text2.base.share1.*;
+import com.editor.text2.base.share4.*;
+import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
+import com.editor.text2.builder.words.*;
 
 
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener

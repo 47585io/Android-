@@ -1,16 +1,17 @@
 package com.editor.text2.builder;
 
 import android.text.*;
-import com.editor.text2.base.*;
+import android.text.style.*;
+import com.editor.text.base.*;
+import com.editor.text2.base.share1.*;
 import com.editor.text2.builder.listenerInfo.*;
 import com.editor.text2.builder.listenerInfo.listener.*;
 import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
 import java.util.*;
+
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 import static com.editor.text2.builder.words.Words.*;
-import android.text.style.*;
-import com.editor.text.base.*;
 
 public class CodeEditBuilder implements EditBuilder
 {

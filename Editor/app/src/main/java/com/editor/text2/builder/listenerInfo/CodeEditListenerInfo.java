@@ -12,8 +12,6 @@ public class CodeEditListenerInfo implements EditListenerInfo
 	{
 		mlistenerS = new HashMap<>();
 		//我们希望它们一开始就是EditListenerList
-		mlistenerS.put(FinderIndex,new myEditListenerList());
-		mlistenerS.put(InsertorIndex,new myEditListenerList());
 		mlistenerS.put(CompletorIndex,new myEditListenerList());
 		mlistenerS.put(CanvaserIndex,new myEditListenerList());
 	}

@@ -3,15 +3,17 @@ package com.editor.text2;
 import android.content.*;
 import android.text.*;
 import com.editor.text.*;
-import com.editor.text2.base.*;
-import java.util.*;
-import android.text.style.*;
+import com.editor.text2.base.share1.*;
+import com.editor.text2.base.share4.*;
 import com.editor.text2.builder.*;
+import com.editor.text2.builder.listenerInfo.*;
 import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
-import com.editor.text2.builder.listenerInfo.*;
+import java.util.*;
 import java.util.concurrent.*;
-import com.editor.text2.base.share.*;
+import android.widget.*;
+import android.view.*;
+import android.graphics.*;
 
 
 public class CodeEdit extends Edit implements EditBuilderUser
@@ -21,11 +23,13 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	private EditListenerInfo mListenerInfo;
 	private EditBuilder mEditBuilder;
 	
+	private ThreadPoolExecutor mPool;
+	private ListView mWindow;
+	
 	private Stack<token> mLast, mNext;
 	private int mPrivateFlags;
 	public static int mPublicFlags;
 	
-	private ThreadPoolExecutor mPool;
 	
 	public CodeEdit(Context cont){
 		super(cont);
@@ -117,6 +121,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			@Override
 			public void run(){
 				onDrawNodes(start,end,getText(),nodes);
+				invalidate();
 			}
 		};
 		post(runDraw);
@@ -433,6 +438,38 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	public int getFlags(){
 		return mPrivateFlags;
 	}
+
 	
+	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+	{
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		//mWindow.measure(widthMeasureSpec,heightMeasureSpec);
+	}
+
+	@Override
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom)
+	{
+		super.onLayout(changed, left, top, right, bottom);
+	}
+
+	
+// bbb
+	
+	
+	
+	@Override
+	protected void dispatchDraw(Canvas canvas)
+	{
+		
+		super.dispatchDraw(canvas);
+	}
+	
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent event)
+	{
+		return super.dispatchTouchEvent(event);
+	}
 	
 }

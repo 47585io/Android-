@@ -17,9 +17,7 @@ import android.util.*;
 public class MainActivity extends Activity implements Runnable
 {
 	
-	public static final Handler mHamdler = new Handler();
 	private ThreadPoolExecutor mPool;
-	private CodeEdit E;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -27,8 +25,8 @@ public class MainActivity extends Activity implements Runnable
         super.onCreate(savedInstanceState);
 		getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-		//requestWindowFeature(Window.FEATURE_NO_TITLE);
-        mHamdler.postDelayed(this,50);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+        runOnUiThread(this);
     }
 
 	@Override
@@ -48,7 +46,7 @@ public class MainActivity extends Activity implements Runnable
 				test();
 				break;
 			case 1:
-				E.Redo();
+				//E.Redo();
 				break;
 		}
 		return super.onMenuItemSelected(featureId, item);
@@ -64,17 +62,33 @@ public class MainActivity extends Activity implements Runnable
 		//test2("/storage/emulated/0/Linux/2.java");
 	}
 	
-	public void loadFileInThread(String path)
+	public void loadFileInThread(final String path)
 	{
-		myReader reader = new myReader(path);
-		String text = reader.r("UTF-8");
-	    CodeEdit E = new CodeEdit(this);
-		E.setText(text,0,text.length());
-	
-		setContentView(E);
-		E.getLayoutParams().height=2180;
-		E.setPool(mPool);
-		E.reDrawTextS(0,E.getText().length());
+		Runnable run = new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				myReader reader = new myReader(path);
+				final CodeEdit E = new CodeEdit(MainActivity.this);
+				String text = reader.r("UTF-8");
+				E.setText(text,0,text.length());
+				E.setPool(mPool);
+				
+				Runnable run2 = new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						setContentView(E);
+						E.getLayoutParams().height=2180;
+						E.reDrawTextS(0,E.getText().length());
+					}
+				};
+				runOnUiThread(run2);
+			}
+		};
+		mPool.execute(run);
 		
 		/*Random rand = new Random();
 		for(int i = 0;i<1000;i+=1){

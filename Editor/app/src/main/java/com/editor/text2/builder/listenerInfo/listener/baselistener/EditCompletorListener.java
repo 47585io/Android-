@@ -1,9 +1,8 @@
 package com.editor.text2.builder.listenerInfo.listener.baselistener;
 
 import android.text.*;
-import java.util.*;
+import com.editor.text2.base.share2.*;
 import com.editor.text2.builder.words.*;
-import com.editor.text2.base.share.*;
 
 public abstract interface EditCompletorListener extends EditListener
 {
