@@ -68,7 +68,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 	
-	private static final int Default_MaxCount = 1024;
+	private static final int Default_MaxCount = 1280;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -145,6 +145,10 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(mBlockSize==0){
 			//在没有文本块时，必须重新添加以复活
 			addBlock(0,true);
+		}
+		if(AutoReleaseExcessMemory){
+			//释放多余空间
+			ReleaseExcessMemory();
 		}
 	}
 	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */

@@ -57,10 +57,10 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		//loadFileInThread("/storage/emulated/0/Linux/1.java");
+		loadFileInThread("/storage/emulated/0/Linux/1.java");
 		//test();
 		//test2("/storage/emulated/0/Linux/2.java");
-		test3();
+		//test3();
 	}
 	
 	public void loadFileInThread(final String path)

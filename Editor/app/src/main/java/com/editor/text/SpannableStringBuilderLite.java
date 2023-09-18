@@ -307,7 +307,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//在修改前判断范围错误，防止之后出现无法挽回的损失
         checkRange("replace", start, end);
 		//过滤文本
-        for (int i = 0; i < mFilters.length; i++) 
+        for (int i=0; i<mFilters.length; i++) 
 		{
             CharSequence repl = mFilters[i].filter(tb, tbstart, tbend, this, start, end);
             if (repl != null) {
@@ -324,6 +324,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }     
         //改变文本和span
         change(start, end, tb, tbstart, tbend);
+		if(AutoReleaseExcessMemory && origLen>newLen){
+			//释放多余空间
+			ReleaseExcessMemory();
+		}
         return this;
     }
 
@@ -344,6 +348,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
         final boolean textIsRemoved = replacementLength == 0;
         //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
+		//由于文本还未插入，所以不要在此时释放多余空间，避免数组长度不够
         if (replacedLength > 0 && mSpanCount > 0)
 		{
 			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)
@@ -602,6 +607,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         clearSpans();
 		mGapStart = 0;
 		mGapLength = mText.length;
+		if(AutoReleaseExcessMemory){
+			ReleaseExcessMemory();
+		}
     }
 	//清空所有的span
     public void clearSpans() 
@@ -615,6 +623,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 		mSpanCount = 0;
         mSpanInsertCount = 0;
+		if(AutoReleaseExcessMemory){
+			ReleaseExcessMemory();
+		}
     }
 	
 	/* 实现接口 */
@@ -729,6 +740,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     public void removeSpan(Object what) {
         removeSpan(what, 0, true);
     }
+	//外部调用函数，会释放多余空间
     public void removeSpan(Object what, int flags, boolean send)
     {
         if (mIndexOfSpan == null) return;
@@ -736,10 +748,15 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         Integer i = mIndexOfSpan.remove(what);
         if (i != null) {
             removeSpan(i.intValue(), flags, send);
+			if(AutoReleaseExcessMemory){	
+			    //移除span时才需要释放空间
+				ReleaseExcessMemory();
+			}
         }
     }
+	
     //注意:调用者负责删除mIndexOfSpan条目
-    //与setSpan相反，移除span会打乱前面的索引，因此需要立刻刷新
+    //此为文本修改时调用的removeSpan函数，不会释放多余空间
     private void removeSpan(int i, int flags, boolean send) 
     {
         //要移除此span，其实就是把此span之后的span全部往前挪一位
@@ -794,7 +811,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	public <T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
 		return getSpans(queryStart, queryEnd, kind, false);
 	}
-
+	
     /*** 返回指定类型跨度的数组，这些范围与指定的文本范围重叠。 
 	 种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
 	 * * @param querystart 开始索引。 

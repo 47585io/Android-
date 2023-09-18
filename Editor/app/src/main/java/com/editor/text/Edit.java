@@ -75,6 +75,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mEditableFactory = fa;
 		mText.setEditableFactory(fa);
 	}
+	public void setAutoReleaseExcessMemory(boolean auto){
+		mText.setAutoReleaseExcessMemory(auto);
+	}
 	public void setTextColor(int color){
 		mPaint.setColor(color);
 	}
@@ -111,6 +114,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	public Editable getText(){
 		return mText;
+	}
+	public int getTextWatcherDepth(){
+		return mText.getTextWatcherDepth();
 	}
 	
 	public void append(CharSequence text,int start,int end){
