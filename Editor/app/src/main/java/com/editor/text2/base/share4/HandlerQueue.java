@@ -19,7 +19,7 @@ public class HandlerQueue
 		doTotal(0,totals,handler);
 	}
 
-	/* 递归进行post，如果单个任务需要进行长时间前台操作必须使用 */
+	/* 递归进行post，如果任务很多且需要进行长时间前台操作必须使用 */
 	private static void doTotal(final int index,final Runnable[] totals,final Handler handler)
 	{
 		if(index>=totals.length){

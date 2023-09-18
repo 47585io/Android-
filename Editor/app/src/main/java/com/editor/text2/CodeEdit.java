@@ -141,7 +141,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	
 	public void reDrawTextS(int start, int end)
 	{
-		final int once = 5000;
+		final int once = 2500;
 		final int len = end-start;
 		final int count = len%once==0 ? len/once:len/once+1;
 		final Editable editor = getText();
@@ -157,7 +157,6 @@ public class CodeEdit extends Edit implements EditBuilderUser
 				{
 					final wordIndex[] nodes = onFindNodes(st,en,editor,mWordLib);
 					onDrawNodes(st,en,editor,nodes);
-					invalidate();
 				}
 			};	
 			totals[i++] = run;

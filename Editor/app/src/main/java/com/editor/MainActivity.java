@@ -73,7 +73,10 @@ public class MainActivity extends Activity implements Runnable
 				myReader reader = new myReader(path);
 				final CodeEdit E = new CodeEdit(MainActivity.this);
 				String text = reader.r("UTF-8");
+				long last = System.currentTimeMillis();
 				E.setText(text,0,text.length());
+				long now = System.currentTimeMillis();
+				Log.w("SetText",""+(now-last));
 				E.setPool(mPool);
 				
 				Runnable run2 = new Runnable()

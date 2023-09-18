@@ -313,8 +313,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }     
         //改变文本和span
         change(start, end, tb, tbstart, tbend);
-		if(AutoReleaseExcessMemory && origLen>newLen){
-			//释放多余空间
+		if(AutoReleaseExcessMemory){
+			//修改后释放多余空间
 			ReleaseExcessMemory();
 		}
         return this;
