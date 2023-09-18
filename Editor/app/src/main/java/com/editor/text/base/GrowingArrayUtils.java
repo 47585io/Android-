@@ -2,6 +2,7 @@ package com.editor.text.base;
 
 public final class GrowingArrayUtils
 {
+	
     /** 
 	 * 将元素附加到数组的末尾，如果没有更多空间，则会增加数组。
 	 * @param array 追加元素的数组。 这不能为空。

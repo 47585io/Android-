@@ -65,7 +65,9 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int MaxCount;
 	private int ReserveCount;
 	private int mTextWatcherDepth;
+	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
+	
 	private static final int Default_MaxCount = 1024;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
@@ -116,6 +118,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void addBlock(int i, boolean send)
 	{
 		EditableBlock block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
+		block.setAutoReleaseExcessMemory(AutoReleaseExcessMemory);
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -138,6 +141,10 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(send){
 			refreshInvariants(i);
 			sendBlockRemoved(i);
+		}
+		if(mBlockSize==0){
+			//在没有文本块时，必须重新添加以复活
+			addBlock(0,true);
 		}
 	}
 	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
@@ -227,11 +234,11 @@ public class EditableBlockList extends Object implements EditableBlock
 	{
 		//找到临近的位置，然后从此处开始
 		int id = index/(MaxCount-ReserveCount);
-		if(id<0){
-			id=0;
-		}
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
+		}
+		if(id<0){
+			id=0;
 		}
 		int nowIndex = mBlockStarts[id];
 
@@ -1055,6 +1062,22 @@ public class EditableBlockList extends Object implements EditableBlock
 	@Override
 	public InputFilter[] getFilters(){
 		return mFilters;
+	}
+
+	@Override
+	public void setAutoReleaseExcessMemory(boolean auto)
+	{
+		AutoReleaseExcessMemory = auto;
+		for(int i=0;i<mBlockSize;++i){
+			mBlocks[i].setAutoReleaseExcessMemory(auto);
+		}
+	}
+	private void ReleaseExcessMemory()
+	{
+		if(mBlocks.length > mBlockSize*3){
+			mBlocks = ArrayUtils.copyNewArray(EditableBlock.class,mBlocks,mBlockSize,mBlockSize);
+			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,mBlockSize);
+		}
 	}
 	
 	

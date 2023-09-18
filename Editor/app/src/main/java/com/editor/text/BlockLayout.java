@@ -254,11 +254,11 @@ _______________________________________
 	{
 		int div = lineCount/mBlockSize;
 		int id = div>1 ? line/div:line;
-		if(id<0){
-			id = 0;
-		}
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
+		}
+		if(id<0){
+			id = 0;
 		}
 		int nowLine = mStartLines[id];
 

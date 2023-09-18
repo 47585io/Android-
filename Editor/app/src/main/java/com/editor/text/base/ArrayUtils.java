@@ -73,6 +73,50 @@ public class ArrayUtils
 		return size;
 	}
 	
+	/* 创建一个新数组并拷贝原数组中的内容 */
+	public static<T> T[] copyNewArray(Class<T> kind, T[] array, int oldSize, int newSize)
+	{
+		T[] newArray = ArrayUtils.newUnpaddedArray(kind,newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static boolean[] copyNewBooleanArray(boolean[] array, int oldSize, int newSize)
+	{
+		boolean[] newArray = ArrayUtils.newUnpaddedBooleanArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static char[] copyNewCharArray(char[] array, int oldSize, int newSize)
+	{
+		char[] newArray = ArrayUtils.newUnpaddedCharArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static int[] copyNewIntArray(int[] array, int oldSize, int newSize)
+	{
+		int[] newArray = ArrayUtils.newUnpaddedIntArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static long[] copyNewLongArray(long[] array, int oldSize, int newSize)
+	{
+		long[] newArray = ArrayUtils.newUnpaddedLongArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static float[] copyNewFloatArray(float[] array, int oldSize, int newSize)
+	{
+		float[] newArray = ArrayUtils.newUnpaddedFloatArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	public static double[] copyNewDoubleArray(double[] array, int oldSize, int newSize)
+	{
+		double[] newArray = ArrayUtils.newUnpaddedDoubleArray(newSize);
+		System.arraycopy(array,0,newArray,0,oldSize);
+		return newArray;
+	}
+	
 	/* 在数组中向后寻找指定元素，找到了返回它的下标，从index开始 */
 	public static <T> int indexOf(T[] array, T value, int index)
 	{
@@ -100,7 +144,6 @@ public class ArrayUtils
         }
         return -1;
     }
-
 	public static int lastIndexOf(char[] array, char value, int index)
 	{
         if (array == null || index>=array.length) return -1;
@@ -118,7 +161,6 @@ public class ArrayUtils
         }
         return -1;
     }
-
 	public static int lastIndexOf(int[] array, int value, int index)
 	{
         if (array == null || index>=array.length) return -1;

@@ -57,9 +57,10 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		loadFileInThread("/storage/emulated/0/Linux/1.java");
+		//loadFileInThread("/storage/emulated/0/Linux/1.java");
 		//test();
 		//test2("/storage/emulated/0/Linux/2.java");
+		test3();
 	}
 	
 	public void loadFileInThread(final String path)
@@ -134,6 +135,14 @@ public class MainActivity extends Activity implements Runnable
 			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
+	}
+	
+	public void test3()
+	{
+		Edit E = new Edit(this);
+		E.setText("012345",0,6);
+		setContentView(E);
+		E.getLayoutParams().height=2180;
 	}
 	
 }

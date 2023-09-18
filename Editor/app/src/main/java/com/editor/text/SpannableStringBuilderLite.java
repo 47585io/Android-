@@ -112,12 +112,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return i > mGapStart ? i - mGapLength : i;
     }
 
-    /*修改数组的长度的同时修改间隙缓冲区的大小*/
+    /*修改文本数组的长度的同时修改间隙缓冲区的大小*/
     private void resizeFor(int size) 
     {
         final int oldLength = mText.length;
-        if (size + 1 <= oldLength) {
-            //size小于或等于原大小
+        if (size+1 <= length()) {
+            //假设最少额外扩展1个元素后，size仍装不下文本，或者装满了但间隙缓冲区已经没有长度了
             return;
         }
 
@@ -127,7 +127,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final int newLength = newText.length;
         //新增的长度，可以是负数，负数代表缩小数组长度
         final int delta = newLength - oldLength;
-        //原数组中间隙缓冲区的末尾
+        //原数组中间隙缓冲区之后的内容的长度
         final int after = oldLength - (mGapStart + mGapLength);
         //将原数组中间隙缓冲区之后的字符也拷贝到新数组末尾，中间多预留一些位置以扩展间隙缓冲区大小(请注意，间隙缓冲区的大小永远是数组中空闲的大小)
         System.arraycopy(mText, oldLength - after, newText, newLength - after, after);
@@ -142,7 +142,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
 			if(mGapStart>length()*0.75){
 				//遍历在间隙缓冲区之后的span，并将范围增加delta
-				resizeForSpans(delta,treeRoot());
+				moveSpansPoint(delta,treeRoot());
 			}
 			else{
 				//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
@@ -157,14 +157,14 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     }
 	
 	/* 递归增大缓冲区之后的span */
-	private void resizeForSpans(int delta, int i) 
+	private void moveSpansPoint(int delta, int i) 
 	{
 		if((i & 1) != 0)
 		{
 			//左子节点需要在mGapStart后面
 			int left = leftChild(i);
 			if(mSpanMax[left] > mGapStart){
-				resizeForSpans(delta,left);
+				moveSpansPoint(delta,left);
 			}
 		}
 		if(i<mSpanCount)
@@ -174,8 +174,32 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
 			//无法保证右子节点不在后面
 			if((i & 1) != 0){
-				resizeForSpans(delta,rightChild(i));
+				moveSpansPoint(delta,rightChild(i));
 			}
+		}
+	}
+	
+	/* 修改span数组的大小 */
+	private void resizeForSpans(int size)
+	{
+        if (size+1 < mSpanCount) {
+            //size无法装入全部span
+            return;
+        }
+		
+        //这些数组都是同时添加元素，因此它们长度相等
+		mSpans = ArrayUtils.copyNewArray(Object.class,mSpans,mSpanCount,GrowingArrayUtils.growSize(size));
+		mSpanStarts = ArrayUtils.copyNewIntArray(mSpanStarts,mSpanCount,GrowingArrayUtils.growSize(size));
+		mSpanEnds = ArrayUtils.copyNewIntArray(mSpanEnds,mSpanCount,GrowingArrayUtils.growSize(size));
+		mSpanFlags = ArrayUtils.copyNewIntArray(mSpanFlags,mSpanCount,GrowingArrayUtils.growSize(size));
+		mSpanOrder = ArrayUtils.copyNewIntArray(mSpanOrder,mSpanCount,GrowingArrayUtils.growSize(size));
+
+		//mSpanMax数组的大小是最小区间树的大小
+		int sizeOfMax = 2 * treeRoot() + 1;
+		if(mSpanMax.length > sizeOfMax){
+			int[] newSpanMax = new int[sizeOfMax];
+			System.arraycopy(mSpanMax,0,newSpanMax,0,newSpanMax.length);
+			mSpanMax = newSpanMax;
 		}
 	}
 
@@ -243,36 +267,31 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mGapStart = where;
     }
 	
-    public SpannableStringBuilderLite append(CharSequence text){
-        int length = length();
-        return replace(length, length, text, 0, text.length());
+	public SpannableStringBuilderLite append(char text) {
+        return append(String.valueOf(text));
     }
-    public SpannableStringBuilderLite append(CharSequence text, Object what, int flags){
-        int start = length();
-        append(text);
-        setSpan(what, start, length(), flags);
-        return this;
+    public SpannableStringBuilderLite append(CharSequence text){
+        return append(text, 0, text.length());
     }
     public SpannableStringBuilderLite append(CharSequence text, int start, int end) {
         int length = length();
         return replace(length, length, text, start, end);
     }
-    public SpannableStringBuilderLite append(char text) {
-        return append(String.valueOf(text));
+	public SpannableStringBuilderLite append(CharSequence text, Object what, int flags){
+        int start = length();
+        append(text);
+        setSpan(what, start, length(), flags);
+        return this;
     }
 
+	public SpannableStringBuilderLite insert(int where, CharSequence tb) {
+        return replace(where, where, tb, 0, tb.length());
+    }
     public SpannableStringBuilderLite insert(int where, CharSequence tb, int start, int end) {
         return replace(where, where, tb, start, end);
     }
-    public SpannableStringBuilderLite insert(int where, CharSequence tb) {
-        return replace(where, where, tb, 0, tb.length());
-    }
     public SpannableStringBuilderLite delete(int start, int end) {
-        SpannableStringBuilderLite ret = replace(start, end, "", 0, 0);
-        //删除文本后，间隙缓冲区大小过大，重新调整大小
-        if (mGapLength > 2 * length())
-            resizeFor(length());
-        return ret; 
+        return replace(start, end, "", 0, 0); 
     }
     public SpannableStringBuilderLite replace(int start, int end, CharSequence tb) {
         return replace(start, end, tb, 0, tb.length());
@@ -1254,6 +1273,23 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     public InputFilter[] getFilters() {
         return mFilters;
     }
+	
+	/* 设置是否自动释放多余内存 */
+	public void setAutoReleaseExcessMemory(boolean auto){
+		AutoReleaseExcessMemory = auto;
+	}
+	private void ReleaseExcessMemory()
+	{
+		//大小应至少超出2倍，防止GrowingArrayUtils重新扩大为2倍，陷入死循环
+		//修改文本数组大小时，也要修改缓冲区大小，应该改变span的位置
+		if(mGapLength > length()*2){
+			resizeFor(length());
+		}
+		//仅修改span数组大小时，与文本无关
+		if(mSpans.length > mSpanCount*3){
+			resizeForSpans(mSpanCount);
+		}
+	}
 
 
     //树的基本术语:
@@ -1572,6 +1608,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int mSpanCount;  //节点个数
     private IdentityHashMap<Object, Integer> mIndexOfSpan; //存储节点在数组中的下标
     private int mLowWaterMark;  //在此之前的索引没有被触及
+	private boolean AutoReleaseExcessMemory;  //是否自动释放多余内存
 
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
     private static final int MARK = 1;
