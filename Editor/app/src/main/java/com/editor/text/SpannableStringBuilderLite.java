@@ -277,12 +277,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         int length = length();
         return replace(length, length, text, start, end);
     }
-	public SpannableStringBuilderLite append(CharSequence text, Object what, int flags){
-        int start = length();
-        append(text);
-        setSpan(what, start, length(), flags);
-        return this;
-    }
 
 	public SpannableStringBuilderLite insert(int where, CharSequence tb) {
         return replace(where, where, tb, 0, tb.length());
@@ -297,18 +291,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return replace(start, end, tb, 0, tb.length());
     }
 
-    /** 
-     * 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置
-     * 若范围内设置了SpanWatcher和TextWatcher，则会连带发送事件
-     * 若范围内设置了光标的Span，则连带改变光标位置
-     */
+    /** 替换start~end范围的文本为tb中的tbstart~tbend之间的文本，并改变span的位置 */
     public SpannableStringBuilderLite replace(final int start, final int end, CharSequence tb, int tbstart, int tbend)
     {
 		//在修改前判断范围错误，防止之后出现无法挽回的损失
         checkRange("replace", start, end);
 		//过滤文本
-        for (int i=0; i<mFilters.length; i++) 
-		{
+        for (int i=0; i<mFilters.length; i++) {
             CharSequence repl = mFilters[i].filter(tb, tbstart, tbend, this, start, end);
             if (repl != null) {
                 tb = repl;
@@ -741,7 +730,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         removeSpan(what, 0, true);
     }
 	//外部调用函数，会释放多余空间
-    public void removeSpan(Object what, int flags, boolean send)
+    private void removeSpan(Object what, int flags, boolean send)
     {
         if (mIndexOfSpan == null) return;
         //获取span的下标，并移除它
@@ -754,7 +743,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
         }
     }
-	
     //注意:调用者负责删除mIndexOfSpan条目
     //此为文本修改时调用的removeSpan函数，不会释放多余空间
     private void removeSpan(int i, int flags, boolean send) 

@@ -1079,8 +1079,8 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void ReleaseExcessMemory()
 	{
 		if(mBlocks.length > mBlockSize*3){
-			mBlocks = ArrayUtils.copyNewArray(EditableBlock.class,mBlocks,mBlockSize,mBlockSize);
-			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,mBlockSize);
+			mBlocks = ArrayUtils.copyNewArray(EditableBlock.class,mBlocks,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
+			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
 		}
 	}
 	
