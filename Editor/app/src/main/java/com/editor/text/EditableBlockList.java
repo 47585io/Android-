@@ -1217,7 +1217,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			sCachedBuffer[sBufferCount] = null;
 			return buffer;
 		}
-		return new ArrayList();
+		return new IdentityArrayList();
 	}
 	synchronized static void recyleList(List buffer)
 	{
@@ -1238,7 +1238,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			setBuffer[setCount] = null;
 			return buffer;
 		}
-		return new LinkedHashSet();
+		return new IdentityHashSet();
 	}
 	synchronized private static void recyleSet(Set buffer)
 	{

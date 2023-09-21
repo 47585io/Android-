@@ -14,7 +14,7 @@ import java.util.concurrent.*;
 import android.widget.*;
 import android.view.*;
 import android.graphics.*;
-
+import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 
 public class CodeEdit extends Edit implements EditBuilderUser
 {
@@ -113,6 +113,24 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		return null;
 	}
 	
+	
+	public EditListener getDrawer(){
+		return mListenerInfo.findAListener(DrawerIndex);
+	}
+	public EditListener getFormator(){
+		return mListenerInfo.findAListener(FormatorIndex);
+	}
+	public EditListener getCompletor(){
+		return mListenerInfo.findAListener(CompletorIndex);
+	}
+	public EditListener getCanvaser(){
+		return mListenerInfo.findAListener(CanvaserIndex);
+	}
+	public EditListener getRunnar(){
+		return mListenerInfo.findAListener(RunnarIndex);
+	}
+	
+	
 	public void reDrawText(final int start, final int end)
 	{
 		final wordIndex[] nodes = onFindNodes(start,end,getText(),mWordLib);
@@ -141,7 +159,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	
 	public void reDrawTextS(int start, int end)
 	{
-		final int once = 2500;
+		final int once = 5000;
 		final int len = end-start;
 		final int count = len%once==0 ? len/once:len/once+1;
 		final Editable editor = getText();
@@ -166,14 +184,14 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	
 	private wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
 	{
-		EditDrawerListener li = new CodeEditBuilder.DrawerFactory.DefaultDrawer();
+		EditDrawerListener li = (EditDrawerListener) getDrawer();
 		wordIndex[] nodes = li.onFindNodes(start,end,getText(),mWordLib);
 		return nodes;
 	}
 	
 	private void onDrawNodes(int start, int end, Spannable text, wordIndex[] nodes)
 	{
-		EditDrawerListener li = new CodeEditBuilder.DrawerFactory.DefaultDrawer();
+		EditDrawerListener li = (EditDrawerListener) getDrawer();
 		li.onDrawNodes(start,end,getText(),nodes);
 	}
 

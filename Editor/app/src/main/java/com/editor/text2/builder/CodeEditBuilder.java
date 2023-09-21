@@ -12,6 +12,7 @@ import java.util.*;
 
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 import static com.editor.text2.builder.words.Words.*;
+import java.io.*;
 
 public class CodeEditBuilder implements EditBuilder
 {
@@ -28,7 +29,9 @@ public class CodeEditBuilder implements EditBuilder
 		public void SwitchListener(EditListenerInfo Info, String Lua)
 		{
 			//所有的工厂都替换了监听器
-			Info.delListenerFrom(DrawerIndex);
+			if(Info.size()>DrawerIndex+1){
+				Info.delListenerFrom(DrawerIndex);
+			}
 			Info.addListenerTo(ToLisrener(Lua),DrawerIndex);
 		}
 
@@ -53,10 +56,10 @@ public class CodeEditBuilder implements EditBuilder
 					}
 					int nextIndex = ArrayUtils.indexOf(array,'"',index+1);
 					if(nextIndex<0){
-						nodes.add(obtainNode(index,len,new ForegroundColorSpan(0xff98c379)));
+						nodes.add(obtainNode(index,len,new ForegroundColorSpanX(0xff98c379)));
 						break;
 					}
-					nodes.add(obtainNode(index,nextIndex+1,new ForegroundColorSpan(0xff98c379)));
+					nodes.add(obtainNode(index,nextIndex+1,new ForegroundColorSpanX(0xff98c379)));
 					last = nextIndex+1;
 				}
 				Collection<Character> chars = lib.getACollectionChars(chars_fuhao);
@@ -77,7 +80,7 @@ public class CodeEditBuilder implements EditBuilder
 					{
 						c = i<array.length-1 ? array[i+1]:'0';
 						if(!(c>='a' && c<='z' && c>='A' && c<='Z')){
-							nodes.add(obtainNode(i-b.length()+1,i+1,new ForegroundColorSpan(0xffcc80a9)));
+							nodes.add(obtainNode(i-b.length()+1,i+1,new ForegroundColorSpanX(0xffcc80a9)));
 						}
 						b.delete(0,b.length());
 					}
@@ -88,16 +91,20 @@ public class CodeEditBuilder implements EditBuilder
 				for(int i=array.length-1;i>=0;--i)
 				{
 					char c = array[i];
+					if(S.contains(c)){
+						continue;
+					}
 					if(c>='0'&&c<='9'){
-						//nodes.add(obtainNode(i,i+1,new ForegroundColorSpan(0xffff9090)));
+						nodes.add(obtainNode(i,i+1,new ForegroundColorSpanX(0xffff9090)));
 					}
 					if(chars.contains(c)){
-						nodes.add(obtainNode(i,i+1,new ForegroundColorSpan(0xff57adbb)));
+						nodes.add(obtainNode(i,i+1,new ForegroundColorSpanX(0xff57adbb)));
 					}
 				}
 				
 				wordIndex[] nodeArray = new wordIndex[nodes.size()];
 				nodes.toArray(nodeArray);
+				offsetNodes(nodeArray,start);
 				return nodeArray;
 			}
 				
@@ -305,9 +312,11 @@ public class CodeEditBuilder implements EditBuilder
 
 	}
 
-	public static WordsPacket getWordsPacket()
-	{
+	public static WordsPacket getWordsPacket(){
 		return new WordsPackets();
+	}
+	public static ListenerFactory getDrawerFactory(){
+		return new DrawerFactory();
 	}
 	
 	
@@ -329,7 +338,7 @@ public class CodeEditBuilder implements EditBuilder
 			WordLib = ((WordsUser)O).getWordLib();
 		}
 		if(Info!=null){
-			
+			getDrawerFactory().SwitchListener(Info,Lua);
 		}
 		if(WordLib!=null){
 			getWordsPacket().SwitchWords(WordLib,Lua);
