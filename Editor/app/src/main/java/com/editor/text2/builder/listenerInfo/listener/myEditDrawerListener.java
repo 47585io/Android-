@@ -14,8 +14,13 @@ import com.editor.text.base.*;
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
 {
 
-	public myEditDrawerListener(){
+	public myEditDrawerListener()
+	{
 		mNodes = new NodePool();
+		if((IdCount+1) > (SPAN_ID_MASK>>SPAN_ID_SHIFT)){
+			IdCount = 0;
+		}
+		mListenerId = (++IdCount)<<SPAN_ID_SHIFT;
 	}
 	
 	@Override
@@ -190,16 +195,16 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		}
 	}
 	
-	private static int IdCount = 0;
-	private final int mListenerId = (++IdCount)<<SPAN_ID_SHIFT;
+	private int mListenerId;
 	private EPool<wordIndex> mNodes;
-
-	//用13~14位表示span的情况，在draw时去做判断并设置或移除span
-	//用17~32位表示span的id，在remove时不要移除不是你设置的span
-	public static final int SPAN_SET = 0x1000;
-    public static final int SPAN_REMOVE = 0x2000;
-    public static final int SPAN_SET_REMOVE_MASK = 0x3000;
-	public static final int SPAN_ID_MASK = 0xFFFF0000;
-	public static final int SPAN_ID_SHIFT = 16;
+	private static int IdCount = 0;
+	
+	//用9~10位表示span的情况，在draw时去做判断并设置或移除span
+	//用25~32位表示span的id，在remove时不要移除不是你设置的span
+	public static final int SPAN_SET = 0x100;
+    public static final int SPAN_REMOVE = 0x200;
+    public static final int SPAN_SET_REMOVE_MASK = 0x300;
+	public static final int SPAN_ID_MASK = 0xFF000000;
+	public static final int SPAN_ID_SHIFT = 24;
 	
 }
