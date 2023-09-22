@@ -11,20 +11,18 @@ public abstract interface Words
 	public static final int chars_spilt = 1;
 
 	public static final int words_key=0;
-
-	public static final int words_const=1;
-
+	
+	public static final int words_const = 1;
+	
 	public static final int words_func = 2;
 
-	public static final int words_vill = 3;
+	public static final int words_variable = 3;
 
-	public static final int words_obj = 4;
+	public static final int words_type = 4;
 
-	public static final int words_type = 5;
+	public static final int words_tag = 5;
 
-	public static final int words_tag = 6;
-
-	public static final int words_attr = 7;
+	public static final int words_attr = 6;
 
 
 	public abstract void clear()

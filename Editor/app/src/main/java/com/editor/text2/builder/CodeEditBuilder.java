@@ -12,7 +12,10 @@ import java.util.*;
 
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 import static com.editor.text2.builder.words.Words.*;
-import java.io.*;
+import static com.editor.text2.builder.listenerInfo.listener.myEditDrawerListener.*;
+import com.editor.text2.base.share4.*;
+import com.editor.text2.base.share3.*;
+
 
 public class CodeEditBuilder implements EditBuilder
 {
@@ -41,121 +44,366 @@ public class CodeEditBuilder implements EditBuilder
 			@Override
 			public wordIndex[] howToFindNodes(int start, int end, CharSequence text, Words lib)
 			{
-				int len = end-start;
-				char[] array = new char[len];
-				TextUtils.getChars(text,start,end,array,0);
-				List<wordIndex> nodes = new LinkedList<>();
-				
-				//Step1: 检查注释和字符串及字符，优先级最高
-				int last = 0;
-				while (true)
-				{
-					int index = ArrayUtils.indexOf(array,'"',last);
-					if(index<0){
-						break;
-					}
-					int nextIndex = ArrayUtils.indexOf(array,'"',index+1);
-					if(nextIndex<0){
-						nodes.add(obtainNode(index,len,new ForegroundColorSpanX(0xff98c379)));
-						break;
-					}
-					nodes.add(obtainNode(index,nextIndex+1,new ForegroundColorSpanX(0xff98c379)));
-					last = nextIndex+1;
-				}
-				Collection<Character> chars = lib.getACollectionChars(chars_fuhao);
-				
-				//Step2: 检查关键字
-				StringBuilder b = new StringBuilder();
-				Collection<Character> S = lib.getACollectionChars(chars_spilt);
-				Collection<CharSequence> words = lib.getACollectionWords(words_key);
-				for(int i=0;i<array.length;++i)
-				{
-					char c = array[i];
-					b.append(c);
-					if(chars.contains(c)||S.contains(c)){
-						b.delete(0,b.length());
-						continue;
-					}
-					if(words.contains(b.toString()))
-					{
-						c = i<array.length-1 ? array[i+1]:'0';
-						if(!(c>='a' && c<='z' && c>='A' && c<='Z')){
-							nodes.add(obtainNode(i-b.length()+1,i+1,new ForegroundColorSpanX(0xffcc80a9)));
-						}
-						b.delete(0,b.length());
-					}
-				}
-				//Step3: 检查变量，函数，类，不可处于关键字范围内
-				
-				//Step4: 检查字符，字符不可处于单词范围内
-				for(int i=array.length-1;i>=0;--i)
-				{
-					char c = array[i];
-					if(S.contains(c)){
-						continue;
-					}
-					if(c>='0'&&c<='9'){
-						nodes.add(obtainNode(i,i+1,new ForegroundColorSpanX(0xffff9090)));
-					}
-					if(chars.contains(c)){
-						nodes.add(obtainNode(i,i+1,new ForegroundColorSpanX(0xff57adbb)));
-					}
-				}
-				
-				wordIndex[] nodeArray = new wordIndex[nodes.size()];
-				nodes.toArray(nodeArray);
-				offsetNodes(nodeArray,start);
-				return nodeArray;
-			}
-				
-			private void findPairChars(char[] array, char st, char en, List<wordIndex> nodes, boolean[] table)
-			{
-				int last = 0;
-				while (true)
-				{
-					int index = ArrayUtils.indexOf(array,'"',last);
-					if(index<0){
-						break;
-					}
-					int nextIndex = ArrayUtils.indexOf(array,'"',index+1);
-					if(nextIndex<0)
-					{
-						wordIndex node = obtainNode(index,array.length,new ForegroundColorSpan(0xff98c379),table);
-						if(node!=null){
-							nodes.add(node);
-						}
-						break;
-					}
-					wordIndex node = obtainNode(index,nextIndex+1,new ForegroundColorSpan(0xff98c379),table);
-					if(node!=null){
-						nodes.add(node);
-					}
-					last = nextIndex+1;
-				}
-			}
-			private void findPairWords(CharSequence st, CharSequence en, List<wordIndex> nodes){
-				
-			}
-
-			private wordIndex obtainNode(int start, int end, Object span, boolean[] table)
-			{
-				if(checkRange(start,end,table)){
-					return null;
-				}
-				Arrays.fill(table,start,end,true);
-				return obtainNode(start, end, span);
+				FinderFactory.JavaFinderFactory fa = new FinderFactory.JavaFinderFactory(lib,getPool());
+				return startFind(start,end,text,
+				                 fa.getStrFinder(),
+								 fa.getzhuFinder(),
+								 fa.getKeyWordFinder(),
+								 fa.getVariableFinder(),
+				                 fa.getFuncFinder(),											
+								 fa.getCharFinder());
 			}
 			
-			private boolean checkRange(int start, int end, boolean[] table)
+		}
+		
+		
+		public static class FinderFactory
+		{
+			
+			public static class TextFinderFactory
 			{
-				for(;start<end;++start)
+				Words WordLib;
+				EPool<wordIndex> mNodes;
+				//设置一个WordLib，之后获取的DoAnyThing任务都是使用它的单词
+
+				public TextFinderFactory(Words lib,EPool<wordIndex> pool){
+					WordLib = lib;
+					mNodes = pool;
+				}
+				
+				public Finder getzhuFinder()
 				{
-					if(table[start]){
-						return true;
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							CharSequence key = null;
+							for(CharSequence c: get_zhu().keySet()){
+								if(text.indexOf(c.toString(),nowIndex)==nowIndex){
+									key = c;
+								}							
+							}
+							if (key != null)
+							{
+								//如果它是一个任意的注释，找到对应的另一个，并把它们之间染色
+								CharSequence value= get_zhu().get(key);
+								int nextindex = text.indexOf(value.toString(), nowIndex + key.length());
+								if (nextindex != -1){
+									saveChar(text, nowIndex, nextindex + value.length(), Colors.zhuShi, nodes);
+									nowIndex = nextindex + value.length() - 1;
+								}else{
+							    	//如果找不到默认认为到达了末尾
+									nowIndex +=1;
+								}
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}
+							return -1;
+						}
+					};
+				}
+				
+				public Finder getStrFinder()
+				{
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							if (text.charAt(nowIndex) == '"')
+							{
+								//如果它是一个"，一直找到对应的"
+								int endIndex = text.indexOf('"', nowIndex + 1);
+								if (endIndex != -1){
+									saveChar(text, nowIndex, endIndex + 1, Colors.Str, nodes);
+									nowIndex = endIndex;
+								}else{
+									nowIndex+=1;
+								}
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}		
+							else if (text.charAt(nowIndex) == '\'')
+							{
+								//如果它是'字符，将之后的字符加进来
+								if (text.charAt(nowIndex + 1) == '\\'){
+									wordIndex node= obtainNode(nowIndex, nowIndex + 4, new ForegroundColorSpanX(Colors.Str));
+									nodes.add(node);
+									nowIndex += 3;	
+								}
+								else{		
+									int endIndex = text.indexOf('\'', nowIndex + 1);
+									saveChar(text, nowIndex, endIndex + 1,Colors.Str, nodes);
+									nowIndex = endIndex;
+								}
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}	
+							return -1;
+						}
+					};
+					
+				}
+				
+				public Finder getCharFinder()
+				{
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							if (StringChecker.IsNumber(text.charAt(nowIndex))&&
+							    !StringChecker.IsAtoz(text.charAt(nowIndex-1))&&
+								!StringChecker.IsAtoz(text.charAt(nowIndex+1)))
+							{
+								//否则如果当前的字符是一个数字，就把它加进nodes
+								//由于关键字和保留字一定没有数字，所以可以清空之前的字符串
+								wordIndex node= obtainNode(nowIndex, nowIndex+1,new ForegroundColorSpanX(Colors.Number));
+								nodes.add(node);
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}	
+							else if (getFuhao().contains(text.charAt(nowIndex)))
+							{	
+								//否则如果它是一个特殊字符，就更不可能了，清空之前累计的字符串
+								if (!getSpilt().contains(text.charAt(nowIndex)))
+								{
+									//如果它不是会被html文本压缩的字符，将它自己加进nodes
+									//这是为了保留换行空格等
+									wordIndex node=obtainNode(nowIndex, nowIndex + 1, new ForegroundColorSpanX(Colors.FuHao));
+									nodes.add(node);
+								}
+								nowWord.delete(0, nowWord.length());
+								//清空之前累计的字符串
+								return nowIndex;
+							}
+							return -1;
+						}
+					};
+				}
+				
+				public void saveChar(CharSequence src, int nowIndex, int nextindex, int wantColor, List<wordIndex> nodes)
+				{
+					int startindex=nowIndex;
+					for (;nowIndex < nextindex;nowIndex++)
+					{
+						//保留特殊字符
+						if (getSpilt().contains(src.charAt(nowIndex)))
+						{
+							wordIndex node= obtainNode(startindex,nowIndex,new ForegroundColorSpanX(wantColor));
+							nodes.add(node);
+							startindex = nowIndex + 1;
+						}
+					}
+					wordIndex node= 
+					obtainNode(startindex, nextindex, new ForegroundColorSpanX(wantColor));
+					nodes.add(node);
+
+				}
+				
+				public Words getWordLib(){
+					return WordLib;
+				}
+				public EPool getPool(){
+					return mNodes;
+				}
+				public Collection<CharSequence> getKey(){
+					return WordLib.getACollectionWords(words_key);
+				}
+				public Collection<CharSequence> getConst(){
+					return WordLib.getACollectionWords(words_const);
+				}
+				public Collection<Character> getFuhao(){
+					return WordLib.getACollectionChars(chars_fuhao);
+				}
+				public Collection<Character> getSpilt(){
+					return WordLib.getACollectionChars(chars_spilt);
+				}
+				public Map<CharSequence,CharSequence> get_zhu(){
+			    	return WordLib.getAMapWords(maps_zhu);
+				}
+				public Collection<CharSequence> getFunc(){
+					return  WordLib.getACollectionWords(words_func);
+				}
+				public Collection<CharSequence> getVariable(){
+					return  WordLib.getACollectionWords(words_variable);
+				}
+				public Collection<CharSequence> getType(){
+					return  WordLib.getACollectionWords(words_type);
+				}
+				public Collection<CharSequence> getTag(){
+					return  WordLib.getACollectionWords(words_tag);
+				}
+				public Collection<CharSequence> getAttribute(){
+					return WordLib.getACollectionWords(words_attr) ;
+				}
+				
+				public wordIndex obtainNode(){
+					return mNodes.get();
+				}
+				public wordIndex obtainNode(Object span)
+				{
+					wordIndex node = mNodes.get();
+					node.span = span;
+					return node;
+				}
+				public wordIndex obtainNode(int start, int end, Object span)
+				{
+					wordIndex node = mNodes.get();
+					node.set(start,end,span,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+					return node;
+				}
+				public wordIndex obtainNode(int start, int end, Object span, int flags)
+				{
+					wordIndex node = mNodes.get();
+					node.set(start,end,span,flags);
+					return node;
+				}
+				
+				final public void tryWord(CharSequence src,int index,range tmp)
+				{
+					Collection fuhao = getFuhao();
+					try{
+						while(fuhao.contains(src.charAt(index)))
+							--index;
+						tmp.end=index+1;
+						while(!fuhao.contains(src.charAt(index)))
+							--index;
+						tmp.start=index+1;
+					}catch(Exception e){
+						tmp.start=0;
+						tmp.end=0;
 					}
 				}
-				return false;
+
+				final public void tryWordAfter(CharSequence src,int index,range tmp)
+				{
+					Collection fuhao = getFuhao();
+					try{
+						while(fuhao.contains(src.charAt(index)))
+							++index;
+						tmp.start=index;
+						while(!fuhao.contains(src.charAt(index)))
+							++index;
+						tmp.end=index;
+					}catch(Exception e){
+						tmp.start=0;
+						tmp.end=0;
+					}
+				}
+				
 			}
+			
+			public static class JavaFinderFactory extends TextFinderFactory
+			{
+				
+				public JavaFinderFactory(Words lib,EPool<wordIndex> pool){
+					super(lib,pool);
+				}
+				
+				public Finder getFuncFinder()
+				{
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							if (text.charAt(nowIndex) == '(')
+							{
+								//如果它是(字符，将之前的函数名存起来
+								wordIndex node = obtainNode();
+								tryWord(text, nowIndex-1, node);
+								boolean isFunc = text.indexOf('=',node.end)>nowIndex && text.indexOf('.',node.end)>nowIndex;
+								CharSequence func = text.subSequence(node.start, node.end);
+								if(isFunc && !getKey().contains(func))
+								{
+									getFunc().add(func);
+									node.span = new ForegroundColorSpanX(Colors.Function);
+									nodes.add(node);
+									nodes.add(obtainNode(nowIndex,nowIndex+1,new ForegroundColorSpanX(Colors.FuHao)));
+									nowWord.delete(0, nowWord.length());
+									return nowIndex;
+								}
+							}
+							return -1;
+						}
+					};
+				}
+
+				public Finder getVariableFinder()
+				{
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							if ((text.charAt(nowIndex) == '.' || text.charAt(nowIndex)=='='))
+							{
+								wordIndex node = obtainNode(new ForegroundColorSpanX(Colors.Villber));
+								tryWord(text, nowIndex-1,node);
+								nodes.add(node);
+								nodes.add(obtainNode(nowIndex,nowIndex+1,new ForegroundColorSpanX(Colors.FuHao)));
+								getVariable().add(text.substring(node.start, node.end));
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}
+							return -1;
+						}
+					};
+				}
+
+				public Finder getKeyWordFinder()
+				{
+					return new Finder(){
+
+						@Override
+						public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
+						{
+							//找到一个单词 或者 未找到单词就遇到特殊字符，就把之前累计字符串清空
+							//为了节省时间，将更简单的条件放前面，触发&&的断言机制
+							if (!StringChecker.IsAtoz(text.charAt(nowIndex + 1)) 
+								&& text.charAt(nowIndex + 1) != '_' 
+								&& getKey().contains(nowWord.toString()))
+							{
+								//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
+								wordIndex node= obtainNode(nowIndex - nowWord.length() + 1, nowIndex + 1, new ForegroundColorSpanX(Colors.KeyWord));
+								nodes.add(node);
+								String Word=nowWord.toString();
+								if (Word.equals("class")
+									|| Word.equals("new")
+									|| Word.equals("extends")
+									|| Word.equals("implements")
+									|| Word.equals("interface")){
+									wordIndex tmp=obtainNode(new ForegroundColorSpanX(Colors.Type));
+									tryWordAfter(text, nowIndex + 1,tmp);
+									nodes.add(tmp);
+									getType().add(text.substring(tmp.start, tmp.end));
+									nowWord.delete(0, nowWord.length());
+									return tmp.end - 1;
+								}
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}
+							else if (!StringChecker. IsAtoz(text.charAt(nowIndex + 1)) 
+								&& getConst().contains(nowWord.toString()))
+							{
+								//否则如果当前累计的字符串是一个保留字并且后面没有a～z这些字符，就把它加进nodes
+								wordIndex node= obtainNode(nowIndex - nowWord.length() + 1, nowIndex + 1, new ForegroundColorSpanX(Colors.Const));
+								nodes.add(node);
+								nowWord.delete(0, nowWord.length());
+								return nowIndex;
+							}	
+							//关键字和保留字和变量不重复，所以只要中了其中一个，则就是那个
+							//如果能进关键字和保留字和变量的if块，则说明当前字符一定不是特殊字符
+							return -1;
+						}
+					};
+				}
+
+			}
+			
+			
 			
 		}
 

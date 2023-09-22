@@ -15,6 +15,7 @@ import android.widget.*;
 import android.view.*;
 import android.graphics.*;
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
+import com.editor.text.base.*;
 
 public class CodeEdit extends Edit implements EditBuilderUser
 {
@@ -462,7 +463,8 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
 	{
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		//mWindow.measure(widthMeasureSpec,heightMeasureSpec);
+		
+		mWindow.measure(widthMeasureSpec,heightMeasureSpec);
 	}
 
 	@Override
@@ -471,8 +473,31 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		super.onLayout(changed, left, top, right, bottom);
 	}
 
+	private void putWindow()
+	{
+		final pos p = getSelectionEndPos();
+		int x = (int) p.x;
+		int y = (int) (p.y+getLineHeight());
+
+		final int width = getWidth();
+		int wantWidth = (int)(width*0.8);
+		if(p.x+wantWidth>getScrollX()+width){
+			x = getScrollX()+width-wantWidth;
+		}
+
+		final int height = getHeight();
+		mWindow.measure(0,0);
+		int wantHeight = mWindow.getMeasuredHeight();
+		if(wantHeight>height/2){
+			wantHeight = height/2;
+		}
+		if(p.y+wantHeight>getScrollY()+height){
+			y = (int)p.y-wantHeight;
+		}
+		mWindow.layout(x,y,x+wantWidth,y+wantHeight);
+	}
 	
-// bbb
+// 
 	
 	
 	

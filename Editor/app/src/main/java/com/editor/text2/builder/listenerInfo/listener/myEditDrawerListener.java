@@ -9,6 +9,8 @@ import com.editor.text2.builder.words.*;
 import java.util.*;
 import android.text.style.*;
 import com.editor.text.base.*;
+import android.util.*;
+import android.graphics.*;
 
 
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
@@ -128,6 +130,109 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		mNodes.stop();
 	}
 	
+	@Override
+	public String makeHTML(int start, int end, CharSequence text, wordIndex[] nodes)
+	{
+		StringBuilder builder = new StringBuilder();
+		int index=0;
+		builder.append("<!DOCTYPE HTML><html><meta charset='UTF-8'/>   <style> * {  padding: 0%; margin: 0%; outline: 0; border: 0; color: "+Colors.Foreground+";background-color: "+Colors.Background+";font-size: 10px;font-weight: 700px;tab-size: 4;overflow: scroll;font-family:monospace;line-height:16px;} *::selection {background-color: rgba(62, 69, 87, 0.4);}</style><body>");
+		//经典开头
+
+		char[] arr = EmptyArray.CHAR;
+		//遍历node，将范围内的文本混合颜色制作成小段HTML文本，追加在大段文本之后
+		for(wordIndex node:nodes)
+		{
+			String color = "";
+			int len = node.end-node.start;
+			if(arr.length<len){
+				arr = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(len));
+			}
+			TextUtils.getChars(text,node.start,node.end,arr,0);
+			String nodeStr = String.valueOf(arr,0,len);
+			
+			if(node.start>index){
+			    //如果在上个node下个node之间有空缺的未染色部分，在html文本中也要用默认的颜色染色
+				len = node.start-index;
+				if(arr.length<len){
+					arr = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(len));
+				}
+				TextUtils.getChars(text,index,node.start,arr,0);
+				String subStr = String.valueOf(arr,0,len);
+				builder.append(Colors.textForeColor(subStr,color));
+			}
+
+			if(node.span instanceof ForegroundColorSpan)
+			{
+				//如果span是一个ForegroundColorSpan，就用指定的颜色染色范围内的文本
+			    color = Colors.toString(((ForegroundColorSpan)node. span).getForegroundColor());
+			    nodeStr = Colors.textForeColor(nodeStr,color);
+			}
+			else if(node.span instanceof BackgroundColorSpan)
+			{
+				//如果span是一个BackgroundColorSpan，就用指定的颜色染色范围内的背景
+				color = Colors.toString(((BackgroundColorSpan)node. span).getBackgroundColor());
+				nodeStr = Colors.textBackColor(nodeStr,color);
+			}
+			else{
+				//否则就用默认的颜色染色范围内的文本
+				nodeStr = Colors.textForeColor(nodeStr,color);
+			}
+
+			builder.append(nodeStr);
+			index=node.end;
+		}
+
+		if(index<text.length()){
+	    	//如果在最后有空缺的未染色部分，在html文本中也要用默认的颜色染色
+			int len = text.length()-index;
+			if(arr.length<len){
+				arr = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(len));
+			}
+			TextUtils.getChars(text,index,text.length(),arr,0);
+			String nodeStr = String.valueOf(arr,0,len);
+			builder.append(Colors.textForeColor(nodeStr,Colors.Foreground));
+		}
+		builder.append("<br><br><br><hr><br><br></body></html>");
+		//经典结尾
+		return arr.toString();
+	}
+	
+	public static final wordIndex[] startFind(int start, int end, CharSequence text, Finder... finders)
+	{
+		int finderCount = finders.length;
+		int len = end-start;
+		char[] arr = new char[len];
+		TextUtils.getChars(text,start,end,arr,0);
+		String str = String.valueOf(arr);
+		StringBuilder nowWord = new StringBuilder();
+		List<wordIndex> nodes = new LinkedList<>();
+		for(int nowIndex=0;nowIndex<len;++nowIndex)
+	    {
+			nowWord.append(arr[nowIndex]);
+			//每次追加一个字符，交给totalList中的任务过滤
+			//注意是先追加，index后++		
+			for(int j=0;j<finderCount;++j)
+			{
+				Finder finder = finders[j];
+				try{
+				    int index = finder.find(str,nowWord,nowIndex,nodes);
+				    if(index>=nowIndex){
+				        //单词已经找到了，不用找了
+						//如果本次想放弃totalList中的后续任务，可以返回一个大于或等于传入的nowIndex的值，并且这个值还会直接设置nowIndex
+						nowIndex=index;
+						break;
+					}
+				}catch(Exception e){
+					Log.e("StartFind Don't know！","The total name is"+finder.toString()+"  Has Error "+e.toString());
+				}
+			}
+		}
+		wordIndex[] nodeArray = new wordIndex[nodes.size()];
+		nodes.toArray(nodeArray);
+		offsetNodes(nodeArray,start);
+		return nodeArray;
+	}
+	
 	final public static void offsetNodes(wordIndex[] nodes,int start)
 	{
 		for(wordIndex node:nodes){
@@ -135,26 +240,28 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 			node.end+=start;
 		}
 	}
-
-	@Override
-	public String makeHTML(int start, int end, CharSequence text, wordIndex[] nodes)
+	
+	public static interface Finder
 	{
-		return null;
+		public int find(String text, StringBuilder nowWord, int nowIndex, List<wordIndex> nodes)
 	}
 	
 
-	public wordIndex obtainNode(){
+	protected EPool<wordIndex> getPool(){
+		return mNodes;
+	}
+	protected wordIndex obtainNode(){
 		return mNodes.get();
 	}
-	public wordIndex obtainNode(int start, int end, Object span)
+	protected wordIndex obtainNode(int start, int end, Object span)
 	{
-		wordIndex node = new wordIndex();
+		wordIndex node = mNodes.get();
 		node.set(start,end,span,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		return node;
 	}
-	public wordIndex obtainNode(int start, int end, Object span, int flags)
+	protected wordIndex obtainNode(int start, int end, Object span, int flags)
 	{
-		wordIndex node = new wordIndex();
+		wordIndex node = mNodes.get();
 		node.set(start,end,span,flags);
 		return node;
 	}
@@ -192,6 +299,83 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 				return true;
 			}
 			return false;
+		}
+	}
+	public static class BackgroundColorSpanX extends BackgroundColorSpan
+	{
+		public BackgroundColorSpanX(int color){
+			super(color);
+		}
+
+		@Override
+		public int hashCode(){
+			return getBackgroundColor();
+		}
+
+		@Override
+		public boolean equals(Object obj)
+		{
+			if(obj instanceof BackgroundColorSpan && ((BackgroundColorSpan)obj).getBackgroundColor()==getBackgroundColor()){
+				return true;
+			}
+			return false;
+		}
+	}
+	
+	public static class Colors
+	{
+		public static String Foreground ="#abb2bf";//灰白
+		public static String Background = "#222222";
+		public static final int zhuShi =0xff585f65;//深灰
+		public static final int Str=0xff98c379;//青草奶油
+		public static final int FuHao =0xff99c8ea;//蓝
+		public static final int Number=0xffff9090;//橙红柚子
+		public static final int KeyWord=0xffcc80a9;//桃红乌龙
+		public static final int Const =0xffcd9861;//枯叶黄
+		public static final int Villber =0xffff9090;
+		public static final int Function =0xff99c8ea;
+		public static final int Type=0xffd4b876;
+		public static final int Attribute=0xffcd9861;//枣
+		public static final int Tag=0xffde6868;
+		
+		public static String textForeColor(String src,String fgcolor){
+			src=Replace(src);
+			return "<pre style='display:inline;color:"+fgcolor+";'>"+src+"</pre>";
+		}
+		public static String textBackColor(String src,String bgcolor){
+			src=Replace(src);
+			return "<pre style='display:inline;background-color:"+bgcolor+";'>"+src+"</pre>";
+		}
+		public static String textColor(String src,String fgcolor,String bgcolor){
+			src=Replace(src);
+			return "<pre style='display:inline;"+"color:"+ fgcolor+";background-color:"+bgcolor+";'>"+src+"</pre>";
+		}
+		private static String Replace(String src)
+		{
+			src=src.replaceAll("<","&lt;");
+			src=src.replaceAll(">","&gt;");
+			src=src.replaceAll("\t","    ");
+			src=src.replaceAll(" ","&nbsp;");
+			src=src.replaceAll("\n","<br/>");
+			//替换被HTML解析的字符
+			return src;
+		}
+		public static int vualeOf(String color){
+			return Integer.parseInt(color,16);
+		}
+		public static String toString(int color)
+		{
+			int red = Color.red(color);
+			int green = Color.green(color);
+			int blue = Color.blue(color);
+			int alpha = Color.alpha(color);
+			StringBuilder b = new StringBuilder();
+			b.append("rgba(");
+			b.append(red+",");
+			b.append(green+",");
+			b.append(blue+",");
+			b.append(alpha+")");
+			return b.toString();
 		}
 	}
 	
