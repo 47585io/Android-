@@ -44,6 +44,3 @@ public abstract interface Words
 	public abstract void setAMapWords(int index,Map<CharSequence,CharSequence> words)
 
 }
-
-
-

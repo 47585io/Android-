@@ -15,21 +15,35 @@ import android.widget.*;
 import android.view.*;
 import android.graphics.*;
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
+import static com.editor.text2.builder.listenerInfo.listener.baselistener.EditListener.RunLi;
+import static com.editor.text2.builder.listenerInfo.listener.myEditCompletorListener.onOpenWindowLisrener;
 import com.editor.text.base.*;
+import com.editor.text2.base.share2.*;
+import android.widget.AdapterView.*;
 
-public class CodeEdit extends Edit implements EditBuilderUser
+public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListener
 {
+
+	@Override
+	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+	{
+		// TODO: Implement this method
+	}
+	
 
 	private Words mWordLib;
 	private EditListenerInfo mListenerInfo;
 	private EditBuilder mEditBuilder;
 	
 	private ThreadPoolExecutor mPool;
-	private ListView mWindow;
+	private AdapterView mWindow;
+	private onOpenWindowLisrener mListener;
 	
 	private Stack<token> mLast, mNext;
 	private int mPrivateFlags;
 	public static int mPublicFlags;
+	
+	private HandlerQueue.HandlerLock mLocker;
 	
 	
 	public CodeEdit(Context cont){
@@ -158,8 +172,12 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		};
 	}
 	
+	//染色期间不要让用户输入，除非染色被截止或完成
 	public void reDrawTextS(int start, int end)
 	{
+		if(mLocker!=null){
+			return;
+		}
 		final int once = 4000;
 		final int len = end-start;
 		final int count = len%once==0 ? len/once:len/once+1;
@@ -180,7 +198,7 @@ public class CodeEdit extends Edit implements EditBuilderUser
 			};	
 			totals[i++] = run;
 		}
-		HandlerQueue.doTotals(totals,getHandler());
+		mLocker = HandlerQueue.doTotals(totals,getHandler());
 	}
 	
 	private wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
@@ -199,8 +217,13 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
+		if(mLocker!=null){
+			mLocker.lockHandler();
+			mLocker = null;
+		}
 		Runnable run = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
 		mPool.execute(run);
+		openWindow();
 		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
 	}
 	
@@ -456,26 +479,84 @@ public class CodeEdit extends Edit implements EditBuilderUser
 	public int getFlags(){
 		return mPrivateFlags;
 	}
-
 	
-	
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
-	{
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		
-		mWindow.measure(widthMeasureSpec,heightMeasureSpec);
+	public void openWindow()
+	{ 
+		if(mWindow==null){
+			return;
+		}
+		final WordAdapter<wordIcon> adapter = WordAdapter.getDefultAdapter();
+		SearchInGroup(getText(),getSelectionEnd(),adapter);
+		Runnable run = new Runnable()
+		{
+			public void run(){
+				mWindow.setAdapter(adapter);
+				putWindow();
+			}
+		};
+		post(run);
 	}
 
-	@Override
-	protected void onLayout(boolean changed, int left, int top, int right, int bottom)
+	/* 在不同集合中找单词 */
+	public void SearchInGroup(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
 	{
-		super.onLayout(changed, left, top, right, bottom);
+		EditListener lis = getCompletor();
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditCompletorListener){
+			        wordIcon[] Icons = ((EditCompletorListener)li).onSearchWord(text,index,mWordLib);
+			        Adapter.addAll(li.hashCode(),Icons);
+			    }
+				return false;
+			}
+		};
+	    lis.dispatchCallBack(run);
 	}
 
+	/* 插入单词，支持Span文本 */
+	final public int insertWord(CharSequence word, int index, int id)
+	{
+		Editable editor = getText();
+		int before = editor.length();
+		return editor.length()-before;
+	}
+
+	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
+	{
+		EditListener lis = getCompletor();
+		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditCompletorListener && li.hashCode() == id)
+				{
+				    int selection = ((EditCompletorListener)li).onInsertWord(editor,index,word);
+				    setSelection(selection);
+				    return true;
+				}
+				return false;
+			}
+		};
+		if(!lis.dispatchCallBack(run)){
+		    //没有找到listener，就直接插入
+		    editor.replace(index,index,word,0,word.length());
+		}
+	}
+	
+	public void setWindow(AdapterView Window, onOpenWindowLisrener li){
+		mWindow = Window;
+		mListener = li;
+	}
+	
 	private void putWindow()
 	{
-		final pos p = getSelectionEndPos();
+		if(mWindow==null){
+			return;
+		}
+		final pos p = getSelectionStartPos();
 		int x = (int) p.x;
 		int y = (int) (p.y+getLineHeight());
 
@@ -486,32 +567,32 @@ public class CodeEdit extends Edit implements EditBuilderUser
 		}
 
 		final int height = getHeight();
-		mWindow.measure(0,0);
-		int wantHeight = mWindow.getMeasuredHeight();
-		if(wantHeight>height/2){
-			wantHeight = height/2;
-		}
+		int wantHeight = measureWindowHeight(mWindow,height/2);
 		if(p.y+wantHeight>getScrollY()+height){
 			y = (int)p.y-wantHeight;
 		}
 		mWindow.layout(x,y,x+wantWidth,y+wantHeight);
 	}
 	
-// 
-	
-	
-	
-	@Override
-	protected void dispatchDraw(Canvas canvas)
+	private static int measureWindowHeight(AdapterView Window, int maxHeight)
 	{
-		
-		super.dispatchDraw(canvas);
+		Adapter adapter = Window.getAdapter();
+		if(adapter==null){
+			return 0;
+		}
+		int height=0;
+		int count = adapter.getCount();
+		for (int i=0;i<count;++i)
+		{
+			View view = adapter.getView(i, null, Window);
+			view.measure(0, 0);
+			height += view.getMeasuredHeight();
+			if(height>=maxHeight){
+				return maxHeight;
+			}
+		}
+		return height;
 	}
-	
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent event)
-	{
-		return super.dispatchTouchEvent(event);
-	}
-	
+
+
 }

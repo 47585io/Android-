@@ -1,4 +1,5 @@
 package com.editor.text2.base.share3;
+import com.editor.text2.base.share4.*;
 
 public class StringChecker
 {
@@ -9,9 +10,6 @@ public class StringChecker
 			return true;
 		else if(ch>='A' && ch <='Z')
 			return true;
-		else if(ch=='_')
-			return true;
-		//无奈
 		return false;
 	}
 
@@ -31,4 +29,5 @@ public class StringChecker
 		}
 		return true;
 	}
+	
 }

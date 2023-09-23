@@ -15,6 +15,8 @@ import static com.editor.text2.builder.words.Words.*;
 import static com.editor.text2.builder.listenerInfo.listener.myEditDrawerListener.*;
 import com.editor.text2.base.share4.*;
 import com.editor.text2.base.share3.*;
+import com.editor.text2.base.share2.*;
+import com.editor.R;
 
 
 public class CodeEditBuilder implements EditBuilder
@@ -183,21 +185,21 @@ public class CodeEditBuilder implements EditBuilder
 					};
 				}
 				
-				public void saveChar(CharSequence src, int nowIndex, int nextindex, int wantColor, List<wordIndex> nodes)
+				public void saveChar(CharSequence src, int nowIndex, int nextIndex, int wantColor, List<wordIndex> nodes)
 				{
-					int startindex=nowIndex;
-					for (;nowIndex < nextindex;nowIndex++)
+					Collection spilt = getSpilt();
+					int startIndex=nowIndex;
+					for (;nowIndex < nextIndex;nowIndex++)
 					{
 						//保留特殊字符
-						if (getSpilt().contains(src.charAt(nowIndex)))
+						if (spilt.contains(src.charAt(nowIndex)))
 						{
-							wordIndex node= obtainNode(startindex,nowIndex,new ForegroundColorSpanX(wantColor));
+							wordIndex node= obtainNode(startIndex,nowIndex,new ForegroundColorSpanX(wantColor));
 							nodes.add(node);
-							startindex = nowIndex + 1;
+							startIndex = nowIndex + 1;
 						}
 					}
-					wordIndex node= 
-					obtainNode(startindex, nextindex, new ForegroundColorSpanX(wantColor));
+					wordIndex node = obtainNode(startIndex, nextIndex, new ForegroundColorSpanX(wantColor));
 					nodes.add(node);
 
 				}
@@ -344,7 +346,7 @@ public class CodeEditBuilder implements EditBuilder
 								tryWord(text, nowIndex-1,node);
 								nodes.add(node);
 								nodes.add(obtainNode(nowIndex,nowIndex+1,new ForegroundColorSpanX(Colors.FuHao)));
-								getVariable().add(text.substring(node.start, node.end));
+								getVariable().add(text.subSequence(node.start, node.end));
 								nowWord.delete(0, nowWord.length());
 								return nowIndex;
 							}
@@ -374,11 +376,12 @@ public class CodeEditBuilder implements EditBuilder
 									|| Word.equals("new")
 									|| Word.equals("extends")
 									|| Word.equals("implements")
-									|| Word.equals("interface")){
+									|| Word.equals("interface")
+									|| Word.equals("instanceof")){
 									wordIndex tmp=obtainNode(new ForegroundColorSpanX(Colors.Type));
 									tryWordAfter(text, nowIndex + 1,tmp);
 									nodes.add(tmp);
-									getType().add(text.substring(tmp.start, tmp.end));
+									getType().add(text.subSequence(tmp.start, tmp.end));
 									nowWord.delete(0, nowWord.length());
 									return tmp.end - 1;
 								}
@@ -400,14 +403,289 @@ public class CodeEditBuilder implements EditBuilder
 						}
 					};
 				}
-
 			}
-			
-			
-			
+		}
+	}
+
+	
+	public static class CompletorBoxes implements ListenerFactory
+	{
+
+		@Override
+		public EditListenerList ToLisrener(String Lua)
+		{
+			switch(Lua){
+				case "text":
+					return null;
+				case "xml":
+					return getXMLCompletorList();
+				case "java":
+					return getJavaCompletorList();
+				case "css":
+					return getCSSCompletorList();
+				case "html":
+					return getHTMLCompletorList();
+				default:
+				    return null;
+			}
 		}
 
+		@Override
+		public void SwitchListener(EditListenerInfo Info, String Lua)
+		{
+			if(Info.size()>CompletorIndex+1){
+				Info.delListenerFrom(CompletorIndex);
+			}
+			Info.addListenerTo(ToLisrener(Lua),CompletorIndex);
+		}
+
+		public static class JavaCompletor extends myEditListenerList
+		{		
+			public JavaCompletor()
+			{
+				add(getKeyBox());
+				add(getConstBox());
+				//add(getVillBox());
+				//add(getFuncBox());
+				//add(getObjectBox());
+				//add(getTypeBox());
+			}
+		}
+
+		public static class XMLCompletor extends myEditListenerList
+		{
+			public XMLCompletor()
+			{
+				add(getTagBox());
+				add(getAttributeBox());
+			}
+		}
+
+		public static class CSSCompletor extends myEditListenerList
+		{
+			public CSSCompletor()
+			{
+				add(getVillBox());
+				add(getFuncBox());
+				add(getTypeBox());
+				add(getTagBox());
+				add(getAttributeBox());
+			}
+		}
+
+		public static class HTMLCompletor extends myEditListenerList
+		{
+			public HTMLCompletor()
+			{
+				add(getKeyBox());
+				add(getConstBox());
+				add(getVillBox());
+				add(getFuncBox());
+				add(getObjectBox());
+				add(getTypeBox());
+				add(getTagBox());
+				add(getAttributeBox());
+			}
+		}
+
+		public static EditListenerList getJavaCompletorList()
+		{
+			return new JavaCompletor();
+		}
+		public static EditListenerList getXMLCompletorList()
+		{
+			return new XMLCompletor();
+		}
+		public static EditListenerList getCSSCompletorList()
+		{
+			return new CSSCompletor();
+		}
+		public static EditListenerList getHTMLCompletorList()
+		{
+			return new HTMLCompletor();
+		}
+
+
+	    public static EditListener getKeyBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					return makeIcons(words,R.drawable.icon_key);
+				}
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words Wordlib)
+				{
+					return Wordlib.getACollectionWords(words_key);
+				}
+
+				
+			};
+		}
+		public static EditListener getConstBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					return WordLib.getACollectionWords(words_const);
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					return makeIcons(words,R.drawable.icon_default);
+				}
+				
+			};
+		}
+
+		public static EditListener getVillBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+		
+			};
+		}
+
+
+		public static EditListener getFuncBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public int onInsertWord(Editable editor,int index,CharSequence word)
+				{
+					int selection = super.onInsertWord(editor,index,word);
+					if(editor.charAt(selection)!='(')
+					    editor.insert(selection++,"(");
+					return selection;
+				}	
+			};
+		}
+
+
+		public static EditListener getObjectBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				
+			};
+		}
+
+		public static EditListener getTypeBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+				
+			};
+		}
+
+		public static EditListener getTagBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+				
+
+		
+			};
+		}
+
+		public static EditListener getAttributeBox()
+		{
+			return new myEditCompletorListener(){
+
+				@Override
+				public Collection<CharSequence> beforeSearchWord(Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+
+				@Override
+				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				{
+					// TODO: Implement this method
+					return null;
+				}
+				
+
+				
+			};
+		}
 	}
+	
 	
 	public static class WordsPackets implements WordsPacket
 	{
@@ -566,7 +844,9 @@ public class CodeEditBuilder implements EditBuilder
 	public static ListenerFactory getDrawerFactory(){
 		return new DrawerFactory();
 	}
-	
+	public static ListenerFactory getCompletorFactory(){
+		return new CompletorBoxes();
+	}
 	
 	@Override
 	public void SwitchLuagua(Object O, String Lua)
@@ -587,6 +867,7 @@ public class CodeEditBuilder implements EditBuilder
 		}
 		if(Info!=null){
 			getDrawerFactory().SwitchListener(Info,Lua);
+			getCompletorFactory().SwitchListener(Info,Lua);
 		}
 		if(WordLib!=null){
 			getWordsPacket().SwitchWords(WordLib,Lua);

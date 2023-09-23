@@ -235,9 +235,9 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	
 	final public static void offsetNodes(wordIndex[] nodes,int start)
 	{
-		for(wordIndex node:nodes){
-			node.start+=start;
-			node.end+=start;
+		for(int i=0;i<nodes.length;++i){
+			nodes[i].start+=start;
+			nodes[i].end+=start;
 		}
 	}
 	

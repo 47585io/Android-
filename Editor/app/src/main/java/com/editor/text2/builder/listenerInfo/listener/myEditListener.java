@@ -53,7 +53,7 @@ public class myEditListener extends Object implements EditListener
 	
 	@Override
 	public String toString(){
-		return "监听器："+name+"; 类型: "+getClass().getSimpleName()+";";
+		return "监听器："+name+"; 类型: "+getClass().getName()+";";
 	}
 	@Override
 	public boolean equals(Object obj)

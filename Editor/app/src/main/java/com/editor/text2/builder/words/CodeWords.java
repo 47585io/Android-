@@ -67,6 +67,27 @@ public class CodeWords implements Words
 	public boolean contrans(int index){
 		return mchars.containsKey(index) || mdates.containsKey(index) || mmaps.containsKey(index);
 	}
-
+	
+	private static Map EmptyMap()
+	{
+		return Collections.synchronizedMap(new HashMap<>());
+	}
+	private static Set EmptySet()
+	{
+		return Collections.synchronizedSet(new HashSet<>());
+	}
+	private static List EmptyList()
+	{
+		return Collections.synchronizedList(new ArrayList<>());
+	}
+	private static Set copySet(Collection coll)
+	{
+		return Collections.synchronizedSet(new HashSet(coll));
+	}
+	private static Map copyMap(Map coll)
+	{
+		return Collections.synchronizedMap(new HashMap(coll));
+	}
+	
 }
 	

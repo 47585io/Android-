@@ -56,6 +56,16 @@ public class WordAdapter<T> extends BaseAdapter
 		    mfile.addAll(files);
 		}
 	}
+	public void addAll(int flag, T... files)
+	{
+		if(files!=null)
+		{
+			indexs.add(mfile.size());
+			flags.add(flag);
+			Collections.addAll(mfile,files);
+		}
+	}
+	
 
 	/* 在指定位置添加一个file，内部会自行扩展flag以包含这个file */
 	public void add(int index,T file)
@@ -171,7 +181,7 @@ public class WordAdapter<T> extends BaseAdapter
 		private int rid;
 		
 		public Factory(){
-			
+			rid = R.layout.WordIcon;
 		}
 		public Factory(int rid){
 			this.rid = rid;
@@ -200,8 +210,8 @@ public class WordAdapter<T> extends BaseAdapter
 			{
 				LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
 				View v = layoutInflater.inflate(rid,null);
-				//tvName = v.findViewById(R.id.Filename);
-				//tvIcon = v.findViewById(R.id.Fileicon);
+				tvName = v.findViewById(R.id.wordName);
+				tvIcon = v.findViewById(R.id.wordIcon);
 				return v;
 			}
 

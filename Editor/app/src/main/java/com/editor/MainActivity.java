@@ -13,6 +13,7 @@ import java.util.*;
 import com.editor.text2.*;
 import java.util.concurrent.*;
 import android.util.*;
+import com.editor.view.*;
 
 public class MainActivity extends Activity implements Runnable
 {
@@ -57,7 +58,11 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		loadFileInThread("/storage/emulated/0/Linux/2.java");
+		XCode Code = new XCode(this);
+		Code.setPool(mPool);
+		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
+		setContentView(Code);
+		//loadFileInThread("/storage/emulated/0/Linux/2.java");
 		//test();
 		//test2("/storage/emulated/0/Linux/2.java");
 		//test3();

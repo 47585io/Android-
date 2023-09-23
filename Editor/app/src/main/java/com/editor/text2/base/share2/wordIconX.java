@@ -17,15 +17,7 @@ public class wordIconX implements wordIcon
 		this.path=path;
 		this.name=name;
 	}
-	public wordIconX(wordIcon3 I){
-		this.icon=I.getIcon();
-		this.name=I.getName();
-	}
-	public wordIconX(wordIcon2 I){
-		this.path=I.getPath();
-		this.name=I.getName();
-	}
-
+	
 	public CharSequence getName() {
         return name;
     }
@@ -50,7 +42,7 @@ public class wordIconX implements wordIcon
 	@Override
 	public void loadImage(ImageView v)
 	{
-		if(getPath()!=null)
+		if(path!=null)
 		    v.setImageBitmap(BitmapFactory.decodeFile(getPath()));
 		else
 		    v.setImageResource(icon);

@@ -7,22 +7,24 @@ public class HandlerQueue
 	
 	private static final Handler mHamdler = new Handler();
 	
-	public static void doTotals(Runnable[] totals,Handler handler)
+	public static HandlerLock doTotals(Runnable[] totals,Handler handler)
 	{
 		if(totals==null || totals.length==0){
-			return;
+			return null;
 		}
 		if(handler==null){
 			handler = mHamdler;
 			Log.e("Handler is null","");
 		}
-		doTotal(0,totals,handler);
+		HandlerLock locker = new HandlerLock();
+		doTotal(0,totals,handler,locker);
+		return locker;
 	}
 
 	/* 递归进行post，如果任务很多且需要进行长时间前台操作必须使用 */
-	private static void doTotal(final int index,final Runnable[] totals,final Handler handler)
+	private static void doTotal(final int index,final Runnable[] totals,final Handler handler,final HandlerLock locker)
 	{
-		if(index>=totals.length){
+		if(index>=totals.length || locker.lock){
 			return;
 		}
 		Runnable run = new Runnable()
@@ -30,8 +32,11 @@ public class HandlerQueue
 			@Override
 			public void run()
 			{
+				if(locker.lock){
+					return;
+				}
 				totals[index].run();
-				doTotal(index+1,totals,handler);
+				doTotal(index+1,totals,handler,locker);
 				//执行完后再调用Recursion去post下个index的任务
 				//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
 			}
@@ -40,4 +45,13 @@ public class HandlerQueue
 		//递归地抛并执行任务
 	}
 
+	public static class HandlerLock
+	{
+		private boolean lock;
+		
+		public void lockHandler(){
+			lock = true;
+		}
+	}
+	
 }
