@@ -28,6 +28,8 @@ import com.editor.text.base.*;
 public abstract class myEditCompletorListener extends myEditListener implements EditCompletorListener
 {
 	
+	public static final int Invalid_Id = 0;
+	
 	public myEditCompletorListener(){
 		mIcons = new IconPool();
 	}
@@ -106,17 +108,18 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	/* 在一个库中搜索单词 */
 	final public static Collection<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target)
 	{
-		final int before = 0;
-		final int after = wantBefore.length();
+		final int before = wantBefore.length();
+		final int after = wantAfter.length();
 		Collection<CharSequence> words = null;
-		if (!wantBefore.equals("")){
-		    words = indexsOfBefore(wantBefore,before,target);
+		if (before>0 && after>0){
+		    words = indexsOfBefore(wantBefore,0,target);
+			words = indexsOfAfter(wantAfter,before,words);
 		}
-		if (!wantAfter.equals("") && words != null){
-		    words = indexsOfAfter(wantAfter,after,words);
+		else if (before>0){
+		    words = indexsOfBefore(wantBefore,0,target);
 		}
-		else if (!wantAfter.equals("") && wantBefore.equals("")){
-			words = indexsOfAfter(wantAfter,after,target);
+		else if (after>0){
+			words = indexsOfBefore(wantAfter,0,target);
 		}
 		return words;
 	}
@@ -203,7 +206,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	
 	public static interface onOpenWindowLisrener
 	{
-		public void callOnOpenWindow(View Window, int x, int y)
+		public void callOnOpenWindow(View self, Object content)
+		
+		public void callOnCloseWindow(View self)
+		
+		public void callOnRefreshWindow(View self, Object content)
 	}
 	
 	private EPool<wordIcon> mIcons;

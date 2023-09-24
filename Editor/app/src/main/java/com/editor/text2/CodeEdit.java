@@ -16,20 +16,39 @@ import android.view.*;
 import android.graphics.*;
 import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 import static com.editor.text2.builder.listenerInfo.listener.baselistener.EditListener.RunLi;
-import static com.editor.text2.builder.listenerInfo.listener.myEditCompletorListener.onOpenWindowLisrener;
+import static com.editor.text2.builder.listenerInfo.listener.myEditCompletorListener.*;
 import com.editor.text.base.*;
 import com.editor.text2.base.share2.*;
 import android.widget.AdapterView.*;
+import com.editor.R;
 
-public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListener
+public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListener,OnItemLongClickListener
 {
 
 	@Override
-	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+	public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
+		if(p4==Invalid_Id){
+			return false;
+		}
 		wordIcon icon = (wordIcon) p1.getItemAtPosition(p3);
 		CharSequence name = icon.getName();
-		insertWord(name,getSelectionEnd(),(int)p4);
+		WordAdapter<wordIcon> adapter = WordAdapter.getDefultAdapter();
+		adapter.addAll(0,new wordIconX(R.drawable.icon_default,"没有任何doc..."));
+		onSearchDocs(name,(int)p4,adapter);
+		mListener.callOnOpenWindow(this,adapter);
+		return true;
+	}
+	
+	@Override
+	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
+	{
+		if(p4==Invalid_Id){
+			return;
+		}
+		wordIcon icon = (wordIcon) p1.getItemAtPosition(p3);
+		CharSequence name = icon.getName();
+		onInsertWord(getText(),name,getSelectionEnd(),(int)p4);
 	}
 	
 
@@ -38,7 +57,6 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	private EditBuilder mEditBuilder;
 	
 	private ThreadPoolExecutor mPool;
-	private AdapterView mWindow;
 	private onOpenWindowLisrener mListener;
 	
 	private Stack<token> mLast, mNext;
@@ -485,16 +503,15 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	
 	public void openWindow()
 	{ 
-		if(mWindow==null){
+		if(mListener==null){
 			return;
 		}
 		final WordAdapter<wordIcon> adapter = WordAdapter.getDefultAdapter();
-		SearchInGroup(getText(),getSelectionEnd(),adapter);
+		onSearchWords(getText(),getSelectionEnd(),adapter);
 		Runnable run = new Runnable()
 		{
 			public void run(){
-				mWindow.setAdapter(adapter);
-				putWindow();
+				putWindow(adapter);
 			}
 		};
 		post(run);
@@ -513,7 +530,7 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	}
 
 	/* 在不同集合中找单词 */
-	public void SearchInGroup(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
+	public void onSearchWords(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
 	{
 		EditListener lis = getCompletor();
 		RunLi run = new RunLi()
@@ -531,13 +548,7 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	}
 
 	/* 插入单词，支持Span文本 */
-	final public int insertWord(CharSequence word, int index, int id)
-	{
-		onInsertword(getText(),word,index,id);
-		return 0;
-	}
-
-	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
+	protected void onInsertWord(final Editable editor,final CharSequence word, final int index, final int id)
 	{
 		EditListener lis = getCompletor();
 		//遍历所有listener，找到这个单词的放入者，由它自己处理插入
@@ -560,64 +571,52 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 		}
 	}
 	
-	public void setWindow(AdapterView Window, onOpenWindowLisrener li){
-		mWindow = Window;
+	protected void onSearchDocs(final CharSequence word, final int id, final WordAdapter<wordIcon> Adapter )
+	{
+		EditListener lis = getCompletor();
+		//遍历所有listener，找到这个单词的放入者，由它自己处理doc
+		RunLi run = new RunLi()
+		{
+			public boolean run(EditListener li)
+			{
+				if(li instanceof EditCompletorListener && li.hashCode() == id)
+				{
+				    wordIcon[] Icons = ((EditCompletorListener)li).onSearchDoc(word,mWordLib);
+					Adapter.addAll(Invalid_Id,Icons);
+				    return true;
+				}
+				return false;
+			}
+		};
+	}
+	
+	public void setWindow(onOpenWindowLisrener li){
 		mListener = li;
 	}
-	
-	private void putWindow()
+	private void putWindow(ListAdapter content)
 	{
-		if(mWindow==null){
-			return;
-		}
-		mWindow.setVisibility(VISIBLE);
-		final pos p = getSelectionStartPos();
-		int x = (int) p.x;
-		int y = (int) (p.y+getLineHeight());
-
-		final int width = getWidth();
-		int wantWidth = (int)(width*0.8);
-		if(p.x+wantWidth>getScrollX()+width){
-			x = getScrollX()+width-wantWidth;
-		}
-
-		final int height = getHeight();
-		int wantHeight = measureWindowHeight(mWindow,height/2);
-		if(p.y+wantHeight>getScrollY()+height){
-			y = (int)p.y-wantHeight;
-		}
-		mWindow.layout(x,y,x+wantWidth,y+wantHeight);
-		mListener.callOnOpenWindow(mWindow,x,y);
-	}
-	
-	public void cloaeWindow(){
-		mWindow.setVisibility(GONE);
-	}
-	
-	private static int measureWindowHeight(AdapterView Window, int maxHeight)
-	{
-		Adapter adapter = Window.getAdapter();
-		if(adapter==null){
-			return 0;
-		}
-		int height=0;
-		int count = adapter.getCount();
-		for (int i=0;i<count;++i)
+		if(mListener!=null)
 		{
-			View view = adapter.getView(i, null, Window);
-			view.measure(0, 0);
-			height += view.getMeasuredHeight();
-			if(height>=maxHeight){
-				return maxHeight;
+			if(content.getCount()!=0){
+				mListener.callOnOpenWindow(this,content);
+			}else{
+				mListener.callOnCloseWindow(this);
 			}
 		}
-		return height;
 	}
+	private void closeWindow()
+	{
+		if(mListener!=null){
+			mListener.callOnCloseWindow(this);
+		}
+	}
+	
+	
 
 	@Override
 	public boolean performClick()
 	{
-		cloaeWindow();
+		closeWindow();
 		return super.performClick();
 	}
 
