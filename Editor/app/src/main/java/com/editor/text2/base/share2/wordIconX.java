@@ -1,6 +1,9 @@
 package com.editor.text2.base.share2;
 import android.graphics.*;
 import android.widget.*;
+import android.app.*;
+import android.view.*;
+import android.widget.FrameLayout.*;
 
 public class wordIconX implements wordIcon
 {
@@ -46,6 +49,10 @@ public class wordIconX implements wordIcon
 		    v.setImageBitmap(BitmapFactory.decodeFile(getPath()));
 		else
 		    v.setImageResource(icon);
+		Display display = ((Activity)v.getContext()).getWindowManager().getDefaultDisplay();
+		ViewGroup.LayoutParams parms = v.getLayoutParams();
+		parms.width = display.getHeight()*6/100;
+		parms.height = parms.width;
 	}
 
 	@Override

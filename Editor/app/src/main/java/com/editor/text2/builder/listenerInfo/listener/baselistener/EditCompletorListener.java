@@ -8,5 +8,7 @@ public abstract interface EditCompletorListener extends EditListener
 {
 	public abstract wordIcon[] onSearchWord(CharSequence text, int index, Words lib)
 	
+	public abstract wordIcon[] onSearchDoc(CharSequence word, Words lib)
+	
 	public abstract int onInsertWord(Editable editor, int index, CharSequence word)
 }

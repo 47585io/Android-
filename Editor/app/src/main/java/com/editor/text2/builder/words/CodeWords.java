@@ -17,16 +17,16 @@ public class CodeWords implements Words
 	public void init()
 	{
 		//即使未使用，也先装入空的集合，以使get不为null
-		mchars = new HashMap<>();
-		mdates = new HashMap<>();
-		mmaps = new HashMap<>();
+		mchars = EmptyMap();
+		mdates = EmptyMap();
+		mmaps = EmptyMap();
 		
-		mchars.put(chars_fuhao,new HashSet<>());
-		mchars.put(chars_spilt,new HashSet<>());
+		mchars.put(chars_fuhao,EmptySet());
+		mchars.put(chars_spilt,EmptySet());
 		for(int i=words_key;i<=words_attr;++i){
-			mdates.put(i,new HashSet<>());
+			mdates.put(i,EmptySet());
 		}
-		mmaps.put(maps_zhu,new HashMap<>());
+		mmaps.put(maps_zhu,EmptyMap());
 	}
 
 	@Override
@@ -44,15 +44,15 @@ public class CodeWords implements Words
 
 	@Override
 	public void setACollectionChars(int index, Collection<Character> words){
-		mchars.put(index,words);
+		mchars.put(index,copySet(words));
 	}
 	@Override
 	public void setACollectionWords(int index, Collection<CharSequence> words){
-		mdates.put(index,words);
+		mdates.put(index,copySet(words));
 	}
 	@Override
 	public void setAMapWords(int index, Map<CharSequence, CharSequence> words){
-		mmaps.put(index,words);
+		mmaps.put(index,copyMap(words));
 	}
 
 	@Override
@@ -68,24 +68,19 @@ public class CodeWords implements Words
 		return mchars.containsKey(index) || mdates.containsKey(index) || mmaps.containsKey(index);
 	}
 	
-	private static Map EmptyMap()
-	{
+	private static Map EmptyMap(){
 		return Collections.synchronizedMap(new HashMap<>());
 	}
-	private static Set EmptySet()
-	{
+	private static Set EmptySet(){
 		return Collections.synchronizedSet(new HashSet<>());
 	}
-	private static List EmptyList()
-	{
+	private static List EmptyList(){
 		return Collections.synchronizedList(new ArrayList<>());
 	}
-	private static Set copySet(Collection coll)
-	{
+	private static Set copySet(Collection coll){
 		return Collections.synchronizedSet(new HashSet(coll));
 	}
-	private static Map copyMap(Map coll)
-	{
+	private static Map copyMap(Map coll){
 		return Collections.synchronizedMap(new HashMap(coll));
 	}
 	

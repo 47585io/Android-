@@ -10,6 +10,7 @@ import com.editor.text2.base.share2.*;
 import com.editor.text2.base.share4.*;
 import static com.editor.text2.builder.CodeEditBuilder.WordsPackets.BaseWordsPacket.fuhao;
 import com.editor.text2.base.share1.*;
+import com.editor.text.base.*;
 
 
 /*
@@ -33,17 +34,21 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 
 	public abstract Collection<CharSequence> beforeSearchWord(Words WordLib)
 
-	public abstract wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+	public abstract wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 	
 	@Override
 	public wordIcon[] onSearchWord(CharSequence text, int index, Words WordLib)
 	{
 		Collection<CharSequence> lib = beforeSearchWord(WordLib);
+		if(lib==null || lib.size()==0){
+			return EmptyArray.emptyArray(wordIcon.class);
+		}
 		final CharSequence wantBefore= getWord(text,index);
 		final CharSequence wantAfter = getAfterWord(text,index);
-		final int before = 0;
-		final int after = wantBefore.length();
-		List<CharSequence> words = SearchOnce(wantBefore,wantAfter,lib,before,after);
+		Collection<CharSequence> words = SearchOnce(wantBefore,wantAfter,lib);
+		if(words==null || words.size()==0){
+			return EmptyArray.emptyArray(wordIcon.class);
+		}
 		return finishSearchWord(words,WordLib);
 	}
 
@@ -54,6 +59,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 		final int end = tryIndexAfter(editor,index);
 		editor.replace(start,end,word,0,word.length());
 		return start+word.length();
+	}
+
+	@Override
+	public wordIcon[] onSearchDoc(CharSequence word, Words lib){
+		return EmptyArray.emptyArray(wordIcon.class);
 	}
 	
 	/* 试探光标命中单词的开头 */
@@ -94,58 +104,65 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	}
 	
 	/* 在一个库中搜索单词 */
-	final public static List<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target, int before, int after)
+	final public static Collection<CharSequence> SearchOnce(CharSequence wantBefore, CharSequence wantAfter, Collection<CharSequence> target)
 	{
-		List<CharSequence> words = new LinkedList<>();
-		if(wantBefore==""){
-			indexsOfAfter(wantAfter, after, target, words);
+		final int before = 0;
+		final int after = wantBefore.length();
+		Collection<CharSequence> words = null;
+		if (!wantBefore.equals("")){
+		    words = indexsOfBefore(wantBefore,before,target);
 		}
-		else if(wantAfter==""){
-		    indexsOfBefore(wantBefore, before, target, words);
+		if (!wantAfter.equals("") && words != null){
+		    words = indexsOfAfter(wantAfter,after,words);
 		}
-		else{
-			indexsOfBefore(wantBefore, before, target, words);
-			indexsOfAfter(wantAfter, after, words, words);
+		else if (!wantAfter.equals("") && wantBefore.equals("")){
+			words = indexsOfAfter(wantAfter,after,target);
 		}
 		return words;
 	}
 	/* 单词的前半部分必须与光标命中单词的前半部分一样 */
-	final public static void indexsOfBefore(CharSequence str,int start,Collection<CharSequence> keyword,Collection<CharSequence> result) 
+	final public static List<CharSequence> indexsOfBefore(CharSequence str,int start,Collection<CharSequence> keyword) 
 	{	
+	    List<CharSequence> result = new ArrayList<>();
 	    for(CharSequence word:keyword){
 			if(word.toString().toLowerCase().indexOf(str.toString().toLowerCase(),start)==start){
 				result.add(word);
 			}
 		}
+		return result;
 	}
 	/* 单词的后半部分必须与光标命中单词的后半部分一样 */
-	final public static void indexsOfAfter(CharSequence str,int start,Collection<CharSequence> keyword,Collection<CharSequence> result) 
-	{	
+	final public static List<CharSequence> indexsOfAfter(CharSequence str,int start,Collection<CharSequence> keyword) 
+	{
+		List<CharSequence> result = new ArrayList<>();
 	    for(CharSequence word:keyword){
 			if(word.toString().toLowerCase().indexOf(str.toString().toLowerCase(),start)>=start){
 				result.add(word);
 			}
 		}
+		return result;
 	}
 	
 	/* 用单词制作Icon */
-	final public wordIcon[] makeIcons(List<CharSequence> words, int icon)
+	final public wordIcon[] makeIcons(Collection<CharSequence> words, int icon)
 	{
 		int size = words.size();
 		wordIcon[] Icons = new wordIcon[size];
-		for (int i=0;i<size;++i){
-			wordIcon Icon = obtainIcon(words.get(i),icon);
-		    Icons[i] = Icon;
+		int i = 0;
+		for (CharSequence word:words){
+			wordIcon Icon = obtainIcon(word,icon);
+		    Icons[i++] = Icon;
 		}
 		return Icons;
 	}
-	final public wordIcon[] makeIcons(List<CharSequence> words, String path)
+	final public wordIcon[] makeIcons(Collection<CharSequence> words, String path)
 	{
 		int size = words.size();
 		wordIcon[] Icons = new wordIcon[size];
-		for (int i=0;i<size;++i){
-			wordIcon Icon = obtainIcon(words.get(i),path);
-		    Icons[i] = Icon;
+		int i = 0;
+		for (CharSequence word:words){
+			wordIcon Icon = obtainIcon(word,path);
+		    Icons[i++] = Icon;
 		}
 		return Icons;
 	}
@@ -186,7 +203,7 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	
 	public static interface onOpenWindowLisrener
 	{
-		public void callOnOpenWindow(View Window, float x, float y)
+		public void callOnOpenWindow(View Window, int x, int y)
 	}
 	
 	private EPool<wordIcon> mIcons;

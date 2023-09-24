@@ -16,9 +16,8 @@ public final class R {
         public static final int icon_func=0x7f020002;
         public static final int icon_key=0x7f020003;
         public static final int icon_obj=0x7f020004;
-        public static final int icon_tag=0x7f020005;
-        public static final int icon_type=0x7f020006;
-        public static final int icon_var=0x7f020007;
+        public static final int icon_type=0x7f020005;
+        public static final int icon_var=0x7f020006;
     }
     public static final class id {
         public static final int wordIcon=0x7f060000;

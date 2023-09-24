@@ -23,12 +23,10 @@ public class WordAdapter<T> extends BaseAdapter
     private List<T> mfile;
 	private ViewHolderFactory<T> mfactory;
 
-	public WordAdapter() 
-	{
+	public WordAdapter() {
         init();
     }
-	public WordAdapter(WordAdapter<T> adapter)
-	{
+	public WordAdapter(WordAdapter<T> adapter){
 		init();
 		copy(adapter);
 	}
@@ -68,14 +66,12 @@ public class WordAdapter<T> extends BaseAdapter
 	
 
 	/* 在指定位置添加一个file，内部会自行扩展flag以包含这个file */
-	public void add(int index,T file)
-	{
+	public void add(int index,T file){
 		mfile.add(index,file);
 		offsetIndex(index,1);
 	}
 	/* 在指定位置删除一个file，内部会自行缩减以填补空缺 */
-	public void remove(int index)
-	{
+	public void remove(int index){
 		mfile.remove(index);
 		offsetIndex(index,-1);
 	}
@@ -98,17 +94,14 @@ public class WordAdapter<T> extends BaseAdapter
 	}
 
     @Override
-    public int getCount() 
-	{
+    public int getCount() {
         return mfile == null ? 0 : mfile.size();
     }
     @Override
-    public T getItem(int position)
-	{
+    public T getItem(int position){
         return mfile.get(position);
     }
-	public void setItem(int position,T file)
-	{
+	public void setItem(int position,T file){
 		mfile.set(position,file);
 	}
 	
@@ -150,19 +143,18 @@ public class WordAdapter<T> extends BaseAdapter
 		{
 			//如果要创建一个新的列表项，创建并配置tag，之后在返回后ListView将convertView添加到自己上
 			holder = mfactory.newViewHodler();
-			convertView = holder.creatView(parent,getItem(position),position);
+			convertView = holder.creatView(parent,this,position);
 			convertView.setTag(holder);
 		}
 	    else{
 			//如果要刷新一个已有的列表项，用Adpter中postion的值更新convertView
 			holder = (ViewHolderFactory.ViewHolder<T>) convertView.getTag();
 		}
-		holder.resetView(parent,convertView,getItem(position),position);
+		holder.resetView(parent,convertView,this,position);
 		return convertView;
     }
 
-	public void setViewHolderFactory(ViewHolderFactory<T> f)
-	{
+	public void setViewHolderFactory(ViewHolderFactory<T> f){
 		mfactory = f;
 	}
 
@@ -188,8 +180,7 @@ public class WordAdapter<T> extends BaseAdapter
 		}
 		
 		@Override
-		public ViewHolderFactory.ViewHolder<wordIcon> newViewHodler()
-		{
+		public ViewHolderFactory.ViewHolder<wordIcon> newViewHodler(){
 			return new Holder();
 		}
 
@@ -206,7 +197,7 @@ public class WordAdapter<T> extends BaseAdapter
 			private ImageView tvIcon;
 
 			@Override
-			public View creatView(ViewGroup parent, wordIcon date, int position)
+			public View creatView(ViewGroup parent, WordAdapter<wordIcon> adapter, int position)
 			{
 				LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
 				View v = layoutInflater.inflate(rid,null);
@@ -216,8 +207,9 @@ public class WordAdapter<T> extends BaseAdapter
 			}
 
 			@Override
-			public void resetView(ViewGroup parent, View root, wordIcon date, int position)
+			public void resetView(ViewGroup parent, View convertView, WordAdapter<wordIcon> adapter, int position)
 			{
+				wordIcon date = adapter.getItem(position);
 				date.loadImage(tvIcon);
 				date.loadText(tvName);
 			}

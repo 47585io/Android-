@@ -25,6 +25,7 @@ public class HandlerQueue
 	private static void doTotal(final int index,final Runnable[] totals,final Handler handler,final HandlerLock locker)
 	{
 		if(index>=totals.length || locker.lock){
+			//任务抛出前，判断是否可以抛出
 			return;
 		}
 		Runnable run = new Runnable()
@@ -33,12 +34,16 @@ public class HandlerQueue
 			public void run()
 			{
 				if(locker.lock){
+					//在任务抛出到执行的延迟中，是否设置了lock
 					return;
 				}
 				totals[index].run();
-				doTotal(index+1,totals,handler,locker);
-				//执行完后再调用Recursion去post下个index的任务
-				//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
+				if(!locker.lock){
+					//任务执行中是否设置了lock
+					doTotal(index+1,totals,handler,locker);
+					//执行完后再调用Recursion去post下个index的任务
+					//这样每执行完一个任务，主线程都可以先顺着执行下去，缓口气，接下来继续执行下个任务
+				}	
 			}
 		};
 		handler.postDelayed(run,500);

@@ -27,7 +27,9 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	@Override
 	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
 	{
-		// TODO: Implement this method
+		wordIcon icon = (wordIcon) p1.getItemAtPosition(p3);
+		CharSequence name = icon.getName();
+		insertWord(name,getSelectionEnd(),(int)p4);
 	}
 	
 
@@ -221,9 +223,10 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 			mLocker.lockHandler();
 			mLocker = null;
 		}
-		Runnable run = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
-		mPool.execute(run);
-		openWindow();
+		Runnable run1 = OpenWindow();
+		mPool.execute(run1);
+		Runnable run2 = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		mPool.execute(run2);
 		super.onTextChanged(text, start, lenghtBefore, lengthAfter);
 	}
 	
@@ -496,6 +499,18 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 		};
 		post(run);
 	}
+	
+	public Runnable OpenWindow()
+	{
+		return new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				openWindow();
+			}
+		};
+	}
 
 	/* 在不同集合中找单词 */
 	public void SearchInGroup(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
@@ -518,9 +533,8 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 	/* 插入单词，支持Span文本 */
 	final public int insertWord(CharSequence word, int index, int id)
 	{
-		Editable editor = getText();
-		int before = editor.length();
-		return editor.length()-before;
+		onInsertword(getText(),word,index,id);
+		return 0;
 	}
 
 	protected void onInsertword(final Editable editor,final CharSequence word, final int index, final int id)
@@ -556,6 +570,7 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 		if(mWindow==null){
 			return;
 		}
+		mWindow.setVisibility(VISIBLE);
 		final pos p = getSelectionStartPos();
 		int x = (int) p.x;
 		int y = (int) (p.y+getLineHeight());
@@ -572,6 +587,11 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 			y = (int)p.y-wantHeight;
 		}
 		mWindow.layout(x,y,x+wantWidth,y+wantHeight);
+		mListener.callOnOpenWindow(mWindow,x,y);
+	}
+	
+	public void cloaeWindow(){
+		mWindow.setVisibility(GONE);
 	}
 	
 	private static int measureWindowHeight(AdapterView Window, int maxHeight)
@@ -594,5 +614,11 @@ public class CodeEdit extends Edit implements EditBuilderUser,OnItemClickListene
 		return height;
 	}
 
+	@Override
+	public boolean performClick()
+	{
+		cloaeWindow();
+		return super.performClick();
+	}
 
 }

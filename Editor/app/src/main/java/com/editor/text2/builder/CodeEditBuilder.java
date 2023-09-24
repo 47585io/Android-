@@ -445,8 +445,8 @@ public class CodeEditBuilder implements EditBuilder
 			{
 				add(getKeyBox());
 				add(getConstBox());
-				//add(getVillBox());
-				//add(getFuncBox());
+				add(getVillBox());
+				add(getFuncBox());
 				//add(getObjectBox());
 				//add(getTypeBox());
 			}
@@ -511,7 +511,7 @@ public class CodeEditBuilder implements EditBuilder
 			return new myEditCompletorListener(){
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
 					return makeIcons(words,R.drawable.icon_key);
 				}
@@ -536,7 +536,7 @@ public class CodeEditBuilder implements EditBuilder
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
 					return makeIcons(words,R.drawable.icon_default);
 				}
@@ -551,15 +551,13 @@ public class CodeEditBuilder implements EditBuilder
 				@Override
 				public Collection<CharSequence> beforeSearchWord(Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return WordLib.getACollectionWords(words_variable);
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return makeIcons(words,R.drawable.icon_var);
 				}
 		
 			};
@@ -573,15 +571,13 @@ public class CodeEditBuilder implements EditBuilder
 				@Override
 				public Collection<CharSequence> beforeSearchWord(Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return WordLib.getACollectionWords(words_func);
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return makeIcons(words,R.drawable.icon_func);
 				}
 
 				@Override
@@ -608,7 +604,7 @@ public class CodeEditBuilder implements EditBuilder
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
 					// TODO: Implement this method
 					return null;
@@ -625,15 +621,13 @@ public class CodeEditBuilder implements EditBuilder
 				@Override
 				public Collection<CharSequence> beforeSearchWord(Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return WordLib.getACollectionWords(words_type);
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
-					// TODO: Implement this method
-					return null;
+					return makeIcons(words,R.drawable.icon_type);
 				}
 				
 			};
@@ -651,7 +645,7 @@ public class CodeEditBuilder implements EditBuilder
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
 					// TODO: Implement this method
 					return null;
@@ -674,7 +668,7 @@ public class CodeEditBuilder implements EditBuilder
 				}
 
 				@Override
-				public wordIcon[] finishSearchWord(List<CharSequence> words, Words WordLib)
+				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
 					// TODO: Implement this method
 					return null;
