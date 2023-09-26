@@ -817,7 +817,7 @@ _______________________________________
 	public abstract void draw(Canvas c)
 	
 	
-	private static class RecylePool
+	static class RecylePool
 	{
 		public static final char[][] sCharArrays = new char[6][0];
 		public static final float[][] sFloatArrays = new float[6][0];
@@ -825,8 +825,36 @@ _______________________________________
 		public static final pos[] sPosArray = new pos[6];
 		public static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
 		
-		
-		
+		synchronized public static char[] obtainCharArray(){
+			return null;
+		}
+		synchronized public static void recyleCharArray(char[] array){
+
+		}
+		synchronized public static float[] obtainFloatArray(){
+			return null;
+		}
+		synchronized public static void recyleFloatArray(float[] array){
+			
+		}
+		synchronized public static RectF obtainRect(){
+			return null;
+		}
+		synchronized public static void recyleRect(RectF rect){
+
+		}
+		synchronized public static pos obtainNode(){
+			return null;
+		}
+		synchronized public static void recyleNode(pos node){
+
+		}
+		synchronized public static pos obtainFont(){
+			return null;
+		}
+		synchronized public static void recyleFont(Paint.FontMetrics font){
+
+		}
 	}
 	
 }

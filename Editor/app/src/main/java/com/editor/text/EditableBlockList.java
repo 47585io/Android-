@@ -1205,52 +1205,83 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	
+	//任意对象有一个锁和一个等待队列，锁只能被一个线程持有，其他试图获得同样锁的线程需要等待
+	//任意对象都可以作为锁对象，对于拥有相同锁的所有代码块，无论在代码块中做了什么，都保证同时只有一个线程能执行这些代码块
+	//在方法上加synchronized，实际上是以this对象作为锁，而在静态方法上加synchronized，实际上是以类对象作为锁
+	//我们再强调下，synchronized保护的是对象而非代码，只要访问的是同一个对象的synchronized代码块，即使是不同的代码，也会被同步顺序访问
+	//反之，多个线程是可以同时执行同一个synchronized方法的，只要它们访问的对象是不同的
+	//此外，需要说明的，synchronized方法不能防止非synchronized方法被同时执行，因为非synchronized方法不需要锁
+	
+	//synchronized代码块的执行过程大概如下：
+	//尝试获得锁，如果能够获得锁，继续下一步，否则加入等待队列，阻塞并等待唤醒
+	//执行实例方法体代码
+	//释放锁，如果等待队列上有等待的线程，从中取一个并唤醒，如果有多个等待的线程，唤醒哪一个是不一定的，不保证公平性
+
+	
 	/* 回收不使用的List，便于复用 */
 	private static int ListCount = 0;
 	private static final int MaxListCount = 100000;
 	private static List[] ListBuffer = new List[100];
 	
-	synchronized static List obtainList()
+    static List obtainList()
 	{
-		if(ListCount>0){
-			List buffer = ListBuffer[--ListCount];
-			ListBuffer[ListCount] = null;
-			return buffer;
+		//我们只能同时让一个线程执行ListBuffer代码块中的内容
+		synchronized(ListBuffer)
+		{
+			if(ListCount>0){
+				List buffer = ListBuffer[--ListCount];
+				ListBuffer[ListCount] = null;
+				return buffer;
+			}
 		}
+		//但当该线程判断完毕后，若没有buffer，则自己创建一个，而不阻塞其它线程
 		return new IdentityArrayList();
 	}
-	synchronized static void recyleList(List buffer)
+	static void recyleList(List buffer)
 	{
-		if(ListCount<MaxListCount)
+		//每个线程均可先各自清空自己的buffer并等待回收
+		//Android 应用中默认有三个线程: 主线程、GC线程、和Heap线程
+		//而且在GC线程运行的过程中，主线程会中断执行，因此若buffer在此时不清空，之后仍然会阻塞主线程
+		buffer.clear();
+		//我们只能同时让一个线程执行ListBuffer代码块中的内容
+		synchronized(ListBuffer)
 		{
-			buffer.clear();
-			if(ListCount+1 > ListBuffer.length) {
-			    int newSize = GrowingArrayUtils.growSize(ListCount);
-				newSize = newSize>MaxListCount ? MaxListCount:newSize;
-				ListBuffer = ArrayUtils.copyNewArray(ListBuffer,ListCount,newSize);
+			if(ListCount<MaxListCount)
+			{
+				if(ListCount+1 > ListBuffer.length) {
+					int newSize = GrowingArrayUtils.growSize(ListCount);
+					newSize = newSize>MaxListCount ? MaxListCount:newSize;
+					ListBuffer = ArrayUtils.copyNewArray(ListBuffer,ListCount,newSize);
+				}
+				ListBuffer[ListCount++] = buffer;
 			}
-			ListBuffer[ListCount++] = buffer;
 		}
 	}
 	
 	/* 这边也是，回收不使用的Set */
 	private static int SetCount = 0;
-	private static Set[] SetBuffer = new Set[10];
+	private static Set[] SetBuffer = new Set[6];
 	
-	synchronized private static Set obtainSet()
+	private static Set obtainSet()
 	{
-		if(SetCount>0){
-			Set buffer = SetBuffer[--SetCount];
-			SetBuffer[SetCount] = null;
-			return buffer;
+		synchronized(SetBuffer)
+		{
+			if(SetCount>0){
+				Set buffer = SetBuffer[--SetCount];
+				SetBuffer[SetCount] = null;
+				return buffer;
+			}
 		}
 		return new IdentityHashSet();
 	}
-	synchronized private static void recyleSet(Set buffer)
+	private static void recyleSet(Set buffer)
 	{
-		if(SetCount<SetBuffer.length){
-			buffer.clear();
-			SetBuffer[SetCount++] = buffer;
+		buffer.clear();
+		synchronized(SetBuffer)
+		{
+			if(SetCount<SetBuffer.length){
+				SetBuffer[SetCount++] = buffer;
+			}
 		}
 	}
 	
