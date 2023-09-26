@@ -1220,7 +1220,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	/* 回收不使用的List，便于复用 */
 	private static int ListCount = 0;
-	private static final int MaxListCount = 100000;
+	private static final int MaxListCount = 10000;
 	private static List[] ListBuffer = new List[100];
 	
     static List obtainList()

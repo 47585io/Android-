@@ -80,7 +80,12 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 						E.setWindowListener(XCode.this);
 						E.setPool(mPool);
 						E.getLayoutParams().height=2180;
-						E.reDrawTextContinuous(0,E.getText().length());
+					    int len = E.getText().length();
+						if(len<100000){
+							E.reDrawText(0,len);
+						}else{
+							E.reDrawTextContinuous(0,len);
+						}
 					}
 				};
 				post(run2);

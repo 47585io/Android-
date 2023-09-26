@@ -1022,7 +1022,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	* @param elementCount要返回的int[]的大小
 	* @返回一个长度至少为elementCount的int[]
 	*/
-    private static int[] obtain(final int elementCount)
+    static int[] obtain(final int elementCount)
 	{
         int[] result = null;
         synchronized (sCachedIntBuffer)
@@ -1054,7 +1054,7 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 	* 回收排序数组
 	* @param buffer要回收的数组
 	*/
-    private static void recycle(int[] buffer)
+    static void recycle(int[] buffer)
 	{
         synchronized (sCachedIntBuffer)
 		{

@@ -916,7 +916,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					}
 					else
 					{
-						if(end-start>100000){
+						if(end-start>1000){
 							mLayout.getCursorPos(end,endPos);
 						}
 						else{

@@ -605,7 +605,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
  
  ------------------------------------------------------------------------------------
 */
-	
+
 	@Override
 	public void onTextChanged(CharSequence text, int start, int lenghtBefore, int lengthAfter)
 	{
@@ -743,6 +743,5 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		closeWindow();
 		return super.performClick();
 	}
-	
 
 }

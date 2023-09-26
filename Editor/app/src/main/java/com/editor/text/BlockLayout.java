@@ -817,43 +817,153 @@ _______________________________________
 	public abstract void draw(Canvas c)
 	
 	
-	static class RecylePool
+	protected static class RecylePool
 	{
-		public static final char[][] sCharArrays = new char[6][0];
-		public static final float[][] sFloatArrays = new float[6][0];
-		public static final Rect[] sRectArray = new Rect[6];
-		public static final pos[] sPosArray = new pos[6];
-		public static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
+		private static final char[][] sCharArrays = new char[6][0];
+		private static final float[][] sFloatArrays = new float[6][0];
+		private static final RectF[] sRectArray = new RectF[6];
+		private static final pos[] sPosArray = new pos[6];
+		private static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
 		
-		synchronized public static char[] obtainCharArray(){
-			return null;
+		public static char[] obtainCharArray(int size)
+		{
+			synchronized(sCharArrays)
+			{
+				for(int i=0;i<sCharArrays.length;++i)
+				{
+					char[] array = sCharArrays[i];
+					if (array!=null && array.length>=size) {
+						sCharArrays[i] = null;
+						return array;
+					}
+				}
+			}
+			return ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(size));
 		}
-		synchronized public static void recyleCharArray(char[] array){
-
+		public static void recyleCharArray(char[] array)
+		{
+			synchronized (sCharArrays)
+			{
+				for (int i=0;i<sCharArrays.length;i++) 
+				{
+					if (sCharArrays[i] == null || array.length > sCharArrays[i].length) {
+						sCharArrays[i] = array;
+						break;
+					}
+				}
+			}
 		}
-		synchronized public static float[] obtainFloatArray(){
-			return null;
+		public static float[] obtainFloatArray(int size)
+		{
+			synchronized(sFloatArrays)
+			{
+				for(int i=0;i<sFloatArrays.length;++i)
+				{
+					float[] array = sFloatArrays[i];
+					if (array!=null && array.length>=size) {
+						sFloatArrays[i] = null;
+						return array;
+					}
+				}
+			}
+			return ArrayUtils.newUnpaddedFloatArray(GrowingArrayUtils.growSize(size));
 		}
-		synchronized public static void recyleFloatArray(float[] array){
-			
+		public static void recyleFloatArray(float[] array)
+		{
+			synchronized (sFloatArrays)
+			{
+				for (int i=0;i<sFloatArrays.length;i++) 
+				{
+					if (sFloatArrays[i] == null || array.length > sFloatArrays[i].length) {
+						sFloatArrays[i] = array;
+						break;
+					}
+				}
+			}
 		}
-		synchronized public static RectF obtainRect(){
-			return null;
+		public static RectF obtainRect()
+		{
+			synchronized(sRectArray)
+			{
+				for(int i=0;i<sRectArray.length;++i)
+				{
+					RectF rect = sRectArray[i];
+					if (rect!=null) {
+						sRectArray[i] = null;
+						return rect;
+					}
+				}
+			}
+			return new RectF();
 		}
-		synchronized public static void recyleRect(RectF rect){
-
+		public static void recyleRect(RectF rect)
+		{
+			synchronized(sRectArray)
+			{
+				for (int i=0;i<sRectArray.length;i++) 
+				{
+					if (sRectArray[i] == null){
+						sRectArray[i] = rect;
+						break;
+					}
+				}
+			}
 		}
-		synchronized public static pos obtainNode(){
-			return null;
+		public static pos obtainNode()
+		{
+			synchronized(sPosArray)
+			{
+				for(int i=0;i<sPosArray.length;++i)
+				{
+					pos pos = sPosArray[i];
+					if (pos!=null) {
+						sPosArray[i] = null;
+						return pos;
+					}
+				}
+			}
+			return new pos();
 		}
-		synchronized public static void recyleNode(pos node){
-
+		public static void recyleNode(pos node)
+		{
+			synchronized(sPosArray)
+			{
+				for (int i=0;i<sPosArray.length;i++) 
+				{
+					if (sPosArray[i] == null){
+						sPosArray[i] = node;
+						break;
+					}
+				}
+			}
 		}
-		synchronized public static pos obtainFont(){
-			return null;
+		public static Paint.FontMetrics obtainFont()
+		{
+			synchronized(sFontArray)
+			{
+				for(int i=0;i<sFontArray.length;++i)
+				{
+					Paint.FontMetrics font = sFontArray[i];
+					if (font!=null) {
+						sFontArray[i] = null;
+						return font;
+					}
+				}
+			}
+			return new Paint.FontMetrics();
 		}
-		synchronized public static void recyleFont(Paint.FontMetrics font){
-
+		public static void recyleFont(Paint.FontMetrics font)
+		{
+			synchronized(sFontArray)
+			{
+				for (int i=0;i<sFontArray.length;i++) 
+				{
+					if (sFontArray[i] == null){
+						sFontArray[i] = font;
+						break;
+					}
+				}
+			}
 		}
 	}
 	
