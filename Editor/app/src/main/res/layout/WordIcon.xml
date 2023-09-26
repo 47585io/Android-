@@ -1,27 +1,23 @@
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
-	android:layout_height="match_parent"
-	android:orientation="horizontal"
-	android:paddingLeft="0px"
-	android:paddingRight="0px"
-	android:paddingBottom="0px"
-	android:paddingTop="0px">
+	android:layout_height="wrap_content"
+	android:orientation="horizontal">
 
 	<ImageView
 		android:id="@+id/wordIcon"
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:layout_gravity="center"
-		android:paddingRight="10px"
+		android:layout_height="45dp"
+		android:layout_width="45dp"
 		android:scaleType="centerInside"/>
 
 	<TextView
 		android:id="@+id/wordName"
-		android:layout_width="wrap_content"
+		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
+		android:singleLine="false"
 		android:layout_gravity="center"
-		android:paddingStart="10dp"
+		android:paddingLeft="10dp"
+		android:paddingRight="10dp"
 		android:textColor="#ffabb2bf"
 		android:textAppearance="?android:attr/textAppearanceSmall"/>
 

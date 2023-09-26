@@ -35,5 +35,4 @@ public abstract class RecylePool<T>
 
 	abstract protected T[] newInstance(int size)
 
-	abstract protected T newObject(int size)
 }

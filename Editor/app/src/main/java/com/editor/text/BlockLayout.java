@@ -19,6 +19,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	public static int TabSize = 4;
 
 	//临时变量
+	//支持在子线程中加载文本，因此每一个实例单独拥有这些成员
 	private char[] chars = EmptyArray.CHAR;
 	private float[] widths = EmptyArray.FLOAT;
 	private RectF rectF = new RectF();
@@ -814,5 +815,18 @@ _______________________________________
 
 	@Override
 	public abstract void draw(Canvas c)
+	
+	
+	private static class RecylePool
+	{
+		public static final char[][] sCharArrays = new char[6][0];
+		public static final float[][] sFloatArrays = new float[6][0];
+		public static final Rect[] sRectArray = new Rect[6];
+		public static final pos[] sPosArray = new pos[6];
+		public static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
+		
+		
+		
+	}
 	
 }

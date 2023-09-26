@@ -1,22 +1,19 @@
 package com.editor.text2.builder;
 
 import android.text.*;
-import android.text.style.*;
-import com.editor.text.base.*;
+import com.editor.*;
 import com.editor.text2.base.share1.*;
-import com.editor.text2.builder.listenerInfo.*;
-import com.editor.text2.builder.listenerInfo.listener.*;
-import com.editor.text2.builder.listenerInfo.listener.baselistener.*;
+import com.editor.text2.base.share2.*;
+import com.editor.text2.base.share3.*;
+import com.editor.text2.base.share4.*;
+import com.editor.text2.builder.listener.*;
+import com.editor.text2.builder.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
 import java.util.*;
 
-import static com.editor.text2.builder.listenerInfo.EditListenerInfo.*;
 import static com.editor.text2.builder.words.Words.*;
-import static com.editor.text2.builder.listenerInfo.listener.myEditDrawerListener.*;
-import com.editor.text2.base.share4.*;
-import com.editor.text2.base.share3.*;
-import com.editor.text2.base.share2.*;
-import com.editor.R;
+import static com.editor.text2.builder.listener.myEditDrawerListener.*;
+import com.editor.text.base.*;
 
 
 public class CodeEditBuilder implements EditBuilder
@@ -25,19 +22,14 @@ public class CodeEditBuilder implements EditBuilder
 	public static class DrawerFactory implements ListenerFactory
 	{
 
-		public static EditListener getDefaultDrawer(){
+		public static EditDrawerListener getDefaultDrawer(){
 			return new DefaultDrawer();
 		}
-		public EditListener ToLisrener(String Lua){
+		public EditDrawerListener ToLisrener(String Lua){
 			return getDefaultDrawer();
 		}
-		public void SwitchListener(EditListenerInfo Info, String Lua)
-		{
-			//所有的工厂都替换了监听器
-			if(Info.size()>DrawerIndex+1){
-				Info.delListenerFrom(DrawerIndex);
-			}
-			Info.addListenerTo(ToLisrener(Lua),DrawerIndex);
+		public void SwitchListener(EditListenerInfo Info, String Lua){
+			Info.mDrawerListener = ToLisrener(Lua);
 		}
 
 		public static class DefaultDrawer extends myEditDrawerListener
@@ -266,33 +258,24 @@ public class CodeEditBuilder implements EditBuilder
 				final public void tryWord(CharSequence src,int index,range tmp)
 				{
 					Collection fuhao = getFuhao();
-					try{
-						while(fuhao.contains(src.charAt(index)))
-							--index;
-						tmp.end=index+1;
-						while(!fuhao.contains(src.charAt(index)))
-							--index;
-						tmp.start=index+1;
-					}catch(Exception e){
-						tmp.start=0;
-						tmp.end=0;
-					}
+					while(index>-1 && fuhao.contains(src.charAt(index)))
+						--index;
+					tmp.end = index==-1 ? 0: index+1;
+					while(index>-1 && !fuhao.contains(src.charAt(index)))
+						--index;
+					tmp.start= index==-1 ? 0 : index+1;
 				}
 
 				final public void tryWordAfter(CharSequence src,int index,range tmp)
 				{
 					Collection fuhao = getFuhao();
-					try{
-						while(fuhao.contains(src.charAt(index)))
-							++index;
-						tmp.start=index;
-						while(!fuhao.contains(src.charAt(index)))
-							++index;
-						tmp.end=index;
-					}catch(Exception e){
-						tmp.start=0;
-						tmp.end=0;
-					}
+					int len = src.length();
+					while(index<len && fuhao.contains(src.charAt(index)))
+						++index;
+					tmp.start=index;
+					while(index<len && !fuhao.contains(src.charAt(index)))
+						++index;
+					tmp.end=index;
 				}
 				
 			}
@@ -316,9 +299,8 @@ public class CodeEditBuilder implements EditBuilder
 								//如果它是(字符，将之前的函数名存起来
 								wordIndex node = obtainNode();
 								tryWord(text, nowIndex-1, node);
-								boolean isFunc = text.indexOf('=',node.end)>nowIndex && text.indexOf('.',node.end)>nowIndex;
 								CharSequence func = text.subSequence(node.start, node.end);
-								if(isFunc && !getKey().contains(func))
+								if(!getKey().contains(func))
 								{
 									getFunc().add(func);
 									node.span = new ForegroundColorSpanX(Colors.Function);
@@ -410,13 +392,16 @@ public class CodeEditBuilder implements EditBuilder
 	
 	public static class CompletorBoxes implements ListenerFactory
 	{
-
+		
 		@Override
-		public EditListenerList ToLisrener(String Lua)
+		public void SwitchListener(EditListenerInfo Info, String Lua)
+		{
+			Info.mCompletorListeners = ToListeners(Lua);
+		}
+		
+		public EditCompletorListener[] ToListeners(String Lua)
 		{
 			switch(Lua){
-				case "text":
-					return null;
 				case "xml":
 					return getXMLCompletorList();
 				case "java":
@@ -430,83 +415,25 @@ public class CodeEditBuilder implements EditBuilder
 			}
 		}
 
-		@Override
-		public void SwitchListener(EditListenerInfo Info, String Lua)
+		public static EditCompletorListener[] getJavaCompletorList()
 		{
-			if(Info.size()>CompletorIndex+1){
-				Info.delListenerFrom(CompletorIndex);
-			}
-			Info.addListenerTo(ToLisrener(Lua),CompletorIndex);
+			return new EditCompletorListener[]{getKeyBox(),getConstBox(),getFuncBox(),getVillBox()};
 		}
-
-		public static class JavaCompletor extends myEditListenerList
-		{		
-			public JavaCompletor()
-			{
-				add(getKeyBox());
-				add(getConstBox());
-				add(getVillBox());
-				add(getFuncBox());
-				//add(getObjectBox());
-				//add(getTypeBox());
-			}
-		}
-
-		public static class XMLCompletor extends myEditListenerList
+		public static EditCompletorListener[] getXMLCompletorList()
 		{
-			public XMLCompletor()
-			{
-				add(getTagBox());
-				add(getAttributeBox());
-			}
+			return new EditCompletorListener[]{};
 		}
-
-		public static class CSSCompletor extends myEditListenerList
+		public static EditCompletorListener[] getCSSCompletorList()
 		{
-			public CSSCompletor()
-			{
-				add(getVillBox());
-				add(getFuncBox());
-				add(getTypeBox());
-				add(getTagBox());
-				add(getAttributeBox());
-			}
+			return new EditCompletorListener[]{};
 		}
-
-		public static class HTMLCompletor extends myEditListenerList
+		public static EditCompletorListener[] getHTMLCompletorList()
 		{
-			public HTMLCompletor()
-			{
-				add(getKeyBox());
-				add(getConstBox());
-				add(getVillBox());
-				add(getFuncBox());
-				add(getObjectBox());
-				add(getTypeBox());
-				add(getTagBox());
-				add(getAttributeBox());
-			}
-		}
-
-		public static EditListenerList getJavaCompletorList()
-		{
-			return new JavaCompletor();
-		}
-		public static EditListenerList getXMLCompletorList()
-		{
-			return new XMLCompletor();
-		}
-		public static EditListenerList getCSSCompletorList()
-		{
-			return new CSSCompletor();
-		}
-		public static EditListenerList getHTMLCompletorList()
-		{
-			return new HTMLCompletor();
+			return new EditCompletorListener[]{};
 		}
 
 
-	    public static EditListener getKeyBox()
+	    public static EditCompletorListener getKeyBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -525,7 +452,7 @@ public class CodeEditBuilder implements EditBuilder
 				
 			};
 		}
-		public static EditListener getConstBox()
+		public static EditCompletorListener getConstBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -544,7 +471,7 @@ public class CodeEditBuilder implements EditBuilder
 			};
 		}
 
-		public static EditListener getVillBox()
+		public static EditCompletorListener getVillBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -564,7 +491,7 @@ public class CodeEditBuilder implements EditBuilder
 		}
 
 
-		public static EditListener getFuncBox()
+		public static EditCompletorListener getFuncBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -592,7 +519,7 @@ public class CodeEditBuilder implements EditBuilder
 		}
 
 
-		public static EditListener getObjectBox()
+		public static EditCompletorListener getObjectBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -614,7 +541,7 @@ public class CodeEditBuilder implements EditBuilder
 			};
 		}
 
-		public static EditListener getTypeBox()
+		public static EditCompletorListener getTypeBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -633,7 +560,7 @@ public class CodeEditBuilder implements EditBuilder
 			};
 		}
 
-		public static EditListener getTagBox()
+		public static EditCompletorListener getTagBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -656,7 +583,7 @@ public class CodeEditBuilder implements EditBuilder
 			};
 		}
 
-		public static EditListener getAttributeBox()
+		public static EditCompletorListener getAttributeBox()
 		{
 			return new myEditCompletorListener(){
 
@@ -690,7 +617,6 @@ public class CodeEditBuilder implements EditBuilder
 			UnPackWords(Lua).loadWords(Lib);
 		}
 
-		@Override
 		public AWordsPacket UnPackWords(String Lua)
 		{
 			switch (Lua)
@@ -718,14 +644,14 @@ public class CodeEditBuilder implements EditBuilder
 
 		public static class BaseWordsPacket implements AWordsPacket
 		{
-			public static final Character[] fuhaox= new Character[]{
+			public static final char[] fuhaox= new char[]{
 				'(',')','{','}','[',']',
 				'=',';',',','.',':',
 				'+','-','*','/','%',
 				'^','|','&','<','>','?','@',
 				'!','~','\'','\n',' ','\t','#','"','\''
 			};
-			public static final Character[] spiltx= new Character[]{
+			public static final char[] spiltx= new char[]{
 				'\n',' ','\t','<','>',
 			};
 			public static final Collection<Character> fuhao = new HashSet<>();
@@ -734,8 +660,8 @@ public class CodeEditBuilder implements EditBuilder
 			static{
 				Arrays.sort(fuhaox);
 				Arrays.sort(spiltx);
-				Collections.addAll(fuhao,fuhaox);
-				Collections.addAll(spilt,spiltx);
+				CodeWords.copySet(fuhao,fuhaox);
+				CodeWords.copySet(spilt,spiltx);
 			}
 
 			@Override
@@ -794,8 +720,11 @@ public class CodeEditBuilder implements EditBuilder
 			public void loadWords(Words Lib)
 			{
 				super.loadWords(Lib);
-				Lib.setACollectionWords(words_key,Arrays.asList(keyword));
-				Lib.setACollectionWords(words_const,Arrays.asList(constword));
+				Lib.setACollectionWords(words_key,keyword);
+				Lib.setACollectionWords(words_const,constword);
+				for(int i=words_func;i<=words_attr;++i){
+					Lib.setACollectionWords(i,EmptyArray.emptyArray(CharSequence.class));
+				}
 				Lib.setAMapWords(maps_zhu,zhu_key_value);
 			}
 
@@ -824,7 +753,7 @@ public class CodeEditBuilder implements EditBuilder
 			public void loadWords(Words Lib)
 			{
 				super.loadWords(Lib);
-				Lib.setACollectionWords(words_tag,Arrays.asList(IknowTag));
+				Lib.setACollectionWords(words_tag,IknowTag);
 				Lib.setAMapWords(maps_zhu,zhu_key_value);
 			}
 
@@ -842,42 +771,22 @@ public class CodeEditBuilder implements EditBuilder
 		return new CompletorBoxes();
 	}
 	
+	
 	@Override
-	public void SwitchLuagua(Object O, String Lua)
+	public void trimListener(EditListenerInfo Info, String Lua)
 	{
-		EditListenerInfo Info = null;
-		Words WordLib = null;
-		if(O instanceof EditListenerInfo){
-			Info = (EditListenerInfo) O;
-		}
-		if(O instanceof EditListenerInfoUser){
-			Info = ((EditListenerInfoUser)O).getInfo();
-		}
-		if(O instanceof Words){
-			WordLib = (Words) O;
-		}
-		if(O instanceof WordsUser){
-			WordLib = ((WordsUser)O).getWordLib();
-		}
 		if(Info!=null){
 			getDrawerFactory().SwitchListener(Info,Lua);
 			getCompletorFactory().SwitchListener(Info,Lua);
 		}
+	}
+
+	@Override
+	public void loadWords(Words WordLib, String Lua)
+	{
 		if(WordLib!=null){
 			getWordsPacket().SwitchWords(WordLib,Lua);
 		}
-	}
-
-	@Override
-	public void trimListener(EditListenerInfo Info)
-	{
-		// TODO: Implement this method
-	}
-
-	@Override
-	public void loadWords(Words Lib)
-	{
-		WordsPackets.getBaseWordsPacket().loadWords(Lib);
 	}
 	
 }

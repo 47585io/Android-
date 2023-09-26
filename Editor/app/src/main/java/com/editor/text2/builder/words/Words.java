@@ -1,6 +1,8 @@
 package com.editor.text2.builder.words;
+
 import java.util.*;
 
+/* 不应该add或remove，因为会使下标变乱 */
 public abstract interface Words 
 {
 
@@ -27,20 +29,22 @@ public abstract interface Words
 
 	public abstract void clear()
 
-	public abstract int size()
-
-	public abstract boolean contrans(int index)
-
 	public abstract Collection<Character> getACollectionChars(int index)
 
 	public abstract Collection<CharSequence> getACollectionWords(int index)
 
 	public abstract Map<CharSequence,CharSequence> getAMapWords(int index)
 
-	public abstract void setACollectionChars(int index,Collection<Character> words)
+	public abstract void setACollectionChars(int index,Collection<Character> chars)
 
 	public abstract void setACollectionWords(int index,Collection<CharSequence> words)
-
+	
 	public abstract void setAMapWords(int index,Map<CharSequence,CharSequence> words)
+	
+	public abstract void setACollectionChars(int index,char[] chars)
 
+	public abstract void setACollectionWords(int index,CharSequence[] words)
+	
+	public abstract void setAMapWords(int index,CharSequence[] keys,CharSequence[] vaules);
+	
 }

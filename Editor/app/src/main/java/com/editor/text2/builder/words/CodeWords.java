@@ -1,88 +1,242 @@
 package com.editor.text2.builder.words;
 
 import java.util.*;
+import java.util.concurrent.*;
+
 
 public class CodeWords implements Words
 {
 
-	//所有单词使用Map存储，以使index可以为任意的值
-	private Map<Integer,Collection<Character>> mchars;
-	private Map<Integer,Collection<CharSequence>> mdates;
-	private Map<Integer,Map<CharSequence,CharSequence>> mmaps;
-	//支持保存Span单词，但可能有一些异常
-
+	private List<Collection<Character>> mChars;
+	private List<Collection<CharSequence>> mWords;
+	private List<Map<CharSequence,CharSequence>> mMaps;
+	
 	public CodeWords(){
 		init();
 	}
-	public void init()
-	{
-		//即使未使用，也先装入空的集合，以使get不为null
-		mchars = EmptyMap();
-		mdates = EmptyMap();
-		mmaps = EmptyMap();
-		
-		mchars.put(chars_fuhao,EmptySet());
-		mchars.put(chars_spilt,EmptySet());
-		for(int i=words_key;i<=words_attr;++i){
-			mdates.put(i,EmptySet());
-		}
-		mmaps.put(maps_zhu,EmptyMap());
+	private void init(){
+		mChars = EmptyList();
+		mWords = EmptyList();
+		mMaps = EmptyList();
 	}
-
+	@Override
+	public void clear(){
+		mChars.clear();
+		mWords.clear();
+		mMaps.clear();
+	}
+	
 	@Override
 	public Collection<Character> getACollectionChars(int index){
-		return mchars.get(index);
+		return mChars.get(index);
 	}
 	@Override
 	public Collection<CharSequence> getACollectionWords(int index){
-		return mdates.get(index);
+		return mWords.get(index);
 	}
 	@Override
 	public Map<CharSequence, CharSequence> getAMapWords(int index){
-		return mmaps.get(index);
+		return mMaps.get(index);
 	}
 
 	@Override
-	public void setACollectionChars(int index, Collection<Character> words){
-		mchars.put(index,copySet(words));
+	public void setACollectionChars(int index, Collection<Character> chars)
+	{
+		if(mChars.size()>index)
+		{
+			Collection<Character> coll = mChars.get(index);
+			if(coll==null){
+				mChars.set(index,newSet(chars));
+			}else{
+				mChars.set(index,copySet(coll,chars));
+			}
+		}
+		else{
+			mChars.add(index,newSet(chars));
+		}
 	}
 	@Override
-	public void setACollectionWords(int index, Collection<CharSequence> words){
-		mdates.put(index,copySet(words));
+	public void setACollectionChars(int index, char[] chars)
+	{
+		if(mChars.size()>index)
+		{
+			Collection<Character> coll = mChars.get(index);
+			if(coll==null){
+				mChars.set(index,newSet(chars));
+			}else{
+				mChars.set(index,copySet(coll,chars));
+			}
+		}
+		else{
+			mChars.add(index,newSet(chars));
+		}
 	}
 	@Override
-	public void setAMapWords(int index, Map<CharSequence, CharSequence> words){
-		mmaps.put(index,copyMap(words));
+	public void setACollectionWords(int index, Collection<CharSequence> words)
+	{
+		if(mWords.size()>index)
+		{
+			Collection<CharSequence> coll = mWords.get(index);
+			if(coll==null){
+				mWords.set(index,newSet(words));
+			}else{
+				mWords.set(index,copySet(coll,words));
+			}
+		}
+		else{
+			mWords.add(index,newSet(words));
+		}
 	}
-
 	@Override
-	public void clear(){
-		init();
+	public void setACollectionWords(int index, CharSequence[] words)
+	{
+		if(mWords.size()>index)
+		{
+			Collection<CharSequence> coll = mWords.get(index);
+			if(coll==null){
+				mWords.set(index,newSet(words));
+			}else{
+				mWords.set(index,copySet(coll,words));
+			}
+		}
+		else{
+			mWords.add(index,newSet(words));
+		}
 	}
 	@Override
-	public int size(){
-		return mdates.size()+mmaps.size()+mchars.size();
+	public void setAMapWords(int index, Map<CharSequence, CharSequence> words)
+	{
+		if(mMaps.size()>index)
+		{
+			Map<CharSequence,CharSequence> map = mMaps.get(index);
+			if(map==null){
+				mMaps.set(index,newMap(words));
+			}else{
+				mMaps.set(index,copyMap(map,words));
+			}
+		}
+		else{
+			mMaps.add(index,newMap(words));
+		}
 	}
 	@Override
-	public boolean contrans(int index){
-		return mchars.containsKey(index) || mdates.containsKey(index) || mmaps.containsKey(index);
+	public void setAMapWords(int index, CharSequence[] keys, CharSequence[] vaules)
+	{
+		if(mMaps.size()>index)
+		{
+			Map<CharSequence,CharSequence> map = mMaps.get(index);
+			if(map==null){
+				mMaps.set(index,newMap(keys,vaules));
+			}else{
+				mMaps.set(index,copyMap(map,keys,vaules));
+			}
+		}
+		else{
+			mMaps.add(index,newMap(keys,vaules));
+		}
 	}
 	
-	private static Map EmptyMap(){
-		return Collections.synchronizedMap(new HashMap<>());
+	
+	public static Map EmptyMap(){
+		return new ConcurrentHashMap();
 	}
-	private static Set EmptySet(){
-		return Collections.synchronizedSet(new HashSet<>());
+	public static Set EmptySet(){
+		return new ConcurrentHashSet();
 	}
-	private static List EmptyList(){
-		return Collections.synchronizedList(new ArrayList<>());
+	public static List EmptyList(){
+		return new CopyOnWriteArrayList();
 	}
-	private static Set copySet(Collection coll){
-		return Collections.synchronizedSet(new HashSet(coll));
+	
+	public static<T> Set<T> newSet(Collection<T> dst){
+		return dst==null ? null : new ConcurrentHashSet<T>(dst);
 	}
-	private static Map copyMap(Map coll){
-		return Collections.synchronizedMap(new HashMap(coll));
+	public static<K,V> Map<K,V> newMap(Map<K,V> dst){
+		return dst==null ? null : new ConcurrentHashMap<K,V>(dst);
+	}
+	public static<T> Set<T> newSet(T[] dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		Set<T> set = new ConcurrentHashSet<>();
+		for(int i=0;i<dst.length;++i){
+			set.add(dst[i]);
+		}
+		return set;
+	}
+	public static<K,V> Map<K,V> newMap(K[] keys, V[] values)
+	{
+		if(keys==null || values==null){
+			return null;
+		}
+		Map<K,V> map = new ConcurrentHashMap<>();
+		for(int i=0;i<keys.length;++i){
+			map.put(keys[i],values[i]);
+		}
+		return map;
+	}
+	public static Set<Character> newSet(char[] dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		Set<Character> set = new ConcurrentHashSet<>();
+		for(int i=0;i<dst.length;++i){
+			set.add(dst[i]);
+		}
+		return set;
+	}
+	
+	public static<T> Collection<T> copySet(Collection<T> self, Collection<T> dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		self.clear();
+		self.addAll(dst);
+		return self;
+	}
+	public static<K,V> Map<K,V> copyMap(Map<K,V> self, Map<K,V> dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		self.clear();
+		self.putAll(dst);
+		return self;
+	}
+	public static<T> Collection<T> copySet(Collection<T> self, T[] dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		self.clear();
+		for(int i=0;i<dst.length;++i){
+			self.add(dst[i]);
+		}
+		return self;
+	}
+	public static<K,V> Map<K,V> copyMap(Map<K,V> self, K[] keys, V[] vaules)
+	{
+		if(keys==null || vaules==null){
+			return null;
+		}
+		self.clear();
+		for(int i=0;i<keys.length;++i){
+			self.put(keys[i],vaules[i]);
+		}
+		return self;
+	}
+	public static Collection<Character> copySet(Collection<Character> self, char[] dst)
+	{
+		if(dst==null){
+			return null;
+		}
+		self.clear();
+		for(int i=0;i<dst.length;++i){
+			self.add(dst[i]);
+		}
+		return self;
 	}
 	
 }
-	

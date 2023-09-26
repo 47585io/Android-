@@ -91,7 +91,7 @@ public class MainActivity extends Activity implements Runnable
 					{
 						setContentView(E);
 						E.getLayoutParams().height=2180;
-						E.reDrawTextS(0,E.getText().length());
+						E.reDrawTextContinuous(0,E.getText().length());
 					}
 				};
 				runOnUiThread(run2);

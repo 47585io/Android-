@@ -188,7 +188,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 		
         //这些数组都是同时添加元素，因此它们长度相等
-		mSpans = ArrayUtils.copyNewArray(Object.class,mSpans,mSpanCount,GrowingArrayUtils.growSize(size));
+		mSpans = ArrayUtils.copyNewArray(mSpans,mSpanCount,GrowingArrayUtils.growSize(size));
 		mSpanStarts = ArrayUtils.copyNewIntArray(mSpanStarts,mSpanCount,GrowingArrayUtils.growSize(size));
 		mSpanEnds = ArrayUtils.copyNewIntArray(mSpanEnds,mSpanCount,GrowingArrayUtils.growSize(size));
 		mSpanFlags = ArrayUtils.copyNewIntArray(mSpanFlags,mSpanCount,GrowingArrayUtils.growSize(size));

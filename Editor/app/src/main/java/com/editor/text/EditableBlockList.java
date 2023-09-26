@@ -1079,7 +1079,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void ReleaseExcessMemory()
 	{
 		if(mBlocks.length > mBlockSize*3){
-			mBlocks = ArrayUtils.copyNewArray(EditableBlock.class,mBlocks,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
+			mBlocks = ArrayUtils.copyNewArray(mBlocks,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
 			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
 		}
 	}
@@ -1206,45 +1206,51 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	
 	/* 回收不使用的List，便于复用 */
-	private static int sBufferCount = 0;
-	private static final int sMaxBufferCount = 10000;
-	private static List[] sCachedBuffer = new List[100];
+	private static int ListCount = 0;
+	private static final int MaxListCount = 100000;
+	private static List[] ListBuffer = new List[100];
 	
 	synchronized static List obtainList()
 	{
-		if(sBufferCount>0){
-			List buffer = sCachedBuffer[--sBufferCount];
-			sCachedBuffer[sBufferCount] = null;
+		if(ListCount>0){
+			List buffer = ListBuffer[--ListCount];
+			ListBuffer[ListCount] = null;
 			return buffer;
 		}
 		return new IdentityArrayList();
 	}
 	synchronized static void recyleList(List buffer)
 	{
-		buffer.clear();
-		if(sBufferCount<sMaxBufferCount){
-			sCachedBuffer = GrowingArrayUtils.append(sCachedBuffer,sBufferCount++,buffer);
+		if(ListCount<MaxListCount)
+		{
+			buffer.clear();
+			if(ListCount+1 > ListBuffer.length) {
+			    int newSize = GrowingArrayUtils.growSize(ListCount);
+				newSize = newSize>MaxListCount ? MaxListCount:newSize;
+				ListBuffer = ArrayUtils.copyNewArray(ListBuffer,ListCount,newSize);
+			}
+			ListBuffer[ListCount++] = buffer;
 		}
 	}
 	
 	/* 这边也是，回收不使用的Set */
-	private static int setCount = 0;
-	private static Set[] setBuffer = new Set[10];
+	private static int SetCount = 0;
+	private static Set[] SetBuffer = new Set[10];
 	
 	synchronized private static Set obtainSet()
 	{
-		if(setCount>0){
-			Set buffer = setBuffer[--setCount];
-			setBuffer[setCount] = null;
+		if(SetCount>0){
+			Set buffer = SetBuffer[--SetCount];
+			SetBuffer[SetCount] = null;
 			return buffer;
 		}
 		return new IdentityHashSet();
 	}
 	synchronized private static void recyleSet(Set buffer)
 	{
-		buffer.clear();
-		if(setCount<setBuffer.length){
-			setBuffer[setCount++] = buffer;
+		if(SetCount<SetBuffer.length){
+			buffer.clear();
+			SetBuffer[SetCount++] = buffer;
 		}
 	}
 	

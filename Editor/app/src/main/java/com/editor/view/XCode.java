@@ -7,110 +7,54 @@ import android.widget.AdapterView.*;
 import com.editor.text2.*;
 import java.util.concurrent.*;
 import com.editor.*;
-import com.editor.text2.builder.listenerInfo.listener.*;
 import android.util.*;
 import com.editor.text.*;
 import com.editor.text.base.*;
+import static com.editor.text2.builder.listener.myEditCompletorListener.*;
+import com.editor.text2.builder.listener.*;
 
 
-public class XCode extends ViewGroup implements OnItemClickListener,OnItemLongClickListener,myEditCompletorListener.onOpenWindowLisrener
+public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWindowLisrener
 {
 
 	@Override
-	public boolean onItemLongClick(AdapterView<?> p1, View p2, int p3, long p4)
+	public void callOnOpenWindow(View content, int x, int y, int width, int height)
 	{
-		return lastEdit.onItemLongClick(p1,p2,p3,p4);
+		mWindow.setVisibility(VISIBLE);
+		mWindow.removeAllViews();
+		mWindow.addView(content);
+		ViewGroup.LayoutParams parms = mWindow.getLayoutParams();
+		parms.width = width;
+		parms.height = height;
+		mWindow.measure(width,height);
+		mWindow.layout(x,y,x+width,y+height);
 	}
-	
 
 	@Override
-	public void callOnCloseWindow(View self)
-	{
+	public void callOnCloseWindow(){
 		mWindow.setVisibility(GONE);
 	}
 
 	@Override
-	public void callOnRefreshWindow(View self, Object content)
+	public void callOnRefreshWindow(View content)
 	{
-		ListAdapter adapter = (ListAdapter) content;
-		mWindow.setAdapter(adapter);
-		
-	}
-
-	@Override
-	public void callOnOpenWindow(View self, Object content)
-	{
-		ListAdapter adapter = (ListAdapter) content;
-		mWindow.setAdapter(adapter);
-		
-		lastEdit = (CodeEdit)self;
-		final pos p = lastEdit.getSelectionStartPos();
-		int x = (int) p.x;
-		int y = (int) (p.y+lastEdit.getLineHeight());
-
-		final int width = lastEdit.getWidth();
-		int wantWidth = (int)(width*0.8);
-		if(p.x+wantWidth > lastEdit.getScrollX()+width){
-			x = lastEdit.getScrollX()+width-wantWidth;
-		}
-
-		final int height = lastEdit.getHeight();
-		int wantHeight = measureWindowHeight(mWindow,height/2);
-		if(p.y+wantHeight > lastEdit.getScrollY()+height){
-			y = (int)p.y-wantHeight;
-		}
-		
-		ViewGroup.LayoutParams parms = mWindow.getLayoutParams();
-		parms.width = wantWidth;
-		parms.height = wantHeight;
-		mWindow.measure(0,0);
-		mWindow.layout(x,y,x+wantWidth,y+wantHeight);
-		mWindow.setVisibility(VISIBLE);
-	}
-	private static int measureWindowHeight(AdapterView Window, int maxHeight)
-	{
-		Adapter adapter = Window.getAdapter();
-		if(adapter==null){
-			return 0;
-		}
-		int height=0;
-		int count = adapter.getCount();
-		for (int i=0;i<count;++i)
-		{
-			View view = adapter.getView(i, null, Window);
-			view.measure(0, 0);
-			height += view.getMeasuredHeight();
-			if(height>=maxHeight){
-				return maxHeight;
-			}
-		}
-		return height;
-	}
-	
-	@Override
-	public void onItemClick(AdapterView<?> p1, View p2, int p3, long p4)
-	{
-		lastEdit.onItemClick(p1,p2,p3,p4);
+		mWindow.removeAllViews();
+		mWindow.addView(content);
 	}
 	
 	private View mTitle;
 	private View mPageHandler;
 	private View mDownBar;
-	private ListView mWindow;
-	
-	private CodeEdit lastEdit;
+	private ViewGroup mWindow;
 	private ThreadPoolExecutor mPool;
 	
 	
 	public XCode(Context cont)
 	{
 		super(cont);
-		mWindow = new TopListView(cont);
+		mWindow = new myWindow(cont);
 		mWindow.setBackgroundColor(0xff1e2126);
-		mWindow.setDivider(null);
-		mWindow.setOnItemClickListener(this);
-		mWindow.setOnItemLongClickListener(this);
-		mWindow.setFocusable(false);
+		//mWindow.setFocusable(false);
 	}
 	
 	public void loadFileInThread(final String path)
@@ -132,12 +76,11 @@ public class XCode extends ViewGroup implements OnItemClickListener,OnItemLongCl
 					public void run()
 					{
 						addView(E);
-						E.setWindow(XCode.this);
-						E.setPool(mPool);
 						addView(mWindow);
-						lastEdit = E;
+						E.setWindowListener(XCode.this);
+						E.setPool(mPool);
 						E.getLayoutParams().height=2180;
-						E.reDrawTextS(0,E.getText().length());
+						E.reDrawTextContinuous(0,E.getText().length());
 					}
 				};
 				post(run2);
@@ -153,28 +96,32 @@ public class XCode extends ViewGroup implements OnItemClickListener,OnItemLongCl
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b)
 	{
-		if(false){
-			
+		if(getChildCount()==0){
+			return;
 		}
-		
-		
-		if(lastEdit!=null){
-			lastEdit.layout(0,0,1000,2000);
-		}
+		getChildAt(0).layout(0,0,r-l,b-t);
 	}
 	
 	
-	private static class TopListView extends ListView
+	private static class myWindow extends ViewGroup
 	{
 
-		public TopListView(Context cont){
+		public myWindow(Context cont){
 			super(cont);
 		}
 
 		@Override
-		public boolean dispatchKeyEvent(KeyEvent event)
-		{
+		public boolean dispatchKeyEvent(KeyEvent event){
 			return false;
+		}
+
+		@Override
+		protected void onLayout(boolean p1, int l, int t, int r, int b)
+		{
+			if(!p1 || getChildCount()==0){
+				return;
+			}
+			getChildAt(0).layout(0,0,r-l,b-t);
 		}
 
 	}
