@@ -371,8 +371,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			//修正节点可能导致spanStarts和SpanMax错误，但IndexOfSpan仍是正确的
 			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和SpanMax，最好是在添加span之后一起刷新
             updatedCount = updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot());
-			//updatedCount可能包含了一部分重复节点的端点，我们粗略地认为spanStart和spanEnd端点数量相同，但当它为1和0时例外
-			updatedCount = updatedCount>1 ? updatedCount/2:updatedCount;
         }
 	
 		int addCount = 0;
@@ -518,7 +516,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		restoreInvariants(mSpanCount);
 	}
 	
-	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，返回修正端点数 */
+	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，返回修正节点数 */
     private int updatedIntervalBounds(int start, int nbNewChars, boolean textIsRemoved, int i)
     {
 		//resolveGap的使用时机是，保证所有节点的端点都不在间隙缓冲区中
@@ -543,25 +541,18 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
 			
 			//节点i自己在范围内，就修正它的位置
-			int ost = mSpanStarts[i];
-			int oen = mSpanEnds[i];
-			if (ost >= start && ost < mGapStart + mGapLength) 
-			{
+			final int ost = mSpanStarts[i];
+			final int oen = mSpanEnds[i];
+			if (ost >= start && ost < mGapStart + mGapLength) {
 				final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
-				int nst = updatedIntervalBound(mSpanStarts[i], start, nbNewChars, startFlag,  textIsRemoved);
-				if(nst!=ost){
-					mSpanStarts[i] = nst;
-					updatedCount++;
-				}
+				mSpanStarts[i] = updatedIntervalBound(ost, start, nbNewChars, startFlag,  textIsRemoved);
 			}
-			if (oen >= start && oen < mGapStart + mGapLength) 
-			{
+			if (oen >= start && oen < mGapStart + mGapLength) {
 				final int endFlag = (mSpanFlags[i] & END_MASK);
-				int nen = updatedIntervalBound(mSpanEnds[i], start, nbNewChars, endFlag, textIsRemoved);
-				if(nen!=oen){
-					mSpanEnds[i] = nen;
-					updatedCount++;
-				}
+				mSpanEnds[i] = updatedIntervalBound(oen, start, nbNewChars, endFlag, textIsRemoved);	
+			}
+			if(mSpanStarts[i]!=ost || mSpanEnds[i]!=oen){
+				updatedCount++;
 			}
 		}
 		return updatedCount;
