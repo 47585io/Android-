@@ -151,35 +151,6 @@ public class EditableBlockList extends Object implements EditableBlock
 			ReleaseExcessMemory();
 		}
 	}
-	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
-	private void addBlocks(int i, int count, boolean send)
-	{
-		for(int j=0;j<count;++j){
-			addBlock(i+j,false);
-		}
-		if(send)
-		{
-			refreshInvariants(i);
-			for(int j=0;j<count;++j){
-				sendBlockAdded(i+j);
-			}
-		}
-	}
-	/* 移除指定范围内的文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
-	private void removeBlocks(int i, int j, boolean send)
-	{
-		int end = j;
-		for(;i<=j;--j){
-			removeBlock(j,false);
-		}
-		if(send)
-		{
-			refreshInvariants(i);
-			for(j=end;i<=j;--j){
-				sendBlockRemoved(j);
-			}
-		}
-	}
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
 	private int dispatchTextBlock(final int id, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{

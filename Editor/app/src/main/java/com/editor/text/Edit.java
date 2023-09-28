@@ -36,7 +36,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		init();
 		config();
 	}
-	
 	protected void init()
 	{
 		mCursor = new Cursor();
@@ -55,7 +54,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		setDefaultFocusHighlightEnabled(false);
 		//设置在获取焦点时不用额外绘制高亮的矩形区域
 	}
-	protected void configPaint(TextPaint paint)
+	private void configPaint(TextPaint paint)
 	{
 		paint.setTextSize(40);
 		paint.setColor(0xffaaaaaa);
@@ -795,15 +794,23 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, int[] table, int begin)
 		{
 			if(spanStarts[i]>=spanEnds[i]){
-				//Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]"+"，The spanInBlocks: "+mText.printSpanInBlocks(mSpans[i]));
+				//Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]");
 				return;
 			}
 			
 			int start = spanStarts[i]-begin;
 			int end = spanEnds[i]-begin;
 			//两端点尽可能地往内缩
-			start = checkSpanStart(start,end,table);
-			end = checkSpanEnd(start,end,table);
+			for(;start<end;++start){
+				if(table[start]==FREE){
+					break;
+				}
+			}
+			for(;end>start;--end){
+				if(table[end-1]==FREE){
+					break;
+				}
+			}
 			
 			//设置此span所使用的范围
 			Arrays.fill(table,start,end,USE);
@@ -1101,10 +1108,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		return mCursor.getSelectionEnd();
 	}
 	public pos getSelectionStartPos(){
-		return mCursor.getStartPos();
+		return new pos(mCursor.getStartPos());
 	}
 	public pos getSelectionEndPos(){
-		return mCursor.getEndPos();
+		return new pos(mCursor.getEndPos());
 	}
 
 	public void setCursorDrawable(Drawable draw){

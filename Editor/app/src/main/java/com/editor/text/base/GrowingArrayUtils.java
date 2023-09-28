@@ -87,12 +87,14 @@ public final class GrowingArrayUtils
             array[index] = element;
             return array;
         }
+		//如果currentSize + 1 > array.length，则currentSize == array.length
+		//所以在下面的代码中，currentSize - index 与 array.length - index 等价(google源码是这样的)
         @SuppressWarnings("unchecked")
 			T[] newArray = ArrayUtils.newUnpaddedArray((Class<T>)array.getClass().getComponentType(),
 													   growSize(currentSize));
         System.arraycopy(array, 0, newArray, 0, index);
         newArray[index] = element;
-        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        System.arraycopy(array, index, newArray, index + 1, currentSize - index);
         return newArray;
     }
  
@@ -107,7 +109,7 @@ public final class GrowingArrayUtils
         int[] newArray = ArrayUtils.newUnpaddedIntArray(growSize(currentSize));
         System.arraycopy(array, 0, newArray, 0, index);
         newArray[index] = element;
-        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        System.arraycopy(array, index, newArray, index + 1, currentSize - index);
         return newArray;
     }
     
@@ -122,7 +124,7 @@ public final class GrowingArrayUtils
         long[] newArray = ArrayUtils.newUnpaddedLongArray(growSize(currentSize));
         System.arraycopy(array, 0, newArray, 0, index);
         newArray[index] = element;
-        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        System.arraycopy(array, index, newArray, index + 1, currentSize - index);
         return newArray;
     }
    
@@ -137,7 +139,7 @@ public final class GrowingArrayUtils
         boolean[] newArray = ArrayUtils.newUnpaddedBooleanArray(growSize(currentSize));
         System.arraycopy(array, 0, newArray, 0, index);
         newArray[index] = element;
-        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        System.arraycopy(array, index, newArray, index + 1, currentSize - index);
         return newArray;
     }
 	
@@ -152,7 +154,7 @@ public final class GrowingArrayUtils
         float[] newArray = ArrayUtils.newUnpaddedFloatArray(growSize(currentSize));
         System.arraycopy(array, 0, newArray, 0, index);
         newArray[index] = element;
-        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        System.arraycopy(array, index, newArray, index + 1, currentSize - index);
         return newArray;
     }
 	

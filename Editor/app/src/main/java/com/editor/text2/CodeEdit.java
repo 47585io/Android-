@@ -76,6 +76,8 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 	}
 	public void setLuagua(String Lua){
 		mLuagua = Lua;
+		mWordLib.clear();
+		mListenerInfo.clear();
 		mEditBuilder.loadWords(mWordLib,Lua);
 		mEditBuilder.trimListener(mListenerInfo,Lua);
 	}

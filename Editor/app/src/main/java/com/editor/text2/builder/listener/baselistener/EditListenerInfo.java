@@ -11,4 +11,13 @@ public class EditListenerInfo
 	public EditCanvaserListener[] mCanvaserListeners;
 	
 	public EditRunnarListener mRunnarListener;
+	
+	public void clear()
+	{
+		mDrawerListener = null;
+		mFormatorListener = null;
+		mCompletorListeners = null;
+		mCanvaserListeners = null;
+		mRunnarListener = null;
+	}
 }

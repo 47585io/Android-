@@ -280,9 +280,8 @@ _______________________________________
 	/* 检查最大的宽度 */
 	public float checkMaxWidth()
 	{
-		int j;
 		float width = 0;
-		for(j=mBlockSize-1;j>=0;--j)
+		for(int j=mBlockSize-1;j>=0;--j)
 		{
 			float w = mWidths[j];
 			if(w>width){
@@ -817,6 +816,7 @@ _______________________________________
 	public abstract void draw(Canvas c)
 	
 	
+	/* 回收池 */
 	protected static class RecylePool
 	{
 		private static final char[][] sCharArrays = new char[6][0];
@@ -909,7 +909,7 @@ _______________________________________
 				}
 			}
 		}
-		public static pos obtainNode()
+		public static pos obtainPos()
 		{
 			synchronized(sPosArray)
 			{
@@ -924,14 +924,14 @@ _______________________________________
 			}
 			return new pos();
 		}
-		public static void recyleNode(pos node)
+		public static void recylePos(pos pos)
 		{
 			synchronized(sPosArray)
 			{
 				for (int i=0;i<sPosArray.length;i++) 
 				{
 					if (sPosArray[i] == null){
-						sPosArray[i] = node;
+						sPosArray[i] = pos;
 						break;
 					}
 				}

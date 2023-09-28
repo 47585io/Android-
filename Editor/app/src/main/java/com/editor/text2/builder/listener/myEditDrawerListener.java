@@ -30,6 +30,7 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	{
 		mNodes.start();
 		wordIndex[] nodes = howToFindNodes(start,end,text,lib);
+		nodes = mergeSpans(nodes);
 		nodes = replaceSpans(start,end,text,nodes);
 		return nodes;
 	}
@@ -110,21 +111,59 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		}
 		return nodes;
 	}
+	
+	//合并范围连续的span
+	private wordIndex[] mergeSpans(wordIndex[] nodes)
+	{
+		int nodeCount = nodes.length;
+		//由于是连续寻找的，因此范围连续的span应该彼此相邻
+		for(int i=0;i<nodeCount;++i)
+		{
+			wordIndex node = nodes[i];
+			Object span = node.span;
+			int st = node.start;
+			int en = node.end;
+			int fl = node.flags;
+			for(int j=i+1;j<nodeCount;++j)
+			{
+				wordIndex other = nodes[j];
+				int ost = other.start;
+				int oen = other.end;
+				if(!(ost>en || oen<st) && 
+				   span.equals(other.span) && other.flags==fl){
+					st = st<=ost ? st:ost;
+					en = en>=oen ? en:oen;
+					other.start = -1;
+					++i;
+				}
+				else{
+					break;
+				}
+			}
+			node.start = st;
+			node.end = en;
+		}
+		return nodes;
+	}
 
 	@Override
 	public void onDrawNodes(int start, int end, Spannable editor, wordIndex[] nodes)
 	{
 		int nodeCount = nodes.length;
+		int length = editor.length();
 		for(int i=0;i<nodeCount;++i)
 		{
 			wordIndex node = nodes[i];
-			int flag = node.flags & SPAN_SET_REMOVE_MASK;
-			if(flag==SPAN_SET){
-				node.flags &= ~SPAN_SET_REMOVE_MASK;
-				editor.setSpan(node.span,node.start,node.end,node.flags);
-			}
-			else if(flag==SPAN_REMOVE){
-				editor.removeSpan(node.span);
+			if(node.start>-1 && node.start<=length && 
+			   node.end>-1 && node.end<=length){
+				int flag = node.flags & SPAN_SET_REMOVE_MASK;
+				if(flag==SPAN_SET){
+					node.flags &= ~SPAN_SET_REMOVE_MASK;
+					editor.setSpan(node.span,node.start,node.end,node.flags);
+				}
+				else if(flag==SPAN_REMOVE){
+					editor.removeSpan(node.span);
+				}
 			}
 		}
 		mNodes.stop();
