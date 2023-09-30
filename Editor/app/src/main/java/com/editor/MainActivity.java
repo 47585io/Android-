@@ -62,10 +62,6 @@ public class MainActivity extends Activity implements Runnable
 		Code.setPool(mPool);
 		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
 		setContentView(Code);
-		//loadFileInThread("/storage/emulated/0/Linux/2.java");
-		//test();
-		//test2("/storage/emulated/0/Linux/2.java");
-		//test3();
 	}
 	
 	public void loadFileInThread(final String path)
@@ -99,12 +95,6 @@ public class MainActivity extends Activity implements Runnable
 		};
 		mPool.execute(run);
 		
-		/*Random rand = new Random();
-		for(int i = 0;i<1000;i+=1){
-			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-		}*/
-		//E.getText().setSpan(new ForegroundColorSpan(0xff98c379),0,822,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 	}
 	
 	public void test()

@@ -417,7 +417,7 @@ public class CodeEditBuilder implements EditBuilder
 
 		public static EditCompletorListener[] getJavaCompletorList()
 		{
-			return new EditCompletorListener[]{getKeyBox(),getConstBox(),getFuncBox(),getVillBox()};
+			return new EditCompletorListener[]{getKeyBox(),getConstBox(),getFuncBox(),getVillBox(),getTypeBox()};
 		}
 		public static EditCompletorListener[] getXMLCompletorList()
 		{
@@ -465,7 +465,7 @@ public class CodeEditBuilder implements EditBuilder
 				@Override
 				public wordIcon[] finishSearchWord(Collection<CharSequence> words, Words WordLib)
 				{
-					return makeIcons(words,R.drawable.icon_default);
+					return makeIcons(words,R.drawable.icon_doc);
 				}
 				
 			};

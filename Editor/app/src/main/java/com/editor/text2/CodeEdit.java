@@ -114,7 +114,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 
 	final public void reDrawText(final int start, final int end)
 	{
-		final wordIndex[] nodes = onFindNodes(start,end,getText(),mWordLib);
+		final wordIndex[] nodes = onFindNodes(start,end,getText());
 		Runnable runDraw = new Runnable()
 		{
 			@Override
@@ -159,7 +159,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 				@Override
 				public void run()
 				{
-					final wordIndex[] nodes = onFindNodes(st,en,editor,mWordLib);
+					final wordIndex[] nodes = onFindNodes(st,en,editor);
 					onDrawNodes(st,en,editor,nodes);
 				}
 			};	
@@ -168,7 +168,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		mLocker = HandlerQueue.doTotals(totals,getHandler());
 	}
 	
-	protected wordIndex[] onFindNodes(int start, int end, CharSequence text, Words lib)
+	protected wordIndex[] onFindNodes(int start, int end, CharSequence text)
 	{
 		EditDrawerListener li = getDrawer();
 		wordIndex[] nodes = EmptyArray.emptyArray(wordIndex.class);
@@ -197,10 +197,13 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
     /* 对齐范围内的文本 */
 	public final void Format(final int start, final int end)
 	{
-		Editable editor = getText();
 		//大量次数的修改，我们不想一直刷新
 		beginBatchEdit();
-		onFormat(start, end, editor);
+		++ModifyCount;
+		IsFormat(true);
+		onFormat(start, end, getText());
+		IsFormat(false);
+		-- ModifyCount;
 		endBatchEdit();
 	}
 
@@ -213,13 +216,22 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 	}
 
     /* 在指定位置插入后续字符 */
-	public void Insert(final int index,final int count)
+	public final void Insert(final int index,final int count)
 	{	
+		++ModifyCount;
+		IsFormat(true);
+		onInsert(index, count, getText());
+		IsFormat(false);
+		-- ModifyCount;
+	}	
+	
+	public void onInsert(final int index,final int count, Editable editor)
+	{
 		EditFormatorListener li = getFormator();
 		if(li!=null){
-		    li.onInsert(index,count,getText());
+		    li.onInsert(index,count,editor);
 		}
-	}	
+	}
 	
 /*
  ----------------------------------------------------------------------------
@@ -233,7 +245,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
  ------------------------------------------------------------------------------------
 */
 
-	public void openWindow()
+	public final void openWindow()
 	{ 
 		if(mListener==null){
 			return;
@@ -262,7 +274,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 	}
 
 	/* 在不同集合中找单词 */
-	public void onSearchWords(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
+	protected void onSearchWords(final CharSequence text,final int index,final WordAdapter<wordIcon> Adapter)
 	{
 		EditCompletorListener[] lis = getCompletors();
 		if(lis!=null)
@@ -399,9 +411,9 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 	@Override
 	protected void dispatchDraw(final Canvas canvas)
 	{
-		final TextPaint paint = getPaint();
 		EditCanvaserListener[] lis = getCanvasers();
 		if(lis!=null){
+			TextPaint paint = getPaint();
 			for(int i=0;i<lis.length;++i){
 				lis[i].onDraw(this,canvas,paint);
 			}
