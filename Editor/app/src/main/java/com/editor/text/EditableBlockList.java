@@ -304,7 +304,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			//插入前还要移除文本中与自身重复的span
 			tb = removeRepeatSpans(tb,tbStart,tbEnd);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
-			insertForBlocksReverse(i,start,tb,tbStart,tbEnd);
+			insertForBlocks(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span
 			expandSpans(spans,st,st+after);
 		}
@@ -798,7 +798,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	@Override
 	public void clear()
 	{
-		final int before = length();
+		final int before = mLength;
 		sendBeforeTextChanged(0,before,0);
 		
 		//所有内容全部清空
