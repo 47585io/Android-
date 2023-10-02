@@ -156,14 +156,6 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		}
 	}
 
-	@Override
-	public void clearBlocks()
-	{
-		lineCount = 0;
-		mBlockSize = 0;
-		maxWidth = 0;
-	}
-
 /*
 _______________________________________
 

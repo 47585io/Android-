@@ -513,7 +513,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		
 		//需要在发送事件前刷新数据
-		if(send){
+		if(send)
+		{
 			refreshInvariants(i);
 			if(before>0){
 				sendBlocksDeleteAfter(i,i,start,end);
@@ -802,8 +803,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		sendBeforeTextChanged(0,before,0);
 		
 		//所有内容全部清空
-		for(int i=0;i<mBlockSize;++i){
+		for(int i=mBlockSize-1;i>=0;--i){
 			mBlocks[i] = null;
+			sendBlockRemoved(i);
 		}
 		mIndexOfBlocks.clear();
 		mSpanInBlocks.clear();
@@ -812,7 +814,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		mBlockSize = 0;
 		mInsertionOrder = 0;
 		
-		sendBlocksCleared();
+		//重新添加文本块以复活
+		addBlock(0,true);
 		sendTextChanged(0,before,0);
 		setSelection(0,0);
 		sendAfterTextChanged();
@@ -1161,11 +1164,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void sendAfterBlocksChanged(int i, int iStart){
 		if(mBlockListener!=null){
 			mBlockListener.afterBlocksChanged(i,iStart);
-		}
-	}
-	private void sendBlocksCleared(){
-		if(mBlockListener!=null){
-			mBlockListener.clearBlocks();
 		}
 	}
 	

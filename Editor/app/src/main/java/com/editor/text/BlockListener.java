@@ -13,6 +13,4 @@ public interface BlockListener
 	public void onBlocksInsertAfter(int i, int j, int iStart, int jEnd)
 
 	public void afterBlocksChanged(int i, int iStart)
-	
-	public void clearBlocks()
 }
