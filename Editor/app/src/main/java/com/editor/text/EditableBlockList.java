@@ -840,13 +840,9 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 用指定的span标记范围内的文本，enforce表示是否需要强制设置而无视其是否是无效span */
 	private void setSpan(final Object span, int start, int end, final int flags, final boolean enforce)
 	{
-		if(!enforce)
-		{
-			int id = findBlockIdForIndex(start);
-			if(mBlocks[id].isInvalidSpan(span,start,end,flags)){
-				//从该类创建无效跨度时，自动忽略无效跨度
-				return;
-			}
+		if(!enforce && isInvalidSpan(span,start,end,flags)){
+			//从该类创建无效跨度时，自动忽略无效跨度
+			return;
 		}
 		
 		if(mSpanInBlocks.get(span)!=null){
