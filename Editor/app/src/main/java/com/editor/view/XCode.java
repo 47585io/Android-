@@ -12,21 +12,19 @@ import com.editor.text.*;
 import com.editor.text.base.*;
 import static com.editor.text2.builder.listener.myEditCompletorListener.*;
 import com.editor.text2.builder.listener.*;
+import android.graphics.*;
 
 
 public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWindowLisrener
 {
 
 	@Override
-	public void callOnOpenWindow(View content, int x, int y, int width, int height)
+	public void callOnOpenWindow(int x, int y, int width, int height)
 	{
 		mWindow.setVisibility(VISIBLE);
-		mWindow.removeAllViews();
-		mWindow.addView(content);
 		ViewGroup.LayoutParams parms = mWindow.getLayoutParams();
 		parms.width = width;
 		parms.height = height;
-		mWindow.measure(width,height);
 		mWindow.layout(x,y,x+width,y+height);
 	}
 
@@ -36,10 +34,14 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 	}
 
 	@Override
-	public void callOnRefreshWindow(View content)
+	public void callOnRefreshWindow(View content, int l, int t, int r, int b)
 	{
 		mWindow.removeAllViews();
 		mWindow.addView(content);
+		ViewGroup.LayoutParams parms = content.getLayoutParams();
+		parms.width = r-l;
+		parms.height = b-t;
+		content.layout(l,t,r,b);
 	}
 	
 	private View mTitle;
@@ -107,10 +109,8 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 		getChildAt(0).layout(0,0,r-l,b-t);
 	}
 	
-	
 	private static class myWindow extends ViewGroup
 	{
-
 		public myWindow(Context cont){
 			super(cont);
 		}
@@ -121,13 +121,7 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 		}
 
 		@Override
-		protected void onLayout(boolean p1, int l, int t, int r, int b)
-		{
-			if(!p1 || getChildCount()==0){
-				return;
-			}
-			getChildAt(0).layout(0,0,r-l,b-t);
-		}
+		protected void onLayout(boolean p1, int l, int t, int r, int b){}
 
 	}
 	

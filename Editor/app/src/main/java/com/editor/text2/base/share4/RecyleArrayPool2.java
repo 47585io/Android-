@@ -8,6 +8,11 @@ public abstract class RecyleArrayPool2<T>
 	private int count;
 	private int maxCount;
 
+	public RecyleArrayPool2(){
+		newInstance(GrowingArrayUtils.growSize(10));
+		maxCount = 10;
+	}
+	
 	synchronized public void setMaxCount(int count){
 		maxCount = count;
 	}

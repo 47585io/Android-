@@ -974,8 +974,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			else{
 			    mLayout.getSelectionPath(selectionStart,selectionEnd,mCursorPath);
 			}
-			int line = mLayout.getLineForVertical((int)startPos.y);
-			mLayout.getLineBounds(line,mLineBounds);
+			mLineBounds.set(0,(int)startPos.y,(int)mLayout.maxWidth(),(int)(startPos.y+mLayout.getLineHeight()));
 			Edit.this.onSelectionChanged(start,end,0,0,mText);
 		}
 
@@ -1407,27 +1406,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				return super.dispatchTouchEvent(event);	
 			}
 
-		    int h = isScrollToEdgeH();
-			int v = isScrollToEdgeV();
-		    float x = nowX-lastX;
-		    float y = nowY-lastY;
-
-			if ( (Math.abs(x) > Math.abs(y) 
-				&& ((h == Left && x > TouchSlop) 
-				|| (h == Right && x < -TouchSlop)))
-				|| 
-				(Math.abs(x) < Math.abs(y) 
-				&& ((v == Top && y > TouchSlop) 
-				|| (v == Bottom && y < -TouchSlop)))){
-				getParent().requestDisallowInterceptTouchEvent(false);
-			}
-			else{
-				getParent().requestDisallowInterceptTouchEvent(true);
-			}
-			//手指倾向于x或y轴滑动，滚动条滚动到边缘后仍向外划动，且当前速度超出15，请求父元素拦截，否则自己滚动
-
+		    float dx = nowX-lastX;
+		    float dy = nowY-lastY;
 			consume = super.dispatchTouchEvent(event);
-			if(x>TouchSlop || x<-TouchSlop || y>TouchSlop || y<-TouchSlop){
+			if(dx>TouchSlop || dx<-TouchSlop || dy>TouchSlop || dy<-TouchSlop){
 				//太大幅度的触摸应该判定为滑动，而不是点击或长按
 				useFlag = notClick;
 			}
@@ -1627,34 +1609,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	public float getVScrollRange(){
 		return mLayout.getHeight()+ExpandHeight;
-	}
-	private int isScrollToEdgeH()
-	{
-		int x = getScrollX();
-		int r = (int) mLayout.maxWidth()+ExpandWidth;
-		int w = getWidth();
-
-		if (x <= -mLayout.getLeftPadding()){
-			return Left;
-		}
-		else if (x + w >= r){
-			return Right;
-		}
-		return -1;
-	}
-	private int isScrollToEdgeV()
-	{
-		int y = getScrollY();
-		int b = mLayout.getHeight()+ExpandHeight;
-		int h = getHeight();
-
-		if(y <= 0){
-			return Top;
-		}
-		else if(y + h >= b){
-			return Bottom;
-		}
-		return -1;
 	}
 
 }

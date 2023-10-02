@@ -363,7 +363,8 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 			if(p.y+wantHeight > scrollY+height){
 				y = (int)p.y-wantHeight;
 			}
-			mListener.callOnOpenWindow(mContent,x-scrollX,y-scrollY,wantWidth,wantHeight);
+			mListener.callOnOpenWindow(x-scrollX,y-scrollY,wantWidth,wantHeight);
+			mListener.callOnRefreshWindow(mContent,0,0,wantWidth,wantHeight);
 		}
 		else{
 			mListener.callOnCloseWindow();

@@ -193,11 +193,11 @@ public abstract class myEditCompletorListener extends myEditListener implements 
 	
 	public static interface onOpenWindowLisrener
 	{
-		public void callOnOpenWindow(View content, int x, int y, int width, int height)
+		public void callOnOpenWindow(int x, int y, int width, int height)
 		
 		public void callOnCloseWindow()
 		
-		public void callOnRefreshWindow(View content)
+		public void callOnRefreshWindow(View content, int l, int t, int r, int b)
 	}
 	
 	private EPool<wordIcon> mIcons;

@@ -302,7 +302,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				spans = getAtPointSpans(st);
 			}
 			//插入前还要移除文本中与自身重复的span
-			tb = removeRepeatSpans(tb);
+			tb = removeRepeatSpans(tb,tbStart,tbEnd);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocks(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span
@@ -359,17 +359,61 @@ public class EditableBlockList extends Object implements EditableBlock
 				Object[] spans = EmptyArray.OBJECT;
 				if(mBlocks[i+1].length()>0){
 					//新文本块不用修正span，也不用修正重复span
-					spans = checkRepeatSpans(mBlocks[i+1],text);
+					spans = checkRepeatSpans(mBlocks[i+1],text,0,text.length());
 				}
 				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
 				repalceWithSpan(i+1,0,0,text,0,overLen,true,true);
-				correctRepeatSpans(mBlocks[i+1],text,spans);
+				correctRepeatSpans(mBlocks[i+1],text,spans,0);
 			}
 			else{
 				//如果超出的文本大于MaxCount，必须分发，分发时不需要修正span，也不需要修正重复span
 				//就像是将修正好的文本单独拷贝到新的文本块中，由于没有重复的span，span整体位置保持不变
 				dispatchTextBlock(i+1,text,0,overLen,true);
 			}
+		}
+	}
+	/* 另一个解决办法是，倒着进行，即先插入，再删除 */
+	private void insertForBlocksReverse(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
+	{
+		//先插入文本，让在此范围内的span进行扩展和修正
+		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,true,true);
+		
+		//再检查文本块的内容是否超出MaxCount
+		final EditableBlock dstBlock = mBlocks[i];
+		final int srcLen = dstBlock.length();	
+		if(srcLen > this.MaxCount)
+		{								   
+			//将超出的文本截取出来，需要多预留一些空间以待之后使用
+			final int MaxCount = this.MaxCount-ReserveCount;
+			final int overLen = srcLen-MaxCount;
+			
+			//如果超出的文本小于或等于MaxCount
+			if(overLen <= this.MaxCount)
+			{
+				if (mBlockSize-1 == i || mBlocks[i+1].length()+overLen > this.MaxCount){
+					//若无下个文本块，则添加一个
+					//若有下个文本块，但它的字数也不足，那么在我之后添加一个(对于文本块的变化则必须刷新)
+					addBlock(i+1,true);
+				}
+				//插入前需要获取重复的span，插入后再次修正范围(针对完全被截取至下个文本块的span)
+				Object[] spans = EmptyArray.OBJECT;
+				if(mBlocks[i+1].length()>0){
+					//新文本块不用修正span，也不用修正重复span
+					spans = checkRepeatSpans(mBlocks[i+1],dstBlock,MaxCount,srcLen);
+				}
+				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
+				repalceWithSpan(i+1,0,0,dstBlock,MaxCount,srcLen,true,true);
+				correctRepeatSpans(mBlocks[i+1],dstBlock,spans,MaxCount);
+			}
+			else{
+				//如果超出的文本大于MaxCount，必须分发，分发时不需要修正span，也不需要修正重复span
+				//就像是将修正好的文本单独拷贝到新的文本块中，由于没有重复的span，span整体位置保持不变
+				dispatchTextBlock(i+1,dstBlock,MaxCount,srcLen,true);
+			}
+			//最后删除，意义一致，span在下个文本块中正常扩展，行数测量正确
+			//宽度测量在紧邻的两个文本块中无论如何都会错一个，之前是前面错，现在是后面错，但只要有一个正确能保证maxWidth正确即可
+			//另一个好处是，该方案可以保证span在删除时不被完全移除，spanIsRemoved可以不要了
+			deleteForBlocks(i,i,MaxCount,srcLen,false);
 		}
 	}
 	
@@ -618,10 +662,10 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 	
-	/* 检查在dst与src中重复的span，spans取自dst */
-	private static Object[] checkRepeatSpans(Spanned src, CharSequence dst)
+	/* 检查在dst与src中重复的span，spans取自dst中的指定范围 */
+	private static Object[] checkRepeatSpans(Spanned src, CharSequence dst, int start, int end)
 	{
-		Object[] spans = SpanUtils.getSpans(dst,0,dst.length(),Object.class);
+		Object[] spans = SpanUtils.getSpans(dst,start,end,Object.class);
 		for(int i=0;i<spans.length;++i)
 		{
 			if(src.getSpanStart(spans[i])<0){
@@ -632,8 +676,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		return spans;
 	}
 	
-	/* 将重复的span在src中的起始位置转换为在dst中的起始位置 */
-	private static void correctRepeatSpans(EditableBlock src, CharSequence dst, Object[] spans)
+	/* 将重复的span从dst中截取到src的开头，可以指定在dst中截取的起始位置 */
+	private static void correctRepeatSpans(EditableBlock src, CharSequence dst, Object[] spans, int start)
 	{
 		if(!(dst instanceof Spanned)){
 			return;
@@ -646,6 +690,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				Object span = spans[i];
 				int ost = src.getSpanStart(span);
 				int nst = dstStr.getSpanStart(span);
+				nst = nst<start ? 0:nst-start;
 				if(ost!=nst){
 					//此时被插入的文本必然在文本块开头，因此跨越多个文本块的span必然衔接在开头或末尾，已在correctSpan时修正的不用再次修正
 					//另外的，完全被截取至单独的下个文本块且重复的span没有被correctSpan修正，应将它衔接在上次的位置之前，spanEnd已在插入时修正
@@ -655,13 +700,13 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 	
-	/* 移除text中与自己重复的spans */
-	private CharSequence removeRepeatSpans(CharSequence text)
+	/* 移除text指定范围中与自己重复的spans */
+	private CharSequence removeRepeatSpans(CharSequence text, int start, int end)
 	{
 		if(text instanceof Spanned)
 		{
 			Spannable editor = text instanceof Spannable ? (Spannable)text:new SpannableStringBuilderLite(text);
-			Object[] spans = SpanUtils.getSpans(editor,0,editor.length(),Object.class);
+			Object[] spans = SpanUtils.getSpans(editor,start,end,Object.class);
 			for(int i=0;i<spans.length;++i)
 			{
 				Object span = spans[i];
