@@ -304,7 +304,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			//插入前还要移除文本中与自身重复的span
 			tb = removeRepeatSpans(tb,tbStart,tbEnd);
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
-			insertForBlocks(i,start,tb,tbStart,tbEnd);
+			insertForBlocksReverse(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span
 			expandSpans(spans,st,st+after);
 		}
@@ -769,12 +769,11 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 	
-	/* 检查是否是无效span，内容随文本块的规则变动，span需要跟随文本块的添加而添加 */
-	@Override
+	/* 检查是否是无效span，随文本块的规则变动，span需要跟随文本块的添加而添加 */
 	public boolean isInvalidSpan(Object span, int start, int end, int flags){
 		return mBlocks[0].isInvalidSpan(span,start,end,flags);
 	}
-	@Override
+	/* 当start~end之间的文本被删除，是否可以移除span */
 	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved)
 	{
 		List<EditableBlock> blocks = mSpanInBlocks.get(span);
@@ -787,23 +786,21 @@ public class EditableBlockList extends Object implements EditableBlock
 		delend -= mBlockStarts[mIndexOfBlocks.get(blockEnd)];
 		return blockStart.canRemoveSpan(span,delstart,blockStart.length(),textIsRemoved) && blockEnd.canRemoveSpan(span,0,delend,textIsRemoved);
 	}
-	@Override
-	public boolean needExpandSpanStart(Object span, int flags)
-	{
-		EditableBlock blockStart = mSpanInBlocks.get(span).get(0);
-		return blockStart.needExpandSpanStart(span,flags);
+	/* span的起始位置是否需要扩展 */
+	public boolean needExpandSpanStart(Object span, int flags){
+		return mBlocks[0].needExpandSpanStart(span,flags);
 	}
-	@Override
-	public boolean needExpandSpanEnd(Object span, int flags)
-	{
-		List<EditableBlock> blocks = mSpanInBlocks.get(span);
-		EditableBlock blockEnd = blocks.get(blocks.size()-1);
-		return blockEnd.needExpandSpanEnd(span,flags);
+	/* span的末尾位置是否需要扩展 */
+	public boolean needExpandSpanEnd(Object span, int flags){
+		return mBlocks[0].needExpandSpanEnd(span,flags);
 	}
 	
 	@Override
 	public void clear()
 	{
+		final int before = length();
+		sendBeforeTextChanged(0,before,0);
+		
 		//所有内容全部清空
 		for(int i=0;i<mBlockSize;++i){
 			mBlocks[i] = null;
@@ -814,6 +811,11 @@ public class EditableBlockList extends Object implements EditableBlock
 		mLength = 0;
 		mBlockSize = 0;
 		mInsertionOrder = 0;
+		
+		sendBlocksCleared();
+		sendTextChanged(0,before,0);
+		setSelection(0,0);
+		sendAfterTextChanged();
 	}
 
 	@Override
@@ -1161,6 +1163,11 @@ public class EditableBlockList extends Object implements EditableBlock
 			mBlockListener.afterBlocksChanged(i,iStart);
 		}
 	}
+	private void sendBlocksCleared(){
+		if(mBlockListener!=null){
+			mBlockListener.clearBlocks();
+		}
+	}
 	
 	/* 发送文本事件 */
 	private void sendBeforeTextChanged(int start, int before, int after) {
@@ -1296,6 +1303,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			}
 		}
 	}
+	
 	
 	/* 测试代码 */
 	private static final StringBuilder b = new StringBuilder();

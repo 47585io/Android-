@@ -155,7 +155,15 @@ public abstract class BlockLayout extends Layout implements BlockListener
 			mStartLines[i] = i==0 ? 0:mStartLines[i-1]+mLines[i-1];
 		}
 	}
-	
+
+	@Override
+	public void clearBlocks()
+	{
+		lineCount = 0;
+		mBlockSize = 0;
+		maxWidth = 0;
+	}
+
 /*
 _______________________________________
 
