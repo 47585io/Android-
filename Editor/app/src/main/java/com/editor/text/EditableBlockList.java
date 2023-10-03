@@ -128,7 +128,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void removeBlock(int i)
 	{
 		Editable block = mBlocks[i];
-		replaceSpan(i,0,block.length(),"",0,0,true);
+		replaceSpans(i,0,block.length(),"",0,0,true);
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
 		mIndexOfBlocks.remove(block);
@@ -138,8 +138,8 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
 	private void addBlocks(final int i, final int count, boolean send)
 	{
-		for(int j=0;j<count;++j){
-			addBlock(i+j);
+		for(int k=0;k<count;++k){
+			addBlock(i+k);
 		}
 		if(send){
 			refreshInvariants(i);
@@ -189,10 +189,10 @@ public class EditableBlockList extends Object implements EditableBlock
 		for(i=id;i<j;++i)
 		{
 			if(tbEnd-tbStart<=MaxCount){
-				repalceWithSpan(i,0,0,tb,tbStart,tbEnd,false,true);
+				repalceWithSpans(i,0,0,tb,tbStart,tbEnd,false,true);
 				break;
 			}
-			repalceWithSpan(i,0,0,tb,tbStart,tbStart+MaxCount,false,true);
+			repalceWithSpans(i,0,0,tb,tbStart,tbStart+MaxCount,false,true);
 			tbStart+=MaxCount;
 		}
 
@@ -345,7 +345,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void insertForBlocks(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
-		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,true,true);
+		repalceWithSpans(i,index,index,tb,tbStart,tbEnd,true,true);
 		
 		//再检查文本块的内容是否超出MaxCount
 		final int srcLen = mBlocks[i].length();	
@@ -372,7 +372,7 @@ public class EditableBlockList extends Object implements EditableBlock
 					spans = checkRepeatSpans(mBlocks[i+1],text,0,text.length());
 				}
 				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
-				repalceWithSpan(i+1,0,0,text,0,overLen,true,true);
+				repalceWithSpans(i+1,0,0,text,0,overLen,true,true);
 				correctRepeatSpans(mBlocks[i+1],text,spans,0);
 			}
 			else{
@@ -386,7 +386,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void insertForBlocksReverse(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
-		repalceWithSpan(i,index,index,tb,tbStart,tbEnd,true,true);
+		repalceWithSpans(i,index,index,tb,tbStart,tbEnd,true,true);
 		
 		//再检查文本块的内容是否超出MaxCount
 		final EditableBlock dstBlock = mBlocks[i];
@@ -412,7 +412,7 @@ public class EditableBlockList extends Object implements EditableBlock
 					spans = checkRepeatSpans(mBlocks[i+1],dstBlock,MaxCount,srcLen);
 				}
 				//之后将超出的文本插入下个文本块开头，最后刷新数据(仅需从i+1开始)
-				repalceWithSpan(i+1,0,0,dstBlock,MaxCount,srcLen,true,true);
+				repalceWithSpans(i+1,0,0,dstBlock,MaxCount,srcLen,true,true);
 				correctRepeatSpans(mBlocks[i+1],dstBlock,spans,MaxCount);
 			}
 			else{
@@ -440,7 +440,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				i = -1;
 			}else{	
 			    //否则就删除范围内的文本
-				repalceWithSpan(i,start,end,"",0,0,false,spanIsRemoved);
+				repalceWithSpans(i,start,end,"",0,0,false,spanIsRemoved);
 				refreshInvariants(i);
 			}
 			sendBlocksDeleteAfter(i,i,start,start);
@@ -461,7 +461,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				endBlockIndex--;
 			}else{
 				//否则就删除范围内的文本，但移除文本块起始下标加1
-			    repalceWithSpan(i,start,mBlocks[i].length(),"",0,0,false,spanIsRemoved);
+			    repalceWithSpans(i,start,mBlocks[i].length(),"",0,0,false,spanIsRemoved);
 				removedBlockStartIndex++;
 			}
 			
@@ -471,7 +471,7 @@ public class EditableBlockList extends Object implements EditableBlock
 				endBlockIndex = -1;
 			}else{
 				//否则就删除范围内的文本，但移除文本块末尾下标减1
-			    repalceWithSpan(j,0,end,"",0,0,false,spanIsRemoved);
+			    repalceWithSpans(j,0,end,"",0,0,false,spanIsRemoved);
 				removedBlockEndIndex--;
 			}
 			
@@ -486,7 +486,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	/* 替换指定文本块的文本及span与其的绑定，若send为false，则刷新mBlockStarts是调用者的责任 */
-	private void repalceWithSpan(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean send, boolean spanIsRemoved)
+	private void repalceWithSpans(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean send, boolean spanIsRemoved)
 	{
 		final int before = end-start;
 		final int after = tbEnd-tbStart;
@@ -506,7 +506,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		
 		//需要在删除文本前，替换span的绑定。删除文本不需要修正span
-		replaceSpan(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
+		replaceSpans(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
 		dstBlock.replace(start,end,tb,tbStart,tbEnd);
 		mLength += -before+after;
 		//需要在插入后，修正端点处的span
@@ -528,7 +528,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 
 	/* 替换指定文本块的span与其的绑定，spanIsRemoved为true表示默认行为，只有在insertForBlocks中才传false */
-	private void replaceSpan(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean spanIsRemoved)
+	private void replaceSpans(final int i, final int start, final int end, CharSequence tb, int tbStart, int tbEnd, boolean spanIsRemoved)
 	{
 		//先移除指定文本块start~end范围内的span与block的绑定
 		//纯删除时，mIndexOfBlocks和mBlockStarts均可不正确
