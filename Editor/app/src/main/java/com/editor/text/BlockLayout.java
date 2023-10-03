@@ -54,12 +54,10 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		mStartLines = EmptyArray.INT;
 		mWidths = EmptyArray.FLOAT;
 		
-		int size = text.getBlockSize();
 		//测量所有文本块以初始化数据
-		for(int i=0;i<size;++i){
-			onAddBlock(i);
-			measureInsertBlockAfter(i,0,text.getBlock(i).length());
-		}
+		int size = text.getBlockSize();
+		onAddBlocks(0,size);
+		onBlocksInsertAfter(0,size-1,0,text.getBlock(size-1).length());
 		afterBlocksChanged(0,0);
 		
 		//等待后续的测量
@@ -70,24 +68,30 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	}
 	
 	@Override
-	public void onAddBlock(int i)
+	public void onAddBlocks(int i, int count)
 	{
 		//每次添加文本块，都同步对应的行数和宽度
-		mLines = GrowingArrayUtils.insert(mLines,mBlockSize,i,0);
-		mStartLines = GrowingArrayUtils.insert(mStartLines,mBlockSize,i,0);
-		mWidths = GrowingArrayUtils.insert(mWidths,mBlockSize,i,0);
-		mBlockSize++;
+		for(int j=i+count;i<j;++i)
+		{
+			mLines = GrowingArrayUtils.insert(mLines,mBlockSize,i,0);
+			mStartLines = GrowingArrayUtils.insert(mStartLines,mBlockSize,i,0);
+			mWidths = GrowingArrayUtils.insert(mWidths,mBlockSize,i,0);
+			mBlockSize++;
+		}
 	}
 
 	@Override
-	public void onRemoveBlock(int i)
+	public void onRemoveBlocks(int i, int j)
 	{
 		//每次移除文本块，都同步对应的行数和宽度
-		lineCount -= mLines[i];
-		mLines = GrowingArrayUtils.remove(mLines,mBlockSize,i);
-		mStartLines = GrowingArrayUtils.remove(mStartLines,mBlockSize,i);
-		mWidths = GrowingArrayUtils.remove(mWidths,mBlockSize,i);
-		mBlockSize--;
+		for(--j;i<=j;--j)
+		{
+			lineCount -= mLines[j];
+			mLines = GrowingArrayUtils.remove(mLines,mBlockSize,j);
+			mStartLines = GrowingArrayUtils.remove(mStartLines,mBlockSize,j);
+			mWidths = GrowingArrayUtils.remove(mWidths,mBlockSize,j);
+			mBlockSize--;
+		}
 		maxWidth = checkMaxWidth();
 	}
 
@@ -210,7 +214,7 @@ _______________________________________
 	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText)
 	{
 		float width;
-		float w = mWidths[id];
+		float oldWidth = mWidths[id];
 		GetChars text = mText.getBlock(id);
 		if(needMeasureAllText){
 			//如果需要全部测量
@@ -225,8 +229,12 @@ _______________________________________
 				mWidths[id] = width;
 			}
 		}
-		if(width>=maxWidth || w>=maxWidth){
-			//当前块的最大宽度比maxWidth大，或者是最大宽度被删了，重新检查
+		if(width>=maxWidth){
+			//当前块的最大宽度比maxWidth大，就记录它
+			maxWidth = width;
+		}
+		else if(oldWidth>=maxWidth){
+			//如果当前块原本是最大宽度，现在被删了并且比原来更小，重新检查
 			maxWidth = checkMaxWidth();
 		}
 	}

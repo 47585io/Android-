@@ -66,12 +66,17 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 			@Override
 			public void run()
 			{
-				myReader reader = new myReader(path);
 				final CodeEdit E = new CodeEdit(getContext());
-				String text = reader.r("UTF-8");
-				E.setText(text,0,text.length());
-				E.setPool(mPool);
-
+				try{
+					myReader reader = new myReader(path);
+					String text = reader.r("UTF-8");
+					E.setText(text,0,text.length());
+					E.setPool(mPool);
+				}
+				catch(Exception e){
+					Log.e("A Error",e.toString());
+				}
+				
 				Runnable run2 = new Runnable()
 				{
 					@Override
@@ -107,6 +112,13 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 			return;
 		}
 		getChildAt(0).layout(0,0,r-l,b-t);
+	}
+
+	@Override
+	protected void dispatchDraw(Canvas canvas)
+	{
+		// TODO: Implement this method
+		super.dispatchDraw(canvas);
 	}
 	
 	private static class myWindow extends ViewGroup

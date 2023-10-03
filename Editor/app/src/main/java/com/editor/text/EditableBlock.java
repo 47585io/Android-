@@ -30,7 +30,6 @@ public interface EditableBlock extends Editable
 		public static BlockFactory getInstance(){
 			return mInstance;
 		}
-		
 		public EditableBlock newEditable(CharSequence source){
 			return new SpannableStringBuilderLite(source);
 		}

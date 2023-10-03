@@ -234,12 +234,12 @@ public class CodeEditBuilder implements EditBuilder
 				}
 				
 				public wordIndex obtainNode(){
-					return mNodes.get();
+					return mNodes.getAndReset();
 				}
 				public wordIndex obtainNode(Object span)
 				{
 					wordIndex node = mNodes.get();
-					node.span = span;
+					node.set(0,0,span,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 					return node;
 				}
 				public wordIndex obtainNode(int start, int end, Object span)

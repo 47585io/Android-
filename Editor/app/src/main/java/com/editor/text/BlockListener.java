@@ -2,9 +2,9 @@ package com.editor.text;
 
 public interface BlockListener
 {
-	public void onAddBlock(int i)
+	public void onAddBlocks(int i, int count)
 
-	public void onRemoveBlock(int i)
+	public void onRemoveBlocks(int i, int j)
 
 	public void onBlocksDeleteBefore(int i, int j, int iStart, int jEnd)
 

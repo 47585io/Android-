@@ -545,7 +545,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			final int oen = mSpanEnds[i];
 			if (ost >= start && ost < mGapStart + mGapLength) {
 				final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
-				mSpanStarts[i] = updatedIntervalBound(ost, start, nbNewChars, startFlag,  textIsRemoved);
+				mSpanStarts[i] = updatedIntervalBound(ost, start, nbNewChars, startFlag, textIsRemoved);
 			}
 			if (oen >= start && oen < mGapStart + mGapLength) {
 				final int endFlag = (mSpanFlags[i] & END_MASK);
