@@ -18,25 +18,18 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	public static final int TextColor = 0xffaaaaaa;
 	public static int TabSize = 4;
 
-	//临时变量
-	//支持在子线程中加载文本，因此每一个实例单独拥有这些成员
-	private char[] chars = EmptyArray.CHAR;
-	private float[] widths = EmptyArray.FLOAT;
-	private RectF rectF = new RectF();
-	private pos tmp = new pos(), tmp2 = new pos();
-	private Paint.FontMetrics font = new Paint.FontMetrics();
-	
+	//临时变得
 	private int cacheLine;
 	private boolean isStart,isEnd;
 
 	//记录属性
-	private int lineCount;
+	private int mLineCount;
 	private float maxWidth;
 	private int mBlockSize;
 	
-	private float cursorWidth;
-	private float lineSpacing;
-	private float scaleLayout;
+	private float mLineSpacing;
+	private float mScaleLayout;
+	private float mCursorWidthSpacing;
 
 	//每个文本块，每个块的行数，每个块的宽度
 	private EditableBlockList mText;
@@ -62,11 +55,54 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		
 		//等待后续的测量
 		text.setBlockListener(this);
-		scaleLayout = scale;
-		lineSpacing = spacingmult;
-		this.cursorWidth = cursorWidth;
+		mScaleLayout = scale;
+		mLineSpacing = spacingmult;
+		mCursorWidthSpacing = cursorWidth;
 	}
 	
+	public void setScale(float scale)
+	{
+		TextPaint paint = getPaint();
+		float lastSacle = mScaleLayout;
+		float textSize = paint.getTextSize()/mScaleLayout;
+
+		//首先我们缩放文本的大小
+		mScaleLayout *= scale;
+		mScaleLayout = mScaleLayout<MinScacle ? MinScacle:mScaleLayout;
+		mScaleLayout = mScaleLayout>MaxScale ? MaxScale:mScaleLayout;
+		paint.setTextSize(textSize*mScaleLayout);
+
+		//我们还应该同步maxWidth的大小
+		scale = mScaleLayout/lastSacle;
+		for(int j=mBlockSize-1;j>=0;--j){
+			mWidths[j] *= scale;
+		}
+		maxWidth = maxWidth*scale;
+	}
+	public void setLineSpacing(float lineSpacing){
+		mLineSpacing = lineSpacing;
+	}
+	public void setCursorSpacing(float cursorSpacing){
+		mCursorWidthSpacing = cursorSpacing;
+	}
+	public float getScale(){
+		return mScaleLayout;
+	}
+	public float getLineSpacing(){
+		return mLineSpacing;
+	}
+	public float getcursorSpacing(){
+		return mCursorWidthSpacing;
+	}
+
+/*
+_______________________________________
+
+ 文本块事件
+_______________________________________
+
+*/
+
 	@Override
 	public void onAddBlocks(int i, int count)
 	{
@@ -86,7 +122,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		//每次移除文本块，都同步对应的行数和宽度
 		for(--j;i<=j;--j)
 		{
-			lineCount -= mLines[j];
+			mLineCount -= mLines[j];
 			mLines = GrowingArrayUtils.remove(mLines,mBlockSize,j);
 			mStartLines = GrowingArrayUtils.remove(mStartLines,mBlockSize,j);
 			mWidths = GrowingArrayUtils.remove(mWidths,mBlockSize,j);
@@ -163,7 +199,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 /*
 _______________________________________
 
- 测量文本的函数
+ 测量文本块的函数
 _______________________________________
 
 */
@@ -182,7 +218,7 @@ _______________________________________
 		}
 		if(line>0){
 			//在插入字符串后，计算增加的行
-			lineCount+=line;
+			mLineCount+=line;
 			mLines[id] = mLines[id]+line;
 		}
 	}
@@ -203,7 +239,7 @@ _______________________________________
 			}
 			if(line>0){
 				//在删除文本前，计算删除的行
-				lineCount-=line;    
+				mLineCount -= line;    
 				mLines[id] = mLines[id]-line;
 			}
 		}
@@ -245,8 +281,9 @@ _______________________________________
 		int st = mText.getBlockStartIndex(i);
 		start = tryLine_Start(mText,st+start);
 		end = tryLine_End(mText,st+end);
-		fillChars(mText,start,end);
+		char[] chars = fillChars(mText,start,end);
 		float width = getDesiredWidth(chars,0,end-start,getPaint());
+		RecylePool.recyleCharArray(chars);
 		return width;
 	}
 
@@ -261,7 +298,7 @@ _______________________________________
     /* 寻找行数所在的文本块 */
     public int findBlockIdForLine(int line)
 	{
-		int div = lineCount/mBlockSize;
+		int div = mLineCount/mBlockSize;
 		int id = div>1 ? line/div:line;
 		if(id>mBlockSize-1){
 			id = mBlockSize-1;
@@ -309,11 +346,11 @@ _______________________________________
 	
     @Override
 	public int getLineCount(){
-		return lineCount;
+		return mLineCount;
 	}
 	@Override
 	public int getHeight(){
-		return (int)(lineCount*getLineHeight());
+		return (int)(mLineCount*getLineHeight());
 	}
 	public float maxWidth(){
 		return maxWidth;
@@ -325,8 +362,10 @@ _______________________________________
 	@Override
 	public int getLineDescent(int p1)
 	{
+		Paint.FontMetrics font = RecylePool.obtainFont();
 		getPaint().getFontMetrics(font);
-		float descent = font.descent*lineSpacing;
+		float descent = font.descent*mLineSpacing;
+		RecylePool.recyleFont(font);
 		return (int)(getLineTop(p1)+descent);
 	}
 
@@ -364,9 +403,11 @@ _______________________________________
 	public float getLineHeight()
 	{
 		TextPaint paint = getPaint();
+		Paint.FontMetrics font = RecylePool.obtainFont();
 		paint.getFontMetrics(font);
 		float height = font.bottom-font.top;
-		return height*lineSpacing;
+		RecylePool.recyleFont(font);
+		return height*mLineSpacing;
 	}
 
 	/* 获取offset所在的行 */
@@ -386,7 +427,7 @@ _______________________________________
 	public int getLineForVertical(int vertical)
 	{
 		int line = (int)(vertical/getLineHeight());
-		line = line<0 ? 0 : (line>lineCount ? lineCount:line);
+		line = line<0 ? 0 : (line>mLineCount ? mLineCount:line);
 		return line;
 	}
 
@@ -442,19 +483,23 @@ _______________________________________
 	@Override
 	public void getCursorPath(int point, Path dest, CharSequence editingBuffer)
 	{
-		RectF r = rectF;
-		pos p = tmp;
+		RectF r = RecylePool.obtainRect();
+		pos p = RecylePool.obtainPos();
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
-		float width = cursorWidth*paint.getTextSize();
+		float width = mCursorWidthSpacing*paint.getTextSize();
 		getCursorPos(point,p);
 
+		//添加这一点的Rect
 		r.left=p.x;
 		r.top=p.y;
 		r.right=r.left+width;
 		r.bottom=r.top+lineHeight;
 		dest.addRect(r, Path.Direction.CW);
-		//添加这一点的Rect
+		
+		//回收这些
+		RecylePool.recyleRect(r);
+		RecylePool.recylePos(p);
 	}
 
 	/* 获取选择区域的路径 */
@@ -464,15 +509,14 @@ _______________________________________
 		EditableBlockList text = mText;
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
-		RectF rf = rectF;
+		RectF rf = RecylePool.obtainRect();
 
-		pos s = tmp;
-		pos e = tmp2;
+		pos s = RecylePool.obtainPos();
+		pos e = RecylePool.obtainPos();
 		getCursorPos(start,s);
-		if(end-start>100000){
+		if(end-start>1000){
 			getCursorPos(end,e);
-		}
-		else{
+		}else{
 		    nearOffsetPos(mText,start,s.x,s.y,end,e,getPaint());
 		}
 
@@ -480,41 +524,47 @@ _______________________________________
 		if(s.y == e.y)
 		{
 			//单行的情况
+			//添加起始行的Rect
 			rf.left = s.x;
 			rf.top = s.y;
 			rf.right = rf.left+w;
 			rf.bottom = rf.top+lineHeight;
 			dest.addRect(rf,Path.Direction.CW);
-			//添加起始行的Rect
 			return;
 		}
 
 		float sw = measureText(text,start,tryLine_End(text,start),paint);
 		//float ew = measureText(text,tryLine_Start(text,end),end,mPaint);
 
+		//添加起始行的Rect
 		rf.left = s.x;
 		rf.top = s.y;
 		rf.right = rf.left+sw;
 		rf.bottom = rf.top+lineHeight;
-		dest.addRect(rf,Path.Direction.CW);
-		//添加起始行的Rect
+		dest.addRect(rf,Path.Direction.CW);	
 
-		if((e.y-s.y)/lineHeight > 1){
+		if((e.y-s.y)/lineHeight > 1)
+		{
 			//如果行数超过2
+			//添加中间所有行的Rect
 			rf.left = 0;
 			rf.top = rf.top+lineHeight;
 			rf.right = rf.left+w;
 			rf.bottom = e.y;
 			dest.addRect(rf,Path.Direction.CW);
-			//添加中间所有行的Rect
 		}
 
+		//添加末尾行的Rect
 		rf.left = 0;
 		rf.top = rf.bottom;
 		rf.right = rf.left+ e.x;
 		rf.bottom = rf.top+lineHeight;
 		dest.addRect(rf,Path.Direction.CW);
-		//添加末尾行的Rect
+		
+		//回收这些
+		RecylePool.recylePos(s);
+		RecylePool.recylePos(e);
+		RecylePool.recyleRect(rf);
 	}
 
 	/* 获取行的Rect */
@@ -640,7 +690,6 @@ _______________________________________
 		int last = start;
 		float width = 0, w;
 		int line = 0;
-
 		for(;start<end;++start)
 		{
 			if(chars[start]==FN)
@@ -651,7 +700,6 @@ _______________________________________
 				++line;
 			}
 		}
-		
 		w = paint.measureText(chars,last,start-last);
 		width = w>width ? w:width;
 		cacheLine = line;
@@ -666,18 +714,20 @@ _______________________________________
 	/* 测量单行文本宽度，非常精确 */
 	final public float measureText(CharSequence text,int start,int end,TextPaint paint)
 	{
-		fillChars(text,start,end);
-		return measureText(chars,0,end-start,paint);
+		char[] chars = fillChars(text,start,end);
+		float width = measureText(chars,0,end-start,paint);
+		RecylePool.recyleCharArray(chars);
+		return width;
 	}
 	final public float measureText(char[] chars,int start,int end,TextPaint paint)
 	{
 		float width = 0;
 		int count = end-start;
-		fillWidths(chars,start,end,paint);
-
+		float[] widths = fillWidths(chars,start,end,paint);
 		for(int i = 0;i<count;++i){
 			width+=widths[i];
 		}
+		RecylePool.recyleFloatArray(widths);
 		return width;
 	}
 	/* 测量单行文本中，指定位置的下标 */
@@ -685,8 +735,7 @@ _______________________________________
 	{
 		float width = 0;
 		int count = end-start;
-		fillWidths(text,start,end,paint);
-		
+		float[] widths = fillWidths(text,start,end,paint);
 		for(int i=0;i<count;++i)
 		{
 			if(width>=tox){
@@ -695,26 +744,34 @@ _______________________________________
 			++start;
 			width+=widths[i];
 		}
+		RecylePool.recyleFloatArray(widths);
 		return start;
 	}
 		
-	/* 统计和测量下标 */
+	/* 统计和寻找下标 */
 	final public int Count(char c, CharSequence text, int start, int end)
 	{
-		fillChars(text,start,end);
-		return Count(chars,c,0,end-start);
+		char[] chars = fillChars(text,start,end);
+		int count = Count(chars,c,0,end-start);
+		RecylePool.recyleCharArray(chars);
+		return count;
 	}
 	final public int NIndex(char c,CharSequence text,int index, int n)
 	{
-		fillChars(text,index,text.length());
-		return index+NIndex(c,chars,0,n);	
+		char[] chars = fillChars(text,index,text.length());
+		int offset = index+NIndex(c,chars,0,n);	
+		RecylePool.recyleCharArray(chars);
+		return offset;
 	}
 	final public int lastNIndex(char c,CharSequence text,int index, int n)
 	{
-		fillChars(text,0,index+1);
-		return lastNIndex(c,chars,index,n);
+		char[] chars = fillChars(text,0,index+1);
+		int offset = lastNIndex(c,chars,index,n);
+		RecylePool.recyleCharArray(chars);
+		return offset;
 	}
 	
+	/* 从index开始，向后找到字符c在arr中第n次出现的位置 */
 	final public static int NIndex(char c,char[] arr,int index,int n)
 	{
 		if (arr == null || index<0) return -1;
@@ -729,6 +786,7 @@ _______________________________________
 		}
 		return -1;
 	}
+	/* 从index开始，向前找到字符c在arr中第n次出现的位置 */
 	final public static int lastNIndex(char c,char[] arr,int index,int n)
 	{
 		if (arr == null || index>=arr.length) return -1;
@@ -743,6 +801,7 @@ _______________________________________
 		}
 		return -1;
 	}
+	/* 统计字符在数组指定范围内出现的次数 */
 	final public static int Count(char[] array, char value, int start, int end)
 	{
 		int count = 0;
@@ -752,40 +811,27 @@ _______________________________________
 		return count;
 	}
 	
-	private char[] fillChars(CharSequence text, int start, int end){
-		chars = getChars(text,start,end,chars,0);
+	/* 用指定文本填充一个文本数组，注意，调用者负责回收文本数组 */
+	private char[] fillChars(CharSequence text, int start, int end)
+	{
+		char[] chars = RecylePool.obtainCharArray(end-start);
+		TextUtils.getChars(text,start,end,chars,0);
 		return chars;
 	}
-	private float[] fillWidths(char[] chars, int start, int end, TextPaint paint){
-		widths = getWidths(chars,start,end,paint,widths);
-		return widths;
-	}
-	private float[] fillWidths(CharSequence text, int start, int end, TextPaint paint){
-		widths = getWidths(text,start,end,paint,widths);
-		return widths;
-	}
-	
-	/* 安全地获取数据 */
-	final public static char[] getChars(CharSequence text, int start, int end, char[] array, int begin)
+	/* 用指定文本数组的内容填充一个宽度数组，注意，调用者负责回收宽度数组 */
+	private float[] fillWidths(char[] chars, int start, int end, TextPaint paint)
 	{
-		if(array==null || array.length < end-start){
-			array = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(end-start));
-		}
-		TextUtils.getChars(text,start,end,array,begin);
-		return array;
-	}
-	final public static float[] getWidths(char[] chars, int start, int end, TextPaint paint, float[] widths)
-	{
-		if(widths==null || widths.length < end-start){
-			widths = ArrayUtils.newUnpaddedFloatArray(GrowingArrayUtils.growSize(end-start));
-		}
+		float[] widths = RecylePool.obtainFloatArray(end-start);
 		paint.getTextWidths(chars,start,end-start,widths);
 		return widths;
 	}
-	final public float[] getWidths(CharSequence text, int start, int end, TextPaint paint, float[] array)
+	/* 用指定文本填充一个宽度数组，注意，调用者负责回收宽度数组 */
+	private float[] fillWidths(CharSequence text, int start, int end, TextPaint paint)
 	{
-		chars = getChars(text,start,end,chars,0);
-		return getWidths(chars,0,end-start,paint,array);
+		char[] chars = fillChars(text,start,end);
+		float[] widths = fillWidths(chars,0,end-start,paint);
+		RecylePool.recyleCharArray(chars);
+		return widths;
 	}
 	
 	//试探当前下标所在行的起始
@@ -827,12 +873,42 @@ _______________________________________
 	/* 回收池 */
 	protected static class RecylePool
 	{
+		private static final boolean[][] sBooleanArrays = new boolean[6][0];
 		private static final char[][] sCharArrays = new char[6][0];
+		private static final int[][] sIntArrays = new int[6][0];
 		private static final float[][] sFloatArrays = new float[6][0];
 		private static final RectF[] sRectArray = new RectF[6];
 		private static final pos[] sPosArray = new pos[6];
 		private static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
 		
+		public static boolean[] obtainBooleanArray(int size)
+		{
+			synchronized(sBooleanArrays)
+			{
+				for(int i=0;i<sBooleanArrays.length;++i)
+				{
+					boolean[] array = sBooleanArrays[i];
+					if (array!=null && array.length>=size) {
+						sBooleanArrays[i] = null;
+						return array;
+					}
+				}
+			}
+			return ArrayUtils.newUnpaddedBooleanArray(GrowingArrayUtils.growSize(size));
+		}
+		public static void recyleBooleanArray(boolean[] array)
+		{
+			synchronized (sBooleanArrays)
+			{
+				for (int i=0;i<sBooleanArrays.length;i++) 
+				{
+					if (sBooleanArrays[i] == null || array.length > sBooleanArrays[i].length) {
+						sBooleanArrays[i] = array;
+						break;
+					}
+				}
+			}
+		}
 		public static char[] obtainCharArray(int size)
 		{
 			synchronized(sCharArrays)
@@ -856,6 +932,34 @@ _______________________________________
 				{
 					if (sCharArrays[i] == null || array.length > sCharArrays[i].length) {
 						sCharArrays[i] = array;
+						break;
+					}
+				}
+			}
+		}
+		public static int[] obtainIntArray(int size)
+		{
+			synchronized(sIntArrays)
+			{
+				for(int i=0;i<sIntArrays.length;++i)
+				{
+					int[] array = sIntArrays[i];
+					if (array!=null && array.length>=size) {
+						sIntArrays[i] = null;
+						return array;
+					}
+				}
+			}
+			return ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(size));
+		}
+		public static void recyleIntArray(int[] array)
+		{
+			synchronized (sIntArrays)
+			{
+				for (int i=0;i<sIntArrays.length;i++) 
+				{
+					if (sIntArrays[i] == null || array.length > sIntArrays[i].length) {
+						sIntArrays[i] = array;
 						break;
 					}
 				}

@@ -65,9 +65,19 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		mText = new EditableBlockList(text,start,end);
 		mText.setTextWatcher(this);
+		//mText.setSelectionWatcher(this);
 		mText.setEditableFactory(mEditableFactory);
-		mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f);
-		setLineColor(0xff666666);
+		
+		if(mLayout!=null){
+			int lineColor = mLayout.mLineColor;
+			float lineSpacing = mLayout.getLineSpacing();
+			float scaleLayout = mLayout.getScale();
+			float cursorSpacing = mLayout.getcursorSpacing();
+			mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, lineSpacing, lineSpacing-1, cursorSpacing, scaleLayout, lineColor);
+		}
+		else{
+			mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0.2f, 0.1f, 1f, 0xff666666);
+		}
 	}
 	public void setEditableFactory(EditableBlock.BlockFactory fa)
 	{
@@ -77,6 +87,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public void setAutoReleaseExcessMemory(boolean auto){
 		mText.setAutoReleaseExcessMemory(auto);
 	}
+	
 	public void setTextColor(int color){
 		mPaint.setColor(color);
 	}
@@ -88,6 +99,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	public void setLetterSpacing(float spacing){
 		mPaint.setLetterSpacing(spacing);
+	}
+	public void setLineSpacing(float spacing){
+		mLayout.setLineSpacing(spacing);
+	}
+	public void setScaleLayout(float scale){
+		mLayout.setScale(scale);
 	}
 
 	public int getTextColor(){
@@ -105,6 +122,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public float getLetterSpacing(){
 		return mPaint.getLetterSpacing();
 	}
+	public float getLineSpacing(){
+		return mLayout.getLineSpacing();
+	}
+	public float getScaleLayout(){
+		return mLayout.getScale();
+	}
+	
 	public Layout getLayout(){
 		return mLayout;
 	}
@@ -118,6 +142,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		return mText.getTextWatcherDepth();
 	}
 	
+	public void append(CharSequence text){
+		mText.append(text);
+	}
 	public void append(CharSequence text,int start,int end){
 		mText.append(text,start,end);
 	}
@@ -155,7 +182,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//如果输入法要主动输入或删除，不应该调用此方法
 			int keyCode = event.getKeyCode();
 			int action = event.getAction();
-
 			//手指抬起
 			if(action==KeyEvent.ACTION_UP)
 			{
@@ -181,7 +207,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				//没有启用输入，直接返回
 				return true;
 			}
-
 			//根据要输入的文本，进行输入
 			onInputContent(text,newCursorPosition,0,0);
 			return true;
@@ -194,15 +219,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				//没有启用输入，直接返回
 				return true;
 			}
-
 			//准备删除字符
 			onInputContent(null,0,beforeLength,afterLength);	
 			return true;
 		}
 
 		@Override
-		public boolean commitCompletion(CompletionInfo text)
-		{
+		public boolean commitCompletion(CompletionInfo text){
 			//用户选择了输入法的提示栏的一个单词，我们需要获取并插入
 			return commitText(text.getText(),0);
 		}	
@@ -298,8 +321,8 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	
 	/* 输入内容时调用 */
-	protected void onInputContent(CharSequence text, int newCursorPosition, int beforeLength, int afterLength){
-		mCursor.sendInputText(text,newCursorPosition,beforeLength,afterLength);
+	protected void onInputContent(CharSequence text, int newCursorPosition, int before, int after){
+		mCursor.sendInputContent(text,newCursorPosition,before,after);
 	}
 
 	/* 是否启用输入 */
@@ -341,7 +364,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public void endBatchEdit()
 	{
 		--batchEditCount;
-		mCursor.refreshForPos();
+		mCursor.refreshPos();
 		invalidate();
 	}
 	
@@ -368,8 +391,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//光标的变化，必须在Layout的文本块变化后调用
 			//对于批量编辑，导致光标不可见，我们希望在这之后光标保持原位
 			int index = start+lengthAfter;
-			mCursor.setSelection(index,index);
-			invalidate();
+			mCursor.setSelection(index,index);	
 		}
 	}
 	public void afterTextChanged(Editable text)
@@ -377,6 +399,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		if(mTextWatcher!=null){
 			mTextWatcher.afterTextChanged(text);
 		}	
+		if(batchEditCount==0){
+			//文本变化后，刷新界面
+			invalidate();
+		}
 	}
 
 /*
@@ -401,12 +427,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 
 	@Override
-	protected void onDraw(Canvas canvas)
-	{
-		Path path = mCursor.getCursorPath();
-		//获取光标或选择范围的路径
-	    mLayout.draw(canvas,path,mPaint,(int)getSelectionStartPos().y);	
+	protected void onDraw(Canvas canvas){
 		//进行绘制，将文本和光标画到画布上
+	    mLayout.draw(canvas,null,mPaint,0);	
 	}
 
 	@Override
@@ -419,7 +442,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	/* 使用Layout进行文本布局和绘制，尽可能地节省时间 */
 	final private class myLayout extends BlockLayout
 	{
-
 		//行数的颜色
 		private int mLineColor;
 		//专门用于绘制span的画笔，不污染原画笔
@@ -431,68 +453,27 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private Object[] mSpans;
 		private int[] mSpanStarts;
 		private int[] mSpanEnds;
-		private int[] mCopySpanStarts;
-		private int[] mCopySpanEnds;
 		
-		//在绘制时，将已绘制的范围在表中填充，后续span绘制时尽量不绘制表中已填充的范围
-		//0代表位置空闲，1代表位置已使用
-		private int[] mForegroundSpanRangeTable;
-		private int[] mBackgroundSpanRangeTable;
-		private static final int USE = 1;
-		private static final int FREE = 0;
 		
-		//临时变量
-		private char[] sCharBuffer = EmptyArray.CHAR;
-		private RectF sRectF = new RectF();
-		private pos sTmp = new pos(), sTmp2 = new pos(), sTmp3 = new pos();
-		private Paint.FontMetrics sFont = new Paint.FontMetrics();
-
-		
-		public myLayout(EditableBlockList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale)
+		public myLayout(EditableBlockList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale, int lineColor)
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			mSpanPaint = new TextPaint(paint);
-			mLineColor = paint.getColor();
+			mLineColor = lineColor;
 			
 			mSpans = EmptyArray.OBJECT;
 			mSpanStarts = EmptyArray.INT;
 			mSpanEnds = EmptyArray.INT;
-			mCopySpanStarts = EmptyArray.INT;
-			mCopySpanEnds = EmptyArray.INT;
-			mForegroundSpanRangeTable = EmptyArray.INT;
-			mBackgroundSpanRangeTable = EmptyArray.INT;
 		}
 
 		/* 开始绘制文本和光标 */
 		@Override
 		public void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
 		{
-			//在绘制文本前绘制光标所在行的高亮矩形
-			canvas.save();
-			//先保存canvas的状态
-			Rect rect = mCursor.getLineBounds();
-			canvas.clipRect(rect);
-			canvas.translate(0,cursorOffsetVertical);
-			//裁剪行的矩形，并交给mCursor绘制
-			mCursor.draw2(canvas);
-			canvas.restore();
-			//恢复保存前的状态
-
+			//绘制文本前绘制高亮的行，绘制文本后绘制光标
+			mCursor.drawLine(canvas);
 			draw(canvas);
-			//先绘制文本，之后绘制光标
-			//每次调用cancas.drawxxx方法，都会根据当前的状态新建一个图层并绘制，最后canvas显示的内容是所有图层叠加的效果
-			//注意哦，已经绘制的内容是不会被改变的，但是对canvas进行平移等操作会影响之后的图层
-			//考虑到mCursor默认在(0,0)处绘制，因此需要平移图层到下方，使得在(0,0)处绘制的操作转化为在(x,y)处的绘制
-			//并且还需要clipPath，以只绘制指定光标路径的内容 
-
-			canvas.save();
-			canvas.clipPath(highlight);
-			//在平移前，先裁剪指定路径，但其实在之前已经clipRect了，其实也不会超出Rect的范围
-			canvas.translate(0,cursorOffsetVertical);
-			//再平移，之后的绘制就默认到(x,y)处了，而我们剪切的范围正是(x,y)处，所以刚好命中范围
-			mCursor.draw(canvas);
-			//将canvas交给cursor绘制
-			canvas.restore();
+			mCursor.drawCursor(canvas);
 		}
 
 		/* 开始绘制文本 */
@@ -530,56 +511,69 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int end = getLineStart(endLine+1);
 
 			//只绘制可视区域的内容
-			RectF See = sRectF;
+			RectF See = RecylePool.obtainRect();
 			See.set(x,y,x+width,y+height);
 			onDraw(spanString,start,end,startLine,endLine,leftPadding,lineHeight,canvas,spanPaint,textPaint,See);
+			RecylePool.recyleRect(See);
 		}
 
 		/* 绘制文本和span */
 	    protected void onDraw(Spanned spanString, int start, int end, int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint spanPaint, TextPaint textPaint, RectF See)
 		{
 			//重新计算位置
-			pos tmp = sTmp;
-			pos tmp2 = sTmp2;
+			pos tmp = RecylePool.obtainPos();
+			pos tmp2 = RecylePool.obtainPos();
 			tmp.set(0,startLine*lineHeight);
 			tmp2.set(tmp);
 			
 			//刷新数据
-			textPaint.getFontMetrics(sFont);
-			float ascent = sFont.ascent; 
-			sCharBuffer = getChars(spanString,start,end,sCharBuffer,0);
-			char[] chars = sCharBuffer;
+			Paint.FontMetrics font = RecylePool.obtainFont();
+			textPaint.getFontMetrics(font);
+			float ascent = font.ascent; 
+			char[] chars = RecylePool.obtainCharArray(end-start);
+			TextUtils.getChars(spanString,start,end,chars,0);
 			
 			//获取Spans并清除重叠范围
-			getSpans(spanString,start,end,CharacterStyle.class);
-			int spanCount = mSpans.length;
-			if(spanCount>0){
-			    replaceOverlappingSpansRange(start,end,mSpans,mSpanStarts,mSpanEnds);
+			int spanCount = getSpans(spanString,start,end,CharacterStyle.class);
+			int[] copySpanStarts = EmptyArray.INT;
+			int[] copySpanEnds = EmptyArray.INT;
+			if(spanCount>0)
+			{
+				copySpanStarts = RecylePool.obtainIntArray(spanCount);
+				copySpanEnds = RecylePool.obtainIntArray(spanCount);
+				System.arraycopy(mSpanStarts,0,copySpanStarts,0,spanCount);
+				System.arraycopy(mSpanEnds,0,copySpanEnds,0,spanCount);
+			    replaceOverlappingSpansRange(start,end,mSpans,copySpanStarts,copySpanEnds);
 			}
 			
 			//绘制背景的Span
 			if(spanCount>0){
 				spanPaint.set(textPaint);
-			    onDrawBackground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp2,canvas,spanPaint);
+			    onDrawBackground(chars,start,mSpans,copySpanStarts,copySpanEnds,0,lineHeight,tmp2,canvas,spanPaint);
 			}
 
-			//绘制文本，由于画笔的混合模式，所以在文本范围变化时，部分span会改变亮度
-			if(spanCount>0){
-				onDrawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
-			}else{
-				drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);
-			}
-		    
+			//绘制文本
+			drawText(chars,0,end-start,tmp.x,tmp.y-ascent,0,lineHeight,canvas,textPaint);  
 			//绘制行数
 			int saveColor = textPaint.getColor();
 			textPaint.setColor(mLineColor);
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,See.left);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,font,See.left);
 			textPaint.setColor(saveColor);
 
 			//绘制前景的Span
 			if(spanCount>0){
 				spanPaint.set(textPaint);
-				onDrawForeground(chars,start,mSpans,mSpanStarts,mSpanEnds,0,lineHeight,tmp,canvas,spanPaint);
+				onDrawForeground(chars,start,mSpans,copySpanStarts,copySpanEnds,0,lineHeight,tmp,canvas,spanPaint,font);
+			}
+			
+			//回收这些
+			RecylePool.recylePos(tmp);
+			RecylePool.recylePos(tmp2);
+			RecylePool.recyleFont(font);
+			RecylePool.recyleCharArray(chars);
+			if(spanCount>0){
+				RecylePool.recyleIntArray(copySpanStarts);
+				RecylePool.recyleIntArray(copySpanEnds);
 			}
 		}
 		
@@ -615,10 +609,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 在绘制文本后绘制前景 */
-		private void onDrawForeground(char[] array, int begin, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint)
+		private void onDrawForeground(char[] array, int begin, Object[] spans, int[] spanStarts, int[] spanEnds, float leftPadding, float lineHeight, pos tmp, Canvas canvas, TextPaint paint, Paint.FontMetrics font)
 		{
 			int index = begin;
-			float ascent = sFont.ascent;  
+			float ascent = font.ascent;
 			//遍历span，只绘制前景
 			for(int i=0;i<spans.length;++i)
 			{
@@ -644,23 +638,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				}
 		   	}
 		}
-		
-		/* 绘制文本，没有span时，无法保证表中的内容为空，此时不要调用 */
-		private void onDrawText(char[] array, int start, int end, float x, float y, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint)
-		{
-			int begin = start;
-			pos tmp3 = sTmp3;
-			//检查还剩下的范围，只绘制范围内的文本
-			start = checkSpanStart(start,end,mForegroundSpanRangeTable);
-			end = checkSpanEnd(start,end,mForegroundSpanRangeTable);
-			if(start<end){
-				nearOffsetPos(array,begin,x,y,start,tmp3,paint);
-				drawText(array,start,end,tmp3.x,tmp3.y,leftPadding,lineHeight,canvas,paint);
-			}
-		}
 
 		/* 在绘制文本后绘制行 */
-		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, float seeLeft)
+		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, Paint.FontMetrics font, float seeLeft)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = paint.measureText(line,0,line.length());
@@ -670,7 +650,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 
 			float y = startLine*lineHeight;
-			y -= sFont.ascent;  
+			y -= font.ascent;  
 			//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
 			for(;startLine<=endLine;++startLine)
 			{
@@ -733,17 +713,17 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 		
 		/* 获取指定范围内的spans，并用范围填充mSpanStarts和mSpanEnds */
-		private <T extends Object> T[] getSpans(Spanned spanString, int start, int end, Class<T> kind)
+		private <T extends Object> int getSpans(Spanned spanString, int start, int end, Class<T> kind)
 		{
 			mSpans = spanString.getSpans(start,end,kind);
 			int length = mSpans.length;
 			if(mSpanStarts.length<length){
-				mSpanStarts = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
-				mCopySpanStarts = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
+				RecylePool.recyleIntArray(mSpanStarts);
+				mSpanStarts = RecylePool.obtainIntArray(length);
 			}
 			if(mSpanEnds.length<length){
-				mSpanEnds = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
-				mCopySpanEnds = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
+				RecylePool.recyleIntArray(mSpanEnds);
+				mSpanEnds = RecylePool.obtainIntArray(length);
 			}
 			
 			for(int i=0;i<length;++i)
@@ -757,41 +737,40 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				if(mSpanEnds[i] > end){
 					mSpanEnds[i] = end;
 				}
-				mCopySpanStarts[i] = mSpanStarts[i];
-				mCopySpanEnds[i] = mSpanEnds[i];
 			}
-			return (T[])mSpans;
+			return length;
 		}
 		
-		/* 尽可能去除span的重叠区域 */
+		/* 尽可能去除span的重叠区域
+		 * 在绘制时，将已绘制的范围在表中填充，后续span绘制时尽量不绘制表中已填充的范围
+		 * false代表位置空闲，true代表位置已使用 
+		 */
 		private void replaceOverlappingSpansRange(int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds)
 		{
 			int length = end-start;
-			if(mBackgroundSpanRangeTable.length<length){
-				mBackgroundSpanRangeTable = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
-			}
-			if(mForegroundSpanRangeTable.length<length){
-				mForegroundSpanRangeTable = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(length));
-			}
+			boolean[] backgroundSpansRangeTable = RecylePool.obtainBooleanArray(length);
+			boolean[] foregroundSpansRangeTable = RecylePool.obtainBooleanArray(length);
 			//先将表置为空
-			Arrays.fill(mBackgroundSpanRangeTable,0,length,FREE);
-			Arrays.fill(mForegroundSpanRangeTable,0,length,FREE);
+			Arrays.fill(backgroundSpansRangeTable,0,length,false);
+			Arrays.fill(foregroundSpansRangeTable,0,length,false);
 			
 			//逆序检查，优先级高的span应该先被检查
 			for(int i=spans.length-1;i>=0;--i)
 			{
 				Object span = spans[i];
 				if(span instanceof BackgroundColorSpan){
-					checkSpanRange(spanStarts,spanEnds,i,mBackgroundSpanRangeTable,start);
+					checkSpanRange(spanStarts,spanEnds,i,backgroundSpansRangeTable,start);
 				}
 				else if(span instanceof CharacterStyle){
-					checkSpanRange(spanStarts,spanEnds,i,mForegroundSpanRangeTable,start);
+					checkSpanRange(spanStarts,spanEnds,i,foregroundSpansRangeTable,start);
 				}
 			}
+			RecylePool.recyleBooleanArray(backgroundSpansRangeTable);
+			RecylePool.recyleBooleanArray(foregroundSpansRangeTable);
 		}
 		
 		/* 下标为i的span在表中的范围还有多少 (或者说是可视范围) */
-		private void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, int[] table, int begin)
+		private void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, boolean[] table, int begin)
 		{
 			if(spanStarts[i]>=spanEnds[i]){
 				//Log.e("spanRangeOutOfBoundsException","index "+i+"， Range ["+spanStarts[i]+"~"+spanEnds[i]+"]");
@@ -802,39 +781,33 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int end = spanEnds[i]-begin;
 			//两端点尽可能地往内缩
 			for(;start<end;++start){
-				if(table[start]==FREE){
+				if(table[start]==false){
 					break;
 				}
 			}
 			for(;end>start;--end){
-				if(table[end-1]==FREE){
+				if(table[end-1]==false){
 					break;
 				}
 			}
-			
 			//设置此span所使用的范围
-			Arrays.fill(table,start,end,USE);
+			Arrays.fill(table,start,end,true);
 			spanStarts[i] = start+begin;
 			spanEnds[i] = end+begin;
 		}
 		
-		private int checkSpanStart(int spanStart, int spanEnd, int[] table)
+		@Override
+		public void setScale(float scale)
 		{
-			for(;spanStart<spanEnd;++spanStart){
-				if(table[spanStart]==FREE){
-					break;
-				}
-			}
-			return spanStart;
-		}
-		private int checkSpanEnd(int spanStart, int spanEnd, int[] table)
-		{
-			for(;spanEnd>spanStart;--spanEnd){
-				if(table[spanEnd-1]==FREE){
-					break;
-				}
-			}
-			return spanEnd;
+			//scale改变了，就额外缩放光标，并且滚动位置应该保持不变
+			float src = getScale();
+			super.setScale(scale);
+			float x = getScrollX();
+			float y = getScrollY();
+			float now = getScale();
+			scale = now/src;
+			mCursor.refreshIndex();
+			scrollTo((int)(x*scale),(int)(y*scale));
 		}
 		
 		/* 获取应该预留给行数的宽度 */
@@ -847,12 +820,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 检查是否有span被点击了 */
-		public void performClickForSpan(int offset)
+		public void performClickForSpans(int offset)
 		{
 			for(int i=0;i<mSpans.length;++i)
 			{
 				if(mSpans[i] instanceof ClickableSpan && 
-				   mCopySpanStarts[i]<=offset && mCopySpanEnds[i]>=offset){
+				   mSpanStarts[i]<=offset && mSpanEnds[i]>=offset){
 						((ClickableSpan)mSpans[i]).onClick(Edit.this);
 				}
 			}
@@ -951,19 +924,18 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 			setSelection(start,end);
 		}
-		public void refreshForPos()
+		public void refreshIndex()
 		{
 			int start = mLayout.getOffsetForPosition(startPos.x,startPos.y);
 			int end = mLayout.getOffsetForPosition(endPos.x,endPos.y);
 			setSelection(start,end);
 		}
-		public void refreshForIndex()
+		public void refreshPos()
 		{
 			mLayout.getCursorPos(selectionStart,startPos);
 			mLayout.getCursorPos(selectionEnd,endPos);
 			onSelectionChanged(selectionStart,selectionEnd);
 		}
-		/* 先调用自己的onSelectionChanged，完成内部工作，再调用外部的onSelectionChanged */
 		public void onSelectionChanged(int start, int end)
 		{
 			//当光标位置变化，制作新的Path和Rect
@@ -978,73 +950,45 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			Edit.this.onSelectionChanged(start,end,0,0,mText);
 		}
 
-		public void setCursorDrawable(Drawable draw){
-			mCursorDrawable = draw;
-		}
-		public void setSelectionDrawable(Drawable draw){
-			mSelectionDrawable = draw;
-		}
-		public void setLineHilightDrawable(Drawable draw){
-			mLineDrawable = draw;
-		}
-
-		/* input不应该自己修改文本，而是交给光标修改 */
-		public void sendInputText(CharSequence text,int start,int before,int after)
+		public void sendInputContent(CharSequence text, int newCursorPosition, int before, int after)
 		{
-			Cursor save = next;
-			for(;next!=null;next=next.next){
-				next.sendInputText(text,start,before,after);
-			}
-			next = save;
-
 			if(text!=null){
-				mText.replace(selectionStart,selectionEnd,text);
+				mText.replace(selectionStart,selectionEnd,text,0,text.length());
 			}
 			else if(before>0 || after>0)
 			{
 				int len = mText.length();
 				before = before>selectionStart ? selectionStart:before;
 				after = selectionEnd+after>len ? len-selectionEnd:after;
-				mText.delete(selectionStart-before,selectionEnd+after);
+				mText.replace(selectionStart-before,selectionEnd+after,"",0,0);
 			}
 		}
-
-		public int getSelectionStart(){
-			return selectionStart;
-		}
-		public int getSelectionEnd(){
-			return selectionEnd;
-		}
-		public pos getStartPos(){
-			return startPos;
-		}
-		public pos getEndPos(){
-			return endPos;
-		}
-
-		public void draw(Canvas canvas)
+		
+		public void drawCursor(Canvas canvas)
 		{
+			canvas.save();
+			canvas.clipPath(mCursorPath);
+			canvas.translate(0,startPos.y);
 			if(selectionStart==selectionEnd){
 				mCursorDrawable.draw(canvas);
 			}
 			else{
 				mSelectionDrawable.draw(canvas);
 			}
+			canvas.restore();
 		}
-		public void draw2(Canvas canvas)
+		public void drawLine(Canvas canvas)
 		{
-			if(selectionStart==selectionEnd){
-			    mLineDrawable.draw(canvas);
+			if(selectionStart==selectionEnd)
+			{
+				canvas.save();
+				canvas.clipRect(mLineBounds);
+				canvas.translate(0,startPos.y);
+				mLineDrawable.draw(canvas);
+				canvas.restore();
 			}
 		}
-
-		public Path getCursorPath(){
-			return mCursorPath;
-		}
-		public Rect getLineBounds(){
-			return mLineBounds;
-		}
-
+		
 		class CursorDrawable extends NullDrawable
 		{
 			@Override
@@ -1062,13 +1006,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		class LineDrawable extends NullDrawable
 		{
 			@Override
-			public void draw(Canvas p1)
-			{
+			public void draw(Canvas p1){
 				p1.drawColor(0x25616263);
 			}
 		}
 	}
-
 	private static class NullDrawable extends Drawable
 	{
 		@Override
@@ -1090,7 +1032,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		int len = mText.length();
 		if(start>=0&&start<=len && end>=0&&end<=len){
-		    mCursor.setSelection(start,end);
+			mCursor.setSelection(start,end);
 		}
 	}
 	public void setSelection(int index)
@@ -1101,41 +1043,36 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 	}
 	public int getSelectionStart(){
-		return mCursor.getSelectionStart();
+		return mCursor.selectionStart;
 	}
 	public int getSelectionEnd(){
-		return mCursor.getSelectionEnd();
+		return mCursor.selectionEnd;
 	}
 	public pos getSelectionStartPos(){
-		return new pos(mCursor.getStartPos());
+		return new pos(mCursor.startPos);
 	}
 	public pos getSelectionEndPos(){
-		return new pos(mCursor.getEndPos());
+		return new pos(mCursor.endPos);
 	}
 
 	public void setCursorDrawable(Drawable draw){
-		mCursor.setCursorDrawable(draw);
+		mCursor.mCursorDrawable = draw;
 	}
 	public void setSelectionDrawable(Drawable draw){
-		mCursor.setSelectionDrawable(draw);
+		mCursor.mSelectionDrawable = draw;
 	}
 	public void setLineHilightDrawable(Drawable draw){
-		mCursor.setLineHilightDrawable(draw);
+		mCursor.mLineDrawable = draw;
 	}
 	public void setCursorWidth(float spacing){
-		//mLayout.setCursorWidthSpacing(spacing);
+		mLayout.setCursorSpacing(spacing);
 	}
-
-	public void addCursor(){}
-
-	public void removeCursor(){}
-
 	public void setSelectionWatcher(SelectionWatcher li){
 		mSelectionWatcher = li;
 	}
 
 	@Override
-	public void onSelectionChanged(int start, int end, int oldStart, int oldEnd, Spannable editor)
+	public void onSelectionChanged(int start, int end, int oldStart, int oldEnd, CharSequence editor)
 	{
 		//光标移动到超出范围的地方，需要滚动视图
 		int x = getScrollX();
@@ -1191,8 +1128,8 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 
 */
 
-    private int minScrollLen = 100;
-	private int scrollWidth = 10;
+    private static final int minScrollLen = 100;
+	private static final int scrollWidth = 10;
 	private static final int ScrollGnoeTime=1000;
 
     /* 滚动条 */
@@ -1320,13 +1257,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mScrollBar.setVisllble(GONE);
 		//只在视图滚动时，才设置滚动条的Rect，并移除上次还未执行的Runnable，并将要在之后消失
 	}
-
-	public void setScrollBarWidth(int width){
-		scrollWidth = width;
-	}
-	public void setMinScrollBarLenght(int len){
-		minScrollLen = len;
-	}
+	
 	public void setScrollBarDrawable(Drawable draw){
 		mScrollBar.mScrollDrawable = draw;
 	}
@@ -1365,8 +1296,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 
 	private static final int TouchSlop = 15;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
-	private static final byte Left = 0, Top = 1, Right = 2, Bottom = 3;
-
+	
 
 	/* 分发事件，根据情况舎弃事件 */
 	@Override
@@ -1472,9 +1402,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					double hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					double scale = len/hlen;
 					//根据手指间的距离计算缩放倍数，将textSize缩放
-					if(scale<0.95 || scale>1.05){
+					if(scale<0.99 || scale>1.01){
 						//太小的变化不需要去检查
-					   // mLayout.setScale((float)scale);
+					    mLayout.setScale((float)scale);
 					}
 					useFlag = notClick;
 					//缩放不是点击或长按
@@ -1485,16 +1415,16 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				dy = nowY-lastY;
 				switch(flag)
 				{
-						//滚动自己
+					//滚动自己
 					case MoveSelf:			
 						scrollBy(-(int)dx,-(int)dy);
 						break;
-						//移动光标
+					//移动光标
 					case MoveCursor:
 						int offset = getOffsetForPosition(nowX+sx,nowY+sy);
 						setSelection(offset,offset);
 						break;
-						//开始选择
+					//开始选择
 					case Selected:
 						offset = getOffsetForPosition(nowX+sx,nowY+sy);
 						if(offset>cursorStart){
@@ -1534,7 +1464,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				    mVelocityTracker = null;
 				}
 		}
-		postInvalidate();
+	    invalidate();
 		//期待将来刷新，至少在super.onTouchEvent(event)之后
 		return super.onTouchEvent(event);
 	}
@@ -1567,7 +1497,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		        setSelection(offset,offset);
 			}
 			openInputor(getContext(),this);
-			mLayout.performClickForSpan(offset);
+			mLayout.performClickForSpans(offset);
 			//打开输入法，并回调mLayout.performClickForSpan();
 		}
 		return true;
