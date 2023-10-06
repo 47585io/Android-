@@ -6,7 +6,7 @@ public class myReader
 {
 	
 	private static final int GC_Meomry = 5*1024*1024;
-	
+
 	private FileInputStream reader;
 	private File f;
 

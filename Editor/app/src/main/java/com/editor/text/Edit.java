@@ -47,7 +47,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	protected void config()
 	{
 		configPaint(mPaint);
-		setLineColor(0xff666666);
 		setClickable(true);
 		setLongClickable(true);
 		setFocusable(true);
@@ -60,7 +59,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		paint.setColor(0xffaaaaaa);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
-	
 	public void setText(CharSequence text,int start,int end)
 	{
 		mText = new EditableBlockList(text,start,end);
@@ -364,7 +362,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public void endBatchEdit()
 	{
 		--batchEditCount;
-		mCursor.refreshPos();
+		mCursor.refreshIndex();
 		invalidate();
 	}
 	
@@ -388,7 +386,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		if(batchEditCount==0)
 		{
 			//如果没有开启批量编辑，默认刷新
-			//光标的变化，必须在Layout的文本块变化后调用
 			//对于批量编辑，导致光标不可见，我们希望在这之后光标保持原位
 			int index = start+lengthAfter;
 			mCursor.setSelection(index,index);	
@@ -438,7 +435,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mScrollBar.draw(canvas);
 	}
 	
-	
 	/* 使用Layout进行文本布局和绘制，尽可能地节省时间 */
 	final private class myLayout extends BlockLayout
 	{
@@ -454,13 +450,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private int[] mSpanStarts;
 		private int[] mSpanEnds;
 		
-		
 		public myLayout(EditableBlockList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale, int lineColor)
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			mSpanPaint = new TextPaint(paint);
-			mLineColor = lineColor;
-			
+			mLineColor = lineColor;	
 			mSpans = EmptyArray.OBJECT;
 			mSpanStarts = EmptyArray.INT;
 			mSpanEnds = EmptyArray.INT;
@@ -557,7 +551,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			//绘制行数
 			int saveColor = textPaint.getColor();
 			textPaint.setColor(mLineColor);
-			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,font,See.left);
+			onDrawLine(startLine,endLine,-leftPadding,lineHeight,canvas,textPaint,font,See);
 			textPaint.setColor(saveColor);
 
 			//绘制前景的Span
@@ -640,11 +634,11 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		}
 
 		/* 在绘制文本后绘制行 */
-		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, Paint.FontMetrics font, float seeLeft)
+		private void onDrawLine(int startLine, int endLine, float leftPadding, float lineHeight, Canvas canvas, TextPaint paint, Paint.FontMetrics font, RectF See)
 		{
 			String line = String.valueOf(endLine);
 			float lineWidth = paint.measureText(line,0,line.length());
-			if(seeLeft > lineWidth+leftPadding){
+			if(See.left > lineWidth+leftPadding){
 				//如果x位置已经超出了行的宽度，就不用绘制了
 				return ;
 			}
@@ -745,7 +739,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		 * 在绘制时，将已绘制的范围在表中填充，后续span绘制时尽量不绘制表中已填充的范围
 		 * false代表位置空闲，true代表位置已使用 
 		 */
-		private void replaceOverlappingSpansRange(int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds)
+		public void replaceOverlappingSpansRange(int start, int end, Object[] spans, int[] spanStarts, int[] spanEnds)
 		{
 			int length = end-start;
 			boolean[] backgroundSpansRangeTable = RecylePool.obtainBooleanArray(length);
@@ -800,13 +794,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		public void setScale(float scale)
 		{
 			//scale改变了，就额外缩放光标，并且滚动位置应该保持不变
-			float src = getScale();
+			float old = getScale();
 			super.setScale(scale);
 			float x = getScrollX();
 			float y = getScrollY();
 			float now = getScale();
-			scale = now/src;
-			mCursor.refreshIndex();
+			scale = now/old;
+			mCursor.refreshPos();
 			scrollTo((int)(x*scale),(int)(y*scale));
 		}
 		
@@ -1153,7 +1147,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int w = getWidth();
 			int h = getHeight();
 
-			float by = getVScrollRange();
+			float by = computeVerticalScrollRange();
 			float biliy = y/by*h;
 			float leny = h/by*h;
 			leny = leny<minScrollLen ? minScrollLen:leny;
@@ -1171,7 +1165,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int w = getWidth();
 			int h = getHeight();
 
-			float rx = getHScrollRange();
+			float rx = computeHorizontalScrollRange();
 			float bilix = x/rx*w;
 			float lenx = w/rx*w;
 			lenx = lenx<minScrollLen ? minScrollLen:lenx;
@@ -1213,8 +1207,8 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int w = getWidth();
 			int h = getHeight();
 
-			float rx = getHScrollRange();
-			float by = getVScrollRange();
+			float rx = computeHorizontalScrollRange();
+			float by = computeVerticalScrollRange();
 
 			float lenx = mHScrollRect.left-x+dx;
 			float leny = mVScrollRect.top-y+dy;
@@ -1523,7 +1517,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		//不允许滑出范围外
 		int my = getWidth();
-		int child = (int) mLayout.maxWidth()+ExpandWidth;
+		int child = mLayout.maxWidth()+ExpandWidth;
 		int min = -(int)mLayout.getLeftPadding();
 		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
 
@@ -1534,11 +1528,29 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		super.scrollTo(x, y);
 	}
 
-	public float getHScrollRange(){
-		return mLayout.maxWidth()+ExpandWidth;
-	}
-	public float getVScrollRange(){
+	@Override
+	protected int computeVerticalScrollRange(){
 		return mLayout.getHeight()+ExpandHeight;
 	}
-
+	@Override
+	protected int computeVerticalScrollOffset(){
+		return getScrollY()/computeVerticalScrollRange()*computeVerticalScrollExtent();
+	}
+	@Override
+	protected int computeVerticalScrollExtent(){
+		return getHeight();
+	}
+	@Override
+	protected int computeHorizontalScrollRange(){
+		return mLayout.maxWidth()+ExpandWidth;
+	}
+	@Override
+	protected int computeHorizontalScrollOffset(){
+		return getScrollX();
+	}
+	@Override
+	protected int computeHorizontalScrollExtent(){
+		return getWidth();
+	}
+	
 }

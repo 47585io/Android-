@@ -15,8 +15,8 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	public static final char FN = '\n', FT = '\t';
 	public static final float MinScacle = 0.5f, MaxScale = 2.0f;
 	public static final float TextSize = 40f;
-	public static final int TextColor = 0xffaaaaaa;
-	public static int TabSize = 4;
+	public static final int TextColor = 0xffaaaaaa, LineColor = 0xff666666;
+	public static final float LineSpcing = 1.2f, CursorWidthSpcing = 0.1f;
 
 	//临时变得
 	private int cacheLine;
@@ -38,7 +38,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private float[] mWidths;
 	
 
-	public BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
+	protected BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(text,paint,width,align,spacingmult,spacingadd);
 		
@@ -352,8 +352,8 @@ _______________________________________
 	public int getHeight(){
 		return (int)(mLineCount*getLineHeight());
 	}
-	public float maxWidth(){
-		return maxWidth;
+	public int maxWidth(){
+		return (int)maxWidth;
 	}
 	@Override
 	public int getLineTop(int p1){
