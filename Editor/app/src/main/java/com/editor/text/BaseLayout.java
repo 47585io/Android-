@@ -14,10 +14,11 @@ public abstract class BaseLayout
 	public static final int TextColor = 0xffaaaaaa, LineColor = 0xff666666;
 	public static final float LineSpcing = 1.2f, CursorWidthSpcing = 0.1f;
 	
+	private int mCacheLine;
+	private int mCacheStart, mCacheEnd;
+	
 	private CharSequence mText;
 	private TextPaint mPaint;
-	
-	private int mCacheLine;
 	private float mLineSpacing;
 	private float mCursorWidthSpacing;
 	
@@ -48,7 +49,7 @@ public abstract class BaseLayout
 		return mCursorWidthSpacing;
 	}
 	
-	public abstract float getWidth()
+	public abstract float maxWidth()
 	
 	public float getHeight(){
 		return getLineCount()*getLineHeight();
@@ -82,13 +83,8 @@ public abstract class BaseLayout
 		return p1*getLineHeight();
 	}
 	/* 获取行底的纵坐标 */
-	public float getLineDescent(int p1)
-	{
-		Paint.FontMetrics font = RecylePool.obtainFont();
-		mPaint.getFontMetrics(font);
-		float descent = font.descent*mLineSpacing;
-		RecylePool.recyleFont(font);
-		return getLineTop(p1)+descent;
+	public float getLineDescent(int p1){
+		return getLineTop(p1+1);
 	}
 	/* 获取纵坐标指定的行 */
 	public int getLineForVertical(int vertical)
@@ -108,7 +104,7 @@ public abstract class BaseLayout
 	/* 获取行的起始下标 */
 	public abstract int getLineStart(int line)
 	
-	/* 获取下标所处的行 */
+	/* 获取下标所在的行 */
 	public abstract int getLineForOffset(int offset)
 	
 	
@@ -127,22 +123,23 @@ public abstract class BaseLayout
 		int count = getOffsetForHorizontalAndLine(line,x);
 		return count;
 	}
-	/* 获取offset处的横坐标，非常精确 */
+	/* 获取offset的横坐标，非常精确 */
 	public float getOffsetHorizontal(int offset)
 	{
 		CharSequence text = mText;
 		int start = tryLine_Start(text,offset);
 		return measureText(text,start,offset,mPaint);
 	}
-	/* 获取offset处的纵坐标，非常精确 */
+	/* 获取offset的纵坐标，非常精确 */
 	public float getOffsetVertical(int offset){
 		return getLineForOffset(offset)*getLineHeight();
 	}
-    /* 获取offset处的坐标 */
+    /* 获取offset的坐标 */
 	public void getCursorPos(int offset, pos pos){
 		pos.x = getOffsetHorizontal(offset);
 		pos.y = getOffsetVertical(offset);
 	}
+	
 	/* 获取临近光标坐标，可能会更快 */
 	final public void nearOffsetPos(CharSequence text, int oldOffset, float x, float y, int newOffset, pos target, TextPaint paint)
 	{
@@ -187,7 +184,7 @@ public abstract class BaseLayout
 	{
 		bounds.left = 0;
 		bounds.top = (int)(line*getLineHeight());
-		bounds.right = (int)(bounds.left+getWidth());
+		bounds.right = (int)(bounds.left+maxWidth());
 		bounds.bottom = (int) (bounds.top+getLineHeight());
 	}
 	/* 获取光标的路径 */
@@ -279,32 +276,46 @@ public abstract class BaseLayout
 		return Count(FT,text,start,end)!=0;
 	}
 	
+	
 	/* 测量文本切片的宽 */
 	final public float getDisredWidth(CharSequence text, int start, int end, TextPaint paint)
 	{
 		char[] chars = fillChars(text,start,end);
 		float width = getDisredWidth(chars,0,end-start,paint);
 		RecylePool.recyleCharArray(chars);
+		mCacheStart += start;
+		mCacheEnd += start;
 		return width;
 	}
 	final public float getDisredWidth(char[] chars, int start, int end, TextPaint paint)
 	{
 		int last = start;
-		float width = 0, w;
+		float width = 0, w = 0;
 		int line = 0;
+		int maxStart = 0, maxEnd = 0;
 		for(;start<end;++start)
 		{
 			if(chars[start]==FN)
 			{
 				w = paint.measureText(chars,last,start-last);
-				width = w>width ? w:width;
+				if(w > width){
+					width = w;
+					maxStart = last;
+					maxEnd = start;
+				}
 				last = start+1;
 				++line;
 			}
 		}
 		w = paint.measureText(chars,last,start-last);
-		width = w>width ? w:width;
+		if(w > width){
+			width = w;
+			maxStart = last;
+			maxEnd = start;
+		}
 		mCacheLine = line;
+		mCacheStart = maxStart;
+		mCacheEnd = maxEnd;
 		return width;
 	}
 	/* 测量文本切片的高 */
@@ -320,9 +331,16 @@ public abstract class BaseLayout
 		mCacheLine = Count(text,FN,start,end);
 		return mCacheLine*getLineHeight();
 	}
-	/* 在测量后，可以获取文本切片的行 */
+	/* 在测量后，可以获取文本切片的行数 */
 	final protected int getCacheLine(){
 		return mCacheLine;
+	}
+	/* 在测量后，可以获取文本切片中最宽的一行的范围 */
+	final protected int getCacheStart(){
+		return mCacheStart;
+	}
+	final protected int getCacheEnd(){
+		return mCacheEnd;
 	}
 	
 	/* 测量单行文本宽度，非常精确 */

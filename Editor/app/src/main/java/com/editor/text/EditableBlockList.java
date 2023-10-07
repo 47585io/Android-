@@ -205,8 +205,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		return j-1;
 	}
 	
-	public Editable getBlock(int i){
-		return mBlocks[i];
+	public EditableBlock getBlock(int id){
+		return mBlocks[id];
 	}
 	public int getBlockSize(){
 		return mBlockSize;
@@ -217,16 +217,25 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 寻找指定下标所在的文本块 */
 	public int findBlockIdForIndex(int index)
 	{
-		//找到临近的位置，然后从此处开始
-		int id = index/(MaxCount-ReserveCount);
-		if(id>mBlockSize-1){
-			id = mBlockSize-1;
-		}
-		if(id<0){
-			id=0;
-		}
+		//使用二分查找法先找到最接近的位置
+		//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
+		int low = 0;
+		int high = mBlockSize-1;
+		int middle = 0;
+		while (low <= high)
+		{   
+			middle = (low + high) / 2;   
+			if (index == mBlockStarts[middle]) 
+				break;   
+			else if (index < mBlockStarts[middle])
+				high = middle - 1;   
+			else 
+				low = middle + 1;
+		}  
+		
+		int id = middle;
 		int nowIndex = mBlockStarts[id];
-
+		//最后逐个寻找，找到目标文本块
 		//为了方便插入，我们总是尽量将index保持在上一文本块的末尾
 		if(nowIndex<index){
 			for(;id<mBlockSize-1 && mBlockStarts[id+1]<index;++id){}
@@ -234,7 +243,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		else if(nowIndex>index){
 			for(;id>0 && mBlockStarts[id]>index;--id){}
 		}
-		else if(nowIndex==index){
+		else{
 			id = id==0 ? 0:id-1;
 		}
 		return id;

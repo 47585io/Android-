@@ -91,7 +91,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	public float getLineSpacing(){
 		return mLineSpacing;
 	}
-	public float getcursorSpacing(){
+	public float getCursorSpacing(){
 		return mCursorWidthSpacing;
 	}
 
@@ -298,16 +298,23 @@ _______________________________________
     /* 寻找行数所在的文本块 */
     public int findBlockIdForLine(int line)
 	{
-		int div = mLineCount/mBlockSize;
-		int id = div>1 ? line/div:line;
-		if(id>mBlockSize-1){
-			id = mBlockSize-1;
-		}
-		if(id<0){
-			id = 0;
-		}
+		//使用二分查找法先找到最接近的位置
+		int low = 0;   
+		int high = mBlockSize - 1;   
+		int middle = 0;
+		while (low <= high)
+		{   
+			middle = (low + high) / 2;   
+			if (line == mStartLines[middle]) 
+				break;   
+			else if (line < mStartLines[middle])
+				high = middle - 1;   
+			else 
+				low = middle + 1;
+		}  
+		
+		int id = middle;
 		int nowLine = mStartLines[id];
-
 		//文本块的起始行数实际上是之前的文本块的行数(例如第二块文本块的起始行数就是第一块的行数)
 		//这意味着，要寻找指定的换行所在的文本块，并且如果它等于某个文本块的起始行数，此换行应该在上一文本块
 		if(nowLine<line){
@@ -316,8 +323,8 @@ _______________________________________
 		else if(nowLine>line){
 			for(;id>0 && mStartLines[id]>=line;--id){}
 		}
-		else if(nowLine==line){
-			id = id==0 ? 0 : id-1;
+		else{
+			id = id==0 ? 0:id-1;
 		}
 		return id;
 	}

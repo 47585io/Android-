@@ -70,7 +70,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			int lineColor = mLayout.mLineColor;
 			float lineSpacing = mLayout.getLineSpacing();
 			float scaleLayout = mLayout.getScale();
-			float cursorSpacing = mLayout.getcursorSpacing();
+			float cursorSpacing = mLayout.getCursorSpacing();
 			mLayout = new myLayout(mText,mPaint,Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, lineSpacing, lineSpacing-1, cursorSpacing, scaleLayout, lineColor);
 		}
 		else{
@@ -1447,7 +1447,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				    dx = -mVelocityTracker.getXVelocity(id);
 				    dy = -mVelocityTracker.getYVelocity(id);
 				    //设置mScroller的滑行值，并准备开始滑行
-				    mScroller.fling(sx,sy,(int)dx,(int)dy,(int)-mLayout.getLeftPadding(),(int)mLayout.maxWidth()-getWidth()+ExpandWidth,0,mLayout.getHeight()-getHeight()+ExpandHeight);
+				    mScroller.fling(sx,sy,(int)dx,(int)dy,(int)-mLayout.getLeftPadding(),(int)(mLayout.maxWidth()-getWidth()+ExpandWidth),0,(int)(mLayout.getHeight()-getHeight()+ExpandHeight));
 				}
 			case MotionEvent.ACTION_CANCEL:
 				//清除flag
@@ -1517,20 +1517,20 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		//不允许滑出范围外
 		int my = getWidth();
-		int child = mLayout.maxWidth()+ExpandWidth;
+		int child = (int)(mLayout.maxWidth()+ExpandWidth);
 		int min = -(int)mLayout.getLeftPadding();
 		x = my >= child || x < min ? min:(my + x > child ? child-my:x);
 
 		min = 0;
 		my = getHeight();
-		child = mLayout.getHeight()+ExpandHeight;
+		child = (int)(mLayout.getHeight()+ExpandHeight);
 		y = my >= child || y < min ? min:(my + y > child ? child-my:y);
 		super.scrollTo(x, y);
 	}
 
 	@Override
 	protected int computeVerticalScrollRange(){
-		return mLayout.getHeight()+ExpandHeight;
+		return (int)(mLayout.getHeight()+ExpandHeight);
 	}
 	@Override
 	protected int computeVerticalScrollOffset(){
@@ -1542,7 +1542,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	@Override
 	protected int computeHorizontalScrollRange(){
-		return mLayout.maxWidth()+ExpandWidth;
+		return (int)(mLayout.maxWidth()+ExpandWidth);
 	}
 	@Override
 	protected int computeHorizontalScrollOffset(){
