@@ -128,12 +128,13 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void removeBlock(int i)
 	{
 		Editable block = mBlocks[i];
-		replaceSpans(i,0,block.length(),"",0,0,true);
+		int length = block.length();
+		replaceSpans(i,0,length,"",0,0,true);
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
 		mIndexOfBlocks.remove(block);
 		mBlockSize--;
-		mLength -= block.length();
+		mLength -= length;
 	}
 	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
 	private void addBlocks(final int i, final int count, boolean send)
@@ -217,24 +218,38 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 寻找指定下标所在的文本块 */
 	public int findBlockIdForIndex(int index)
 	{
-		//使用二分查找法先找到最接近的位置
-		//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
-		int low = 0;
-		int high = mBlockSize-1;
-		int middle = 0;
-		while (low <= high)
-		{   
-			middle = (low + high) / 2;   
-			if (index == mBlockStarts[middle]) 
-				break;   
-			else if (index < mBlockStarts[middle])
-				high = middle - 1;   
-			else 
-				low = middle + 1;
-		}  
-		
-		int id = middle;
+		//由于每个文本块的文本应该差不多，可以先预判一下id
+		int count = mLength/mBlockSize;
+		int id = count==0 ? 0 : index/count;
+		if(id>mBlockSize-1){
+			id = mBlockSize-1;
+		}
+		if(id<0){
+			id = 0;
+		}
 		int nowIndex = mBlockStarts[id];
+		
+		if(Math.abs(nowIndex-index) > count*32)
+		{
+			//如果误差太大，使用二分查找法先找到最接近的位置
+			//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
+			int low = nowIndex<index ? id:0;
+			int high = nowIndex<index ? mBlockSize-1:id;
+			int middle = id;
+			while (low <= high)
+			{   
+				middle = (low + high) / 2;   
+				if (index == mBlockStarts[middle]) 
+					break;   
+				else if (index < mBlockStarts[middle])
+					high = middle - 1;   
+				else 
+					low = middle + 1;
+			}  
+			id = middle;
+			nowIndex = mBlockStarts[id];
+		}
+		
 		//最后逐个寻找，找到目标文本块
 		//为了方便插入，我们总是尽量将index保持在上一文本块的末尾
 		if(nowIndex<index){
@@ -288,7 +303,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//过滤文本
-        for (int i=0;i<mFilters.length;++i) {
+        for (int i=0;i<mFilters.length;++i){
             CharSequence repl = mFilters[i].filter(tb, tbStart, tbEnd, this, start, end);
             if (repl!=null) {
                 tb = repl;
@@ -305,7 +320,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		
 		//找到start和end所指定的文本块，并将它们偏移到文本块的下标
 		final int i = findBlockIdForIndex(start);
-		final int j = findBlockIdForIndex(end);
+		final int j = start==end ? i : findBlockIdForIndex(end);
 		start-=mBlockStarts[i];
 		end-=mBlockStarts[j];
 		
@@ -929,7 +944,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		final Set spanSet = obtainSet();
 		T[] spans = EmptyArray.emptyArray(kind);
 		int i = findBlockIdForIndex(start);
-		int j = findBlockIdForIndex(end);
+		int j = start==end ? i : findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
 		end -= mBlockStarts[j];
 		
@@ -1043,7 +1058,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		int i = findBlockIdForIndex(p1);
 		Editable block = mBlocks[i];
 		int start = mBlockStarts[i];
-		if(i<mBlockSize-1 && p1-start >= block.length()){
+		if(i<mBlockSize-1 && p1-start == block.length()){
 			//刚好在最后，理应是下一块的起始位置
 			return mBlocks[i+1].charAt(0);
 		}
@@ -1071,7 +1086,8 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	@Override
 	public CharSequence subSequence(int start, int end){
-		return new EditableBlockList(this,start,end);
+		//我们绝不返回EditableBlockList，这太浪费了
+		return new SpannableStringBuilderLite(this,start,end);
 	}
 	public String subString(int start, int end)
 	{ 
@@ -1124,7 +1140,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	{
 		//找到start和end所指定的文本块，并将它们偏移到文本块的下标
 		int i = findBlockIdForIndex(start);
-		int j = findBlockIdForIndex(end);
+		int j = start==end ? i : findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
 		end -= mBlockStarts[j];
 

@@ -60,7 +60,7 @@ public class MainActivity extends Activity implements Runnable
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
 		XCode Code = new XCode(this);
 		Code.setPool(mPool);
-		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
+		Code.loadFileInThread("/storage/emulated/0/Linux/1.java");
 		setContentView(Code);
 		//test2("/storage/emulated/0/Linux/3.java");
 	}

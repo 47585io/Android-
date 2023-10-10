@@ -219,8 +219,8 @@ _______________________________________
 	{
 		EditableBlockList text = (EditableBlockList) getText();
 		int st = text.getBlockStartIndex(i);
-		start = tryLine_Start(text,st+start);
-		end = tryLine_End(text,st+end);
+		start = getOffsetToLeftOf(st+start);
+		end = getOffsetToRightOf(st+end);
 		float width = getDisredWidth(text,start,end,getPaint());
 		return width;
 	}
@@ -338,6 +338,50 @@ _______________________________________
 		CharSequence block = text.getBlock(id);
 		startLine+= Count(FN,block,0,offset-startIndex);
 		return startLine;
+	}
+
+	@Override
+	public int getOffsetToLeftOf(int offset)
+	{
+		//我们知道，EditableBlockList的charAt太浪费时间了
+		EditableBlockList text = (EditableBlockList) getText();
+		int id = text.findBlockIdForIndex(offset);
+		id = text.getBlock(id).length()+text.getBlockStartIndex(id)==offset ? id+1:id;
+		int index = TextUtils.lastIndexOf(text.getBlock(id), FN, offset-text.getBlockStartIndex(id));
+		if(index > -1){
+			return text.getBlockStartIndex(id)+index;
+		}
+		for(--id;id>-1;--id)
+		{
+			CharSequence block = text.getBlock(id);
+			index = TextUtils.lastIndexOf(block,FN,block.length()-1);
+			if(index > -1){
+				return text.getBlockStartIndex(id)+index;
+			}
+		}
+		return 0;
+	}
+
+	@Override
+	public int getOffsetToRightOf(int offset)
+	{
+		EditableBlockList text = (EditableBlockList) getText();
+		int id = text.findBlockIdForIndex(offset);
+		id = text.getBlock(id).length()+text.getBlockStartIndex(id)==offset ? id+1:id;
+		int index = TextUtils.indexOf(text.getBlock(id), FN, offset-text.getBlockStartIndex(id));
+		if(index > -1){
+			return text.getBlockStartIndex(id)+index;
+		}
+		int size = text.getBlockSize();
+		for(++id;id<size;++id)
+		{
+			CharSequence block = text.getBlock(id);
+			index = TextUtils.indexOf(block,FN,0);
+			if(index > -1){
+				return text.getBlockStartIndex(id)+index;
+			}
+		}
+		return text.length();
 	}
 
 }

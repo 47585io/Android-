@@ -64,8 +64,8 @@ public abstract class BaseLayout
 	{
 		CharSequence text = mText;
 		int start = getLineStart(line); 
-		int end = tryLine_End(text,start);
-		return mPaint.measureText(text,start,end);
+		int end = getOffsetToRightOf(start);
+		return measureText(text,start,end,mPaint);
 	}
 	/* 获取行的高度 */
 	public float getLineHeight()
@@ -99,7 +99,7 @@ public abstract class BaseLayout
 	/* 获取行的末尾下标 */
 	public int getLineEnd(int line){
 		int start = getLineStart(line);
-		return tryLine_End(mText,start);
+		return getOffsetToRightOf(start);
 	}
 	/* 获取行的起始下标 */
 	public abstract int getLineStart(int line)
@@ -113,7 +113,7 @@ public abstract class BaseLayout
 	{
 		CharSequence text = mText;
 		int start = getLineStart(line);
-		int end = tryLine_End(text,start);
+		int end = getOffsetToRightOf(start);
 		return measureOffset(text,start,end,horiz,mPaint);
 	}
 	/* 获取指定坐标处的offset */
@@ -127,7 +127,7 @@ public abstract class BaseLayout
 	public float getOffsetHorizontal(int offset)
 	{
 		CharSequence text = mText;
-		int start = tryLine_Start(text,offset);
+		int start = getOffsetToLeftOf(offset);
 		return measureText(text,start,offset,mPaint);
 	}
 	/* 获取offset的纵坐标，非常精确 */
@@ -216,13 +216,8 @@ public abstract class BaseLayout
 		RectF rf = RecylePool.obtainRect();
 		pos s = RecylePool.obtainPos();
 		pos e = RecylePool.obtainPos();
-
 		getCursorPos(start,s);
-		if(end-start>1000){
-			getCursorPos(end,e);
-		}else{
-		    nearOffsetPos(text,start,s.x,s.y,end,e,paint);
-		}
+		getCursorPos(end,e);
 
 		float w = getDisredWidth(text,start,end,paint);
 		if(s.y == e.y)
@@ -237,7 +232,7 @@ public abstract class BaseLayout
 			return;
 		}
 
-		float sw = measureText(text,start,tryLine_End(text,start),paint);
+		float sw = measureText(text,start,getOffsetToRightOf(start),paint);
 		//添加起始行的Rect
 		rf.left = s.x;
 		rf.top = s.y;
@@ -272,7 +267,7 @@ public abstract class BaseLayout
 	{
 		CharSequence text = mText;
 		int start = getLineStart(p1);
-		int end = tryLine_End(text,start);
+		int end = getOffsetToRightOf(start);
 		return Count(FT,text,start,end)!=0;
 	}
 	
@@ -466,6 +461,15 @@ public abstract class BaseLayout
 		return widths;
 	}
 
+	/* 获取offset所在行的起始 */
+	public int getOffsetToLeftOf(int offset){
+		return tryLine_Start(mText,offset);
+	}
+	/* 获取offset所在行的末尾 */
+	public int getOffsetToRightOf(int offset){
+		return tryLine_End(mText,offset);
+	}
+	
 	//试探当前下标所在行的起始
 	final public static int tryLine_Start(CharSequence src,int index)
 	{
@@ -477,6 +481,12 @@ public abstract class BaseLayout
 	{
 		index = TextUtils.indexOf(src,FN,index);
 		return index<0 ? src.length():index;
+	}
+	/* 在测量，绘制时请使用这个，借此机会替换掉文本中的某些内容 */
+	public String FormatString(char[] arr, int start, int end)
+	{
+		String newStr = new String(arr,start,end-start);
+		return newStr.replaceAll("\t","    ");
 	}
 	
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
