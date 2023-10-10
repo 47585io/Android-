@@ -48,8 +48,8 @@ public class EditableBlockList extends Object implements EditableBlock
 
 	private int mLength;
 	private int mBlockSize;
+	private int mSpanCount;
 	private int mInsertionOrder;
-	private int mSelectionStart, mSelectionEnd;
 	
 	private EditableBlock[] mBlocks; 
 	private int[] mBlockStarts;
@@ -65,6 +65,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int MaxCount;
 	private int ReserveCount;
 	private int mTextWatcherDepth;
+	private int mSelectionStart, mSelectionEnd;
 	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 	
@@ -579,6 +580,7 @@ public class EditableBlockList extends Object implements EditableBlock
 							mSpanInBlocks.remove(span);
 							mSpanOrders.remove(span);
 							recyleList(blocks);	
+							mSpanCount--;
 						}else{
 							blocks.remove(dstBlock);
 						}
@@ -609,6 +611,7 @@ public class EditableBlockList extends Object implements EditableBlock
 					blocks.add(dstBlock);
 					mSpanInBlocks.put(span,blocks);
 					mSpanOrders.put(span,mInsertionOrder++);
+					mSpanCount++;
 					continue;
 				}
 				if(blocks.size()==0){
@@ -838,6 +841,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		mSpanOrders.clear();
 		mLength = 0;
 		mBlockSize = 0;
+		mSpanCount = 0;
 		mInsertionOrder = 0;
 		
 		sendBlocksRemoved(0,count);
@@ -857,6 +861,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		mSpanInBlocks.clear();
 		mSpanOrders.clear();
+		mSpanCount = 0;
 		mInsertionOrder = 0;
 	}
 
@@ -868,7 +873,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	public void setSpan(final Object span, int start, int end, final int flags){
 		setSpan(span,start,end,flags,false);
 	}
-
 	/* 用指定的span标记范围内的文本，enforce表示是否需要强制设置而无视其是否是无效span */
 	private void setSpan(final Object span, int start, int end, final int flags, final boolean enforce)
 	{
@@ -877,19 +881,20 @@ public class EditableBlockList extends Object implements EditableBlock
 			return;
 		}
 		
-		if(mSpanInBlocks.get(span)!=null){
-			//如果已有这个span，先移除它，但保留它的插入顺序
-			int order = mSpanOrders.get(span);
-			removeSpan(span);
-			mSpanOrders.put(span,order);
+		List<EditableBlock> tempBlocks = mSpanInBlocks.get(span);
+		if(tempBlocks != null){
+			//如果已有该span，仅清空与其绑定的文本块，保留它的插入顺序和blocks列表
+			removeSpan(span,false);
 		}
 		else{
+			//一个全新的span，需要映射到一个新的列表，并添加插入顺序
 			mSpanOrders.put(span,mInsertionOrder++);
+			tempBlocks = obtainList();
+			mSpanInBlocks.put(span,tempBlocks);
+			mSpanCount++;
 		}
-		//无论如何再添加一个新的，我们不能保留已回收的list的指针
-		final List<EditableBlock> blocks = obtainList();
-		mSpanInBlocks.put(span,blocks);
-
+		final List<EditableBlock> blocks = tempBlocks;
+		
 		//将范围内的所有文本块都设置span，并建立绑定
 		Do d = new Do()
 		{
@@ -913,19 +918,25 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	
 	@Override
-	public void removeSpan(Object span)
+	public void removeSpan(Object span){	
+	    removeSpan(span,true);
+	}
+	/* 移除span与blocks的绑定，并将span从这些文本块中移除，如果removed为false，则保留一个空的blocks，并保留span的插入顺序 */
+	private void removeSpan(Object span, boolean removed)
 	{	
-	    //移除span与editors的绑定，并将span从这些文本块中移除
-		List<EditableBlock> blocks = mSpanInBlocks.remove(span);
+		List<EditableBlock> blocks = removed ? mSpanInBlocks.remove(span):mSpanInBlocks.get(span);
 		if(blocks!=null)
 		{
 			int size = blocks.size();
 			for(int i=0;i<size;++i){
-				Editable block = blocks.get(i);
-				block.removeSpan(span);
+				blocks.get(i).removeSpan(span);
 			}
-			recyleList(blocks);
-			mSpanOrders.remove(span);
+			blocks.clear();
+			if(removed){
+				recyleList(blocks);
+				mSpanOrders.remove(span);
+				mSpanCount--;
+			}
 		}
 	}
 
@@ -937,12 +948,17 @@ public class EditableBlockList extends Object implements EditableBlock
 	public <T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
 		return getSpans(queryStart,queryEnd,kind,false);
 	}
-	
 	/* 获取与指定范围重叠的指定类型的span，sort表示是否按优先级和插入顺序排序 */
 	private <T extends Object> T[] getSpans(int start, int end, final Class<T> kind, boolean sort)
 	{
+		if(kind==null){
+			return (T[])EmptyArray.OBJECT;
+		}
+		if(mSpanCount==0){
+			return EmptyArray.emptyArray(kind);
+		}
+		
 		final Set spanSet = obtainSet();
-		T[] spans = EmptyArray.emptyArray(kind);
 		int i = findBlockIdForIndex(start);
 		int j = start==end ? i : findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
@@ -963,15 +979,22 @@ public class EditableBlockList extends Object implements EditableBlock
 		//仍要包含两端的span，由于每个文本块都不为空，因此不用额外寻找，它们就是上个和下个文本块
 		//插入文本时，新增的文本块都被填充截取的文本，而删除文本时，为空的文本块被移除
 		if(start==0 && i>0){
-			spans = mBlocks[i-1].quickGetSpans(mBlocks[i-1].length(),mBlocks[i-1].length(),kind);
+			int len = mBlocks[i-1].length();
+			T[] spans = mBlocks[i-1].quickGetSpans(len,len,kind);
 			Collections.addAll(spanSet,spans);
 		}
 		if(end==mBlocks[j].length() && j<mBlockSize-1){
-			spans = mBlocks[j+1].quickGetSpans(0,0,kind);
+			T[] spans = mBlocks[j+1].quickGetSpans(0,0,kind);
 			Collections.addAll(spanSet,spans);
 		}
+		
+		if(spanSet.size() == 0){
+			//没有找到span，提前回收set并返回
+			recyleSet(spanSet);
+			return EmptyArray.emptyArray(kind);
+		}
 		//创建一个指定长度的数组类型的对象并转换，然后将span转移到其中
-		spans = (T[]) Array.newInstance(kind,spanSet.size());
+		T[] spans = (T[]) Array.newInstance(kind,spanSet.size());
 		spanSet.toArray(spans);
 		recyleSet(spanSet);
 		
@@ -1019,7 +1042,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		int end = block.getSpanEnd(p1);
 		return mBlockStarts[id]+end;
 	}
-
+	
 	@Override
 	public int getSpanFlags(Object p1)
 	{
@@ -1086,7 +1109,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	@Override
 	public CharSequence subSequence(int start, int end){
-		//我们绝不返回EditableBlockList，这太浪费了
 		return new SpannableStringBuilderLite(this,start,end);
 	}
 	public String subString(int start, int end)
@@ -1348,13 +1370,11 @@ public class EditableBlockList extends Object implements EditableBlock
 		b.append("]");
 		return b.toString();
 	}
-	
 	public void printSpans(){
 		for(Object span:mSpanInBlocks.keySet()){
 			Log.w("Span At "+getSpanStart(span) ,printSpanInBlocks(span));
 		}
 	}
-	
 	public String printSpanOrders(Object[] spans)
 	{
 		b.delete(0,b.length());
