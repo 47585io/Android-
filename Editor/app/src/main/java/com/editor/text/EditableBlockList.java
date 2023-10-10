@@ -230,7 +230,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		int nowIndex = mBlockStarts[id];
 		
-		if(Math.abs(nowIndex-index) > count*32)
+		if(Math.abs(nowIndex-index) > count*24)
 		{
 			//如果误差太大，使用二分查找法先找到最接近的位置
 			//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
