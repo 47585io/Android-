@@ -230,7 +230,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		int nowIndex = mBlockStarts[id];
 		
-		if(Math.abs(nowIndex-index) > count*24)
+		if(Math.abs(nowIndex-index) > count*14)
 		{
 			//如果误差太大，使用二分查找法先找到最接近的位置
 			//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
@@ -1054,19 +1054,40 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 
 	@Override
-	public int nextSpanTransition(int start, int limit, Class kind)
+	public int nextSpanTransition(final int start, final int limit, Class kind)
 	{
-		//先走到start指定的文本块，并获取文本块start后的span位置
+		if(mSpanCount == 0){
+			return limit;
+		}
+		if(kind == null){
+			kind = Object.class;
+		}
+		
+		//先走到start指定的文本块
 		int i = findBlockIdForIndex(start);
 		Editable block = mBlocks[i];
 		int blockStart = mBlockStarts[i];
-		if(i<mBlockSize-1 && start-blockStart==block.length()){
-			//刚好在最后，理应是下一块的起始位置
-			block = mBlocks[i+1];
-			blockStart = mBlockStarts[i+1];
+		if (start-blockStart < block.length()){
+			//文本块还有剩余文本，将文本块剩余的范围找完
+			int next = block.nextSpanTransition(start-blockStart, limit-blockStart, kind);
+			if (next <= block.length()){
+				return next+blockStart;
+			}
 		}
-		int next = block.nextSpanTransition(start-blockStart,limit-blockStart,kind);
-		return next+blockStart;
+		
+		for(++i;i<mBlockSize;++i)
+		{
+			block = mBlocks[i];
+		    blockStart = mBlockStarts[i];
+			int next = block.nextSpanTransition(0, limit-blockStart, kind);
+			if (next <= block.length()){
+				//在文本块中找到了span则返回它的位置，没有找到span会返回limit-blockStart
+				//不管找没找到，只有next小于length，才能说明在自身中找到了span，或者没找到但已经到达limit，此时返回
+				//反之，如果next大于length，则说明一定没找到，并且limit还在自己之后，还需要在之后的文本块中找
+				return next+blockStart;
+			}
+		}
+		return limit;
 	}
 
 	@Override
@@ -1081,7 +1102,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		int i = findBlockIdForIndex(p1);
 		Editable block = mBlocks[i];
 		int start = mBlockStarts[i];
-		if(i<mBlockSize-1 && p1-start == block.length()){
+		if(p1-start == block.length()){
 			//刚好在最后，理应是下一块的起始位置
 			return mBlocks[i+1].charAt(0);
 		}
@@ -1100,7 +1121,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			public void dothing(int id, int start, int end)
 			{
 				mBlocks[id].getChars(start,end,arr,index+getChars);
-				getChars+=end-start;
+				getChars += end-start;
 				//累计已经获取的字符数，便于计算下块的字符在arr的起始获取位置
 			}
 		};
@@ -1120,14 +1141,18 @@ public class EditableBlockList extends Object implements EditableBlock
 	@Override
 	public String toString()
 	{
-		int len = length();
+		int len = mLength;
         char[] buf = new char[len];
         getChars(0, len, buf, 0);
         return new String(buf);
 	}
 
 	@Override
-	public void setFilters(InputFilter[] p1){
+	public void setFilters(InputFilter[] p1)
+	{
+		if(p1==null){
+			throw new IllegalArgumentException();
+		}
 		mFilters = p1;
 	}
 	@Override
@@ -1354,6 +1379,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	
 	/* 测试代码 */
+	private static final String TAG = "EditableBlockList";
 	private static final StringBuilder b = new StringBuilder();
 	
 	public String printSpanInBlocks(Object span)
@@ -1386,5 +1412,21 @@ public class EditableBlockList extends Object implements EditableBlock
 		b.append("]");
 		return b.toString();
 	}
+	
+	/* 检查范围，并抛出异常 */
+    private static String region(int start, int end) {
+        return "(" + start + " ... " + end + ")";
+    }
+    private void checkRange(final String operation, int start, int end) {
+        if (end < start) {
+            throw new IndexOutOfBoundsException(operation + " " +
+                                                region(start, end) + " has end before start");
+        }
+        int len = mLength;
+        if (start > len || end > len) {
+            throw new IndexOutOfBoundsException(operation + " " +
+                                                region(start, end) + " ends beyond length " + len);
+        }
+    }
 	
 }
