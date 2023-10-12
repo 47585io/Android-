@@ -59,8 +59,8 @@ public class EditableBlockList extends Object implements EditableBlock
 	private EditableBlock[] mBlocks; //文本块列表
 	private int[] mBlockStarts;  //每个文本块的内容在总文本中的起始偏移量，用于快速查找下标所在的文本块
 	private Map<EditableBlock,Integer> mIndexOfBlocks; //文本块处于mBlocks和mBlockStarts中的下标
-	private Map<Object,List<EditableBlock>> mSpanInBlocks; //span处于哪些文本块中，这些文本块按mBlocks中的顺序排列，这方便快速获取首尾的文本块
-	private Map<Object,Integer> mSpanOrders; //span的插入顺序，用于排序
+	private Map<Object,List<EditableBlock>> mSpanInBlocks; //span处于哪些文本块中，这些文本块按mBlocks中的顺序排列，这方便快速从文本块中移除span，或者是快速获取首尾文本块
+	private Map<Object,Integer> mSpanOrders; //span的插入顺序，用于在getSpans时对span进行排序
 
 	private BlockFactory mEditableFactory;
 	private TextWatcher mTextWatcher;
@@ -1135,7 +1135,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	@Override
 	public CharSequence subSequence(int start, int end){
-		//我们才不返回EditableBlockList的实例
+		//我们才不返回EditableBlockList的实例，这太浪费了
 		return new SpannableStringBuilderLite(this,start,end);
 	}
 	public String subString(int start, int end)
