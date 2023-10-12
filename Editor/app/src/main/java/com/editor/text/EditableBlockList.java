@@ -11,8 +11,6 @@ import android.util.*;
  * 它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，只要限制每个分块的大小，便可以使效率均衡
  * 此类是分块文本容器的实现类  
  * 此类主要围绕两大内容: 文本和span如何正确分配到文本块中并与其建立绑定，文本块顺序刷新和事件发送
- * 本来还想用mIndexOfSpan来存储span的下标，将mSpanImBlocks和mSpanOrders转化为数组，但是想了一下不划算:
- * 本来就是因为span太多所以分块，目的就是为了可以不用操作全部span，如果加了数组，每次增删都要操作整个数组
  
  * 已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
    未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpan之前刷新
@@ -53,7 +51,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int mInsertionOrder; //span插入计数器
 	
 	//这里将文本打碎成文本块并按正序存储在mBlocks中，mBlockStarts记录了每个文本块的内容在总文本中的起始偏移量，它也是按正序排列，这用于快速查找下标所在的文本块
-	//当插入或删除文本时，我们只要操作局部的少量文本块，其它文本块的内容保持不变。(不用操作所有内容)
+	//当插入或删除文本时，我们只要操作局部的少量文本块，其它文本块的内容保持不变(不用操作所有内容)
 	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块，但这些文本块也按mBlocks中的顺序排列，并在修改文本时保持同步
 	
 	private EditableBlock[] mBlocks; //文本块列表
@@ -156,8 +154,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	/* 移除指定范围内的文本块，若send为false，则刷新mIndexOfBlocks和mBlockStarts是调用者的责任 */
 	private void removeBlocks(final int i, final int j, boolean send)
 	{
-		int k = j;
-		for(--k;i<=k;--k){
+		for(int k=j-i;i<=k;--k){
 			removeBlock(k);
 		}
 		if(send){
