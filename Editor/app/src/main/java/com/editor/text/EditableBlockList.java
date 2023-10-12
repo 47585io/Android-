@@ -8,62 +8,67 @@ import android.util.*;
 
 
 /* 将大的数据分块/分区是一个很棒的思想
-   它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，只要限制每个分块的大小，便可以使效率均衡
-   此类是分块文本容器的实现类
-   
-   已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
+ * 它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，只要限制每个分块的大小，便可以使效率均衡
+ * 此类是分块文本容器的实现类  
+ * 此类主要围绕两大内容: 文本和span如何正确分配到文本块中并与其建立绑定，文本块顺序刷新和事件发送
+ * 本来还想用mIndexOfSpan来存储span的下标，将mSpanImBlocks和mSpanOrders转化为数组，但是想了一下不划算:
+ * 本来就是因为span太多所以分块，目的就是为了可以不用操作全部span，如果加了数组，每次增删都要操作整个数组
+ 
+ * 已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
    未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpan之前刷新
    遗漏在insertForBlocks末尾的refreshInvariants，必须刷新
    
-   已解决bug2: span的范围不连续
+ * 已解决bug2: span的范围不连续
    目前还不知道在插入后怎样获取两端的span并修正
    应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
    
-   已解决bug3: span重复时范围错误
+ * 已解决bug3: span重复时范围错误
    SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
    应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
    参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
    
-   已解决bug4: span插入顺序错误
+ * 已解决bug4: span插入顺序错误
    在上个文本块末尾的span，会优先截取到下个文本块末尾，因此span的优先级会反了，所以我们需要对span重新排序
    在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
    但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
    另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
    
-   已解决bug5: 对于不同的文本块，可能有不同的决策
+ * 已解决bug5: 对于不同的文本块，可能有不同的决策
    EditableList在修改文本时，进行添加，移除，扩展span应先征得文本块的意见，需要与文本块保持同步
    借助接口的方法来进行判断，参见replaceSpan，expandSpans
    
-   已解决bug6: 插入文本时，当插入点位于文本块起始或末尾，端点位于上个文本块末尾和下个文本块起始的span应扩展
+ * 已解决bug6: 插入文本时，当插入点位于文本块起始或末尾，端点位于上个文本块末尾和下个文本块起始的span应扩展
    在插入前，先获取即将挤到两边的span，插入后，如果需要扩展，再将端点扩展包含文本
    参见getAtPointSpans，expandSpans
    
-   已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
+ * 已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
    (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
-   
-   *此类主要围绕两大内容: 文本和span如何正确分配到文本块中并与其建立绑定，文本块顺序刷新和事件发送
 */
 public class EditableBlockList extends Object implements EditableBlock
 {
 
-	private int mLength;
-	private int mBlockSize;
-	private int mSpanCount;
-	private int mInsertionOrder;
+	private int mLength; //总文本长度
+	private int mBlockSize; //文本块的个数
+	private int mSpanCount; //span的个数
+	private int mInsertionOrder; //span插入计数器
 	
-	private EditableBlock[] mBlocks; 
-	private int[] mBlockStarts;
-	private Map<EditableBlock,Integer> mIndexOfBlocks;
-	private Map<Object,List<EditableBlock>> mSpanInBlocks;
-	private Map<Object,Integer> mSpanOrders;
+	//这里将文本打碎成文本块并按正序存储在mBlocks中，mBlockStarts记录了每个文本块的内容在总文本中的起始偏移量，它也是按正序排列，这用于快速查找下标所在的文本块
+	//当插入或删除文本时，我们只要操作局部的少量文本块，其它文本块的内容保持不变。(不用操作所有内容)
+	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块，但这些文本块也按mBlocks中的顺序排列，并在修改文本时保持同步
+	
+	private EditableBlock[] mBlocks; //文本块列表
+	private int[] mBlockStarts;  //每个文本块的内容在总文本中的起始偏移量，用于快速查找下标所在的文本块
+	private Map<EditableBlock,Integer> mIndexOfBlocks; //文本块处于mBlocks和mBlockStarts中的下标
+	private Map<Object,List<EditableBlock>> mSpanInBlocks; //span处于哪些文本块中，这些文本块按mBlocks中的顺序排列，这方便快速获取首尾的文本块
+	private Map<Object,Integer> mSpanOrders; //span的插入顺序，用于排序
 
 	private BlockFactory mEditableFactory;
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
 	private BlockListener mBlockListener;
 	
-	private int MaxCount;
-	private int ReserveCount;
+	private int MaxCount; //每个文本块的最大长度
+	private int ReserveCount; //在文本块装满时，会额外预留ReserveCount长度的空间
 	private int mTextWatcherDepth;
 	private int mSelectionStart, mSelectionEnd;
 	private boolean AutoReleaseExcessMemory;
@@ -1130,6 +1135,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	@Override
 	public CharSequence subSequence(int start, int end){
+		//我们才不返回EditableBlockList的实例
 		return new SpannableStringBuilderLite(this,start,end);
 	}
 	public String subString(int start, int end)

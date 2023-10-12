@@ -26,7 +26,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private int mLineCount;
 	private float maxWidth;
 	private int mBlockSize;
-	
+
 	private float mLineSpacing;
 	private float mScaleLayout;
 	private float mCursorWidthSpacing;
@@ -36,30 +36,30 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private int[] mLines;
 	private int[] mStartLines;
 	private float[] mWidths;
-	
+
 
 	protected BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(text,paint,width,align,spacingmult,spacingadd);
-		
+
 		mText = text;
 		mLines = EmptyArray.INT;
 		mStartLines = EmptyArray.INT;
 		mWidths = EmptyArray.FLOAT;
-		
+
 		//测量所有文本块以初始化数据
 		int size = text.getBlockSize();
 		onAddBlocks(0,size);
 		onBlocksInsertAfter(0,size-1,0,text.getBlock(size-1).length());
 		afterBlocksChanged(0,0);
-		
+
 		//等待后续的测量
 		text.setBlockListener(this);
 		mScaleLayout = scale;
 		mLineSpacing = spacingmult;
 		mCursorWidthSpacing = cursorWidth;
 	}
-	
+
 	public void setScale(float scale)
 	{
 		TextPaint paint = getPaint();
@@ -95,13 +95,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		return mCursorWidthSpacing;
 	}
 
-/*
-_______________________________________
+	/*
+	 _______________________________________
 
- 文本块事件
-_______________________________________
+	 文本块事件
+	 _______________________________________
 
-*/
+	 */
 
 	@Override
 	public void onAddBlocks(int i, int count)
@@ -196,13 +196,13 @@ _______________________________________
 		}
 	}
 
-/*
-_______________________________________
+	/*
+	 _______________________________________
 
- 测量文本块的函数
-_______________________________________
+	 测量文本块的函数
+	 _______________________________________
 
-*/
+	 */
 
 	/* 在插入后测量指定文本块的指定范围内的文本的宽和行数，并做出插入决策 */
 	private void measureInsertBlockAfter(int id, int start, int end)
@@ -222,7 +222,7 @@ _______________________________________
 			mLines[id] = mLines[id]+line;
 		}
 	}
-	
+
 	/* 在删除前测量指定文本块的指定范围内的文本的宽和行数，并做出删除决策 */
 	private boolean measureDeleteBlockBefore(int id, int start, int end)
 	{
@@ -245,7 +245,7 @@ _______________________________________
 		}
 		return is;
 	}
-	
+
 	/* 在删除后测量指定文本块的指定位置的文本的宽，对应measureDeleteBlockBefore，并对其返回值做出回应 */
 	private void measureDeleteBlockAfter(int id, int start, boolean needMeasureAllText)
 	{
@@ -274,7 +274,7 @@ _______________________________________
 			maxWidth = checkMaxWidth();
 		}
 	}
-	
+
 	/* 测量指定文本块的指定范围内的文本的宽，并考虑连接处的宽 */
 	private float measureBlockWidth(int i,int start,int end)
 	{
@@ -287,13 +287,13 @@ _______________________________________
 		return width;
 	}
 
-/*
-_______________________________________
+	/*
+	 _______________________________________
 
- 一些无聊的函数
-_______________________________________
-  
-*/
+	 一些无聊的函数
+	 _______________________________________
+
+	 */
 
     /* 寻找行数所在的文本块 */
     public int findBlockIdForLine(int line)
@@ -312,7 +312,7 @@ _______________________________________
 			else 
 				low = middle + 1;
 		}  
-		
+
 		int id = middle;
 		int nowLine = mStartLines[id];
 		//文本块的起始行数实际上是之前的文本块的行数(例如第二块文本块的起始行数就是第一块的行数)
@@ -328,7 +328,7 @@ _______________________________________
 		}
 		return id;
 	}
-	
+
 	/* 检查最大的宽度 */
 	public float checkMaxWidth()
 	{
@@ -342,15 +342,15 @@ _______________________________________
 		}
 		return width;
 	}
-	
-/*
- _______________________________________
 
- 接下来我们就可以实现父类的一些方法了
- _______________________________________
+	/*
+	 _______________________________________
 
-*/
-	
+	 接下来我们就可以实现父类的一些方法了
+	 _______________________________________
+
+	 */
+
     @Override
 	public int getLineCount(){
 		return mLineCount;
@@ -503,7 +503,7 @@ _______________________________________
 		r.right=r.left+width;
 		r.bottom=r.top+lineHeight;
 		dest.addRect(r, Path.Direction.CW);
-		
+
 		//回收这些
 		RecylePool.recyleRect(r);
 		RecylePool.recylePos(p);
@@ -567,7 +567,7 @@ _______________________________________
 		rf.right = rf.left+ e.x;
 		rf.bottom = rf.top+lineHeight;
 		dest.addRect(rf,Path.Direction.CW);
-		
+
 		//回收这些
 		RecylePool.recylePos(s);
 		RecylePool.recylePos(e);
@@ -619,13 +619,13 @@ _______________________________________
 		return tryLine_End(getText(),offset);
 	}
 
-/*
-_______________________________________
+	/*
+	 _______________________________________
 
-  其它的函数
-_______________________________________
+	 其它的函数
+	 _______________________________________
 
-*/
+	 */
 
 	/* 获取光标坐标 */
 	final public void getCursorPos(int offset, pos pos)
@@ -670,7 +670,7 @@ _______________________________________
 			target.y = y;
 		}
 	}
-	
+
 	/* 与任意内容无关的进行计算坐标，文本可以是一个文本切片，仅用有限的文本计算累计坐标，从上个位置开始 */
 	final public void nearOffsetPos(char[] array, int oldOffset, float x, float y, int newOffset, pos target, TextPaint paint)
 	{
@@ -690,7 +690,7 @@ _______________________________________
 			target.y = y;
 		}
 	}
-	
+
 	/* 为了效;率，我们通常不允许一个一个charAt，而是先获取范围内的chars，再遍历数组 */
 	final public float getDesiredWidth(char[] chars, int start, int end, TextPaint paint)
 	{
@@ -717,7 +717,7 @@ _______________________________________
 		cacheLine = Count(text,FN,start,end);
 		return cacheLine*getLineHeight();
 	}
-	
+
 	/* 测量单行文本宽度，非常精确 */
 	final public float measureText(CharSequence text,int start,int end,TextPaint paint)
 	{
@@ -754,7 +754,7 @@ _______________________________________
 		RecylePool.recyleFloatArray(widths);
 		return start;
 	}
-		
+
 	/* 统计和寻找下标 */
 	final public int Count(char c, CharSequence text, int start, int end)
 	{
@@ -777,7 +777,7 @@ _______________________________________
 		RecylePool.recyleCharArray(chars);
 		return offset;
 	}
-	
+
 	/* 从index开始，向后找到字符c在arr中第n次出现的位置 */
 	final public static int NIndex(char c,char[] arr,int index,int n)
 	{
@@ -817,7 +817,7 @@ _______________________________________
 		}
 		return count;
 	}
-	
+
 	/* 用指定文本填充一个文本数组，注意，调用者负责回收文本数组 */
 	private char[] fillChars(CharSequence text, int start, int end)
 	{
@@ -840,7 +840,7 @@ _______________________________________
 		RecylePool.recyleCharArray(chars);
 		return widths;
 	}
-	
+
 	//试探当前下标所在行的起始
 	final public static int tryLine_Start(CharSequence src,int index)
 	{
@@ -869,14 +869,14 @@ _______________________________________
 		}
 		return index<0 || index>len ? len:index;
 	}
-	
+
 	@Override
 	public abstract void draw(Canvas canvas, Path highlight, Paint highlightPaint, int cursorOffsetVertical)
 
 	@Override
 	public abstract void draw(Canvas c)
-	
-	
+
+
 	/* 回收池 */
 	protected static class RecylePool
 	{
@@ -887,7 +887,7 @@ _______________________________________
 		private static final RectF[] sRectArray = new RectF[6];
 		private static final pos[] sPosArray = new pos[6];
 		private static final Paint.FontMetrics[] sFontArray = new Paint.FontMetrics[6];
-		
+
 		public static boolean[] obtainBooleanArray(int size)
 		{
 			synchronized(sBooleanArrays)
@@ -1085,5 +1085,5 @@ _______________________________________
 			}
 		}
 	}
-	
+
 }
