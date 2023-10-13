@@ -52,12 +52,12 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 	//这里将文本打碎成文本块并按正序存储在mBlocks中，mBlockStarts记录了每个文本块的内容在总文本中的起始偏移量，它也是按正序排列，这用于快速查找下标所在的文本块
 	//当插入或删除文本时，我们只要操作局部的少量文本块，其它文本块的内容保持不变(不用操作所有内容)
-	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块中的范围
+	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块中的范围，并在修改文本时保持同步
 
 	private EditableBlock[] mBlocks; //文本块列表
 	private int[] mBlockStarts;  //每个文本块在总文本中的起始偏移量，用于快速查找下标所在的文本块
 	private IdentityHashMap<EditableBlock,Integer> mIndexOfBlocks; //文本块处于mBlocks和mBlockStarts中的下标
-	private IdentityHashMap<Object,SpanRange> mSpanInBlocks; //span处于哪些文本块列表中的范围
+	private IdentityHashMap<Object,SpanRange> mSpanInBlocks; //span处于文本块列表中的范围
 	
 	//如果要存储一组复杂数据，有两种最优的存储方法:
 	//将不同类型的数据分别存储在不同的数组中，使用相同的下标的数据作为同一组数据，最后用一个map来存储同一组数据在所有数组中的下标
