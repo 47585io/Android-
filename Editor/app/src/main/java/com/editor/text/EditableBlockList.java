@@ -72,7 +72,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 	
-	private static final int Default_MaxCount = 1280;
+	private static final int Default_MaxCount = 10;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 	
@@ -258,11 +258,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(nowIndex<index){
 			for(;id<mBlockSize-1 && mBlockStarts[id+1]<index;++id){}
 		}
-		else if(nowIndex>index){
-			for(;id>0 && mBlockStarts[id]>index;--id){}
-		}
-		else{
-			id = id==0 ? 0:id-1;
+		else if(nowIndex>=index){
+			for(;id>0 && mBlockStarts[id]>=index;--id){}
 		}
 		return id;
 	}

@@ -79,7 +79,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 
-	private static final int Default_MaxCount = 1280;
+	private static final int Default_MaxCount = 10;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 
@@ -265,11 +265,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		if(nowIndex<index){
 			for(;id<mBlockSize-1 && mBlockStarts[id+1]<index;++id){}
 		}
-		else if(nowIndex>index){
-			for(;id>0 && mBlockStarts[id]>index;--id){}
-		}
-		else{
-			id = id==0 ? 0:id-1;
+		else if(nowIndex>=index){
+			for(;id>0 && mBlockStarts[id]>=index;--id){}
 		}
 		return id;
 	}
@@ -343,7 +340,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Object[] spans = EmptyArray.OBJECT;
 			if(start==0 || start==mBlocks[i].length()){
 				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
-				spans = getAtPointSpans(i,start);
+				spans = getAtPointSpans(st);
 			}
 			//插入前还要移除文本中与自身重复的span
 			tb = removeRepeatSpans(tb,tbStart,tbEnd);
@@ -352,6 +349,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			//插入后，扩展端点正好处于插入两端的span
 			expandSpans(spans,st,st+after);
 		}
+		
+		printSpanOrders();
 
 		//最后计算光标位置，并调用文本和文本块和光标监视器的方法
 		sendAfterBlocksChanged(i,start);
@@ -1476,6 +1475,41 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 	/* 测试代码 */
 	private static final String TAG = "EditableBlockList";
+	private static final StringBuilder b = new StringBuilder();
+	
+	public String printSpanInBlocks(Object span)
+	{
+		b.delete(0,b.length());
+		b.append("[");
+		SpanRange spanRange = mSpanInBlocks.get(span);
+		if(spanRange!=null)
+		{
+			int start = mIndexOfBlocks.get(spanRange.startBlock);
+			int end = spanRange.startBlock==spanRange.endBlock ? start : mIndexOfBlocks.get(spanRange.endBlock);
+			for(;start<=end;++start){
+				EditableBlock block = mBlocks[start];
+				b.append("("+start+","+block.getSpanStart(span)+"~"+block.getSpanEnd(span)+")，");	
+			}
+		}
+		b.append("]");
+		return b.toString();
+	}
+	public void printSpans()
+	{
+		Log.w("Start Print Spans","**************************************************");
+		for(Object span:mSpanInBlocks.keySet()){
+			Log.w("Span At "+getSpanStart(span) ,printSpanInBlocks(span));
+		}
+	}
+	public void printSpanOrders()
+	{
+		Log.w("Start Print SpanOrders","**************************************************");
+		Object[] spans = getSpans(0,mLength,Object.class);
+		for(Object span:spans){
+			int order = mSpanInBlocks.get(span).spanOrder;
+			Log.w(""+order,"("+getSpanStart(span)+"~"+getSpanEnd(span)+")");
+		}
+	}
 	
 	/* 检查范围，并抛出异常 */
     private static String region(int start, int end) {

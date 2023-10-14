@@ -32,13 +32,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private float mCursorWidthSpacing;
 
 	//每个文本块，每个块的行数，每个块的宽度
-	private EditableBlockList mText;
+	private EditableBlockList2 mText;
 	private int[] mLines;
 	private int[] mStartLines;
 	private float[] mWidths;
 
 
-	protected BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
+	protected BlockLayout(EditableBlockList2 text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(text,paint,width,align,spacingmult,spacingadd);
 
@@ -287,15 +287,15 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		return width;
 	}
 
-	/*
-	 _______________________________________
+/*
+ _______________________________________
 
-	 一些无聊的函数
-	 _______________________________________
+ 一些无聊的函数
+ _______________________________________
 
-	 */
+*/
 
-    /* 寻找行数所在的文本块 */
+    /* 寻找第line个换行符所在的文本块 */
     public int findBlockIdForLine(int line)
 	{
 		//使用二分查找法先找到最接近的位置
@@ -316,15 +316,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		int id = middle;
 		int nowLine = mStartLines[id];
 		//文本块的起始行数实际上是之前的文本块的行数(例如第二块文本块的起始行数就是第一块的行数)
-		//这意味着，要寻找指定的换行所在的文本块，并且如果它等于某个文本块的起始行数，此换行应该在上一文本块
+		//这意味着，要寻找指定的换行所在的文本块，并且如果它等于某个文本块的起始行数，此换行应该在之前的文本块
+		//为了避免单行文本太长跨越了多个文本块，导致很多文本块的startLine相同，所以这里应该找到最后面的文本块，也就是换行符的那个
 		if(nowLine<line){
 			for(;id<mBlockSize-1 && mStartLines[id+1]<line;++id){}
 		}
-		else if(nowLine>line){
+		else if(nowLine>=line){
 			for(;id>0 && mStartLines[id]>=line;--id){}
-		}
-		else{
-			id = id==0 ? 0:id-1;
 		}
 		return id;
 	}
@@ -513,7 +511,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	@Override
 	public void getSelectionPath(int start, int end, Path dest)
 	{
-		EditableBlockList text = mText;
+		EditableBlockList2 text = mText;
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = RecylePool.obtainRect();
