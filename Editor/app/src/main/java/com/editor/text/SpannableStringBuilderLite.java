@@ -340,6 +340,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
         //然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
+		//我们一般认为当插入文本后，插入位置之前的span位置不变，之后的span的位置应该往后挪，这个想法很单纯
 		//由于我们引入了间隙缓冲区，所以每次获取间隙缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
 		//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于间隙缓冲区之后的span的位置增大
 		//同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
@@ -1544,8 +1545,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
 	  您可以从最后两个示例中看到，为什么SPAN_MARK_MARK标志与SPAN_INCLUSIVE_EXCLUSIVE标志同义
 	  在范围开始处插入的文本包含在范围内，而排除在末尾插入的文本
-	*/
-	/*
+	
 	  SPAN_POINT_POINT 在0长度范围的偏移处插入"INSERT"：向前推动点(也就是被spanStart和spanEnd排除在前面)
 	  Before: Lorem [[ipsum dolor sit.
 	  After:  Lorem INSERT[[ipsum dolor sit.
