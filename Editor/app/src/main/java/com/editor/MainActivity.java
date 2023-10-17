@@ -57,12 +57,13 @@ public class MainActivity extends Activity implements Runnable
 	public void run()
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
+		//mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
 		//XCode Code = new XCode(this);
 		//Code.setPool(mPool);
 		//Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
 		//setContentView(Code);
 		test2("/storage/emulated/0/Linux/3.java");
+		//test3();
 	}
 	
 	public void loadFileInThread(final String path)
@@ -129,18 +130,40 @@ public class MainActivity extends Activity implements Runnable
 		setContentView(E);
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
-		for(int i = 0;i<5;i+=1){
-			E.getText().setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		Editable editor = E.getText();
+		for(int i = 0;i<2000;i+=10){
+			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 	}
 	
 	public void test3()
 	{
-		Edit E = new Edit(this);
-		E.setText("012345",0,6);
-		setContentView(E);
-		E.getLayoutParams().height=2180;
+		SpannableStringBuilderLite li = new SpannableStringBuilderLite("SpannableStringBuilderLite li = new SpannableStringBuilderLite(");
+		SpannableStringBuilderTemplete te = new SpannableStringBuilderTemplete("SpannableStringBuilderLite li = new SpannableStringBuilderLite(");
+		for(int i =200 ;i>=0;i--){
+			Object span = new ForegroundColorSpan(0);
+			li.setSpan(span,0,5,0);
+			te.setSpan(span,0,5,0);
+		}
+		
+		li.getSpans(0,10,Object.class);
+		te.getSpans(0,10,Object.class);
+		
+		long last = System.currentTimeMillis();
+		for(int i=0;i<60;++i){
+			te.getSpans(0,10,Object.class);
+		}
+		long now = System.currentTimeMillis();
+		Log.w("te",(now-last)+"");
+		
+		long last2 = System.currentTimeMillis();
+		for(int i=0;i<60;++i){
+			li.getSpans(0,10,Object.class);
+		}
+		long now2 = System.currentTimeMillis();
+		Log.w("li",(now2-last2)+"");
+		
 	}
 	
 }

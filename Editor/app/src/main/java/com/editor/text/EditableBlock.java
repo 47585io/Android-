@@ -19,9 +19,6 @@ public interface EditableBlock extends Editable
 	
 	public<T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind)
 	
-	public void setAutoReleaseExcessMemory(boolean auto)
-	
-	
 	/* 创建EditableBlock的工厂 */
 	public static class BlockFactory
 	{

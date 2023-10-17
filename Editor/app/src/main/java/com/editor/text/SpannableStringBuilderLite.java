@@ -111,16 +111,24 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
-
+	/*如果此偏移量在间隙缓冲区之后，那么它的真实位置应加上间隙缓冲区长度*/
+	private int resolveGapStartTo(int i) {
+        return i > mGapStart ? i + mGapLength : i;
+    }
+	/*如果此偏移量在间隙缓冲区或其之后，那么它的真实位置应加上间隙缓冲区长度*/
+	private int resolveGapEndTo(int i) {
+        return i >= mGapStart ? i + mGapLength : i;
+    }
+	
     /*修改文本数组的长度的同时修改间隙缓冲区的大小*/
     private void resizeFor(int size) 
     {
-        final int oldLength = mText.length;
         if (size+1 <= length()) {
             //假设最少额外扩展1个元素后，size仍装不下文本，或者装满了但间隙缓冲区已经没有长度了
             return;
         }
 
+		final int oldLength = mText.length;
         //创建一个比size更大的数组，并将原数组中间隙缓冲区之前的字符拷贝到新数组开头
         char[] newText = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(size));
         System.arraycopy(mText, 0, newText, 0, mGapStart);
@@ -178,30 +186,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
 		}
 	}
-	
-	/* 修改span数组的大小 */
-	private void resizeForSpans(int size)
-	{
-        if (size+1 < mSpanCount) {
-            //size无法装入全部span
-            return;
-        }
-		
-        //这些数组都是同时添加元素，因此它们长度相等
-		mSpans = ArrayUtils.copyNewArray(mSpans,mSpanCount,GrowingArrayUtils.growSize(size));
-		mSpanStarts = ArrayUtils.copyNewIntArray(mSpanStarts,mSpanCount,GrowingArrayUtils.growSize(size));
-		mSpanEnds = ArrayUtils.copyNewIntArray(mSpanEnds,mSpanCount,GrowingArrayUtils.growSize(size));
-		mSpanFlags = ArrayUtils.copyNewIntArray(mSpanFlags,mSpanCount,GrowingArrayUtils.growSize(size));
-		mSpanOrder = ArrayUtils.copyNewIntArray(mSpanOrder,mSpanCount,GrowingArrayUtils.growSize(size));
-
-		//mSpanMax数组的大小是最小区间树的大小
-		int sizeOfMax = 2 * treeRoot() + 1;
-		if(mSpanMax.length > sizeOfMax){
-			int[] newSpanMax = new int[sizeOfMax];
-			System.arraycopy(mSpanMax,0,newSpanMax,0,newSpanMax.length);
-			mSpanMax = newSpanMax;
-		}
-	}
 
     /*移动间隙缓冲区到指定位置*/
     private void moveGapTo(int where)
@@ -241,10 +225,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 						start += mGapLength;
 					//POINT标志的端点应将缓冲区排除在前面(自己向后移)
 					//而MARK标志的端点应将缓冲区排除在后面(保持不变)
-					//这里为什么将POINT标志的端点移到start += mGapLength？ 有三个原因:
-					//1、防止span在removeSpansForChange中被移除，请再看一下移除span的条件
-					//2、span端点在updateIntervalBound中不用再管了，请再看一下span端点修正的条件
-					//3、使刚好衔接在插入点的端点扩展，每次修改文本，就将光标移到插入点，刚好处于此位置的端点可以移到缓冲区之后，以此在插入文本时扩展  
+					//这里为什么将POINT标志的端点移到start += mGapLength？ 有两个原因:
+					//1、span端点在updateIntervalBound中不用再管了，请再看一下span端点修正的条件
+					//2、使刚好衔接在插入点的端点扩展，每次修改文本，就将光标移到插入点，刚好处于此位置的端点可以移到缓冲区之后，以此在插入文本时扩展  
                 }
 
                 if (end > mGapStart)
@@ -308,15 +291,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         final int origLen = end - start;
         final int newLen = tbend - tbstart;
         if (origLen == 0 && newLen == 0) {
-            //如果tb中没有要添加的跨度(长度为0)，提前退出，以便文本观察器不会得到通知
+            //如果tb中没有要添加的跨度(长度为0)，提前退出
             return this;
         }     
         //改变文本和span
         change(start, end, tb, tbstart, tbend);
-		if(AutoReleaseExcessMemory){
-			//修改后释放多余空间
-			ReleaseExcessMemory();
-		}
         return this;
     }
 
@@ -335,17 +314,15 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             resizeFor(mText.length + nbNewChars - mGapLength);
         }
 
-        final boolean textIsRemoved = replacementLength == 0;
-        //需要在间隙缓冲区位置更新之前完成移除过程，以便将正确的先前位置传递给正确的相交跨度观察器
-		//由于文本还未插入，所以不要在此时释放多余空间，避免数组长度不够
-        if (replacedLength > 0 && mSpanCount > 0)
+        //需要在间隙缓冲区位置更新之前完成移除过程，以便使用正确的位置来判断
+	    if (replacedLength > 0 && mSpanCount > 0)
 		{
-			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)
-			//要移除的span个数为0时，也不需要span移除
-			final int count = markToBeRemovedSpans(start,end,textIsRemoved,treeRoot());
+			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)，要移除的span个数为0时，也不需要span移除
+			//由于间隙缓冲区在end，因此start的真实位置仍是start，end的真实位置应加上mGapLength
+			final int count = markToBeRemovedSpans(start, end+mGapLength, treeRoot());
 			if(count==1){
 				//单个节点的移除，不需要遍历整个数组，沿着路径将其移除
-				removeSpanForChange(start, end, textIsRemoved, treeRoot());
+				removeFirstMarkSpan(start, end+mGapLength, treeRoot());
 			}
 			else if(count>1){
 				//太多数量的span要移除，必须一次性移除后再刷新，因为restore消耗的时间比remove更多
@@ -356,21 +333,24 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         //插入文本并不需要扩展数组，仅需将间隙缓冲区缩小
         //另一个情况是，nbNewChars是负数，说明要插入的文本太短，此时等同于扩展间隙缓冲区
         //无论怎样，都将间隙缓冲区对齐到插入文本的末尾
-        mGapStart += nbNewChars;
+		mGapStart += nbNewChars;
         mGapLength -= nbNewChars;
-        if (mGapLength < 1){
+		if (mGapLength < 1){
             new Exception("mGapLength < 1").printStackTrace();
 		}
         TextUtils.getChars(cs, csStart, csEnd, mText, start);
         //然后插入文本，注意文本是从start开始插入的，所以start~end之间的内容已经被覆盖了，因此间隙缓冲区只用管溢出文本
+		//由于我们引入了间隙缓冲区，所以每次获取间隙缓冲区之后的span的真实位置后，会减去GapLength得到原本的位置
+		//因此，若将GapStart移动到前面并将GapLength缩小，实际等同于间隙缓冲区之后的span的位置增大
+		//同理，若将GapStart移动到前面并将GapLength增大，实际等同于间隙缓冲区之后的span的位置缩小
 		
 		int updatedCount = 0;
         if (replacedLength > 0 && mSpanCount > 0)
         { 
-            //修正所有在删除文本范围内的span的位置，范围之前或之后的span不修正，纯插入时不需要span修正
+            //修正所有在删除文本范围内的节点的端点，范围之前或之后的span不修正，纯插入时不需要span修正
 			//修正节点可能导致spanStarts和SpanMax错误，但IndexOfSpan仍是正确的
 			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和SpanMax，最好是在添加span之后一起刷新
-            updatedCount = updatedIntervalBounds(start,nbNewChars,textIsRemoved,treeRoot());
+            updatedCount = updatedIntervalBounds(start, mGapStart-nbNewChars, treeRoot());
         }
 	
 		int addCount = 0;
@@ -381,8 +361,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
             for (int i = 0; i < spans.length; i++) 
             {      
-                //只添加不重复的span
-                if (getSpanStart(spans[i]) < 0)
+                //不添加重复的span
+                if (mIndexOfSpan==null || mIndexOfSpan.get(spans[i])==null)
                 {
 					Object span = spans[i];
 					int st = sp.getSpanStart(span);
@@ -394,9 +374,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     //将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
-                    int copySpanFlags = sp.getSpanFlags(span);
-					//无效span不添加
-                    if(!isInvalidSpan(span,copySpanStart,copySpanEnd,copySpanFlags)){
+                    //无效span不添加
+                    if(copySpanEnd > copySpanStart){
+						int copySpanFlags = sp.getSpanFlags(span);
 						setSpan(false, span, copySpanStart, copySpanEnd, copySpanFlags, true);
 						addCount++;
 					}
@@ -420,67 +400,72 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
     }
 
-    /* 文本变化后，在start~end范围内的文本中，下标为i的节点及其子节点是否要删除，删除了一个就立即返回true
-	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
-	   因此函数本质上只是从节点i开始向下找一个节点并移除，因此需要循环调用，以移除范围内的所有节点
+	/* 标记在真实的删除范围内即将移除的节点，被标记的节点在mSpans中置为null，但仍保留它的spanStart和spanEnd，以便您可以找到它
+	   另外的，mIndexOfSpan也将移除它，并且会将mLowWaterMark刷新为最前面的span的下标
+	   因此您在后续的移除中，仅需找到那些标记的节点，并将其在span数组中彻底移除即可
 	*/
-    private boolean removeSpanForChange(int start, int end, boolean textIsRemoved, int i)
-    {
-        if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			if (resolveGap(mSpanMax[i]) >= start &&
-                removeSpanForChange(start, end, textIsRemoved, leftChild(i))) {
-                return true;
-            }
-        }
-        if (i < mSpanCount) 
-        {
-            if (mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength){
-                //如果整个节点在删除范围内，移除此节点
-                mIndexOfSpan.remove(mSpans[i]);
-                removeSpan(i, 0, true);
-                return true;
-            }
-            //若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
-            return resolveGap(mSpanStarts[i]) <= end && (i & 1) != 0 &&
-                removeSpanForChange(start, end, textIsRemoved, rightChild(i));
-        }
-        return false;
-    }
-	
-	/* 标记即将移除的节点 */
-	private int markToBeRemovedSpans(int start, int end, boolean textIsRemoved, int i)
+	private int markToBeRemovedSpans(int start, int end, int i)
     {
 		int count = 0;
         if ((i & 1) != 0) {
-            //节点i不是叶子节点，若它的最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
-			if (resolveGap(mSpanMax[i]) >= start) {
-				count = markToBeRemovedSpans(start, end, textIsRemoved, leftChild(i));
+            //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			int left = leftChild(i);
+			int spanMax = mSpanMax[left];
+			if (spanMax >= start) {
+				count = markToBeRemovedSpans(start, end, left);
 			}
         }
         if (i < mSpanCount) 
         {
-            if (mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
-                mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength){
+            if (mSpanStarts[i] >= start && mSpanStarts[i] <= end &&
+                mSpanEnds[i] >= start && mSpanEnds[i] <= end){
                 //如果整个节点在删除范围内，标记此节点
 				mIndexOfSpan.remove(mSpans[i]);
 				invalidateIndex(i);
 				mSpans[i] = null;
 				count++;
             }
-            
             if((i & 1) != 0){
 				//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
-				if(resolveGap(mSpanStarts[i]) <= end){
-					count += markToBeRemovedSpans(start, end, textIsRemoved, rightChild(i));
+				int spanStart = mSpanStarts[i];
+				if(spanStart <= end){
+					count += markToBeRemovedSpans(start, end, rightChild(i));
 				}
 			}
 	    }
 		return count;
     }
 	
-	/* 移除标记的节点 */
+	/* 移除在真实的删除范围内找到的第一个被标记节点，删除了一个就立即刷新并返回true，适合单个节点移除
+	   注意，一旦任意一个节点被移除，函数直接返回，因为删除之后的节点下标都将是错误的
+	*/
+    private boolean removeFirstMarkSpan(int start, int end, int i)
+    {
+        if ((i & 1) != 0) {
+            //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
+			int left = leftChild(i);
+			int spanMax = mSpanMax[left];
+			if (spanMax >= start && removeFirstMarkSpan(start, end, left)) {
+                return true;
+            }
+        }
+        if (i < mSpanCount) 
+        {
+            if (mSpans[i] == null){
+                //移除标记的节点
+                removeSpan(i, 0);
+                return true;
+            }
+			if((i & 1) != 0){
+				//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
+				int spanStart = mSpanStarts[i];
+				return spanStart <= end && removeFirstMarkSpan(start, end, rightChild(i));
+			}
+        }
+        return false;
+    }
+	
+	/* 移除标记的节点，通过遍历所有的节点来找到这些节点并全部移除，只在移除后刷新一次，适合大量节点移除 */
 	private void removeMarkSpans(int markCount)
 	{
 		if(markCount==0){
@@ -516,80 +501,59 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		restoreInvariants(mSpanCount);
 	}
 	
-	/* 文本修改后，修正节点i及其子节点在修改范围内的位置，返回修正节点数 */
-    private int updatedIntervalBounds(int start, int nbNewChars, boolean textIsRemoved, int i)
+	/* 文本修改后，修正节点i及其子节点在删除范围内的位置，返回修正节点数，start <= 删除的范围 <= mGapStart - nbNewChars
+	   由于在插入后，间隙缓冲区移动了，因此此时可能还有一部分端点错误地分布在间隙缓冲区中，此函数正是应该将它们都移动到正确的位置(也就是插入范围两端)
+	   由于在删除前，节点是不处于间隙缓冲区之内的，删除文本会扩大间隙缓冲区(mGapStart移到前面)，插入文本也只是将其缩小(mGapStart移到后面)，因此后面的节点不会处于间隙缓冲区内   
+	   也就是说，要修正的节点必然处于删除范围内，也就是start ~ mGapStart-nbNewChars，但无论如何mGapStart-nbNewChars < mGapStart+mGapLength (因此mGapStart-nbNewChars+1 ~ mGapStart+mGapLength-1之中没有节点)
+	   另一个意思是: POINT端点如果处于mGapStart+mGapLength就无需再修正了，而start这边，则还有可能有错误的端点。而MARK端点必然处于删除范围内，因此修正节点的范围必然处于start ~ mGapStart - nbNewChars
+	*/
+    private int updatedIntervalBounds(int start, int end, int i)
     {
-		//resolveGap的使用时机是，保证所有节点的端点都不在间隙缓冲区中
-		//由于在删除后，间隙缓冲区移动了，但节点没有移动，因此此时可能有一部分端点错误地分布在间隙缓冲区中
-		//此函数正是应该将它们都移动到正确的位置(也就是间隙缓冲区两端)
 		int updatedCount = 0;
 		if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
 			int left = leftChild(i);
-			if(mSpanMax[left]>=start){
-				updatedCount = updatedIntervalBounds(start,nbNewChars,textIsRemoved,left);
+			if(mSpanMax[left] >= start){
+				updatedCount = updatedIntervalBounds(start, end, left);
 			}
 		}
 		if(i < mSpanCount)
 		{
 			if ((i & 1) != 0) {
-				//节点i不是叶子节点，若它的spanStart<mGapStart+mGapLength，则至少有一个右子节点可能在范围内，处理右子节点
+				//节点i不是叶子节点，若它的spanStart <= mGapStart-nbNewChars，则至少有一个右子节点可能在范围内，处理右子节点
 				//与遍历左子节点不同，注意这里为什么用节点i的spanStart判断是否需要遍历右子节点呢，因为右子节点的左子节点的spanStart可能小于右子节点的spanStart，但一定大于节点i的spanStart
-				if(mSpanStarts[i]<mGapStart+mGapLength){
-					updatedCount += updatedIntervalBounds(start,nbNewChars,textIsRemoved,rightChild(i));
+				if(mSpanStarts[i] <= end){
+					updatedCount += updatedIntervalBounds(start, end, rightChild(i));
 				}
 			}
 			
-			//节点i自己在范围内，就修正它的位置
+			//节点i的任一端点在范围内，就修正它的位置
 			final int ost = mSpanStarts[i];
 			final int oen = mSpanEnds[i];
-			if (ost >= start && ost < mGapStart + mGapLength) {
+			if (ost >= start && ost <= end) {
+				//若span的端点为POINT标志，该端点应将插入文本排除在前面。也就是说，位于删除范围内的端点应移动到插入文本的末尾，即mGapStart(由于mGapStart对齐到插入文本末尾，加上mGapLength是移动到间隙缓冲区末尾，这是为了防止下次moveGapTo失败，导致span无法扩展)
+				//如果span端点为MARK标志(无标志或其它标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到插入文本开头，即start
 				final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
-				mSpanStarts[i] = updatedIntervalBound(ost, start, nbNewChars, startFlag, textIsRemoved);
+				mSpanStarts[i] = startFlag == POINT ? mGapStart+mGapLength : start;
 			}
-			if (oen >= start && oen < mGapStart + mGapLength) {
+			if (oen >= start && oen <= end) {
 				final int endFlag = (mSpanFlags[i] & END_MASK);
-				mSpanEnds[i] = updatedIntervalBound(oen, start, nbNewChars, endFlag, textIsRemoved);	
+				mSpanEnds[i] = endFlag == POINT ? mGapStart+mGapLength : start;	
 			}
 			if(mSpanStarts[i]!=ost || mSpanEnds[i]!=oen){
+				//修正后的位置与原来位置不同才算
 				updatedCount++;
 			}
 		}
 		return updatedCount;
     }
 
-    /* 文本修改后，在修改范围内的span位置应该移动到哪里，在修改范围外的span位置实际不变 */
-    private int updatedIntervalBound(int offset, int start, int nbNewChars, int flag, boolean textIsRemoved)
-    {
-		if (flag == POINT) {
-			//若span的端点为POINT标志，该端点应将插入文本排除在前面。也就是说，位于删除范围内的端点应移动到插入文本的末尾，即mGapStart
-			//另一个情况是当端点位于start并且我们正在进行文本替换（而不是删除）时，该端点保持在start(意为将span之内的内容替换为另一个内容，span要包含替换的内容)
-			if (textIsRemoved || offset > start) {
-				return mGapStart + mGapLength;
-			}
-		} 
-		else 
-		{
-			if (textIsRemoved || offset < mGapStart - nbNewChars) {
-				//如果span端点为MARK标志(无标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到开头(mGapStart - nbNewChars实际等于删除文本的end)
-				return start;
-			} else {
-				//若offset刚好是位于范围结尾的端点，它应该包含替换的文本。因此移动到插入文本的末尾，即mGapStart
-				return mGapStart;
-			}
-		}
-        return offset;
-    }
-	
 	//清空所有的内容
     public void clear() 
     {
         clearSpans();
 		mGapStart = 0;
 		mGapLength = mText.length;
-		if(AutoReleaseExcessMemory){
-			ReleaseExcessMemory();
-		}
     }
 	//清空所有的span
     public void clearSpans() 
@@ -603,9 +567,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 		mSpanCount = 0;
         mSpanInsertCount = 0;
-		if(AutoReleaseExcessMemory){
-			ReleaseExcessMemory();
-		}
     }
 	
 	/* 实现接口 */
@@ -641,18 +602,16 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     public void setSpan(Object what, int start, int end, int flags) {
         setSpan(true, what, start, end, flags, false);
     }
-	
-    //注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
-    //因为新增的span默认在最后，不影响前面节点的顺序，所以可以暂时不刷新
+    //用指定对象标记指定范围的文本，注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
     private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforce)
     {
         checkRange("setSpan", start, end);
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         int flagsEnd = flags & END_MASK;
-        //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (!enforce && isInvalidSpan(what,start,end,flags)) {
+        //0长度跨度
+        if (!enforce && start==end) {
             if (send) {
-                Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
+                Log.e(TAG, "span cannot have a zero length");
             }
             //从该类创建无效跨度时，自动忽略无效跨度。
             //这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
@@ -718,25 +677,19 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
     /**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) {
-        removeSpan(what, 0, true);
+        removeSpan(what, 0);
     }
-	//外部调用函数，会释放多余空间
-    private void removeSpan(Object what, int flags, boolean send)
+    private void removeSpan(Object what, int flags)
     {
         if (mIndexOfSpan == null) return;
         //获取span的下标，并移除它
         Integer i = mIndexOfSpan.remove(what);
         if (i != null) {
-            removeSpan(i.intValue(), flags, send);
-			if(AutoReleaseExcessMemory){	
-			    //移除span时才需要释放空间
-				ReleaseExcessMemory();
-			}
+            removeSpan(i.intValue(), flags);
         }
     }
-    //注意:调用者负责删除mIndexOfSpan条目
-    //此为文本修改时调用的removeSpan函数，不会释放多余空间
-    private void removeSpan(int i, int flags, boolean send) 
+    //移除指定下标的span，注意:调用者负责删除mIndexOfSpan条目
+    private void removeSpan(int i, int flags) 
     {
         //要移除此span，其实就是把此span之后的span全部往前挪一位
         int count = mSpanCount - (i + 1);
@@ -750,11 +703,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         invalidateIndex(i);
         mSpans[mSpanCount] = null;  
 		//将其置为null，以释放对象的空间
-		//在发送span removed通知之前，必须恢复不变量，再用原本的数据发送事件
-        if(send){
-			//在有序的数组中移除一个元素，不会打乱顺序
-			restoreInvariants(mSpanCount);
-		}
+		//在有序的数组中移除一个元素，不会打乱顺序
+		restoreInvariants(mSpanCount);
     }
 
     /**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
@@ -805,151 +755,120 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
-		//如果要获取全部span，拷贝所有span
-		if(queryStart==0 && queryEnd==length() && kind==Object.class)
-		{
-			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
-			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
-			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+		//在范围内查找span时，应该将查找范围转换为真实的查找范围，想象着将间隙缓冲区移除，并将后面的内容拼接过来
+		//因此对于在间隙缓冲区之前的查找位置，其亦是真实和原本的位置。对于在间隙缓冲区之后的查找位置，它的真实位置应加上mGapStart偏移到后面
+		//特殊的是当查找位置在mGapStart，由于MARK端点保持在mGapStart，POINT端点保持在mGapStart+mGapLength，而它们的原本位置相同，因此都应包含
+		//也就是说，查找范围的起始位置如果在mGapStart，其真实位置应包含mGapStart，查找范围的末尾位置如果在mGapStart，其真实位置应包含mGapStart+mGapLength
+		queryStart = resolveGapStartTo(queryStart);
+		queryEnd = resolveGapEndTo(queryEnd);
 
-			System.arraycopy(mSpans,0,ret,0,mSpanCount);
-			if(sortByInsertionOrder){
-				for(int i=0;i<mSpanCount;++i){
-					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
-					orderSortBuffer[i] = mSpanOrder[i];
-				}
-			}
-
-			if (sortByInsertionOrder) {
-				sort(ret, prioSortBuffer, orderSortBuffer);
-				recycle(prioSortBuffer);
-				recycle(orderSortBuffer);
-			}
-			return ret;
-		}
-		
-		//创建列表，获取span
-		final List<T> retList = EditableBlockList.obtainList();
-		final List<Integer> prioList = sortByInsertionOrder ? EditableBlockList.obtainList():null;
-		final List<Integer> orderList = sortByInsertionOrder ? EditableBlockList.obtainList():null;
-		final int count = getSpansRec(queryStart,queryEnd,kind,treeRoot(),retList,prioList,orderList,0,sortByInsertionOrder);
-		
-	    //没找到span，提前回收列表
-		if(count==0){
-			EditableBlockList.recyleList(retList);
-			if(sortByInsertionOrder){
-				EditableBlockList.recyleList(prioList);
-				EditableBlockList.recyleList(orderList);
-			}
-			return EmptyArray.emptyArray(kind);
-		}
-		
-		//创建数组
-		T[] ret = (T[]) Array.newInstance(kind, count);
-		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+		//统计范围内节点个数，并创建指定大小的数组
+		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
+        if (count == 0) {
+            return EmptyArray.emptyArray(kind);
+        }
+        T[] ret = (T[]) Array.newInstance(kind, count);
+        final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
         final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-		
-		//将span拷贝到数组中
-		retList.toArray(ret);
-		if(sortByInsertionOrder){
-			for(int i=0;i<count;++i){
-				prioSortBuffer[i] = prioList.get(i);
-				orderSortBuffer[i] = orderList.get(i);
-			}	
-		}
-		
-		//回收列表
-		EditableBlockList.recyleList(retList);
-		if(sortByInsertionOrder){
-			EditableBlockList.recyleList(prioList);
-			EditableBlockList.recyleList(orderList);
-		}
-		
-        //如果需要排序，则按插入顺序排序，回收数组
-        if (sortByInsertionOrder) {
+
+		//从根节点开始，找到范围内的所有节点
+        getSpansRec(queryStart, queryEnd, kind, treeRoot(), 
+		            ret, prioSortBuffer, orderSortBuffer, 0, sortByInsertionOrder);
+
+		//如果需要排序，则按插入顺序排序
+		if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
             recycle(prioSortBuffer);
             recycle(orderSortBuffer);
         }
         return ret;
     }
-
-    /** * 使用当前区间树节点下找到的跨度填充结果数组。 * 
-	 * @param querystart 间隔查询的起始索引。 
-	 * @Param QueryEnd 间隔查询的结束索引。
-	 * @param kind 类类型进行搜索。
-	 * @param i 当前树节点的索引。 
-	 * @param ret 数组将被填充结果。
-	 * @param priority buffer 记录找到的跨度优先级。
-	 * @param insertionOrder 记录找到的跨度的插入顺序。
-	 * @param count 找到的跨度数。
-	 * @param sort flag 填充优先级和插入顺序。 
-	 如果 false 则 * 具有优先级标志的跨度将在结果数组中进行排序。 
-	 * @param <t> * @return 找到的跨度总数。 
-	 */
-	@SuppressWarnings("unchecked")
-    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, List<T> ret, List<Integer> priority, List<Integer> insertionOrder, int count, boolean sort)
-    {
+	
+	//从节点i开始，向下遍历子节点，统计所有在真实范围内的节点个数
+    private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
+	{
+        int count = 0;
         if ((i & 1) != 0) 
-        {
+		{
             //若节点i不是叶子节点，先遍历其左子节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
-            if (spanMax > mGapStart) {
-                spanMax -= mGapLength;
+			//若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
+            if (spanMax >= queryStart) {
+                count = countSpans(queryStart, queryEnd, kind, left);
             }
+        }
+        if (i < mSpanCount)
+		{
+			//若节点i自己在范围内，count++
+            int spanStart = mSpanStarts[i];
+            if (spanStart <= queryEnd)
+			{
+                int spanEnd = mSpanEnds[i];
+                if (spanEnd >= queryStart && (Object.class == kind || kind.isInstance(mSpans[i]))) {
+                    count++;
+                }
+				//若节点i有右子节点，则从右子节点开始找(因为右子节点spanStart大于或等于节点i的spanStart)
+                if ((i & 1) != 0) {
+                    count += countSpans(queryStart, queryEnd, kind, rightChild(i));
+                }
+            }
+        }
+        return count;
+    }
+
+    /** * 使用当前区间树节点下找到的跨度填充结果数组。 * 
+	 * @param querystart 间隔查询的真实起始索引。 
+	 * @Param QueryEnd 间隔查询的真实结束索引。
+	 * @param kind 类类型进行搜索。
+	 * @param i 当前树节点的索引。 
+	 * @param ret 数组将被填充结果
+	 * @param priority 记录找到的跨度优先级。
+	 * @param insertionOrder 记录找到的跨度的插入顺序。
+	 * @param count 找到的跨度数。
+	 * @param sort 是否填充优先级和插入顺序。 
+	 * @param <t> * @return 找到的跨度总数。
+	 */
+	@SuppressWarnings("unchecked")
+    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, T[] ret, int[] priority, int[] insertionOrder, int count, boolean sort)
+    {
+        if ((i & 1) != 0) 
+		{
+            //若节点i不是叶子节点，先遍历其左子节点
+            int left = leftChild(i);
+            int spanMax = mSpanMax[left];
             //若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
             if (spanMax >= queryStart) {
-                count = getSpansRec(queryStart, queryEnd, kind, left, ret, priority,
-                                    insertionOrder, count, sort);
+                count = getSpansRec(queryStart, queryEnd, kind, left, 
+				                    ret, priority, insertionOrder, count, sort);
             }
         }
         if (i >= mSpanCount) return count;
         //i已经在有效元素之后，其右子节点的下标更大，因此不用找了
 
         int spanStart = mSpanStarts[i];
-        if (spanStart > mGapStart) {
-            spanStart -= mGapLength;
-        }
         if (spanStart <= queryEnd) 
         {
             //若节点i自己在范围内，将自己添加到数组中
             int spanEnd = mSpanEnds[i];
-            if (spanEnd > mGapStart) {
-                spanEnd -= mGapLength;
-            }
-            if (spanEnd >= queryStart &&
-                (spanStart == spanEnd || queryStart == queryEnd ||
-                (spanStart != queryEnd && spanEnd != queryStart)) &&
-                (Object.class == kind || kind.isInstance(mSpans[i]))) 
-            {
-                int spanPriority = mSpanFlags[i] & SPAN_PRIORITY;
-                int target = count;
-                if (sort) {
-                    //如果需要排序，我们还要添加该节点的优先级和插入顺序
-					priority.add(target,spanPriority);
-					insertionOrder.add(target,mSpanOrder[i]);
-                } 
-                else if (spanPriority != 0) 
-                {
-                    //对具有优先级的元素进行插入排序，实际上是为即将添加的元素计算并留出一个位置
-                    int j = 0;
-                    for (; j < count; j++) {
-                        int p = getSpanFlags(ret.get(j)) & SPAN_PRIORITY;
-                        if (spanPriority > p) break;
-                    }
-                    target = j;
-                }
-                //将自己放入指定位置，但count每次指向最后的下一个元素
-				ret.add(target,(T) mSpans[i]);
+            if (spanEnd >= queryStart && (Object.class == kind || kind.isInstance(mSpans[i])))
+			{    
+                //将自己放入最后
+				int target = count;
+				ret[target] = (T) mSpans[i];
+			    if (sort) {
+				    //如果需要排序，我们还要添加该节点的优先级和插入顺序
+				    priority[target] = mSpanFlags[i] & SPAN_PRIORITY;
+				    insertionOrder[target] = mSpanOrder[i];
+			    } 
                 count++;
             }
             //若节点i有右子节点，则还可以从右子节点开始找(因为右子节点spanStart大于或等于i)
             if ((i & 1) != 0) {
 				//为什么count直接被赋值？ 因为count是递归累加的，它从传递的count开始，再次加上自己找到的个数后返回
 				//这样做的原因是让count保持在数组当前最后一个元素的位置，以此按顺序放入元素
-                count = getSpansRec(queryStart, queryEnd, kind, rightChild(i), ret, priority,
-                                    insertionOrder, count, sort);
+                count = getSpansRec(queryStart, queryEnd, kind, rightChild(i),
+				                    ret, priority, insertionOrder, count, sort);
             }
         }
         return count;
@@ -1018,7 +937,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
         return buffer;
     }
-
+	
     //将数组表示为堆，堆的每个节点最多有两个子节点，节点从按层次从上至下，从左至右，按数组中的顺序排列
     //将下标为0的元素作为根节点，而根节点的左右子节点下标分别为1，2，并且下层的子节点下标为3，4，5，6，一直这样排列下去
     /*例如一列数 0，1，2，3，4，5，6
@@ -1136,8 +1055,14 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) {
             kind = Object.class;
         }
-        //从根节点开始找
-        return nextSpanTransitionRec(start, limit, kind, treeRoot());
+		//将原本的范围转换为真实的范围，再进行查找
+		start = resolveGapStartTo(start);
+		limit = resolveGapEndTo(limit);
+        int next = nextSpanTransitionRec(start, limit, kind, treeRoot());
+		//当范围完全在间隙缓冲区左边，返回的next亦是其真实和原本的位置
+		//当范围完全在间隙缓冲区右边，返回的next应该偏移一个mGapLength对齐至前面
+		//当范围包含间隙缓冲区，返回的next处于左边还是右边则视情况而定
+		return resolveGap(next);
     }
 
     //此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
@@ -1180,7 +1105,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-            if (resolveGap(mSpanMax[left]) > start){
+			int spanMax = mSpanMax[left];
+            if (spanMax > start){
                 //左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
                 //因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点的最小limit边界
                 limit = nextSpanTransitionRec(start, limit, kind, left);
@@ -1190,8 +1116,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (i < mSpanCount) 
         {
             //若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
-            int st = resolveGap(mSpanStarts[i]);
-            int en = resolveGap(mSpanEnds[i]);
+            int st = mSpanStarts[i];
+            int en = mSpanEnds[i];
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
                 limit = st;
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
@@ -1205,6 +1131,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return limit;
     }
 
+	
     /** 返回一个新的CharSequence，它包含本对象的字符数组指定范围的字符，包括重叠范围 */
     public CharSequence subSequence(int start, int end) {
         return new SpannableStringBuilderLite(this, start, end);
@@ -1270,23 +1197,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return mFilters;
     }
 	
-	/* 设置是否自动释放多余内存 */
-	public void setAutoReleaseExcessMemory(boolean auto){
-		AutoReleaseExcessMemory = auto;
-	}
-	private void ReleaseExcessMemory()
-	{
-		//大小应至少超出2倍，防止GrowingArrayUtils重新扩大为2倍，陷入死循环
-		//修改文本数组大小时，也要修改缓冲区大小，应该改变span的位置
-		if(mGapLength > length()*2){
-			resizeFor(length());
-		}
-		//仅修改span数组大小时，与文本无关
-		if(mSpans.length > mSpanCount*3){
-			resizeForSpans(mSpanCount);
-		}
-	}
-
 
     //树的基本术语:
     //Tree 树是由节点和边组成的且不存在着任何环的一种数据结构
@@ -1580,10 +1490,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mLowWaterMark = i<=mLowWaterMark ? i:mLowWaterMark;
     }
 
-    private static final InputFilter[] NO_FILTERS = new InputFilter[0];
-    private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
-    private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
-
     private char[] mText; //文本数组
     private int mGapStart; //数组中空闲间隙的起始位置
     private int mGapLength; //空闲间隙的长度
@@ -1604,9 +1510,57 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int mSpanCount;  //节点个数
     private IdentityHashMap<Object, Integer> mIndexOfSpan; //存储节点在数组中的下标
     private int mLowWaterMark;  //在此之前的索引没有被触及
-	private boolean AutoReleaseExcessMemory;  //是否自动释放多余内存
-
+	
+	private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
+	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
+    private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
+	
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
+	//每个span有spanStart和spanEnd，而我们可以给两端点各设置MARK，POINT，PARAGRAPH其中的一个标志
+	//spanFlags中，用1~4位存储spanEnd的标志，用5~8位存储spanStart的标志
+
+	//我喜欢解释MARK 和 POINT的方式是将它们表示为方括号，以及它们在一系列文本中存在的任何偏移量，括号指向的方向显示标记或端点“附加”到的字符
+	//因此对于POINT，您将使用开括号 - 它附加到它后面的字符上  hello[world!
+	//对于MARK，您可以使用闭括号 - 它附加在它前面的字符上  hello]world!
+
+	//一般地，在任意span之内(不包含两端)插入字符时，span都会包含插入的字符(由间隙缓冲区管理)
+	//而当为其一端设置MARK标志，若正好在span的一端插入字符时(例如where == spanEnd)，那么这一端的位置将跟随原文本之前的内容(保持不变)，而新插入的文本被端点排除在后面
+	//而POINT标志正好相反，若正好在span的一端插入字符时，那么这一端会随着插入字符而向后移动(跟随原文本之后的内容)，而新插入的文本被端点排除在前面
+	//PARAGRAPH标志更特殊，它永远保证span的一端是一个段落的结尾，即这一端永远在换行符的位置或文本末尾
+	//下面的例子，我们给不同的字符串插入字符，注意端点变化
+
+	/*
+	  SPAN_MARK_MARK 在0长度范围(spanStart == spanEnd)的偏移处插入"INSERT"：标记保持固定(也就是被spanStart和spanEnd排除在后面)
+	  Before: Lorem ]]ipsum dolor sit.
+	  After:  Lorem ]]INSERTipsum dolor sit.
+
+	  在非0长度范围(spanStart和spanEnd包含着"ipsum")的开头插入：插入的文本包含在span的范围内(也就是被spanStart排除在后面)
+	  Before: Lorem ]ipsum] dolor sit.
+	  After:  Lorem ]INSERTipsum] dolor sit.
+ 
+	  在非0长度范围的末尾插入：插入的文本从span的范围中排除(也就是被spanEnd排除在后面)
+	  Before: Lorem ]ipsum] dolor sit.
+	  After:  Lorem ]ipsum]INSERT dolor sit.
+
+	  您可以从最后两个示例中看到，为什么SPAN_MARK_MARK标志与SPAN_INCLUSIVE_EXCLUSIVE标志同义
+	  在范围开始处插入的文本包含在范围内，而排除在末尾插入的文本
+	*/
+	/*
+	  SPAN_POINT_POINT 在0长度范围的偏移处插入"INSERT"：向前推动点(也就是被spanStart和spanEnd排除在前面)
+	  Before: Lorem [[ipsum dolor sit.
+	  After:  Lorem INSERT[[ipsum dolor sit.
+
+	  在非0长度范围的开头插入：插入的文本从span的范围中排除(也就是被spanStart排除在前面)
+	  Before: Lorem [ipsum[ dolor sit.
+	  After:  Lorem INSERT[ipsum[ dolor sit.
+
+	  在非0长度范围的末尾插入：插入的文本包含在span的范围内(也就是被spanEnd排除在前面)
+	  Before: Lorem [ipsum[ dolor sit.
+	  After:  Lorem [ipsumINSERT[ dolor sit.
+
+	  您可以从最后两个示例中看到为什么SPAN_POINT_POINT标志与SPAN_EXCLUSIVE_INCLUSIVE标志同义
+	  在范围开始处插入的文本将从范围中排除，而包含在末尾插入的文本
+	*/
     private static final int MARK = 1;
     private static final int POINT = 2;
     private static final int START_MASK = 0xF0;

@@ -82,9 +82,6 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mEditableFactory = fa;
 		mText.setEditableFactory(fa);
 	}
-	public void setAutoReleaseExcessMemory(boolean auto){
-		mText.setAutoReleaseExcessMemory(auto);
-	}
 	
 	public void setTextColor(int color){
 		mPaint.setColor(color);

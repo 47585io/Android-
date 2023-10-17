@@ -11,40 +11,44 @@ import android.util.*;
  * 它使得对于数据的处理仅存在于小的区域中，而不必修改所有数据，只要限制每个分块的大小，便可以使效率均衡
  * 此类是分块文本容器的实现类  
  * 此类主要围绕两大内容: 文本和span如何正确分配到文本块中并与其建立绑定，文本块顺序刷新和事件发送
-
+ *
  * 已解决bug1: span绑定的文本块不按顺序排列，并且mBlockStarts未刷新
- 未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpan之前刷新
- 遗漏在insertForBlocks末尾的refreshInvariants，必须刷新
-
+ * 未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpan之前刷新
+ * 遗漏在insertForBlocks末尾的refreshInvariants，必须刷新
+ *
  * 已解决bug2: span的范围不连续
- 目前还不知道在插入后怎样获取两端的span并修正
- 应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
-
+ * 目前还不知道在插入后怎样获取两端的span并修正
+ * 应该是每次截取时获取两端的span，参见replaceWithSpan，correctSpan
+ *
  * 已解决bug3: span重复时范围错误
- SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
- 应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
- 参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
-
+ * SpannableStringBuilder在插入文本中包含重复span时不会扩展其范围，导致该span仍处于上次的位置
+ * 应该在插入时额外修正，即在插入前判断是否已有，如果是则应在插入后修正，分发时则不需要管(全都是新文本块)
+ * 参见insertForBlocks，checkRepeatSpans，correctRepeatSpans
+ *
  * 已解决bug4: span插入顺序错误
- 在上个文本块末尾的span，会优先截取到下个文本块末尾，因此span的优先级会反了，所以我们需要对span重新排序
- 在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
- 但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
- 另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
-
+ * 在上个文本块末尾的span，会优先截取到下个文本块末尾，因此span的优先级会反了，所以我们需要对span重新排序
+ * 在replaceSpan中，会给新的span(也就是不在mSpanInBlocks中的span)设置一个插入顺序，
+ * 但是此span可能刚才正处于上一文本块，但已移除并将要放入新文本块之中，此时该span的插入顺序不变
+ * 另外注意到setSpan也有此bug，对于重复的span，不要改变插入顺序
+ *
  * 已解决bug5: 对于不同的文本块，可能有不同的决策
- EditableList在修改文本时，进行添加，移除，扩展span应先征得文本块的意见，需要与文本块保持同步
- 借助接口的方法来进行判断，参见replaceSpan，expandSpans
-
+ * EditableList在修改文本时，进行添加，移除，扩展span应先征得文本块的意见，需要与文本块保持同步
+ * 借助接口的方法来进行判断，参见replaceSpan，expandSpans
+ * 
  * 已解决bug6: 插入文本时，当插入点位于文本块起始或末尾，端点位于上个文本块末尾和下个文本块起始的span应扩展
- 在插入前，先获取即将挤到两边的span，插入后，如果需要扩展，再将端点扩展包含文本
- 参见getAtPointSpans，expandSpans
-
+ * 在插入前，先获取即将挤到两边的span，插入后，如果需要扩展，再将端点扩展包含文本
+ * 参见getAtPointSpans，expandSpans
+ *
  * 已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
- (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
+ * (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
+ *
+ * 已解决bug8: 在之前的SpanRange中只存储起始和末尾文本块时，移除文本块时默认是获取下一个文本块
+ * 但其实不是这样，因为在超长文本插入时，span会直接挤到超级后面的文本块，这时没办法知道这个文本块
+ * (所以我们还是老老实实存储所有文本块)
  */
 public class EditableBlockList2 extends Object implements EditableBlock
 {
-
+	
 	private int mLength; //总文本长度
 	private int mBlockSize; //文本块的个数
 	private int mSpanCount; //span的个数
@@ -52,12 +56,12 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 	//这里将文本打碎成文本块并按正序存储在mBlocks中，mBlockStarts记录了每个文本块的内容在总文本中的起始偏移量，它也是按正序排列，这用于快速查找下标所在的文本块
 	//当插入或删除文本时，我们只要操作局部的少量文本块，其它文本块的内容保持不变(不用操作所有内容)
-	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块中的范围，并在修改文本时保持同步
+	//由于是用文本块存储的，某些span的范围可能会跨越多个文本块，因此我们使用mSpanInBlocks来存储span所在的所有文本块，这些文本块也是正序排序，并在修改文本时保持同步
 
 	private EditableBlock[] mBlocks; //文本块列表
 	private int[] mBlockStarts;  //每个文本块在总文本中的起始偏移量，用于快速查找下标所在的文本块
 	private IdentityHashMap<EditableBlock,Integer> mIndexOfBlocks; //文本块处于mBlocks和mBlockStarts中的下标
-	private IdentityHashMap<Object,SpanRange> mSpanInBlocks; //span处于文本块列表中的范围
+	private IdentityHashMap<Object,SpanRange> mSpanInBlocks; //span处于哪些文本块中
 	
 	//如果要存储一组复杂数据，有两种最优的存储方法:
 	//将不同类型的数据分别存储在不同的数组中，使用相同的下标的数据作为同一组数据，最后用一个map来存储同一组数据在所有数组中的下标
@@ -76,14 +80,13 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private int ReserveCount; //在文本块装满时，会额外预留ReserveCount长度的空间
 	private int mTextWatcherDepth;
 	private int mSelectionStart, mSelectionEnd;
-	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 
-	private static final int Default_MaxCount = 10;
+	private static final int Default_MaxCount = 1280;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 
-
+	
 	public EditableBlockList2(){
 		this("");
 	}
@@ -129,7 +132,6 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private void addBlock(int i)
 	{
 		EditableBlock block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
-		block.setAutoReleaseExcessMemory(AutoReleaseExcessMemory);
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -171,10 +173,6 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		if(mBlockSize==0){
 			//在没有文本块时，必须重新添加以复活
 			addBlocks(0,1,true);
-		}
-		if(AutoReleaseExcessMemory){
-			//释放多余空间
-			ReleaseExcessMemory();
 		}
 	}
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
@@ -340,7 +338,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Object[] spans = EmptyArray.OBJECT;
 			if(start==0 || start==mBlocks[i].length()){
 				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
-				spans = getAtPointSpans(st);
+				spans = getAtPointSpans(i,start);
 			}
 			//插入前还要移除文本中与自身重复的span
 			tb = removeRepeatSpans(tb,tbStart,tbEnd);
@@ -349,8 +347,6 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			//插入后，扩展端点正好处于插入两端的span
 			expandSpans(spans,st,st+after);
 		}
-		
-		printSpanOrders();
 
 		//最后计算光标位置，并调用文本和文本块和光标监视器的方法
 		sendAfterBlocksChanged(i,start);
@@ -579,7 +575,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 				if(blockIsRemoved || dstBlock.canRemoveSpan(span,start,end,textIsRemoved))
 				{
 					SpanRange spanRange = mSpanInBlocks.get(span);		
-					if(spanRange.startBlock==spanRange.endBlock && spanIsRemoved){
+					if(spanRange.size()==1 && spanIsRemoved){
 						//如果span只在这一个文本块中，可以直接移除span
 						//另一个情况是，本次截取是为了接下来的插入，此时该span仍保留
 						mSpanInBlocks.remove(span);
@@ -609,10 +605,9 @@ public class EditableBlockList2 extends Object implements EditableBlock
 				SpanRange spanRange = mSpanInBlocks.get(span);
 				if(spanRange == null){
 					//一个全新的span，需要映射到一个新的范围
-					spanRange = obtainRange(dstBlock,dstBlock,mInsertionOrder++);
+					spanRange = obtainRange(mInsertionOrder++);
 					mSpanInBlocks.put(span,spanRange);
 					mSpanCount++;
-					continue;
 				}
 				spanRange.add(i, dstBlock);
 			}
@@ -643,18 +638,18 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			SpanRange spanRange = mSpanInBlocks.get(span);
 			//文本刚刚在dstBlock中插入，因此span也只可能在此文本块中的范围错误
 			//如果span绑定了多个文本块，才需要修正，因为在单独文本块中的范围会自己改变
-			if(spanRange.startBlock != spanRange.endBlock)
+			if(spanRange.size() > 1)
 			{
 				int start = dstBlock.getSpanStart(span);
 				int end = dstBlock.getSpanEnd(span);
 				int flags = dstBlock.getSpanFlags(span);
-				if(spanRange.startBlock == dstBlock){
+				if(spanRange.get(0) == dstBlock){
 					//span应衔接在起始块末尾
 					if(end!=len){
 						dstBlock.enforceSetSpan(span,start,len,flags);
 					}
 				}
-				else if(spanRange.endBlock == dstBlock){
+				else if(spanRange.get(spanRange.size()-1) == dstBlock){
 					//span应衔接在末尾块起始
 					if(start!=0){
 						dstBlock.enforceSetSpan(span,0,end,flags);
@@ -747,7 +742,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Object[] spans = dstBlock.quickGetSpans(dstBlock.length(),dstBlock.length(),Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
-				EditableBlock blockEnd = mSpanInBlocks.get(spans[j]).endBlock;
+				SpanRange spanRange = mSpanInBlocks.get(spans[j]);
+				EditableBlock blockEnd = spanRange.get(spanRange.size()-1);
 				if(dstBlock != blockEnd){
 					//由于span需要跨越len下标，又由于它的末尾文本块必须是此文本块，这说明span的末尾位置必然在此文本块的len处
 					//反之，末尾文本块不为此文本块，则该span应该在后面有衔接，会自己扩展
@@ -762,7 +758,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Object[] spans = dstBlock.quickGetSpans(0,0,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
-				EditableBlock blockStart = mSpanInBlocks.get(spans[j]).startBlock;
+				EditableBlock blockStart = mSpanInBlocks.get(spans[j]).get(0);
 				if(dstBlock != blockStart){
 					//由于span需要跨越0下标，又由于它的起始文本块必须是此文本块，这说明span的起始位置必然在此文本块的0处
 					//反之，起始文本块不为此文本块，则该span应该在前面有衔接，会自己扩展
@@ -783,8 +779,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			{
 				Object span = spans[i];
 				SpanRange spanRange = mSpanInBlocks.get(span);
-				EditableBlock blockStart = spanRange.startBlock;
-				EditableBlock blockEnd = spanRange.endBlock;
+				EditableBlock blockStart = spanRange.get(0);
+				EditableBlock blockEnd = spanRange.get(spanRange.size()-1);
 				//该span可能从单独的上一个文本块或下一个文本块中扩展到此文本块中
 				int ost = mBlockStarts[mIndexOfBlocks.get(blockStart)] + blockStart.getSpanStart(span);
 				int oen = mBlockStarts[mIndexOfBlocks.get(blockEnd)] + blockEnd.getSpanEnd(span);
@@ -818,12 +814,12 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	public boolean canRemoveSpan(Object span, int delstart, int delend, boolean textIsRemoved)
 	{
 		SpanRange spanRange = mSpanInBlocks.get(span);
-		EditableBlock blockStart = spanRange.startBlock;
+		EditableBlock blockStart = spanRange.get(0);
 		delstart -= mBlockStarts[mIndexOfBlocks.get(blockStart)];
-		if(spanRange.startBlock == spanRange.endBlock){
+		if(spanRange.size()==1){
 			return blockStart.canRemoveSpan(span,delstart,delend,textIsRemoved);
 		}
-		EditableBlock blockEnd = spanRange.endBlock;
+		EditableBlock blockEnd = spanRange.get(spanRange.size()-1);
 		delend -= mBlockStarts[mIndexOfBlocks.get(blockEnd)];
 		return blockStart.canRemoveSpan(span,delstart,blockStart.length(),textIsRemoved) && blockEnd.canRemoveSpan(span,0,delend,textIsRemoved);
 	}
@@ -897,7 +893,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		}
 		else{
 			//一个全新的span，需要映射到一个新的列表，并添加插入顺序
-			tempRange = obtainRange(null,null,mInsertionOrder++);
+			tempRange = obtainRange(mInsertionOrder++);
 			mSpanInBlocks.put(span,tempRange);
 			mSpanCount++;
 		}
@@ -942,8 +938,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	*/
 	private void removeSpan(Object span, SpanRange spanRange, boolean removed)
 	{
-		int start = mIndexOfBlocks.get(spanRange.startBlock);
-		int end = spanRange.startBlock==spanRange.endBlock ? start : mIndexOfBlocks.get(spanRange.endBlock);
+		int start = mIndexOfBlocks.get(spanRange.get(0));
+		int end = spanRange.size()==1 ? start : mIndexOfBlocks.get(spanRange.get(spanRange.size()-1));
 		for(;start<=end;++start){
 			mBlocks[start].removeSpan(span);
 		}
@@ -972,7 +968,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			return EmptyArray.emptyArray(kind);
 		}
 
-		final IdentityHashSet spanSet = obtainSet();
+		final IdentityHashSet<T> spanSet = obtainSet();
 		int i = findBlockIdForIndex(start);
 		int j = start==end ? i : findBlockIdForIndex(end);
 		start -= mBlockStarts[i];
@@ -1019,8 +1015,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
 			for(i=0;i<spans.length;++i){
 				SpanRange spanRange = mSpanInBlocks.get(spans[i]);
-				prioSortBuffer[i] = spanRange.startBlock.getSpanFlags(spans[i]) & SPAN_PRIORITY;
-				orderSortBuffer[i] = spanRange.spanOrder;
+				prioSortBuffer[i] = spanRange.get(0).getSpanFlags(spans[i]) & SPAN_PRIORITY;
+				orderSortBuffer[i] = spanRange.getOrder();
 			}
 			SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
 			SpannableStringBuilderLite.recycle(prioSortBuffer);
@@ -1038,7 +1034,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		if(spanRange==null){
 			return -1;
 		}
-		Editable block = spanRange.startBlock;
+		Editable block = spanRange.get(0);
 		int id = mIndexOfBlocks.get(block);
 		int start = block.getSpanStart(p1);
 		return mBlockStarts[id]+start;
@@ -1052,7 +1048,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		if(spanRange==null){
 			return -1;
 		}
-		Editable block = spanRange.endBlock;
+		Editable block = spanRange.get(spanRange.size()-1);
 		int id = mIndexOfBlocks.get(block);
 		int end = block.getSpanEnd(p1);
 		return mBlockStarts[id]+end;
@@ -1065,7 +1061,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		if(spanRange==null){
 			return 0;
 		}
-		return spanRange.startBlock.getSpanFlags(p1);
+		return spanRange.get(0).getSpanFlags(p1);
 	}
 
 	@Override
@@ -1175,23 +1171,6 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	public InputFilter[] getFilters(){
 		return mFilters;
 	}
-
-	@Override
-	public void setAutoReleaseExcessMemory(boolean auto)
-	{
-		AutoReleaseExcessMemory = auto;
-		for(int i=0;i<mBlockSize;++i){
-			mBlocks[i].setAutoReleaseExcessMemory(auto);
-		}
-	}
-	private void ReleaseExcessMemory()
-	{
-		if(mBlocks.length > mBlockSize*3){
-			mBlocks = ArrayUtils.copyNewArray(mBlocks,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
-			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
-		}
-	}
-
 
 	private static interface Do
 	{
@@ -1330,7 +1309,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private static final int MaxRangeCount = 10000;
 	private static SpanRange[] RangeBuffer = new SpanRange[100];
 
-    private SpanRange obtainRange(EditableBlock start, EditableBlock end, int order)
+    private SpanRange obtainRange(int order)
 	{
 		//我们只能同时让一个线程执行ListBuffer代码块中的内容
 		synchronized(RangeBuffer)
@@ -1338,12 +1317,12 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			if(RangeCount>0){
 				SpanRange buffer = RangeBuffer[--RangeCount];
 				RangeBuffer[RangeCount] = null;
-				buffer.set(start,end,order);
+				buffer.setOrder(order);
 				return buffer;
 			}
 		}
 		//但当该线程判断完毕后，若没有buffer，则自己创建一个，而不阻塞其它线程
-		return new SpanRange(start,end,order);
+		return new SpanRange(order);
 	}
 	private void recyleRange(SpanRange buffer)
 	{
@@ -1394,81 +1373,158 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	}
 
 	
-	/* 存储span在文本块列表中的范围和插入顺序，存储文本块而不是下标，因为下标会变化
-	   由于span在文本块列表中的范围是连续的，所以只用存储两端的文本块，在范围变化吋扩展或收缩
-	   使用这个，无论span绑定了多少个文本块，效率都是非常快，并且占用内存永远非常少
+	/* 存储span在文本块列表中的范围内的blocks和插入顺序，存储文本块而不是下标，因为下标会变化
+	   潜在优化: span所处的文本块是连续的，因此添加或移除文本块时可以不用全部遍历
 	*/
 	private class SpanRange
 	{
-		public EditableBlock startBlock;
-		public EditableBlock endBlock;
-		public int spanOrder;
+		private int blockSize;
+		private EditableBlock[] sBlocks;
+		private int spanOrder;
 		
-		public SpanRange(EditableBlock start, EditableBlock end, int order)
+		public SpanRange(int order)
 		{
-			startBlock = start;
-			endBlock = end;
+			blockSize = 0;
+			sBlocks = EmptyArray.emptyArray(EditableBlock.class);
 			spanOrder = order;
 		}
-		public void set(EditableBlock start, EditableBlock end, int order)
+		/* span被加入index所指定的文本块时，添加span与文本块的绑定 */
+		public void add(int index, EditableBlock dstBlock)
 		{
-			startBlock = start;
-			endBlock = end;
-			spanOrder = order;
-		}
-		/* span被加入index所指定的文本块时，更新span的范围 */
-		public void add(int index, EditableBlock block)
-		{
-			if(startBlock==null || endBlock==null){
-				//空范围会将添加的第一个文本块作为范围
-				startBlock = endBlock = block;
+			if(blockSize==0){
+				sBlocks = GrowingArrayUtils.append(sBlocks,blockSize++,dstBlock);
 				return;
 			}
-			if(startBlock==block || endBlock==block){
-				//不添加重复的文本块，或者说，block不能是两端的文本块
+			if(contains(dstBlock)){
+				//不添加重复的block
 				return;
 			}
-			//在范围内添加的文本块不予理会，两端的文本块自会被挤开
-			int end = mIndexOfBlocks.get(endBlock);
-			if(end < index){
-				//在范围的右边添加文本块，范围扩展到右边
-				//聪明一点，一般范围不会往左扩展，所以我们先看后面
-				endBlock = block;
-				return;
-			}
-			int start = startBlock==endBlock ? end : mIndexOfBlocks.get(startBlock);
-			if(index < start){
-				//在范围的左边添加文本块，范围扩展到左边
-				startBlock = block;
-			}
-		}
-		/* span从index所指定的文本块中移除时，更新span的范围 */
-		public void remove(int index, EditableBlock block)
-		{
-			if(startBlock==null || endBlock==null){
-				//空范围没有什么可移除的
-				return;
-			}
-			if(startBlock == endBlock){
-				//单文本块的范围，不管移除成功或失败，都返回
-				if(startBlock == block){
-					startBlock = endBlock = null;
+			//为block寻找一个合适位置并插入，使blocks之中的文本块都顺序排列
+			for(int k=blockSize-1;k>-1;--k)
+			{
+				//bug: 未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpans之前刷新
+				int id = mIndexOfBlocks.get(sBlocks[k]);
+				if(id<index){
+					sBlocks = GrowingArrayUtils.insert(sBlocks,blockSize++,k+1,dstBlock);
+					break;
 				}
-				return;
+				if(k==0){
+					sBlocks = GrowingArrayUtils.insert(sBlocks,blockSize++,k,dstBlock);
+					break;
+				}
 			}
-			//在范围内或范围外移除的文本块不予理会，两端的文本块自会挤开或收缩
-			if(startBlock == block){
-				//正好移除左端的文本块，左端会向右移，收缩范围
-				startBlock = mBlocks[index+1];
+		}
+		/* span从index所指定的文本块中移除时，移除span与文本块的绑定 */
+		public void remove(int index, EditableBlock dstBlock)
+		{
+			for(int i=0;i<blockSize;++i)
+			{
+				if(sBlocks[i]==dstBlock){
+					sBlocks = GrowingArrayUtils.remove(sBlocks,blockSize--,i);
+					break;
+				}
 			}
-			else if(endBlock == block){
-				//正好移除右端的文本块，右端会向左移，收缩范围
-				endBlock = mBlocks[index-1];
+		}
+		/* dstBlock是否已经存在了 */
+		public boolean contains(EditableBlock dstBlock)
+		{
+			for(int i=0;i<blockSize;++i)
+			{
+				if(sBlocks[i]==dstBlock){
+					return true;
+				}
 			}
+			return false;
 		}
 		/* 清空范围 */
+		public void clear()
+		{
+			for(int i=0;i<blockSize;++i){
+				sBlocks[i] = null;
+			}
+			blockSize = 0;
+		}
+		public int size(){
+			return blockSize;
+		}
+		public EditableBlock get(int i){
+			return sBlocks[i];
+		}
+		public int getOrder(){
+			return spanOrder;
+		}
+		public void setOrder(int order){
+			spanOrder = order;
+		}
+	}
+	
+	private class SpanRange2
+	{
+		private int blockSize;
+		private SpanLink sHead;
+		private SpanLink sTail;
+		private int spanOrder;
+		
+		public void add(int index, EditableBlock dstBlock)
+		{
+			if(blockSize==0){
+				sHead = sTail = new SpanLink(dstBlock,null);
+				return;
+			}
+			if(contains(dstBlock)){
+				//不添加重复的block
+				return;
+			}
+			SpanLink tail =sTail;
+			//为block寻找一个合适位置并插入，使blocks之中的文本块都顺序排列
+			//由于添加文本块通常是在后面添加，因此这里从尾部开始遍历
+			//注意，此链表是反向排列的
+			for(int k=blockSize-1;k>-1;--k)
+			{
+				//bug: 未刷新的mIndexOfBlocks，导致block下标错误，应该在replaceSpans之前刷新
+				int id = mIndexOfBlocks.get(tail.block);
+				if(id<index){
+					
+					break;
+				}
+				if(k==0){
+					
+					break;
+				}
+				tail = tail.next;
+			}
+		}
+		public void remove(EditableBlock dstBlock){
+			
+		}
+		public boolean contains(EditableBlock dstBlock){
+			return false;
+		}
 		public void clear(){
-			startBlock = endBlock = null;
+			
+		}
+		public void removeSpan(Object span){
+			
+		}
+		public int size(){
+			return blockSize;
+		}
+		public EditableBlock getHeadBlock(){
+			return sHead.block;
+		}
+		public EditableBlock getTailBlock(){
+			return sTail.block;
+		}
+	}
+	
+	private static class SpanLink
+	{
+		private EditableBlock block;
+		private SpanLink next;
+		
+		public SpanLink(EditableBlock block, SpanLink next){
+			this.block = block;
+			this.next = next;
 		}
 	}
 	
@@ -1484,8 +1540,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		SpanRange spanRange = mSpanInBlocks.get(span);
 		if(spanRange!=null)
 		{
-			int start = mIndexOfBlocks.get(spanRange.startBlock);
-			int end = spanRange.startBlock==spanRange.endBlock ? start : mIndexOfBlocks.get(spanRange.endBlock);
+			int start = mIndexOfBlocks.get(spanRange.get(0));
+			int end = mIndexOfBlocks.get(spanRange.get(spanRange.size()-1));
 			for(;start<=end;++start){
 				EditableBlock block = mBlocks[start];
 				b.append("("+start+","+block.getSpanStart(span)+"~"+block.getSpanEnd(span)+")，");	
@@ -1501,10 +1557,9 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Log.w("Span At "+getSpanStart(span) ,printSpanInBlocks(span));
 		}
 	}
-	public void printSpanOrders()
+	public void printSpanOrders(Object[] spans)
 	{
 		Log.w("Start Print SpanOrders","**************************************************");
-		Object[] spans = getSpans(0,mLength,Object.class);
 		for(Object span:spans){
 			int order = mSpanInBlocks.get(span).spanOrder;
 			Log.w(""+order,"("+getSpanStart(span)+"~"+getSpanEnd(span)+")");

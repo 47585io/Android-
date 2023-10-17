@@ -60,6 +60,14 @@ public class EditableBlockList extends Object implements EditableBlock
 	private Map<Object,List<EditableBlock>> mSpanInBlocks; //span处于哪些文本块中，这些文本块按mBlocks中的顺序排列，这方便快速从文本块中移除span，或者是快速获取首尾文本块
 	private Map<Object,Integer> mSpanOrders; //span的插入顺序，用于在getSpans时对span进行排序
 
+	//如果要存储一组复杂数据，有两种最优的存储方法:
+	//将不同类型的数据分别存储在不同的数组中，使用相同的下标的数据作为同一组数据，最后用一个map来存储同一组数据在所有数组中的下标
+	//自定义一个类型，将不同类型的数据作为它的成员，最后用一个map来建立联系
+
+	//方案1更适合既需要快速查找并且还需要频繁进行数组操作的情况，但比较麻烦，并且需要额外维护数组下标，会更慢
+	//如果只要快速查找，建议使用方案2，它不仅能节省时间，还能节省内存
+	//最蠢的做法则是为每种类型的数据都分配一个map，存储时需要put多次，要获取不同数据吋得多次get，并且相同的键占用了额外内存
+	
 	private BlockFactory mEditableFactory;
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
@@ -69,7 +77,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int ReserveCount; //在文本块装满时，会额外预留ReserveCount长度的空间
 	private int mTextWatcherDepth;
 	private int mSelectionStart, mSelectionEnd;
-	private boolean AutoReleaseExcessMemory;
 	private InputFilter[] mFilters = NO_FILTERS;
 	
 	private static final int Default_MaxCount = 10;
@@ -122,7 +129,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	private void addBlock(int i)
 	{
 		EditableBlock block = mEditableFactory==null ? new SpannableStringBuilderLite() : mEditableFactory.newEditable("");
-		block.setAutoReleaseExcessMemory(AutoReleaseExcessMemory);
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
@@ -164,10 +170,6 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(mBlockSize==0){
 			//在没有文本块时，必须重新添加以复活
 			addBlocks(0,1,true);
-		}
-		if(AutoReleaseExcessMemory){
-			//释放多余空间
-			ReleaseExcessMemory();
 		}
 	}
 	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
@@ -1159,23 +1161,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	public InputFilter[] getFilters(){
 		return mFilters;
 	}
-
-	@Override
-	public void setAutoReleaseExcessMemory(boolean auto)
-	{
-		AutoReleaseExcessMemory = auto;
-		for(int i=0;i<mBlockSize;++i){
-			mBlocks[i].setAutoReleaseExcessMemory(auto);
-		}
-	}
-	private void ReleaseExcessMemory()
-	{
-		if(mBlocks.length > mBlockSize*3){
-			mBlocks = ArrayUtils.copyNewArray(mBlocks,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
-			mBlockStarts = ArrayUtils.copyNewIntArray(mBlockStarts,mBlockSize,GrowingArrayUtils.growSize(mBlockSize));
-		}
-	}
-	
 	
 	private static interface Do
 	{
