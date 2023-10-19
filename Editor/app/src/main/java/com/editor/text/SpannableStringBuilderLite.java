@@ -502,10 +502,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		restoreInvariants(mSpanCount);
 	}
 	
-	/* 文本修改后，修正节点i及其子节点在删除范围内的位置，返回修正节点数，start <= 删除的范围 <= mGapStart - nbNewChars
+	/* 文本修改后，修正节点i及其子节点在间隙缓冲区移动前的删除范围内的端点，返回修正节点数，start <= 删除的范围 <= mGapStart - nbNewChars
 	   由于在插入后，间隙缓冲区移动了，因此此时可能还有一部分端点错误地分布在间隙缓冲区中，此函数正是应该将它们都移动到正确的位置(也就是插入范围两端)
-	   由于在删除前，节点是不处于间隙缓冲区之内的，删除文本会扩大间隙缓冲区(mGapStart移到前面)，插入文本也只是将其缩小(mGapStart移到后面)，因此后面的节点不会处于间隙缓冲区内   
-	   也就是说，要修正的节点必然处于删除范围内，也就是start ~ mGapStart-nbNewChars，但无论如何mGapStart-nbNewChars < mGapStart+mGapLength (因此mGapStart-nbNewChars+1 ~ mGapStart+mGapLength-1之中没有节点)
+	   由于在删除前，节点是不处于间隙缓冲区之内的，删除文本会扩大间隙缓冲区(mGapStart移到前面)，插入文本也只是将其缩小(mGapStart移到后面)，因此间隙缓冲区之后的的端点不会处于间隙缓冲区内   
+	   也就是说，要修正的端点必然处于删除范围内，也就是start ~ mGapStart-nbNewChars，但无论如何mGapStart-nbNewChars < mGapStart+mGapLength (因此mGapStart-nbNewChars+1 ~ mGapStart+mGapLength-1之中没有节点)
 	   另一个意思是: POINT端点如果处于mGapStart+mGapLength就无需再修正了，而start这边，则还有可能有错误的端点。而MARK端点必然处于删除范围内，因此修正节点的范围必然处于start ~ mGapStart - nbNewChars
 	*/
     private int updatedIntervalBounds(int start, int end, int i)
@@ -572,7 +572,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	
 	/* 实现接口 */
 	public boolean isInvalidSpan(Object span, int start, int end, int flags){
-		return start == end;
+		return start >= end;
 	}
 	public boolean canRemoveSpan(Object span, int start, int end, boolean textIsRemoved)
 	{
@@ -610,7 +610,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
         int flagsEnd = flags & END_MASK;
         //0长度跨度
-        if (!enforce && start==end) {
+        if (!enforce && start>=end) {
             if (send) {
                 Log.e(TAG, "span cannot have a zero length");
             }
@@ -806,7 +806,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             if (spanStart <= queryEnd)
 			{
                 int spanEnd = mSpanEnds[i];
-                if (spanEnd >= queryStart && (Object.class == kind || kind.isInstance(mSpans[i]))) {
+                if (spanEnd >= queryStart &&
+                    (spanStart == spanEnd || queryStart == queryEnd ||
+					(spanStart != queryEnd && spanEnd != queryStart)) &&
+					(Object.class == kind || kind.isInstance(mSpans[i]))) {
                     count++;
                 }
 				//若节点i有右子节点，则从右子节点开始找(因为右子节点spanStart大于或等于节点i的spanStart)
@@ -852,7 +855,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //若节点i自己在范围内，将自己添加到数组中
             int spanEnd = mSpanEnds[i];
-            if (spanEnd >= queryStart && (Object.class == kind || kind.isInstance(mSpans[i])))
+            if (spanEnd >= queryStart  &&
+				(spanStart == spanEnd || queryStart == queryEnd ||
+				(spanStart != queryEnd && spanEnd != queryStart)) &&
+				(Object.class == kind || kind.isInstance(mSpans[i])))
 			{    
                 //将自己放入最后
 				int target = count;

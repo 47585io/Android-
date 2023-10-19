@@ -112,7 +112,7 @@ public class MainActivity extends Activity implements Runnable
 		try{
 			SpannableStringBuilderLite li2 = new SpannableStringBuilderLite("");
 			li2.replace(0,0,li,0,8);
-			for(int i = 0;i<10;i+=1){
+			for(int i = 0;i<10;i+=10){
 				li2.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			}
 			li.replace(5,10,li,0,li.length());
@@ -131,7 +131,7 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i = 0;i<2000;i+=10){
+		for(int i = 0;i<2000;i+=1){
 			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}

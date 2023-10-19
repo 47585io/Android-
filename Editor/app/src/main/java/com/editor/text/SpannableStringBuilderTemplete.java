@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /** 这是内容和标记都可以更改的文本类 */
-public class SpannableStringBuilderTemplete implements CharSequence, GetChars, Spannable, Editable, Appendable 
+public class SpannableStringBuilderTemplete implements CharSequence, GetChars, Spannable, Editable, Appendable ,EditableBlock
 {
 	
 	private final static String TAG = "SpannableStringBuilderTemplete";
@@ -494,10 +494,8 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
 			//要替换的文本长度为0就直接移除此节点，否则节点的两端都要衔接在start和end上才不会被移除(实际是为了等之后在updatedIntervalBound中，对span进行扩展)
 			//实际上如果满足了mSpanEnds[i] < mGapStart这个条件，就意味着spanEnd在缓冲区之前，它必然是其原本的位置，而由于之前spanEnd在删除范围内，所以可以移除
 			//为什么要把Point标志的端点移到mGapStart+mGapLength？ 因为可以防止被删除
-            if ((mSpanFlags[i] & Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) == Spanned.SPAN_EXCLUSIVE_EXCLUSIVE &&
-				mSpanStarts[i] >= start && mSpanStarts[i] < mGapStart + mGapLength &&
-				mSpanEnds[i] >= start && mSpanEnds[i] < mGapStart + mGapLength &&
-				(textIsRemoved || mSpanStarts[i] > start || mSpanEnds[i] < mGapStart)){
+            if (mSpanStarts[i] >= start && mSpanStarts[i] <= mGapStart + mGapLength &&
+				mSpanEnds[i] >= start && mSpanEnds[i] <= mGapStart + mGapLength){
 				//满足条件的节点i会被移除
                 mIndexOfSpan.remove(mSpans[i]);
                 removeSpan(i, 0);
@@ -677,41 +675,54 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
         return false;
     }
 	
+	/* 实现接口 */
+	public boolean isInvalidSpan(Object span, int start, int end, int flags){
+		return start == end;
+	}
+	public boolean canRemoveSpan(Object span, int start, int end, boolean textIsRemoved)
+	{
+		if(mIndexOfSpan==null){
+			return false;
+		}
+		Integer index = mIndexOfSpan.get(span);
+		if(index!=null){
+			if(resolveGap(mSpanStarts[index])>=start && resolveGap(mSpanEnds[index])<=end){
+				return true;
+			}
+		}
+		return false;
+	}
+	public boolean needExpandSpanStart(Object span, int flags){
+		int startFlag = (flags & START_MASK) >> START_SHIFT;
+		return startFlag == MARK;
+	}
+	public boolean needExpandSpanEnd(Object span, int flags){
+		int endFlag = flags & END_MASK;
+		return endFlag == POINT;
+	}
+	
+	public void enforceSetSpan(Object what, int start, int end, int flags){
+		setSpan(true, what, start, end, flags, true);
+	}
     /** 用指定对象标记指定范围的文本 */
     public void setSpan(Object what, int start, int end, int flags) {
-        setSpan(true, what, start, end, flags, true);
+        setSpan(true, what, start, end, flags, false);
     }
 	
 	//注意:如果send为false，那么恢复不变量就是调用者的责任(如果send为false，并且跨度已经存在，则此方法不会更改任何跨度的索引)
 	//因为新增的span默认在最后，不影响前面节点的顺序，所以可以暂时不刷新
-    private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforceParagraph)
+    private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforce)
 	{
         checkRange("setSpan", start, end);
         int flagsStart = (flags & START_MASK) >> START_SHIFT;
-        if (isInvalidParagraph(start, flagsStart)) {
-            if (!enforceParagraph) {
-                //不要设置跨度
-                return;
-            }
-            throw new RuntimeException("PARAGRAPH span must start at paragraph boundary"
-									   + " (" + start + " follows " + charAt(start - 1) + ")");
-        }
         int flagsEnd = flags & END_MASK;
-        if (isInvalidParagraph(end, flagsEnd)) {
-            if (!enforceParagraph) {
-                //不要设置跨度
-                return;
-            }
-            throw new RuntimeException("PARAGRAPH span must end at paragraph boundary"
-									   + " (" + end + " follows " + charAt(end - 1) + ")");
-        }
-        //0-长度跨度。SPAN_EXCLUSIVE_EXCLUSIVE
-        if (flagsStart == POINT && flagsEnd == MARK && start == end) {
+        //0长度跨度
+        if (!enforce && start==end) {
             if (send) {
-                Log.e(TAG, "SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length");
+                Log.e(TAG, "span cannot have a zero length");
             }
-			//从该类创建无效跨度时，自动忽略无效跨度。
-			//这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
+            //从该类创建无效跨度时，自动忽略无效跨度。
+            //这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
             return;
         }
 		
@@ -854,7 +865,11 @@ public class SpannableStringBuilderTemplete implements CharSequence, GetChars, S
     public <T> T[] getSpans(int queryStart, int queryEnd, Class<T> kind) {
         return getSpans(queryStart, queryEnd, kind, true);
     }
-	
+	@Override
+	public <T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
+		return getSpans(queryStart, queryEnd, kind, false);
+	}
+
 	/*** 返回指定类型跨度的数组，这些范围与指定的文本范围重叠。 
 	   种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
 	   * * @param querystart 开始索引。 

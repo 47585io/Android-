@@ -82,7 +82,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private int mSelectionStart, mSelectionEnd;
 	private InputFilter[] mFilters = NO_FILTERS;
 
-	private static final int Default_MaxCount = 1280;
+	private static final int Default_MaxCount = 10;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 
@@ -375,7 +375,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
 		repalceWithSpans(i,index,index,tb,tbStart,tbEnd,true,true);
-
+		
 		//再检查文本块的内容是否超出MaxCount
 		final int srcLen = mBlocks[i].length();	
 		if(srcLen > this.MaxCount)
@@ -416,7 +416,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
 		repalceWithSpans(i,index,index,tb,tbStart,tbEnd,true,true);
-
+		
 		//再检查文本块的内容是否超出MaxCount
 		final EditableBlock dstBlock = mBlocks[i];
 		final int srcLen = dstBlock.length();	
