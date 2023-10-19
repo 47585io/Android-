@@ -111,14 +111,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int resolveGap(int i) {
         return i > mGapStart ? i - mGapLength : i;
     }
-	/*如果此偏移量在间隙缓冲区之后，那么它的真实位置应加上间隙缓冲区长度*/
-	private int resolveGapStartTo(int i) {
-        return i > mGapStart ? i + mGapLength : i;
-    }
-	/*如果此偏移量在间隙缓冲区或其之后，那么它的真实位置应加上间隙缓冲区长度*/
-	private int resolveGapEndTo(int i) {
-        return i >= mGapStart ? i + mGapLength : i;
-    }
 	
     /*修改文本数组的长度的同时修改间隙缓冲区的大小*/
     private void resizeFor(int size) 
@@ -318,7 +310,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	    if (replacedLength > 0 && mSpanCount > 0)
 		{
 			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)，要移除的span个数为0时，也不需要span移除
-			//由于间隙缓冲区在end，因此start的真实位置仍是start，end的真实位置应加上mGapLength
+			//由于间隙缓冲区在end，因此start的真实位置仍是start，end的真实位置应加上mGapLength，以包含间隙缓冲区之后的span
 			final int count = markToBeRemovedSpans(start, end+mGapLength, treeRoot());
 			if(count==1){
 				//单个节点的移除，不需要遍历整个数组，沿着路径将其移除
@@ -756,13 +748,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
-		//在范围内查找span时，应该将查找范围转换为真实的查找范围，想象着将间隙缓冲区移除，并将后面的内容拼接过来
-		//因此对于在间隙缓冲区之前的查找位置，其亦是真实和原本的位置。对于在间隙缓冲区之后的查找位置，它的真实位置应加上mGapStart偏移到后面
-		//特殊的是当查找位置在mGapStart，由于MARK端点保持在mGapStart，POINT端点保持在mGapStart+mGapLength，而它们的原本位置相同，因此都应包含
-		//也就是说，查找范围的起始位置如果在mGapStart，其真实位置应包含mGapStart，查找范围的末尾位置如果在mGapStart，其真实位置应包含mGapStart+mGapLength
-		queryStart = resolveGapStartTo(queryStart);
-		queryEnd = resolveGapEndTo(queryEnd);
-
 		//统计范围内节点个数，并创建指定大小的数组
 		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
         if (count == 0) {
@@ -785,7 +770,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return ret;
     }
 	
-	//从节点i开始，向下遍历子节点，统计所有在真实范围内的节点个数
+	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
     private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
 	{
         int count = 0;
@@ -794,6 +779,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //若节点i不是叶子节点，先遍历其左子节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
+			if(spanMax > mGapStart){
+				spanMax -= mGapLength;
+			}
 			//若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
             if (spanMax >= queryStart) {
                 count = countSpans(queryStart, queryEnd, kind, left);
@@ -801,15 +789,22 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
         if (i < mSpanCount)
 		{
-			//若节点i自己在范围内，count++
             int spanStart = mSpanStarts[i];
+			if (spanStart > mGapStart) {
+				spanStart -= mGapLength;
+			}
+			//若节点i自己在范围内，count++
             if (spanStart <= queryEnd)
 			{
                 int spanEnd = mSpanEnds[i];
+				if (spanEnd > mGapStart) {
+                    spanEnd -= mGapLength;
+                }
                 if (spanEnd >= queryStart &&
                     (spanStart == spanEnd || queryStart == queryEnd ||
 					(spanStart != queryEnd && spanEnd != queryStart)) &&
 					(Object.class == kind || kind.isInstance(mSpans[i]))) {
+				    //span与范围重叠，但不包含spanEnd为queryStart或者spanStart为queryEnd的span，但当span或查找范围为一点时此条件无效
                     count++;
                 }
 				//若节点i有右子节点，则从右子节点开始找(因为右子节点spanStart大于或等于节点i的spanStart)
@@ -822,8 +817,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     }
 
     /** * 使用当前区间树节点下找到的跨度填充结果数组。 * 
-	 * @param querystart 间隔查询的真实起始索引。 
-	 * @Param QueryEnd 间隔查询的真实结束索引。
+	 * @param querystart 间隔查询的起始索引。 
+	 * @Param QueryEnd 间隔查询的结束索引。
 	 * @param kind 类类型进行搜索。
 	 * @param i 当前树节点的索引。 
 	 * @param ret 数组将被填充结果
@@ -841,6 +836,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //若节点i不是叶子节点，先遍历其左子节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
+			if (spanMax > mGapStart) {
+                spanMax -= mGapLength;
+            }
             //若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
             if (spanMax >= queryStart) {
                 count = getSpansRec(queryStart, queryEnd, kind, left, 
@@ -851,10 +849,16 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         //i已经在有效元素之后，其右子节点的下标更大，因此不用找了
 
         int spanStart = mSpanStarts[i];
+		if (spanStart > mGapStart) {
+            spanStart -= mGapLength;
+        }
         if (spanStart <= queryEnd) 
         {
             //若节点i自己在范围内，将自己添加到数组中
             int spanEnd = mSpanEnds[i];
+			if (spanEnd > mGapStart) {
+                spanEnd -= mGapLength;
+            }
             if (spanEnd >= queryStart  &&
 				(spanStart == spanEnd || queryStart == queryEnd ||
 				(spanStart != queryEnd && spanEnd != queryStart)) &&
@@ -1062,14 +1066,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) {
             kind = Object.class;
         }
-		//将原本的范围转换为真实的范围，再进行查找
-		start = resolveGapStartTo(start);
-		limit = resolveGapEndTo(limit);
-        int next = nextSpanTransitionRec(start, limit, kind, treeRoot());
-		//当范围完全在间隙缓冲区左边，返回的next亦是其真实和原本的位置
-		//当范围完全在间隙缓冲区右边，返回的next应该偏移一个mGapLength对齐至前面
-		//当范围包含间隙缓冲区，返回的next处于左边还是右边则视情况而定
-		return resolveGap(next);
+		return nextSpanTransitionRec(start, limit, kind, treeRoot());
     }
 
     //此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
@@ -1112,7 +1109,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-			int spanMax = mSpanMax[left];
+			int spanMax = mSpanMax[left] > mGapStart ? mSpanMax[left]-mGapLength : mSpanMax[left];
             if (spanMax > start){
                 //左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
                 //因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点的最小limit边界
@@ -1123,8 +1120,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (i < mSpanCount) 
         {
             //若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
-            int st = mSpanStarts[i];
-            int en = mSpanEnds[i];
+            int st = mSpanStarts[i] > mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
+            int en = mSpanEnds[i] > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
                 limit = st;
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
