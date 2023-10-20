@@ -730,7 +730,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return getSpans(queryStart, queryEnd, kind, true);
     }
 	@Override
-	public <T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
+	public <T> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind){
 		return getSpans(queryStart, queryEnd, kind, false);
 	}
 	
@@ -779,7 +779,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //若节点i不是叶子节点，先遍历其左子节点
             int left = leftChild(i);
             int spanMax = mSpanMax[left];
-			if(spanMax > mGapStart){
+			if (spanMax > mGapStart){
 				spanMax -= mGapLength;
 			}
 			//若左子节点的spanMax >= queryStart，则左子节点中有至少一个在范围内的节点
@@ -1177,7 +1177,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private static String region(int start, int end) {
         return "(" + start + " ... " + end + ")";
     }
-    private void checkRange(final String operation, int start, int end) {
+    private void checkRange(final String operation, int start, int end) 
+	{
         if (end < start) {
             throw new IndexOutOfBoundsException(operation + " " +
                                                 region(start, end) + " has end before start");
@@ -1494,6 +1495,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mLowWaterMark = i<=mLowWaterMark ? i:mLowWaterMark;
     }
 
+	
     private char[] mText; //文本数组
     private int mGapStart; //数组中空闲间隙的起始位置
     private int mGapLength; //空闲间隙的长度

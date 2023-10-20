@@ -57,13 +57,12 @@ public class MainActivity extends Activity implements Runnable
 	public void run()
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		//mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		//XCode Code = new XCode(this);
-		//Code.setPool(mPool);
-		//Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
-		//setContentView(Code);
-		test2("/storage/emulated/0/Linux/3.java");
-		//test3();
+		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
+		XCode Code = new XCode(this);
+		Code.setPool(mPool);
+		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
+		setContentView(Code);
+		//test2("/storage/emulated/0/Linux/3.java");
 	}
 	
 	public void loadFileInThread(final String path)
@@ -131,8 +130,8 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i = 0;i<2000;i+=1){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(int i = 0;i<2000;i+=1000){
+			editor.setSpan(new ForegroundColorSpan(0xff859674),i,i+1000,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 	}

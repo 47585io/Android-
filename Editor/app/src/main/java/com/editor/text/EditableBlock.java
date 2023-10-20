@@ -17,7 +17,7 @@ public interface EditableBlock extends Editable
 	
 	public void enforceSetSpan(Object span, int start, int end, int flags)
 	
-	public<T extends Object> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind)
+	public<T> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind)
 	
 	/* 创建EditableBlock的工厂 */
 	public static class BlockFactory

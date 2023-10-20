@@ -634,9 +634,9 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		}
 		//bug: 子线程的时间不同步，等任务开始时，下标可能超出范围
 		Runnable run1 = OpenWindow();
-		mPool.execute(run1);
+		//mPool.execute(run1);
 		Runnable run2 = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
-		mPool.execute(run2);
+		//mPool.execute(run2);
 		if(lengthAfter>0){
 			Insert(start,lengthAfter);
 		}

@@ -70,6 +70,7 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 				try{
 					myReader reader = new myReader(path);
 					String text = reader.r("UTF-8");
+					text = text.replaceAll("\t","    ");
 					E.setText(text,0,text.length());
 					E.setPool(mPool);
 				}
