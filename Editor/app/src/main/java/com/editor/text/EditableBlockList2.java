@@ -307,6 +307,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	@Override
 	public Editable replace(int start, int end, CharSequence tb, int tbStart, int tbEnd)
 	{
+		//在修改前判断范围错误，防止之后出现无法挽回的损失
+		checkRange("replace",start,end);
 		//过滤文本
         for (int i=0;i<mFilters.length;++i){
             CharSequence repl = mFilters[i].filter(tb, tbStart, tbEnd, this, start, end);
@@ -590,7 +592,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 		//如果要替换的文本是Spanned，范围内的span需要与block建立新的绑定
 		//插入时，mIndexOfBlocks必须是正确的
-		if(tbEnd>tbStart && tb instanceof Spanned)
+		if(tbEnd > tbStart && tb instanceof Spanned)
 		{
 			Spanned spanString = (Spanned) tb;
 			//添加时需要保证顺序，使这些span也像是在spanString中一样
@@ -927,10 +929,11 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private void removeSpan(Object span, SpanRange spanRange, boolean removed)
 	{
 		spanRange.removeSpan(span);
-		spanRange.clear();
 		if(removed){
 			recyleRange(spanRange);
 			mSpanCount--;
+		}else{
+			spanRange.clear();
 		}
 	}
 
@@ -1348,7 +1351,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	
 	/* 这边也是，回收不使用的Map */
 	private static int MapCount = 0;
-	private static IdentityHashMap[] MapBuffer = new IdentityHashMap[6];
+	private static final IdentityHashMap[] MapBuffer = new IdentityHashMap[6];
 
 	private static IdentityHashMap obtainMap()
 	{
@@ -1574,7 +1577,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
     private static String region(int start, int end) {
         return "(" + start + " ... " + end + ")";
     }
-    private void checkRange(final String operation, int start, int end) {
+    private void checkRange(final String operation, int start, int end)
+	{
         if (end < start) {
             throw new IndexOutOfBoundsException(operation + " " +
                                                 region(start, end) + " has end before start");

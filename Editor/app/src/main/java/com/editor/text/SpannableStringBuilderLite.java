@@ -41,7 +41,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mSpanMax = EmptyArray.INT;
         mSpanOrder = EmptyArray.INT;
 
-        if (text instanceof Spanned) 
+        if (end > start && text instanceof Spanned) 
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) text;
