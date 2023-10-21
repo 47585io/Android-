@@ -338,7 +338,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			Object[] spans = EmptyArray.OBJECT;
 			if(start==0 || start==mBlocks[i].length()){
 				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
-				spans = getAtPointSpans(i,start);
+				spans = getExpandSpans(i,start);
 			}
 			//插入前还要移除文本中与自身重复的span
 			tb = removeRepeatSpans(tb,tbStart,tbEnd);
@@ -720,32 +720,19 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		return text;
 	}
 
-	/* 获取端点正好处于index的span，必须在修正后调用 */
-	private Object[] getAtPointSpans(int index)
-	{
-		Object[] spans = quickGetSpans(index,index,Object.class);
-		for(int i=0;i<spans.length;++i)
-		{
-			Object span = spans[i];
-			if(getSpanStart(span)!=index && getSpanEnd(span)!=index){
-				//端点不处于index的span会被置为null
-				spans[i] = null;
-			}
-		}
-		return spans;
-	}
-	private Object[] getAtPointSpans(int i, int start)
+	/* 获取需要扩展的spans，必须在修正后调用 */
+	private Object[] getExpandSpans(int i, int start)
 	{
 		if(i>0 && start==0)
 		{
+			//在文本块开头插入文本，应该判断上个文本块末尾处的span能不能扩展
 			EditableBlock dstBlock = mBlocks[i-1];
 			Object[] spans = dstBlock.quickGetSpans(dstBlock.length(),dstBlock.length(),Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
-				SpanRange spanRange = mSpanInBlocks.get(spans[j]);
-				EditableBlock blockEnd = spanRange.tailBlock();
+				EditableBlock blockEnd = mSpanInBlocks.get(spans[j]).tailBlock();
 				if(dstBlock != blockEnd){
-					//由于span需要跨越len下标，又由于它的末尾文本块必须是此文本块，这说明span的末尾位置必然在此文本块的len处
+					//由于span需要跨越len下标，也就是说，如果它的末尾文本块是此文本块，这说明span的末尾位置必然在此文本块的len处，不会扩展
 					//反之，末尾文本块不为此文本块，则该span应该在后面有衔接，会自己扩展
 					spans[j] = null;
 				}
@@ -754,13 +741,14 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		}
 		if(i<mBlockSize-1 && start==mBlocks[i].length())
 		{
+			//在文本块末尾插入文本，应该判断下个文本块开头处的span能不能扩展
 			EditableBlock dstBlock = mBlocks[i+1];
 			Object[] spans = dstBlock.quickGetSpans(0,0,Object.class);
 			for(int j=0;j<spans.length;++j)
 			{
 				EditableBlock blockStart = mSpanInBlocks.get(spans[j]).headBlock();
 				if(dstBlock != blockStart){
-					//由于span需要跨越0下标，又由于它的起始文本块必须是此文本块，这说明span的起始位置必然在此文本块的0处
+					//由于span需要跨越0下标，也就是说，如果它的起始文本块是此文本块，这说明span的起始位置必然在此文本块的0处，不会扩展
 					//反之，起始文本块不为此文本块，则该span应该在前面有衔接，会自己扩展
 					spans[j] = null;
 				}
@@ -1072,12 +1060,14 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 		//先走到start指定的文本块
 		int i = findBlockIdForIndex(start);
-		Editable block = mBlocks[i];
+		EditableBlock block = mBlocks[i];
+		int length = block.length();
 		int blockStart = mBlockStarts[i];
-		if (start-blockStart < block.length()){
+		
+		if (start-blockStart < length){
 			//文本块还有剩余文本，将文本块剩余的范围找完
 			int next = block.nextSpanTransition(start-blockStart, limit-blockStart, kind);
-			if (next <= block.length()){
+			if (next < length || (next == length && hasSpanPointAt(this, blockStart+length))){
 				return next+blockStart;
 			}
 		}
@@ -1085,16 +1075,31 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		for(++i;i<mBlockSize;++i)
 		{
 			block = mBlocks[i];
+			length = block.length();
 		    blockStart = mBlockStarts[i];
 			int next = block.nextSpanTransition(0, limit-blockStart, kind);
-			if (next <= block.length()){
+			if (next < length || (next == length && hasSpanPointAt(this, blockStart+length))){
 				//在文本块中找到了span则返回它的位置，没有找到span会返回limit-blockStart
 				//不管找没找到，只有next小于length，才能说明在自身中找到了span，或者没找到但已经到达limit，此时返回
 				//反之，如果next大于length，则说明一定没找到，并且limit还在自己之后，还需要在之后的文本块中找
+				//但无法判断当limit==length时，不知该span是否在之后有衔接，因此额外判断
 				return next+blockStart;
 			}
 		}
 		return limit;
+	}
+	/* 是否有span的端点正好处于文本中的指定位置 */
+	private static boolean hasSpanPointAt(Spanned text, int offset)
+	{
+		Object[] spans = SpanUtils.getSpans(text,offset,offset,Object.class);
+		for(int i=0;i<spans.length;++i)
+		{
+			Object span = spans[i];
+			if(text.getSpanStart(span)==offset || text.getSpanEnd(span)==offset){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

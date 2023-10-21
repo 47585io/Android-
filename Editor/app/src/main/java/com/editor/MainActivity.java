@@ -58,11 +58,12 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		XCode Code = new XCode(this);
-		Code.setPool(mPool);
-		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
-		setContentView(Code);
+		//XCode Code = new XCode(this);
+		//Code.setPool(mPool);
+		//Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
+		//setContentView(Code);
 		//test2("/storage/emulated/0/Linux/3.java");
+		//test3();
 	}
 	
 	public void loadFileInThread(final String path)
@@ -130,10 +131,12 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i = 0;i<2000;i+=1000){
-			editor.setSpan(new ForegroundColorSpan(0xff859674),i,i+1000,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(int i = 0;i<2000;i+=100){
+			editor.setSpan(new ForegroundColorSpan(0xff859674),i,i+2000,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			//E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
+		//editor.insert(1000,"56");
+		Log.w("Span" ,nextSpan(editor));
 	}
 	
 	public void test3()
@@ -148,21 +151,42 @@ public class MainActivity extends Activity implements Runnable
 		
 		li.getSpans(0,10,Object.class);
 		te.getSpans(0,10,Object.class);
+		li.getSpans(0,10,Object.class);
+		te.getSpans(0,10,Object.class);
+		li.getSpans(0,10,Object.class);
+		te.getSpans(0,10,Object.class);
+		StringBuilder builder = new StringBuilder();
 		
-		long last = System.currentTimeMillis();
-		for(int i=0;i<60;++i){
+		for(int i=0;i<100;++i){
+			long last = System.currentTimeMillis();
 			te.getSpans(0,10,Object.class);
+			long now = System.currentTimeMillis();
+			builder.append(now-last+",");
 		}
-		long now = System.currentTimeMillis();
-		Log.w("te",(now-last)+"");
+		Log.w("te",builder.toString());
 		
-		long last2 = System.currentTimeMillis();
-		for(int i=0;i<60;++i){
+		builder.delete(0,builder.length());
+		for(int i=0;i<100;++i){
+			long last = System.currentTimeMillis();
 			li.getSpans(0,10,Object.class);
+			long now = System.currentTimeMillis();
+			builder.append(now-last+",");
 		}
-		long now2 = System.currentTimeMillis();
-		Log.w("li",(now2-last2)+"");
-		
+		Log.w("li",builder.toString());
+	}
+	
+	public String nextSpan(Spanned spanString)
+	{
+		StringBuilder builder = new StringBuilder();
+		int end = 99999999;
+		int next = 0;
+		for (;next < end;) 
+		{
+			next = spanString.nextSpanTransition(next, end, CharacterStyle.class);
+			builder.append(next);
+			builder.append(',');
+		}
+		return builder.toString();
 	}
 	
 }

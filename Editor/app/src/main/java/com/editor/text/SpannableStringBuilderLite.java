@@ -52,21 +52,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                     continue;
                 }
 
-                //将span在原字符串中较start的偏移量获取，并偏移到自身中的位置
+                //将span在原字符串中较start的偏移量获取
                 int st = sp.getSpanStart(spans[i]) - start;
                 int en = sp.getSpanEnd(spans[i]) - start;
-                int fl = sp.getSpanFlags(spans[i]);
-
+				int fl = sp.getSpanFlags(spans[i]);
+				
                 //范围不可超过自己的大小
                 if (st < 0)
                     st = 0;
-                if (st > end - start)
-                    st = end - start;
-                if (en < 0)
-                    en = 0;
                 if (en > end - start)
                     en = end - start;
-                setSpan(false, spans[i], st, en, fl, false);
+				setSpan(false, spans[i], st, en, fl, false);	
             }
             //设置完span后一并刷新
             quickRestoreInvariants();
@@ -581,7 +577,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	}
 	public boolean needExpandSpanStart(Object span, int flags){
 		int startFlag = (flags & START_MASK) >> START_SHIFT;
-		return startFlag == MARK;
+		return startFlag != POINT;
 	}
 	public boolean needExpandSpanEnd(Object span, int flags){
 		int endFlag = flags & END_MASK;
@@ -748,21 +744,48 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
-		//统计范围内节点个数，并创建指定大小的数组
-		int count = countSpans(queryStart, queryEnd, kind, treeRoot());
-        if (count == 0) {
-            return EmptyArray.emptyArray(kind);
-        }
-        T[] ret = (T[]) Array.newInstance(kind, count);
-        final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+		//创建列表，获取span
+		final List<T> retList = obtainList();
+		final List<Integer> prioList = sortByInsertionOrder ? obtainList() : null;
+		final List<Integer> orderList = sortByInsertionOrder ? obtainList() : null;
+		final int count = getSpansRec(queryStart, queryEnd, kind, treeRoot(),
+		                              retList, prioList, orderList, 0, sortByInsertionOrder);
+
+	    //没找到span，提前回收列表
+		if(count==0){
+			recyleList(retList);
+			if(sortByInsertionOrder){
+				recyleList(prioList);
+				recyleList(orderList);
+			}
+			return EmptyArray.emptyArray(kind);
+		}
+
+		//创建数组
+		T[] ret = (T[]) Array.newInstance(kind, count);
+		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
         final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
 
-		//从根节点开始，找到范围内的所有节点
-        getSpansRec(queryStart, queryEnd, kind, treeRoot(), 
-		            ret, prioSortBuffer, orderSortBuffer, 0, sortByInsertionOrder);
+		//将span拷贝到数组中
+		retList.toArray(ret);
+		if(sortByInsertionOrder){
+			Iterator prioIterator = prioList.listIterator(0);
+			Iterator orderIterator = orderList.listIterator(0);
+			for(int i=0;i<count;++i){
+				prioSortBuffer[i] = prioIterator.next();
+				orderSortBuffer[i] = orderIterator.next();
+			}	
+		}
 
-		//如果需要排序，则按插入顺序排序
-		if (sortByInsertionOrder) {
+		//回收列表
+		recyleList(retList);
+		if(sortByInsertionOrder){
+			recyleList(prioList);
+			recyleList(orderList);
+		}
+
+        //如果需要排序，则按插入顺序排序，回收数组
+        if (sortByInsertionOrder) {
             sort(ret, prioSortBuffer, orderSortBuffer);
             recycle(prioSortBuffer);
             recycle(orderSortBuffer);
@@ -829,7 +852,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @param <t> * @return 找到的跨度总数。
 	 */
 	@SuppressWarnings("unchecked")
-    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, T[] ret, int[] priority, int[] insertionOrder, int count, boolean sort)
+    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, List<T> ret, List<Integer> priority, List<Integer> insertionOrder, int count, boolean sort)
     {
         if ((i & 1) != 0) 
 		{
@@ -865,12 +888,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 				(Object.class == kind || kind.isInstance(mSpans[i])))
 			{    
                 //将自己放入最后
-				int target = count;
-				ret[target] = (T) mSpans[i];
+				ret.add((T)mSpans[i]);
 			    if (sort) {
 				    //如果需要排序，我们还要添加该节点的优先级和插入顺序
-				    priority[target] = mSpanFlags[i] & SPAN_PRIORITY;
-				    insertionOrder[target] = mSpanOrder[i];
+				    priority.add(mSpanFlags[i] & SPAN_PRIORITY);
+				    insertionOrder.add(mSpanOrder[i]);
 			    } 
                 count++;
             }
@@ -948,6 +970,32 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
         return buffer;
     }
+	
+	/* 获取一个空列表 */
+	private static List obtainList()
+	{
+		synchronized(sListBuffer)
+		{
+			if(sListCount > 0){
+				List buffer = sListBuffer[--sListCount];
+				sListBuffer[sListCount] = null;
+				return buffer;
+			}
+		}
+		return new LinkedList();
+	}
+	
+	/* 回收一个列表 */
+	private static void recyleList(List buffer)
+	{
+		buffer.clear();
+		synchronized(sListBuffer)
+		{
+			if(sListCount < sListBuffer.length){
+				sListBuffer[sListCount++] = buffer;
+			}
+		}
+	}
 	
     //将数组表示为堆，堆的每个节点最多有两个子节点，节点从按层次从上至下，从左至右，按数组中的顺序排列
     //将下标为0的元素作为根节点，而根节点的左右子节点下标分别为1，2，并且下层的子节点下标为3，4，5，6，一直这样排列下去
@@ -1066,7 +1114,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) {
             kind = Object.class;
         }
-		return nextSpanTransitionRec(start, limit, kind, treeRoot());
+		//查找前将原本范围转换为真实范围，找到后再转换为原本位置
+		start = start > mGapStart ? start+mGapLength : start;
+		limit = limit >= mGapStart ? limit+mGapLength : limit;
+		int next = nextSpanTransitionRec(start, limit, kind, treeRoot());
+		return resolveGap(next);
     }
 
     //此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
@@ -1103,13 +1155,14 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     //每次limit边界都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
 
     //从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
+	//为了提升效率，此函数将直接在真实范围中查找
     private int nextSpanTransitionRec(int start, int limit, Class kind, int i) 
     {
         if ((i & 1) != 0) 
         {
             //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-			int spanMax = mSpanMax[left] > mGapStart ? mSpanMax[left]-mGapLength : mSpanMax[left];
+			int spanMax = mSpanMax[left];// > mGapStart ? mSpanMax[left]-mGapLength : mSpanMax[left];
             if (spanMax > start){
                 //左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
                 //因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点的最小limit边界
@@ -1120,8 +1173,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (i < mSpanCount) 
         {
             //若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
-            int st = mSpanStarts[i] > mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
-            int en = mSpanEnds[i] > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
+            int st = mSpanStarts[i];//> mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
+            int en = mSpanEnds[i];// > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
                 limit = st;
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
@@ -1519,7 +1572,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	
 	private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
-    private static final int[][] sCachedIntBuffer = new int[6][0]; //存放和回收用于排序的数组
+    private static final int[][] sCachedIntBuffer = new int[6][0]; //回收用于排序span的数组
+	private static final List[] sListBuffer = new List[6]; //回收用于获取span的列表
+	private static int sListCount = 0; //记录列表数
 	
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
 	//每个span有spanStart和spanEnd，而我们可以给两端点各设置MARK，POINT，PARAGRAPH其中的一个标志
