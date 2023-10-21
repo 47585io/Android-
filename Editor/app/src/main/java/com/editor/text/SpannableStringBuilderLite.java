@@ -1114,11 +1114,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) {
             kind = Object.class;
         }
-		//查找前将原本范围转换为真实范围，找到后再转换为原本位置
-		start = start > mGapStart ? start+mGapLength : start;
-		limit = limit >= mGapStart ? limit+mGapLength : limit;
-		int next = nextSpanTransitionRec(start, limit, kind, treeRoot());
-		return resolveGap(next);
+		return nextSpanTransitionRec(start, limit, kind, treeRoot());
     }
 
     //此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
@@ -1155,14 +1151,13 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     //每次limit边界都随着返回可能缩小，最后必然是所有节点在此范围内最小的偏移量
 
     //从索引为i的节点开始，向下遍历其子节点，找到一个在start~limit之内且离start最近的偏移量，此偏移量可以是某个节点的起始或末尾位置
-	//为了提升效率，此函数将直接在真实范围中查找
     private int nextSpanTransitionRec(int start, int limit, Class kind, int i) 
     {
         if ((i & 1) != 0) 
         {
             //若i不是叶子节点，则先遍历左子节点
             int left = leftChild(i);
-			int spanMax = mSpanMax[left];// > mGapStart ? mSpanMax[left]-mGapLength : mSpanMax[left];
+			int spanMax = mSpanMax[left] > mGapStart ? mSpanMax[left]-mGapLength : mSpanMax[left];
             if (spanMax > start){
                 //左子节点之下的最大区间在start之后，说明左子节点中有至少一个节点的spanEnd>start
                 //因此可以继续遍历左子节点，找到一个spanEnd大于start但小于limit的左子节点的最小limit边界
@@ -1173,8 +1168,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (i < mSpanCount) 
         {
             //若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
-            int st = mSpanStarts[i];//> mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
-            int en = mSpanEnds[i];// > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
+            int st = mSpanStarts[i] > mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
+            int en = mSpanEnds[i] > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
             if (st > start && st < limit && kind.isInstance(mSpans[i]))
                 limit = st;
             if (en > start && en < limit && kind.isInstance(mSpans[i]))
