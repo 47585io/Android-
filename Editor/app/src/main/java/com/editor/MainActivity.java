@@ -62,7 +62,7 @@ public class MainActivity extends Activity implements Runnable
 		//Code.setPool(mPool);
 		//Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
 		//setContentView(Code);
-		//test2("/storage/emulated/0/Linux/3.java");
+		test2("/storage/emulated/0/Linux/3.java");
 		//test3();
 	}
 	
