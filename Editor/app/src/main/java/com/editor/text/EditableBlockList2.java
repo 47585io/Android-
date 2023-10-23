@@ -1210,6 +1210,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		return mFilters;
 	}
 
+	
 	private static interface Do
 	{
 		public void dothing(int id, int start, int end)
@@ -1300,7 +1301,6 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	public int getTextWatcherDepth() {
         return mTextWatcherDepth;
     }
-
 
 	/* 对光标的处理 */
 	public void setSelection(int start, int end)
