@@ -895,6 +895,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	/* 用指定的span标记范围内的文本，enforce表示是否需要强制设置而无视其是否是无效span */
 	private void setSpan(final Object span, int start, int end, final int flags, final boolean enforce)
 	{
+		checkRange("setSpan",start,end);
 		if(!enforce && isInvalidSpan(span,start,end,flags)){
 			//从该类创建无效跨度时，自动忽略无效跨度
 			return;
@@ -972,6 +973,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	/* 获取与指定范围重叠的指定类型的span，sort表示是否按优先级和插入顺序排序 */
 	private <T extends Object> T[] getSpans(int start, int end, final Class<T> kind, boolean sort)
 	{
+		checkRange("getSpans", start, end);
 		if(kind == null){
 			return (T[])EmptyArray.OBJECT;
 		}
@@ -1078,6 +1080,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	@Override
 	public int nextSpanTransition(final int start, final int limit, Class kind)
 	{
+		checkRange("nextSpanTransition", start, limit);
 		if(mSpanCount == 0){
 			return limit;
 		}
@@ -1137,6 +1140,12 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	@Override
 	public char charAt(int p1)
 	{
+		int len = mLength;
+        if (p1 < 0) {
+            throw new IndexOutOfBoundsException("charAt: " + p1 + " < 0");
+        } else if (p1 >= len) {
+            throw new IndexOutOfBoundsException("charAt: " + p1 + " >= length " + len);
+        }
 		//先走到start指定的文本块
 		int i = findBlockIdForIndex(p1);
 		Editable block = mBlocks[i];
@@ -1151,6 +1160,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	@Override
 	public void getChars(int start, int end, final char[] arr, final int index)
 	{
+		checkRange("getChars", start, end);
 		//收集范围内所有文本块的字符，存储到arr中
 		Do d = new Do()
 		{
@@ -1170,7 +1180,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	@Override
 	public CharSequence subSequence(int start, int end){
 		//我们才不返回EditableBlockList的实例，这太浪费了
-		return new SpannableStringBuilderLite(this,start,end);
+		return new SpannableStringBuilderLite(this, start, end);
 	}
 	public String subString(int start, int end)
 	{ 
@@ -1315,10 +1325,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			mSelectionWatcher.onSelectionChanged(st,en,ost,oen,this);
 		}
 	}
-	public Editable replaceUseSelection(int before, int after, CharSequence p1, int p2, int p3){
-		return replace(mSelectionStart-before,mSelectionEnd+after,p1,p2,p3);
-	}
-
+	
 
 	//任意对象有一个锁和一个等待队列，锁只能被一个线程持有，其他试图获得同样锁的线程需要等待
 	//任意对象都可以作为锁对象，对于拥有相同锁的所有代码块，无论在代码块中做了什么，都保证同时只有一个线程能执行这些代码块
@@ -1548,6 +1555,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		}
 	}
 	
+	/* 存储文本块的链表节点 */
 	private final static class Link
 	{
 		private EditableBlock block;
