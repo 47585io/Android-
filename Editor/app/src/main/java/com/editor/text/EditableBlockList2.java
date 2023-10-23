@@ -37,7 +37,7 @@ import android.util.*;
  * 
  * 已解决bug6: 插入文本时，当插入点位于文本块起始或末尾，端点位于上个文本块末尾和下个文本块起始的span应扩展
  * 在插入前，先获取即将挤到两边的span，插入后，如果需要扩展，再将端点扩展包含文本
- * 参见getAtPointSpans，expandSpans
+ * 参见getExpandSpans，expandSpans
  *
  * 已解决bug7: BlockListener的方法调用时并没有刷新，可能会有bug
  * (length未刷新，在末尾删除时，测量下标超出界限)，应该在适当时机同步length
@@ -71,18 +71,21 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	//如果只要快速查找，建议使用方案2，它不仅能节省时间，还能节省内存
 	//最蠢的做法则是为每种类型的数据都分配一个map，存储时需要put多次，要获取不同数据吋得多次get，并且相同的键占用了额外内存
 	
+	private int mLowBlockIndexMark; //记录了mIndexOfBlocks应该从哪里开始刷新
+	private int mLowBlockStartMark; //记录了mBlockStarts应该从哪里开始刷新
+	private int MaxCount; //每个文本块的最大长度
+	private int ReserveCount; //在文本块装满时，会额外预留ReserveCount长度的空间
+	
 	private BlockFactory mEditableFactory;
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
 	private BlockListener mBlockListener;
-
-	private int MaxCount; //每个文本块的最大长度
-	private int ReserveCount; //在文本块装满时，会额外预留ReserveCount长度的空间
+	
 	private int mTextWatcherDepth;
 	private int mSelectionStart, mSelectionEnd;
 	private InputFilter[] mFilters = NO_FILTERS;
-
-	private static final int Default_MaxCount = 1280;
+	
+	private static final int Default_MaxCount = 10;
 	private static final int Default_ReserveCount = Default_MaxCount*2/10;
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
 
@@ -135,6 +138,8 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
 		mIndexOfBlocks.put(block,i);
+		invalidateIndexMark(i);
+		invalidateStartMark(i);
 		mBlockSize++;
 	}
 	/* 移除指定位置的文本块 */
@@ -146,17 +151,19 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
 		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
 		mIndexOfBlocks.remove(block);
+		invalidateIndexMark(i);
+		invalidateStartMark(i);
 		mBlockSize--;
 		mLength -= length;
 	}
-	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks是调用者的责任 */
+	/* 在指定位置添加count个文本块，若send为false，则刷新mIndexOfBlocks和mBlockStarts是调用者的责任 */
 	private void addBlocks(final int i, final int count, boolean send)
 	{
 		for(int k=0;k<count;++k){
 			addBlock(i+k);
 		}
 		if(send){
-			refreshInvariants(i);
+			refreshInvariants();
 			sendBlocksAdded(i,count);
 		}
 	}
@@ -167,7 +174,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			removeBlock(k);
 		}
 		if(send){
-			refreshInvariants(i);
+			refreshInvariants();
 			sendBlocksRemoved(i,j);
 		}
 		if(mBlockSize==0){
@@ -175,7 +182,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			addBlocks(0,1,true);
 		}
 	}
-	/* 从指定id的文本块开始，分发text中指定范围内的文本 */
+	/* 从指定id的文本块开始，分发text中指定范围内的文本，返回分发到的文本块下标 */
 	private int dispatchTextBlock(final int id, CharSequence tb, int tbStart, int tbEnd, boolean send)
 	{
 		if(tbStart == tbEnd){
@@ -192,7 +199,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		int j = id+count;
 		//添加文本块后必须刷新mIndexOfBlocks，从id开始
 		addBlocks(i,count,false);
-		refreshInvariants(id);
+		refreshInvariants();
 
 		//计算并填充文本，插入文本仅需mIndexOfBlocks正确，因此可以连续插入
 		for(i=id;i<j;++i)
@@ -207,7 +214,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 
 		//在修正mBlockStarts后，一并发送事件
 		if(send){
-			refreshInvariants(id);
+			refreshInvariants();
 			sendBlocksAdded(id,count);
 			sendBlocksInsertAfter(id,j-1,0,mBlocks[j-1].length());
 		}
@@ -417,6 +424,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	private void insertForBlocksReverse(final int i, final int index, CharSequence tb, int tbStart, int tbEnd)
 	{
 		//先插入文本，让在此范围内的span进行扩展和修正
+		//注意必须立即刷新，因为插入的位置不是末尾时，不连续的范围将错误传递
 		repalceWithSpans(i,index,index,tb,tbStart,tbEnd,true,true);
 		
 		//再检查文本块的内容是否超出MaxCount
@@ -472,7 +480,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			}else{	
 			    //否则就删除范围内的文本
 				repalceWithSpans(i,start,end,"",0,0,false,spanIsRemoved);
-				refreshInvariants(i);
+				refreshInvariants();
 			}
 			sendBlocksDeleteAfter(i,i,start,start);
 		}
@@ -510,7 +518,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 			if(removedBlockEndIndex>removedBlockStartIndex){
 				removeBlocks(removedBlockStartIndex,removedBlockEndIndex,true);
 			}else{
-				refreshInvariants(i);
+				refreshInvariants();
 			}
 			sendBlocksDeleteAfter(startBlockIndex,endBlockIndex,start,0);
 		}
@@ -539,6 +547,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		//需要在删除文本前，替换span的绑定。删除文本不需要修正span
 		replaceSpans(i,start,end,tb,tbStart,tbEnd,spanIsRemoved);
 		dstBlock.replace(start,end,tb,tbStart,tbEnd);
+		invalidateStartMark(i);
 		mLength += -before+after;
 		//需要在插入后，修正端点处的span
 		if(after>0){
@@ -548,7 +557,7 @@ public class EditableBlockList2 extends Object implements EditableBlock
 		//需要在发送事件前刷新数据
 		if(send)
 		{
-			refreshInvariants(i);
+			refreshInvariants();
 			if(before>0){
 				sendBlocksDeleteAfter(i,i,start,end);
 			}
@@ -617,17 +626,32 @@ public class EditableBlockList2 extends Object implements EditableBlock
 	}
 
 	/* 在文本或文本块改变后，刷新所有的数据 */
-	private void refreshInvariants(int i)
+	private void refreshInvariants()
 	{
-		for(;i<mBlockSize;++i)
+		if(mLowBlockStartMark == 0){
+			mBlockStarts[mLowBlockStartMark++] = 0;
+		}
+		for(int i=mLowBlockStartMark; i<mBlockSize; ++i){
+			mBlockStarts[i] = mBlockStarts[i-1]+mBlocks[i-1].length();
+		}
+		for(int i=mLowBlockIndexMark; i<mBlockSize; ++i)
 		{
 			EditableBlock block = mBlocks[i];
-			mBlockStarts[i] = i>0 ? mBlockStarts[i-1]+mBlocks[i-1].length() : 0;
 			Integer index = mIndexOfBlocks.get(block);
 			if(index==null || index!=i){
 				mIndexOfBlocks.put(block,i);
 			}
 		}
+		mLowBlockStartMark = Integer.MAX_VALUE;
+		mLowBlockIndexMark = Integer.MAX_VALUE;
+	}
+	/* 在添加移除文本块时，刷新mLowBlockIndexMark */
+	private void invalidateIndexMark(int i){
+		mLowBlockIndexMark = i<=mLowBlockIndexMark ? i:mLowBlockIndexMark;
+	}
+	/* 在在添加移除文本块时或修改文本块的文本时，刷新mLowBlockStartMark */
+	private void invalidateStartMark(int i){
+		mLowBlockStartMark = i<=mLowBlockStartMark ? i:mLowBlockStartMark;
 	}
 
 	/* 在文本修改后，修正空缺span所在指定文本块中的范围，span样本通常是取自文本块的两端 */

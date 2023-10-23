@@ -21,6 +21,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	//临时变得
 	private int cacheLine;
 	private boolean isStart,isEnd;
+	private boolean isModify;
 
 	//记录属性
 	private int mLineCount;
@@ -95,13 +96,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		return mCursorWidthSpacing;
 	}
 
-	/*
-	 _______________________________________
+/*
+ _______________________________________
 
-	 文本块事件
-	 _______________________________________
+ 文本块事件
+ _______________________________________
 
-	 */
+*/
 
 	@Override
 	public void onAddBlocks(int i, int count)
@@ -191,18 +192,21 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	public void afterBlocksChanged(int i, int iStart)
 	{
 		//在本次文本块变化后，需要刷新数据
+		if(i == 0){
+			mStartLines[i++] = 0;
+		}
 		for(;i<mBlockSize;++i){
-			mStartLines[i] = i==0 ? 0:mStartLines[i-1]+mLines[i-1];
+			mStartLines[i] = mStartLines[i-1]+mLines[i-1];
 		}
 	}
 
-	/*
-	 _______________________________________
+/*
+ _______________________________________
 
-	 测量文本块的函数
-	 _______________________________________
+ 测量文本块的函数
+ _______________________________________
 
-	 */
+*/
 
 	/* 在插入后测量指定文本块的指定范围内的文本的宽和行数，并做出插入决策 */
 	private void measureInsertBlockAfter(int id, int start, int end)
@@ -341,13 +345,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		return width;
 	}
 
-	/*
-	 _______________________________________
+/*
+ _______________________________________
 
-	 接下来我们就可以实现父类的一些方法了
-	 _______________________________________
+ 接下来我们就可以实现父类的一些方法了
+ _______________________________________
 
-	 */
+*/
 
     @Override
 	public int getLineCount(){
@@ -617,13 +621,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 		return tryLine_End(getText(),offset);
 	}
 
-	/*
-	 _______________________________________
+/*
+ _______________________________________
 
-	 其它的函数
-	 _______________________________________
+ 其它的函数
+ _______________________________________
 
-	 */
+*/
 
 	/* 获取光标坐标 */
 	final public void getCursorPos(int offset, pos pos)

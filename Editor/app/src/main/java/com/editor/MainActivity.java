@@ -157,21 +157,22 @@ public class MainActivity extends Activity implements Runnable
 		te.getSpans(0,10,Object.class);
 		StringBuilder builder = new StringBuilder();
 		
+		long last = System.currentTimeMillis();
 		for(int i=0;i<100;++i){
-			long last = System.currentTimeMillis();
-			te.getSpans(0,10,Object.class);
-			long now = System.currentTimeMillis();
-			builder.append(now-last+",");
+			te.quickGetSpans(0,10,Object.class);
 		}
+		long now = System.currentTimeMillis();
+		builder.append(now-last+",");
 		Log.w("te",builder.toString());
 		
 		builder.delete(0,builder.length());
+		
+		last = System.currentTimeMillis();
 		for(int i=0;i<100;++i){
-			long last = System.currentTimeMillis();
-			li.getSpans(0,10,Object.class);
-			long now = System.currentTimeMillis();
-			builder.append(now-last+",");
+			li.quickGetSpans(0,10,Object.class);
 		}
+		now = System.currentTimeMillis();
+		builder.append(now-last+",");
 		Log.w("li",builder.toString());
 	}
 	
