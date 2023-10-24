@@ -51,18 +51,21 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 if (spans[i] instanceof NoCopySpan) {
                     continue;
                 }
-
+				
                 //将span在原字符串中较start的偏移量获取
                 int st = sp.getSpanStart(spans[i]) - start;
-                int en = sp.getSpanEnd(spans[i]) - start;
-				int fl = sp.getSpanFlags(spans[i]);
+                int en = sp.getSpanEnd(spans[i]) - start;	
 				
                 //范围不可超过自己的大小
                 if (st < 0)
                     st = 0;
                 if (en > end - start)
                     en = end - start;
-				setSpan(false, spans[i], st, en, fl, false);	
+				if (en > st){
+					//不添加无效的span
+					int fl = sp.getSpanFlags(spans[i]);
+					setSpan(false, spans[i], st, en, fl, true);	
+				}
             }
             //设置完span后一并刷新
             quickRestoreInvariants();
@@ -744,6 +747,29 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
+		//如果要获取全部span，拷贝所有span。此方案用于在EditableBlockList中节省时间
+		if(kind==Object.class && queryStart==0 && queryEnd==length())
+		{
+			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
+			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+
+			System.arraycopy(mSpans,0,ret,0,mSpanCount);
+			if(sortByInsertionOrder){
+				for(int i=0;i<mSpanCount;++i){
+					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
+					orderSortBuffer[i] = mSpanOrder[i];
+				}
+			}
+
+			if (sortByInsertionOrder) {
+				sort(ret, prioSortBuffer, orderSortBuffer);
+				recycle(prioSortBuffer);
+				recycle(orderSortBuffer);
+			}
+			return ret;
+		}
+		
 		//创建列表，获取span
 		final List<T> retList = obtainList();
 		final List<Integer> prioList = sortByInsertionOrder ? obtainList() : null;
@@ -1231,6 +1257,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             throw new IndexOutOfBoundsException(operation + " " +
                                                 region(start, end) + " has end before start");
         }
+		if (start < 0 || end < 0){
+			throw new IndexOutOfBoundsException(operation + " " +
+                                                region(start, end) + " start before 0 ");
+		}
         int len = length();
         if (start > len || end > len) {
             throw new IndexOutOfBoundsException(operation + " " +

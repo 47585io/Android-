@@ -349,8 +349,12 @@ public class EditableBlockList extends Object implements EditableBlock
 				//需要在插入前获取端点正好在插入两端的span，但前提是它们也刚好在文本块两端并且不扩展
 				spans = getExpandSpans(i,start);
 			}
-			//插入前还要移除文本中与自身重复的span
-			tb = removeRepeatSpans(tb,tbStart,tbEnd);
+			if(mSpanCount>0 && tb instanceof Spanned){
+				//插入前还要移除文本中与自身重复的span
+				tb = removeRepeatSpans(tb,tbStart,tbEnd);
+				tbStart = 0;
+				tbEnd -= tbStart;
+			}
 			//删除后，末尾下标已不可预测，但起始下标仍可用于插入文本
 			insertForBlocksReverse(i,start,tb,tbStart,tbEnd);
 			//插入后，扩展端点正好处于插入两端的span
@@ -727,23 +731,19 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 	}
 
-	/* 移除text指定范围中与自己重复的spans */
+	/* 移除text指定范围中与自己重复的spans，返回新截取的字符串 */
 	private CharSequence removeRepeatSpans(CharSequence text, int start, int end)
 	{
-		if(mSpanCount>0 && text instanceof Spanned)
+		SpannableStringBuilderLite editor = new SpannableStringBuilderLite(text,start,end);
+		Object[] spans = editor.quickGetSpans(0,end-start,Object.class);
+		for(int i=0;i<spans.length;++i)
 		{
-			Spannable editor = text instanceof Spannable ? (Spannable)text:new SpannableStringBuilderLite(text);
-			Object[] spans = SpanUtils.getSpans(editor,start,end,Object.class);
-			for(int i=0;i<spans.length;++i)
-			{
-				Object span = spans[i];
-				if(mSpanInBlocks.get(span)!=null){
-					editor.removeSpan(span);
-				}
+			Object span = spans[i];
+			if(mSpanInBlocks.get(span)!=null){
+				editor.removeSpan(span);
 			}
-			return editor;
 		}
-		return text;
+		return editor;
 	}
 
 	/* 获取需要扩展的spans，必须在修正后调用 */
@@ -1211,6 +1211,7 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 
 	
+	/* 对每个文本块要分配的任务 */
 	private static interface Do
 	{
 		public void dothing(int id, int start, int end)
@@ -1615,6 +1616,10 @@ public class EditableBlockList extends Object implements EditableBlock
             throw new IndexOutOfBoundsException(operation + " " +
                                                 region(start, end) + " has end before start");
         }
+		if (start < 0 || end < 0){
+			throw new IndexOutOfBoundsException(operation + " " +
+                                                region(start, end) + " start before 0 ");
+		}
         int len = mLength;
         if (start > len || end > len) {
             throw new IndexOutOfBoundsException(operation + " " +
