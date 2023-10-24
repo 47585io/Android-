@@ -33,13 +33,13 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private float mCursorWidthSpacing;
 
 	//每个文本块，每个块的行数，每个块的宽度
-	private EditableBlockList2 mText;
+	private EditableBlockList mText;
 	private int[] mLines;
 	private int[] mStartLines;
 	private float[] mWidths;
 
 
-	protected BlockLayout(EditableBlockList2 text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
+	protected BlockLayout(EditableBlockList text, TextPaint paint, int width, Layout.Alignment align, float spacingmult, float spacingadd, float cursorWidth, float scale)
 	{
 		super(text,paint,width,align,spacingmult,spacingadd);
 
@@ -515,7 +515,7 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	@Override
 	public void getSelectionPath(int start, int end, Path dest)
 	{
-		EditableBlockList2 text = mText;
+		EditableBlockList text = mText;
 		TextPaint paint = getPaint();
 		float lineHeight = getLineHeight();
 		RectF rf = RecylePool.obtainRect();

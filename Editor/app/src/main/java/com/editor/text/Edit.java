@@ -22,7 +22,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	private TextPaint mPaint;
 	
 	private myLayout mLayout;
-	private EditableBlockList2 mText;
+	private EditableBlockList mText;
 	private InputConnection mInput;
 	
 	private TextWatcher mTextWatcher;
@@ -61,7 +61,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 	public void setText(CharSequence text,int start,int end)
 	{
-		mText = new EditableBlockList2(text,start,end);
+		mText = new EditableBlockList(text,start,end);
 		mText.setTextWatcher(this);
 		//mText.setSelectionWatcher(this);
 		mText.setEditableFactory(mEditableFactory);
@@ -447,7 +447,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		private int[] mSpanStarts;
 		private int[] mSpanEnds;
 		
-		public myLayout(EditableBlockList2 base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale, int lineColor)
+		public myLayout(EditableBlockList base, TextPaint paint, int width, Layout.Alignment align,float spacingmult, float spacingadd, float cursorWidth, float scale, int lineColor)
 		{
 			super(base,paint,width,align,spacingmult,spacingadd,cursorWidth,scale);
 			mSpanPaint = new TextPaint(paint);

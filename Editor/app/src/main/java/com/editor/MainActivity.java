@@ -139,43 +139,6 @@ public class MainActivity extends Activity implements Runnable
 		Log.w("Span" ,nextSpan(editor));
 	}
 	
-	public void test3()
-	{
-		SpannableStringBuilderLite li = new SpannableStringBuilderLite("SpannableStringBuilderLite li = new SpannableStringBuilderLite(");
-		SpannableStringBuilderTemplete te = new SpannableStringBuilderTemplete("SpannableStringBuilderLite li = new SpannableStringBuilderLite(");
-		for(int i =200 ;i>=0;i--){
-			Object span = new ForegroundColorSpan(0);
-			li.setSpan(span,0,5,0);
-			te.setSpan(span,0,5,0);
-		}
-		
-		li.getSpans(0,10,Object.class);
-		te.getSpans(0,10,Object.class);
-		li.getSpans(0,10,Object.class);
-		te.getSpans(0,10,Object.class);
-		li.getSpans(0,10,Object.class);
-		te.getSpans(0,10,Object.class);
-		StringBuilder builder = new StringBuilder();
-		
-		long last = System.currentTimeMillis();
-		for(int i=0;i<100;++i){
-			te.quickGetSpans(0,10,Object.class);
-		}
-		long now = System.currentTimeMillis();
-		builder.append(now-last+",");
-		Log.w("te",builder.toString());
-		
-		builder.delete(0,builder.length());
-		
-		last = System.currentTimeMillis();
-		for(int i=0;i<100;++i){
-			li.quickGetSpans(0,10,Object.class);
-		}
-		now = System.currentTimeMillis();
-		builder.append(now-last+",");
-		Log.w("li",builder.toString());
-	}
-	
 	public String nextSpan(Spanned spanString)
 	{
 		StringBuilder builder = new StringBuilder();
