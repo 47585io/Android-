@@ -131,11 +131,11 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i = 0;i<1000;i+=1){
+		for(int i = 0;i<1000;i+=10){
 			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i+5,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
-		editor.insert(1,"56");
+		//editor.insert(1,"56");
 		Log.w("Span" ,nextSpan(editor));
 	}
 	
@@ -160,7 +160,7 @@ public class MainActivity extends Activity implements Runnable
 		int next = 0;
 		for (;next < end;) 
 		{
-			next = spanString.nextSpanTransition(next, end, CharacterStyle.class);
+			next = spanString.nextSpanTransition(next, end, BackgroundColorSpan.class);
 			builder.append(next);
 			builder.append(',');
 		}

@@ -524,7 +524,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			final int oen = mSpanEnds[i];
 			if (ost >= start && ost <= end) {
 				//若span的端点为POINT标志，该端点应将插入文本排除在前面。也就是说，位于删除范围内的端点应移动到插入文本的末尾，即mGapStart(由于mGapStart对齐到插入文本末尾，加上mGapLength是移动到间隙缓冲区末尾，这是为了防止下次moveGapTo失败，导致span无法扩展)
-				//如果span端点为MARK标志(无标志或其它标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到插入文本开头，即start
+				//若span的端点为MARK标志(无标志或其它标志的端点默认按MARK处理)，该端点应将插入文本排除在后面。所以应该将删除范围内的端点移动到插入文本开头，即start
 				final int startFlag = (mSpanFlags[i] & START_MASK) >> START_SHIFT;
 				mSpanStarts[i] = startFlag == POINT ? mGapStart+mGapLength : start;
 			}
@@ -636,10 +636,18 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 mSpanStarts[i] = start;
                 mSpanEnds[i] = end;
                 mSpanFlags[i] = flags;
-                if (send && (ost!=start || oen!=end)) {
+                if (send) 
+				{
 					//不用担心flags变化，它造成的位置变化已在之前应验
                     //是否要立刻修正index的位置错误，或等待以后一并修正
-                    restoreInvariants(i);
+                    if(ost!=start){
+						//start的变化可能引起重排序，从i开始排序
+						restoreInvariants(i);
+					}
+					else if(oen!=end){
+						//end的变化则只会影响此节点和父节点的最大范围，因此只calcMax
+						calcMax(treeRoot());
+					}
                 }
                 return;
             }
@@ -720,7 +728,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         Integer i = mIndexOfSpan.get(what);
         return i == null ? 0 : mSpanFlags[i];
     }
-	/* 返回拥有标记对象的数量 */
+	/**返回拥有标记对象的数量*/
 	public int getSpanCount(){
 		return mSpanCount;
 	}
@@ -1194,7 +1202,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     }
 
 
-    /**返回start之后但小于或等于limit的下一个偏移量，其中指定节点的类型和范围*/
+    /**返回start之后但小于limit的下一个偏移量，其中指定节点的类型和范围*/
     public int nextSpanTransition(int start, int limit, Class kind)
     {
         if (mSpanCount == 0) return limit;
