@@ -58,10 +58,10 @@ public class MainActivity extends Activity implements Runnable
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
 		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
-		XCode Code = new XCode(this);
-		Code.setPool(mPool);
-		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
-		setContentView(Code);
+		//XCode Code = new XCode(this);
+		//Code.setPool(mPool);
+		//Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
+		//setContentView(Code);
 		//test2("/storage/emulated/0/Linux/3.java");
 		//test3();
 	}
@@ -137,6 +137,20 @@ public class MainActivity extends Activity implements Runnable
 		}
 		editor.insert(1,"56");
 		Log.w("Span" ,nextSpan(editor));
+	}
+	
+	public void test3()
+	{
+		SpannableStringBuilderLite li = new SpannableStringBuilderLite("123456");
+		for(int i = 0;i<1000;i+=1){
+			li.setSpan(new Integer(0),0,6,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+		}
+		long last = System.currentTimeMillis();
+		for(int i = 0;i<1000;i+=1){
+			li.getSpans(0,5,Integer.class);
+		}
+		long now = System.currentTimeMillis();
+		Log.w("getSpans",""+(now-last));
 	}
 	
 	public String nextSpan(Spanned spanString)

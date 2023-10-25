@@ -1115,6 +1115,11 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 
 	@Override
+	public int getSpanCount(){
+		return mSpanCount;
+	}
+	
+	@Override
 	public int nextSpanTransition(final int start, final int limit, Class kind)
 	{
 		checkRange("nextSpanTransition", start, limit);
@@ -1607,7 +1612,25 @@ public class EditableBlockList extends Object implements EditableBlock
 	
 	
 	/* 一次性文本，在使用时可以随意修改，而不必拷贝一份，节省时间 */
-	public static interface DisposableText extends Spannable{}
+	public static interface DisposableText extends Spannable
+	{
+		public static class TempText extends SpannableStringBuilderLite implements DisposableText
+		{
+			public TempText(){
+				super("");
+			}		
+			public TempText(CharSequence text){
+				super(text);
+			}
+			public TempText(CharSequence text, int start, int end){
+				super(text, start, end);
+			}
+			@Override
+			public CharSequence subSequence(int start, int end){
+				return new TempText(this, start, end);
+			}
+		}
+	}
 	
 
 	/* 测试代码 */

@@ -720,6 +720,10 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         Integer i = mIndexOfSpan.get(what);
         return i == null ? 0 : mSpanFlags[i];
     }
+	/* 返回拥有标记对象的数量 */
+	public int getSpanCount(){
+		return mSpanCount;
+	}
 
     /**返回指定类型的范围的数组，这些范围与指定的文本范围重叠。
 	 种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
@@ -747,29 +751,18 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
-		//如果要获取全部span，拷贝所有span。此方案用于在EditableBlockList中节省时间
-		if(kind==Object.class && queryStart==0 && queryEnd==length())
-		{
-			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
-			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
-			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
-
-			System.arraycopy(mSpans,0,ret,0,mSpanCount);
-			if(sortByInsertionOrder){
-				for(int i=0;i<mSpanCount;++i){
-					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
-					orderSortBuffer[i] = mSpanOrder[i];
-				}
-			}
-
-			if (sortByInsertionOrder) {
-				sort(ret, prioSortBuffer, orderSortBuffer);
-				recycle(prioSortBuffer);
-				recycle(orderSortBuffer);
-			}
-			return ret;
+		if(queryStart==0 && queryEnd==length()){
+			return getSpansWithType(kind,sortByInsertionOrder);
 		}
-		
+		return getSpansInRange(queryStart,queryEnd,kind,sortByInsertionOrder);
+    }
+	
+	/* 获取指定范围内的指定类型的span
+	   为了效率，使用List来获取span，减少递归次数，这在sortByInsertionOrder为false时效果更明显 
+	   由于EditableBlockList中更多次调用quickGetSpans，因此更快
+	*/
+	private <T> T[] getSpansInRange(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder)
+	{
 		//创建列表，获取span
 		final List<T> retList = obtainList();
 		final List<Integer> prioList = sortByInsertionOrder ? obtainList() : null;
@@ -817,7 +810,73 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             recycle(orderSortBuffer);
         }
         return ret;
-    }
+	}
+	
+	/* 获取指定类型的所有span，此方案用于在EditableBlockList中节省时间 */
+	private <T> T[] getSpansWithType(Class<T> kind, boolean sortByInsertionOrder)
+	{
+		//如果要获取全部span，拷贝所有span
+		if(kind == Object.class)
+		{
+			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
+			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
+
+			System.arraycopy(mSpans,0,ret,0,mSpanCount);
+			if(sortByInsertionOrder){
+				for(int i=0;i<mSpanCount;++i){
+					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
+					orderSortBuffer[i] = mSpanOrder[i];
+				}
+			}
+
+			if (sortByInsertionOrder) {
+				sort(ret, prioSortBuffer, orderSortBuffer);
+				recycle(prioSortBuffer);
+				recycle(orderSortBuffer);
+			}
+			return ret;
+		}
+		
+		//统计指定类型的span个数
+		int count = 0;
+		for(int i=0;i<mSpanCount;++i){
+			if(kind.isInstance(mSpans[i])){
+				count++;
+			}
+		}
+		if(count==0){
+			return EmptyArray.emptyArray(kind);
+		}
+		
+		//创建指定长度的数组
+		T[] ret = (T[]) Array.newInstance(kind, count);
+		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+		count = 0;
+		
+		//获取span
+		for(int i=0;i<mSpanCount;++i)
+		{
+			if(kind.isInstance(mSpans[i]))
+			{
+				ret[count] = (T)mSpans[i];
+				if(sortByInsertionOrder){
+					prioSortBuffer[count] = mSpanFlags[i] & SPAN_PRIORITY;
+				    orderSortBuffer[count] = mSpanOrder[i];
+				}
+				count++;
+			}
+		}
+		
+		//如果需要排序，则按插入顺序排序，回收数组
+		if (sortByInsertionOrder) {
+            sort(ret, prioSortBuffer, orderSortBuffer);
+            recycle(prioSortBuffer);
+            recycle(orderSortBuffer);
+        }
+		return ret;
+	}
 	
 	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
     private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
@@ -1196,9 +1255,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             //若节点i在有效节点范围内，看看它在不在start~limit之内，是则返回其在start~limit之内的最大的位置，否则返回limit
             int st = mSpanStarts[i] > mGapStart ? mSpanStarts[i]-mGapLength : mSpanStarts[i];
             int en = mSpanEnds[i] > mGapStart ? mSpanEnds[i]-mGapLength : mSpanEnds[i];
-            if (st > start && st < limit && kind.isInstance(mSpans[i]))
+            if (st > start && st < limit && (Object.class == kind || kind.isInstance(mSpans[i])))
                 limit = st;
-            if (en > start && en < limit && kind.isInstance(mSpans[i]))
+            if (en > start && en < limit && (Object.class == kind || kind.isInstance(mSpans[i])))
                 limit = en;
             if (st < limit && (i & 1) != 0) {
                 //若节点i的起始位置在limit之前，则可能从i之后找一个小于limit边界的节点，从右子节点开始(因为右子节点的spanStart大于或等于i的spanStart)
@@ -1630,7 +1689,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
 	  您可以从最后两个示例中看到，为什么SPAN_MARK_MARK标志与SPAN_INCLUSIVE_EXCLUSIVE标志同义
 	  在范围开始处插入的文本包含在范围内，而排除在末尾插入的文本
-	
+	*/
+	/*
 	  SPAN_POINT_POINT 在0长度范围的偏移处插入"INSERT"：向前推动点(也就是被spanStart和spanEnd排除在前面)
 	  Before: Lorem [[ipsum dolor sit.
 	  After:  Lorem INSERT[[ipsum dolor sit.
