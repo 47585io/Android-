@@ -1185,10 +1185,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         int priority1 = priority[left];
         int priority2 = priority[right];
         if (priority1 == priority2) {
-            return Integer.compare(insertionOrder[left], insertionOrder[right]);
+			int order1 = insertionOrder[left];
+			int order2 = insertionOrder[right];
+            return order1<order2 ? -1 : (order1==order2 ? 0 : 1);
         }
         //因为高优先级必须在低优先级之前，所以要比较的参数与插入顺序检查相反
-        return Integer.compare(priority2, priority1);
+        return priority1<priority2 ? -1 : 1;
     }
 
 
