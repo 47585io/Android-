@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /** 这是内容和标记都可以更改的文本类，删除了监视器，PARAGRAPH标志，并优化效率 */
-public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock
+public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock, SpanBatchSetter
 {
 
     private final static String TAG = "SpannableStringBuilderLite";
@@ -587,6 +587,24 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		return endFlag == POINT;
 	}
 
+	/** 批量设置span */
+	public void setSpans(Object[] spans, int[] spanStarts, int[] spanEnds, int[] spanFlags)
+	{
+		int changedCount = 0;
+		for(int i=0;i<spans.length;++i){
+			if(spanEnds[i] > spanStarts[i]){
+				setSpan(false, spans[i], spanStarts[i], spanEnds[i], spanFlags[i], true);
+				changedCount++;
+			}
+		}
+		if(changedCount>mSpanCount/4){
+			quickRestoreInvariants();
+		}
+		else if(changedCount>0){
+			restoreInvariants(1);
+		}
+	}
+	/** 强制设置span */
 	public void enforceSetSpan(Object what, int start, int end, int flags){
 		setSpan(true, what, start, end, flags, true);
 	}
@@ -675,6 +693,23 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
     }
 
+	/** 批量移除span */
+	public void removeSpans(Object[] spans)
+	{
+		int removeCount = 0;
+		for(int i=0;i<spans.length;++i)
+		{
+			Integer index = mIndexOfSpan.remove(spans[i]);
+			if (index != null) {
+				invalidateIndex(i);
+				mSpans[i] = null;
+				removeCount++;
+			}
+		}
+		if(removeCount>0){
+			removeMarkSpans(removeCount);
+		}
+	}
     /**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) {
         removeSpan(what, 0);
@@ -706,6 +741,19 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//在有序的数组中移除一个元素，不会打乱顺序
 		restoreInvariants(mSpanCount);
     }
+	/** 移除在范围内的span */
+	public void removeSpansInRange(int start, int end)
+	{
+		start = start>mGapStart ? start+mGapLength : start;
+		end = end>=mGapStart ? end+mGapLength : end;
+		int count = markToBeRemovedSpans(start, end, treeRoot());
+		if(count==1){
+			removeFirstMarkSpan(start, end, treeRoot());
+		}
+		else if(count>1){
+			removeMarkSpans(count);
+		}
+	}
 
     /**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
     public int getSpanStart(Object what) 

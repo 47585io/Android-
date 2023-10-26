@@ -1,5 +1,4 @@
 package com.editor.text;
-
 import android.text.*;
 
 public interface SelectionWatcher
