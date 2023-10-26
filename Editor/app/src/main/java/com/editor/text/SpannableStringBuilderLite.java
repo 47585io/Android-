@@ -445,7 +445,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         {
             if (mSpans[i] == null){
                 //移除标记的节点
-                removeSpan(i, 0);
+                removeSpan(i);
                 return true;
             }
 			if((i & 1) != 0){
@@ -616,8 +616,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private void setSpan(boolean send, Object what, int start, int end, int flags, boolean enforce)
     {
         checkRange("setSpan", start, end);
-        int flagsStart = (flags & START_MASK) >> START_SHIFT;
-        int flagsEnd = flags & END_MASK;
         //0长度跨度
         if (!enforce && start>=end) {
             if (send) {
@@ -628,6 +626,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             return;
         }
 
+		int flagsStart = (flags & START_MASK) >> START_SHIFT;
+        int flagsEnd = flags & END_MASK;
         //如果设置span的位置在缓冲区之后，它的真实位置应加上mGapLength
         if (start > mGapStart) {
             start += mGapLength;
@@ -696,6 +696,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	/** 批量移除span */
 	public void removeSpans(Object[] spans)
 	{
+		if (mIndexOfSpan == null){
+			return;
+		} 
 		int removeCount = 0;
 		for(int i=0;i<spans.length;++i)
 		{
@@ -711,20 +714,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
 	}
     /**从文本中移除指定的标记对象*/
-    public void removeSpan(Object what) {
-        removeSpan(what, 0);
-    }
-    private void removeSpan(Object what, int flags)
-    {
+    public void removeSpan(Object what) 
+	{
         if (mIndexOfSpan == null) return;
         //获取span的下标，并移除它
         Integer i = mIndexOfSpan.remove(what);
         if (i != null) {
-            removeSpan(i.intValue(), flags);
+            removeSpan(i.intValue());
         }
     }
     //移除指定下标的span，注意:调用者负责删除mIndexOfSpan条目
-    private void removeSpan(int i, int flags) 
+    private void removeSpan(int i) 
     {
         //要移除此span，其实就是把此span之后的span全部往前挪一位
         int count = mSpanCount - (i + 1);
@@ -744,6 +744,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	/** 移除在范围内的span */
 	public void removeSpansInRange(int start, int end)
 	{
+		if(mSpanCount == 0){
+			return;
+		}
 		start = start>mGapStart ? start+mGapLength : start;
 		end = end>=mGapStart ? end+mGapLength : end;
 		int count = markToBeRemovedSpans(start, end, treeRoot());
