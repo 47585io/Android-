@@ -22,6 +22,8 @@ public abstract class BlockLayout extends Layout implements BlockListener
 	private int cacheLine;
 	private boolean isStart,isEnd;
 	private boolean isModify;
+	//EditableBlockList中对Block的修改事件和AfterBlocksChanged是连续发送的，中间不会发送文本事件
+	//也就是说，但凡涉及修改，每一次文本块事件都是连续的，立即修改立即刷新，不论文本事件回调深度如何
 
 	//记录属性
 	private int mLineCount;

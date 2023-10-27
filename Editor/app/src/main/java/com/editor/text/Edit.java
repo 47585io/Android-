@@ -64,7 +64,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		mText = new EditableBlockList(text,start,end);
 		mText.setTextWatcher(this);
 		//mText.setSelectionWatcher(this);
-		mText.setEditableFactory(mEditableFactory);
+		//mText.setEditableFactory(mEditableFactory);
 		
 		if(mLayout!=null){
 			int lineColor = mLayout.mLineColor;

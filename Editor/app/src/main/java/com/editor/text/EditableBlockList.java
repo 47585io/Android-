@@ -362,7 +362,7 @@ public class EditableBlockList extends Object implements EditableBlock
             }
         }
 
-		//文本变化前，调用文本监视器的方法
+		//文本变化前，调用文本监视器的方法，文本修改前触发二次更改无所谓
 		final int st = start;
 		final int before = end-start;
 		final int after = tbEnd-tbStart;
@@ -412,6 +412,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 
 		//最后计算光标位置，并调用文本和文本块和光标监视器的方法
+		//应该先调用文本块监听器刷新，因为在sendTextChanged中可能触发下次更改
 		sendAfterBlocksChanged(i,start);
 		sendTextChanged(st,before,after);
 		setSelection(st+after,st+after);
@@ -974,15 +975,11 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 
 	@Override
-	public void removeSpan(Object span){	
-	    removeSpan(span,true);
-	}
-	/* 移除span与blocks的绑定，并将span从这些文本块中移除，如果removed为false，则保留一个空的范围，并保留span的插入顺序 */
-	private void removeSpan(Object span, boolean removed)
+	public void removeSpan(Object span)
 	{	
-		SpanRange spanRange = removed ? mSpanInBlocks.remove(span):mSpanInBlocks.get(span);
+	    SpanRange spanRange = mSpanInBlocks.remove(span);
 		if(spanRange!=null){
-			removeSpan(span,spanRange,removed);
+			removeSpan(span,spanRange,true);
 		}
 	}
 	/* 移除span与blocks的绑定，并将span从这些文本块中移除，如果removed为false，则保留一个空的范围，并保留span的插入顺序 

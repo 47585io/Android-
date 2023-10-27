@@ -747,9 +747,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		if(mSpanCount == 0){
 			return;
 		}
-		if(start==0 && end==length()){
-			clearSpans();
-		}
 		start = start>mGapStart ? start+mGapLength : start;
 		end = end>=mGapStart ? end+mGapLength : end;
 		int count = markToBeRemovedSpans(start, end, treeRoot());
