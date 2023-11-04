@@ -930,11 +930,7 @@ public class EditableBlockList extends Object implements EditableBlock
 					return;
 				}
 				EditableBlock block = mBlocks[id];
-				if(!enforce){
-					block.setSpan(span,start,end,flags);
-				}else{
-					block.enforceSetSpan(span,start,end,flags);
-				}
+				block.enforceSetSpan(span,start,end,flags);
 				spanRange.add(block);
 			}
 		};
