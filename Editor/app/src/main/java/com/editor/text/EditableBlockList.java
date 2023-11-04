@@ -85,9 +85,9 @@ public class EditableBlockList extends Object implements EditableBlock
 	private int mSelectionStart, mSelectionEnd;
 	private InputFilter[] mFilters = NO_FILTERS;
 	
-	private static final int Default_MaxCount = 1280;
-	private static final int Default_ReserveCount = Default_MaxCount*2/10;
-	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
+	public static final int Default_MaxCount = 1280;
+	public static final int Default_ReserveCount = Default_MaxCount*2/10;
+	public static final InputFilter[] NO_FILTERS = new InputFilter[0];
 
 	
 	public EditableBlockList(){
@@ -97,9 +97,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		this(text,0,text.length());
 	}
 	public EditableBlockList(CharSequence text, int start, int end){
-		this(text,start,end,Default_MaxCount,Default_ReserveCount);
+		this(text,start,end,Default_MaxCount,Default_ReserveCount,null);
 	}
-	public EditableBlockList(CharSequence text, int start, int end, int count, int reserveCount)
+	public EditableBlockList(CharSequence text, int start, int end, int count, int reserveCount, BlockFactory fa)
 	{
 		mLength = 0;
 		mBlockSize = 0;
@@ -107,6 +107,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		mInsertionOrder = 0;
 		MaxCount = count<400 ? Default_MaxCount:count;
 		ReserveCount = reserveCount>=count ? count*2/10:reserveCount;
+		mEditableFactory = fa;
 		
 		mBlocks = EmptyArray.emptyArray(EditableBlock.class);
 		mBlockStarts = EmptyArray.INT;
@@ -122,32 +123,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			dispatchTextBlock(0,text,start,end,true);
 		}
 	}
-
-	/* 设置创建文本块的工厂，并立即应用这些文本块对象 */
-	public void setEditableFactory(BlockFactory fa)
-	{
-		if(mEditableFactory == fa){
-			return;
-		}
-		mEditableFactory = fa;
-		
-		//拷贝一份旧的文本块数组
-		int oldBlockSize = mBlockSize;
-		EditableBlock[] oldBlocks = ArrayUtils.copyNewArray(mBlocks,oldBlockSize,oldBlockSize);
-		mBlockSize = 0;
-		
-		//清空文本后，重新添加一些新的文本块，并刷新索引，不用刷新mBlockStarts
-		clearText();
-		addBlocks(0,oldBlockSize,false);
-		mLowBlockStartMark = Integer.MAX_VALUE;
-		refreshInvariants();
-		
-		//遍历旧文本块数组，将每个文本块的内容重新分配到新文本块中，并与span建立绑定
-		for(int i=0; i<oldBlockSize; ++i){
-			repalceWithSpans(i,0,0,oldBlocks[i],0,oldBlocks[i].length(),false,true);
-		}
-		mLowBlockStartMark = Integer.MAX_VALUE;
-	}
+	
 	public void setTextWatcher(TextWatcher wa){
 		mTextWatcher = wa;
 	}
@@ -156,15 +132,6 @@ public class EditableBlockList extends Object implements EditableBlock
 	}
 	public void setBlockListener(BlockListener li){
 		mBlockListener = li;
-	}
-	/* 扩展文本块的容量 */
-	public void increaseCountTo(int maxCount, int reserveCount)
-	{
-		if(maxCount<MaxCount || reserveCount>=maxCount){
-			throw new RuntimeException("The size does not fit the current text");
-		}
-		MaxCount = maxCount;
-		ReserveCount = reserveCount;
 	}
 
 	/* 在指定位置添加文本块 */

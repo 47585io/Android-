@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /** 这是内容和标记都可以更改的文本类，删除了监视器，PARAGRAPH标志，并优化效率 */
-public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock, SpanBatchSetter
+public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock
 {
 
     private final static String TAG = "SpannableStringBuilderLite";
@@ -85,40 +85,37 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     //为了达到这种效果，每次插入新的字符，就将间隙缓冲区移到光标位置，因此若之后也在连续位置插入字符，可以大大提升效率
     //间隙缓冲区中的内容总是无效的，它不被计入总文本之中(总文本实际上是处于间隙缓冲区之前和之后的文本)，若间隙缓冲区长度不足，需要进行扩展
 
-    /**返回文本中指定偏移量处的字符*/
+    /**文本长度总是数组长度减去间隙缓冲区长度*/
+    public int length() {
+        return mText.length - mGapLength;
+    }
+    /**如果此偏移量在间隙缓冲区之后，那么它的原本位置应减去间隙缓冲区长度*/
+    private int resolveGap(int i) {
+        return i > mGapStart ? i - mGapLength : i;
+    }
+	/**在间隙缓冲区之后的字符的真实位置总是加上一个间隙缓冲区长度*/
     public char charAt(int where) 
     {
-        int len = length();
+		int len = mText.length - mGapLength;
         if (where < 0) {
             throw new IndexOutOfBoundsException("charAt: " + where + " < 0");
         } else if (where >= len) {
             throw new IndexOutOfBoundsException("charAt: " + where + " >= length " + len);
         }
-        //在间隙缓冲区之后的字符的真实位置总是加上一个间隙缓冲区长度
         if (where >= mGapStart)
             return mText[where + mGapLength];
         else
             return mText[where];
     }
-
-    /**文本长度总是数组长度减去间隙缓冲区长度*/
-    public int length() {
-        return mText.length - mGapLength;
-    }
-
-    /*如果此偏移量在间隙缓冲区之后，那么它的原本位置应减去间隙缓冲区长度*/
-    private int resolveGap(int i) {
-        return i > mGapStart ? i - mGapLength : i;
-    }
 	
-    /*修改文本数组的长度的同时修改间隙缓冲区的大小*/
+    /**修改文本数组的长度的同时修改间隙缓冲区的大小*/
     private void resizeFor(int size) 
     {
         if (size+1 <= length()) {
             //假设最少额外扩展1个元素后，size仍装不下文本，或者装满了但间隙缓冲区已经没有长度了
             return;
         }
-
+		
 		final int oldLength = mText.length;
         //创建一个比size更大的数组，并将原数组中间隙缓冲区之前的字符拷贝到新数组开头
         char[] newText = ArrayUtils.newUnpaddedCharArray(GrowingArrayUtils.growSize(size));
@@ -134,12 +131,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         //轮替mText，间隙缓冲区长度增加
         mText = newText;
         mGapLength += delta;
-
         if (mGapLength < 1)
             new Exception("mGapLength < 1").printStackTrace();
+			
         if (mSpanCount != 0) 
         {
-			if(mGapStart>length()*0.75){
+			if(mGapStart > length()*0.75){
 				//遍历在间隙缓冲区之后的span，并将范围增加delta
 				moveSpansPoint(delta,treeRoot());
 			}
@@ -155,7 +152,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
     }
 	
-	/* 递归增大缓冲区之后的span */
+	/** 递归增大间隙缓冲区之后的span */
 	private void moveSpansPoint(int delta, int i) 
 	{
 		if((i & 1) != 0)
@@ -178,7 +175,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
 	}
 
-    /*移动间隙缓冲区到指定位置*/
+    /**移动间隙缓冲区到指定位置*/
     private void moveGapTo(int where)
     {
         if (where == mGapStart)
@@ -311,11 +308,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			//纯插入时不需要span移除，没有span时也不需要移除(因为0会导致leftChild为-1的bug)，要移除的span个数为0时，也不需要span移除
 			//由于间隙缓冲区在end，因此start的真实位置仍是start，end的真实位置应加上mGapLength，以包含间隙缓冲区之后的span
 			final int count = markToBeRemovedSpans(start, end+mGapLength, treeRoot());
-			if(count==1){
+			if(count == 1){
 				//单个节点的移除，不需要遍历整个数组，沿着路径将其移除
 				removeFirstMarkSpan(start, end+mGapLength, treeRoot());
 			}
-			else if(count>1){
+			else if(count > 1){
 				//太多数量的span要移除，必须一次性移除后再刷新，因为restore消耗的时间比remove更多
 				removeMarkSpans(count);
 			}
@@ -460,10 +457,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	/* 移除标记的节点，通过遍历所有的节点来找到这些节点并全部移除，只在移除后刷新一次，适合大量节点移除 */
 	private void removeMarkSpans(int markCount)
 	{
-		if(markCount==0){
-			return;
-		}
-		
 		//这是一个简单的清除标记节点的算法，i为查找索引，j为有效索引
 		int i=0, j=0;
 		for(;i<mSpanCount;++i)
@@ -487,7 +480,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
 			++j;
 		}
-		
 		mSpanCount-=markCount;
 		//在有序的数组中移除一些元素，不会打乱顺序
 		restoreInvariants(mSpanCount);
@@ -518,7 +510,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 					updatedCount += updatedIntervalBounds(start, end, rightChild(i));
 				}
 			}
-			
 			//节点i的任一端点在范围内，就修正它的位置
 			final int ost = mSpanStarts[i];
 			final int oen = mSpanEnds[i];
@@ -587,23 +578,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		return endFlag == POINT;
 	}
 
-	/** 批量设置span */
-	public void setSpans(Object[] spans, int[] spanStarts, int[] spanEnds, int[] spanFlags)
-	{
-		int changedCount = 0;
-		for(int i=0;i<spans.length;++i){
-			if(spanEnds[i] > spanStarts[i]){
-				setSpan(false, spans[i], spanStarts[i], spanEnds[i], spanFlags[i], true);
-				changedCount++;
-			}
-		}
-		if(changedCount>mSpanCount/4){
-			quickRestoreInvariants();
-		}
-		else if(changedCount>0){
-			restoreInvariants(1);
-		}
-	}
 	/** 强制设置span */
 	public void enforceSetSpan(Object what, int start, int end, int flags){
 		setSpan(true, what, start, end, flags, true);
@@ -626,18 +600,20 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             return;
         }
 
-		int flagsStart = (flags & START_MASK) >> START_SHIFT;
-        int flagsEnd = flags & END_MASK;
-        //如果设置span的位置在缓冲区之后，它的真实位置应加上mGapLength
+	    //如果设置span的位置在缓冲区之后，它的真实位置应加上mGapLength
         if (start > mGapStart) {
             start += mGapLength;
-        } else if (start == mGapStart) {
+        }
+		else if (start == mGapStart) {
+			int flagsStart = (flags & START_MASK) >> START_SHIFT;
             if (flagsStart == POINT)
                 start += mGapLength;
         }
         if (end > mGapStart) {
             end += mGapLength;
-        } else if (end == mGapStart) {
+        }
+		else if (end == mGapStart) {
+			int flagsEnd = flags & END_MASK;
             if (flagsEnd == POINT)
                 end += mGapLength;
         }
@@ -693,26 +669,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
     }
 
-	/** 批量移除span */
-	public void removeSpans(Object[] spans)
-	{
-		if (mIndexOfSpan == null){
-			return;
-		} 
-		int removeCount = 0;
-		for(int i=0;i<spans.length;++i)
-		{
-			Integer index = mIndexOfSpan.remove(spans[i]);
-			if (index != null) {
-				invalidateIndex(i);
-				mSpans[i] = null;
-				removeCount++;
-			}
-		}
-		if(removeCount>0){
-			removeMarkSpans(removeCount);
-		}
-	}
     /**从文本中移除指定的标记对象*/
     public void removeSpan(Object what) 
 	{
@@ -741,23 +697,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//在有序的数组中移除一个元素，不会打乱顺序
 		restoreInvariants(mSpanCount);
     }
-	/** 移除在范围内的span */
-	public void removeSpansInRange(int start, int end)
-	{
-		if(mSpanCount == 0){
-			return;
-		}
-		start = start>mGapStart ? start+mGapLength : start;
-		end = end>=mGapStart ? end+mGapLength : end;
-		int count = markToBeRemovedSpans(start, end, treeRoot());
-		if(count==1){
-			removeFirstMarkSpan(start, end, treeRoot());
-		}
-		else if(count>1){
-			removeMarkSpans(count);
-		}
-	}
-
+	
     /**返回指定标记对象开头在文本中的偏移量，如果该对象未附加到文本，则返回-1*/
     public int getSpanStart(Object what) 
     {
@@ -1026,6 +966,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			if (spanEnd > mGapStart) {
                 spanEnd -= mGapLength;
             }
+			//span与范围重叠，但不包含spanEnd为queryStart或者spanStart为queryEnd的span，但当span或查找范围为一点时此条件无效
             if (spanEnd >= queryStart  &&
 				(spanStart == spanEnd || queryStart == queryEnd ||
 				(spanStart != queryEnd && spanEnd != queryStart)) &&
