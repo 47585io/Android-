@@ -2,12 +2,14 @@ package com.editor.text;
 
 import android.text.*;
 import android.util.*;
-import com.editor.text.base.*;
 import java.lang.reflect.*;
 import java.util.*;
+import com.editor.text.base.*;
+import static com.editor.text.base.GrowingArrayUtils.GrowingArray;
+import static com.editor.text.base.GrowingArrayUtils.GrowingIntArray;
 
 
-/** 这是内容和标记都可以更改的文本类，删除了监视器，PARAGRAPH标志，并优化效率 */
+/** 这是内容和标记都可以更改的文本类，删除了监视器，PARAGRAPH标志，并优化效率，如果不嫌弃的话就试试吧^_^ */
 public class SpannableStringBuilderLite implements CharSequence, GetChars, Spannable, Editable, Appendable, EditableBlock
 {
 
@@ -68,7 +70,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 				}
             }
             //设置完span后一并刷新
-            quickRestoreInvariants();
+            restoreInvariants(1);
         }
     }
     public static SpannableStringBuilderLite valueOf(CharSequence source)
@@ -134,46 +136,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (mGapLength < 1)
             new Exception("mGapLength < 1").printStackTrace();
 			
-        if (mSpanCount != 0) 
-        {
-			if(mGapStart > length()*0.75){
-				//遍历在间隙缓冲区之后的span，并将范围增加delta
-				moveSpansPoint(delta,treeRoot());
-			}
-			else{
-				//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
-				for (int i = 0; i < mSpanCount; i++) {
-					if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
-					if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
-				}
+        if (mSpanCount != 0)
+		{
+			//遍历所有span，在间隙缓冲区之后的span的范围会增加delta
+			for (int i = 0; i < mSpanCount; i++) {
+				if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
+				if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
 			}
             //重新计算节点最大范围
             calcMax(treeRoot());
         }
     }
-	
-	/** 递归增大间隙缓冲区之后的span */
-	private void moveSpansPoint(int delta, int i) 
-	{
-		if((i & 1) != 0)
-		{
-			//左子节点需要在mGapStart后面
-			int left = leftChild(i);
-			if(mSpanMax[left] > mGapStart){
-				moveSpansPoint(delta,left);
-			}
-		}
-		if(i<mSpanCount)
-		{
-			//节点i自己在mGapStart后面
-			if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
-			if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
-			//无法保证右子节点不在后面
-			if((i & 1) != 0){
-				moveSpansPoint(delta,rightChild(i));
-			}
-		}
-	}
 
     /**移动间隙缓冲区到指定位置*/
     private void moveGapTo(int where)
@@ -343,12 +316,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 	
 		int addCount = 0;
-		if (cs instanceof Spanned) 
+		if (replacementLength > 0 && cs instanceof Spanned) 
         {
             //如果增加的文本是Spanned，需要获取范围内全部的span并附加到自身
             Spanned sp = (Spanned) cs;
             Object[] spans = sp.getSpans(csStart, csEnd, Object.class);
-            for (int i = 0; i < spans.length; i++) 
+            for (int i = 0; i < spans.length; ++i) 
             {      
                 //不添加重复的span
                 if (mIndexOfSpan==null || mIndexOfSpan.get(spans[i])==null)
@@ -360,7 +333,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 					if (st < csStart) st = csStart;
 					if (en > csEnd) en = csEnd;
 
-                    //将span在原字符串中较csStart的偏移量获取，并加上start偏移到新字符串中的位置
+                    //将span在原字符串中较csStart的偏移量获取，并加上start偏移到自身中的位置
                     int copySpanStart = st - csStart + start;
                     int copySpanEnd = en - csStart + start;
                     //无效span不添加
@@ -374,13 +347,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         }
 		
 		//添加span之后一并刷新，当然此刷新还可能包含updatedIntervalBounds时未刷新的内容
-		if(updatedCount+addCount>mSpanCount/4){
-			//当大量的节点被修改，我们使用快速排序
-			quickRestoreInvariants();
-		}
-		else if(updatedCount+addCount>0){
-			//小量节点被修改，使用插入排序
-			if(updatedCount==0){
+		if(updatedCount+addCount > 0)
+		{
+			if(updatedCount == 0){
 				//纯添加时，被修改的span都在后面
 				restoreInvariants(mSpanCount-addCount);
 			}else{
@@ -399,8 +368,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
 			int left = leftChild(i);
-			int spanMax = mSpanMax[left];
-			if (spanMax >= start) {
+			if (mSpanMax[left] >= start) {
 				count = markToBeRemovedSpans(start, end, left);
 			}
         }
@@ -414,12 +382,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 				mSpans[i] = null;
 				count++;
             }
-            if((i & 1) != 0){
+            if((i & 1) != 0 && mSpanStarts[i] <= end){
 				//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
-				int spanStart = mSpanStarts[i];
-				if(spanStart <= end){
-					count += markToBeRemovedSpans(start, end, rightChild(i));
-				}
+				count += markToBeRemovedSpans(start, end, rightChild(i));
 			}
 	    }
 		return count;
@@ -433,8 +398,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if ((i & 1) != 0) {
             //节点i不是叶子节点，若它的左子节点最大边界在start之后，则至少有一个左子节点可能在范围内，处理左子节点
 			int left = leftChild(i);
-			int spanMax = mSpanMax[left];
-			if (spanMax >= start && removeFirstMarkSpan(start, end, left)) {
+			if (mSpanMax[left] >= start && removeFirstMarkSpan(start, end, left)) {
                 return true;
             }
         }
@@ -445,11 +409,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 removeSpan(i);
                 return true;
             }
-			if((i & 1) != 0){
-				//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
-				int spanStart = mSpanStarts[i];
-				return spanStart <= end && removeFirstMarkSpan(start, end, rightChild(i));
-			}
+			//若节点i的start在end之前，并且有右子节点，处理右子节点(右子节点start>=节点i的start)
+			return (i & 1) != 0 && 
+			       mSpanStarts[i] <= end && removeFirstMarkSpan(start, end, rightChild(i));
         }
         return false;
     }
@@ -457,17 +419,20 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	/* 移除标记的节点，通过遍历所有的节点来找到这些节点并全部移除，只在移除后刷新一次，适合大量节点移除 */
 	private void removeMarkSpans(int markCount)
 	{
+		if(markCount == 0){
+			return;
+		}
 		//这是一个简单的清除标记节点的算法，i为查找索引，j为有效索引
-		int i=0, j=0;
-		for(;i<mSpanCount;++i)
+		int i = 0, j = 0;
+		for(; i < mSpanCount; ++i)
 		{
 			//当没有遇到标记的节点，它们一起向后走
-			if(mSpans[j]==null)
+			if(mSpans[j] == null)
 			{
 				//当遇到标记的节点，i需要向后找一个非标记的节点并移到j的位置
-				for(;i<mSpanCount;++i)
+				for(; i < mSpanCount; ++i)
 				{
-					if(mSpans[i]!=null){
+					if(mSpans[i] != null){
 						mSpans[j] = mSpans[i];
 						mSpanStarts[j] = mSpanStarts[i];
 						mSpanEnds[j] = mSpanEnds[i];
@@ -480,7 +445,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 			}
 			++j;
 		}
-		mSpanCount-=markCount;
+		mSpanCount -= markCount;
 		//在有序的数组中移除一些元素，不会打乱顺序
 		restoreInvariants(mSpanCount);
 	}
@@ -503,13 +468,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
 		if(i < mSpanCount)
 		{
-			if ((i & 1) != 0) {
-				//节点i不是叶子节点，若它的spanStart <= mGapStart-nbNewChars，则至少有一个右子节点可能在范围内，处理右子节点
-				//与遍历左子节点不同，注意这里为什么用节点i的spanStart判断是否需要遍历右子节点呢，因为右子节点的左子节点的spanStart可能小于右子节点的spanStart，但一定大于节点i的spanStart
-				if(mSpanStarts[i] <= end){
-					updatedCount += updatedIntervalBounds(start, end, rightChild(i));
-				}
-			}
 			//节点i的任一端点在范围内，就修正它的位置
 			final int ost = mSpanStarts[i];
 			final int oen = mSpanEnds[i];
@@ -523,9 +481,14 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 				final int endFlag = (mSpanFlags[i] & END_MASK);
 				mSpanEnds[i] = endFlag == POINT ? mGapStart+mGapLength : start;	
 			}
-			if(mSpanStarts[i]!=ost || mSpanEnds[i]!=oen){
+			if(mSpanStarts[i] != ost || mSpanEnds[i] != oen){
 				//修正后的位置与原来位置不同才算
 				updatedCount++;
+			}
+			if ((i & 1) != 0 && ost <= end) {
+				//节点i不是叶子节点，若它的spanStart <= mGapStart-nbNewChars，则至少有一个右子节点可能在范围内，处理右子节点
+				//与遍历左子节点不同，注意这里为什么用节点i的spanStart判断是否需要遍历右子节点呢，因为右子节点的左子节点的spanStart可能小于右子节点的spanStart，但一定大于节点i的spanStart
+				updatedCount += updatedIntervalBounds(start, end, rightChild(i));
 			}
 		}
 		return updatedCount;
@@ -563,7 +526,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		}
 		Integer index = mIndexOfSpan.get(span);
 		if(index!=null){
-			if(resolveGap(mSpanStarts[index])>=start && resolveGap(mSpanEnds[index])<=end){
+			int i = index;
+			if(resolveGap(mSpanStarts[i])>=start && resolveGap(mSpanEnds[i])<=end){
 				return true;
 			}
 		}
@@ -591,16 +555,16 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     {
         checkRange("setSpan", start, end);
         //0长度跨度
-        if (!enforce && start>=end) {
+        if (!enforce && start == end) {
             if (send) {
                 Log.e(TAG, "span cannot have a zero length");
             }
-            //从该类创建无效跨度时，自动忽略无效跨度。
-            //这避免了在该类中完成对setSpan的所有调用之前重复上面的测试代码
+            //从该类创建无效跨度时，自动忽略无效跨度。    
             return;
         }
 
 	    //如果设置span的位置在缓冲区之后，它的真实位置应加上mGapLength
+		//如果设置span的位置刚好在缓冲区，它的真实位置根据flags决定
         if (start > mGapStart) {
             start += mGapLength;
         }
@@ -632,13 +596,12 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 mSpanFlags[i] = flags;
                 if (send) 
 				{
-					//不用担心flags变化，它造成的位置变化已在之前应验
                     //是否要立刻修正index的位置错误，或等待以后一并修正
-                    if(ost!=start){
+                    if(ost != start){
 						//start的变化可能引起重排序，从i开始排序
 						restoreInvariants(i);
 					}
-					else if(oen!=end){
+					else if(oen != end){
 						//end的变化则只会影响此节点和父节点的最大范围，因此只calcMax
 						calcMax(treeRoot());
 					}
@@ -664,7 +627,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             mSpanMax = new int[sizeOfMax];
         }
         if (send) {
-            //需要发送事件，则更新数据，仅需从mSpanCount-1开始排序
+            //需要刷新，则更新数据，仅需从mSpanCount-1开始排序
             restoreInvariants(mSpanCount-1);
         }
     }
@@ -725,7 +688,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	}
 
     /**返回指定类型的范围的数组，这些范围与指定的文本范围重叠。
-	 种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
+	   种类可以是Object.class，以获得所有跨度的列表，而不考虑类型。
      */
     @SuppressWarnings("unchecked")
     public <T> T[] getSpans(int queryStart, int queryEnd, Class<T> kind) {
@@ -738,7 +701,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	
     /*** 返回指定类型跨度的数组，这些范围与指定的文本范围重叠。 
 	 种类可能是 Object.class 以获取无论类型如何的所有跨度的列表。
-	 * * @param querystart 开始索引。 
+	 * @param querystart 开始索引。 
 	 * @Param QueryEnd 结束索引。 
 	 * @param kind 类类型进行搜索。
 	 * @Param SortByInsertionOrder 如果为 true 结果按插入顺序排序。
@@ -750,134 +713,39 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (kind == null) return (T[])EmptyArray.emptyArray(Object.class);
         if (mSpanCount == 0) return EmptyArray.emptyArray(kind);
 		
-		if(queryStart==0 && queryEnd==length()){
-			return getSpansWithType(kind,sortByInsertionOrder);
-		}
-		return getSpansInRange(queryStart,queryEnd,kind,sortByInsertionOrder);
-    }
-	
-	/* 获取指定范围内的指定类型的span
-	   为了效率，使用List来获取span，减少递归次数，这在sortByInsertionOrder为false时效果更明显 
-	   由于EditableBlockList中更多次调用quickGetSpans，因此更快
-	*/
-	private <T> T[] getSpansInRange(int queryStart, int queryEnd,  Class<T> kind, boolean sortByInsertionOrder)
-	{
-		//创建列表，获取span
-		final List<T> retList = obtainList();
-		final List<Integer> prioList = sortByInsertionOrder ? obtainList() : null;
-		final List<Integer> orderList = sortByInsertionOrder ? obtainList() : null;
+		//为了效率，使用列表来获取span，减少一倍递归次数
+		final int guess = length()*mSpanCount/(queryEnd-queryStart+1);
+		final GrowingArray<T> retList = obtainSpanArray(guess);
+		final GrowingIntArray prioList = sortByInsertionOrder ? obtainIntArray(guess) : null;
+		final GrowingIntArray orderList = sortByInsertionOrder ? obtainIntArray(guess) : null;
 		final int count = getSpansRec(queryStart, queryEnd, kind, treeRoot(),
 		                              retList, prioList, orderList, 0, sortByInsertionOrder);
 
 	    //没找到span，提前回收列表
-		if(count==0){
-			recyleList(retList);
+		if(count == 0){
+			recyleSpanArray(retList);
 			if(sortByInsertionOrder){
-				recyleList(prioList);
-				recyleList(orderList);
+				recyleIntArray(prioList);
+				recyleIntArray(orderList);
 			}
 			return EmptyArray.emptyArray(kind);
 		}
 
-		//创建数组
+		//创建数组，将span拷贝到数组中
 		T[] ret = (T[]) Array.newInstance(kind, count);
-		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
+		System.arraycopy(retList.popArray(),0,ret,0,count);
+		recyleSpanArray(retList);
 
-		//将span拷贝到数组中
-		retList.toArray(ret);
-		if(sortByInsertionOrder){
-			Iterator prioIterator = prioList.listIterator(0);
-			Iterator orderIterator = orderList.listIterator(0);
-			for(int i=0;i<count;++i){
-				prioSortBuffer[i] = prioIterator.next();
-				orderSortBuffer[i] = orderIterator.next();
-			}	
-		}
-
-		//回收列表
-		recyleList(retList);
-		if(sortByInsertionOrder){
-			recyleList(prioList);
-			recyleList(orderList);
-		}
-
-        //如果需要排序，则按插入顺序排序，回收数组
+        //如果需要排序，则按插入顺序排序，最后回收列表，因为数组内嵌于列表中
         if (sortByInsertionOrder) {
-            sort(ret, prioSortBuffer, orderSortBuffer);
-            recycle(prioSortBuffer);
-            recycle(orderSortBuffer);
+            sort(ret, prioList.popArray(), orderList.popArray());
+			recyleIntArray(prioList);
+			recyleIntArray(orderList);
         }
         return ret;
-	}
+    }
 	
-	/* 获取指定类型的所有span，此方案用于在EditableBlockList中节省时间 */
-	private <T> T[] getSpansWithType(Class<T> kind, boolean sortByInsertionOrder)
-	{
-		//如果要获取全部span，拷贝所有span
-		if(kind == Object.class)
-		{
-			T[] ret = (T[]) Array.newInstance(kind, mSpanCount);
-			final int[] prioSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
-			final int[] orderSortBuffer = sortByInsertionOrder ? obtain(mSpanCount) : EmptyArray.INT;
-
-			System.arraycopy(mSpans,0,ret,0,mSpanCount);
-			if(sortByInsertionOrder){
-				for(int i=0;i<mSpanCount;++i){
-					prioSortBuffer[i] = mSpanFlags[i] & SPAN_PRIORITY;
-					orderSortBuffer[i] = mSpanOrder[i];
-				}
-			}
-
-			if (sortByInsertionOrder) {
-				sort(ret, prioSortBuffer, orderSortBuffer);
-				recycle(prioSortBuffer);
-				recycle(orderSortBuffer);
-			}
-			return ret;
-		}
-		
-		//统计指定类型的span个数
-		int count = 0;
-		for(int i=0;i<mSpanCount;++i){
-			if(kind.isInstance(mSpans[i])){
-				count++;
-			}
-		}
-		if(count==0){
-			return EmptyArray.emptyArray(kind);
-		}
-		
-		//创建指定长度的数组
-		T[] ret = (T[]) Array.newInstance(kind, count);
-		final int[] prioSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-        final int[] orderSortBuffer = sortByInsertionOrder ? obtain(count) : EmptyArray.INT;
-		count = 0;
-		
-		//获取span
-		for(int i=0;i<mSpanCount;++i)
-		{
-			if(kind.isInstance(mSpans[i]))
-			{
-				ret[count] = (T)mSpans[i];
-				if(sortByInsertionOrder){
-					prioSortBuffer[count] = mSpanFlags[i] & SPAN_PRIORITY;
-				    orderSortBuffer[count] = mSpanOrder[i];
-				}
-				count++;
-			}
-		}
-		
-		//如果需要排序，则按插入顺序排序，回收数组
-		if (sortByInsertionOrder) {
-            sort(ret, prioSortBuffer, orderSortBuffer);
-            recycle(prioSortBuffer);
-            recycle(orderSortBuffer);
-        }
-		return ret;
-	}
-	
-	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数
+	//从节点i开始，向下遍历子节点，统计所有在范围内的节点个数，<已弃用>
     private int countSpans(int queryStart, int queryEnd, Class kind, int i) 
 	{
         int count = 0;
@@ -936,7 +804,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @param <t> * @return 找到的跨度总数。
 	 */
 	@SuppressWarnings("unchecked")
-    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, List<T> ret, List<Integer> priority, List<Integer> insertionOrder, int count, boolean sort)
+    private <T> int getSpansRec(int queryStart, int queryEnd, Class<T> kind, int i, GrowingArray<T> ret, GrowingIntArray priority, GrowingIntArray insertionOrder, int count, boolean sort)
     {
         if ((i & 1) != 0) 
 		{
@@ -992,18 +860,15 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return count;
     }
 
-    /** 获取临时排序数组
-	 * @param elementCount要返回的int[]的大小
-	 * @返回一个长度至少为elementCount的int[]
-	 */
-    static int[] obtain(final int elementCount)
+	/* 获取临时排序数组，为本包其它类准备的 */
+	static int[] obtain(final int elementCount)
     {
         int[] result = null;
         synchronized (sCachedIntBuffer)
         {
             //如果找不到第一个可用的tmp数组，请尝试查找长度至少为elementCount的tmp数组
             int candidateIndex = -1;
-            for (int i = sCachedIntBuffer.length - 1; i >= 0; i--)
+            for (int i = sCachedIntBuffer.length - 1; i >= 0; --i)
             {
                 if (sCachedIntBuffer[i] != null)
                 {
@@ -1020,19 +885,17 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 sCachedIntBuffer[candidateIndex] = null;
             }
         }
-        result = checkSortBuffer(result, elementCount);
+		if (result == null || elementCount > result.length) {
+            result = ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(elementCount));
+        }
         return result;
     }
-
-    /** 
-	 * 回收排序数组
-	 * @param buffer要回收的数组
-	 */
+	/* 回收临时排序数组 */
     static void recycle(int[] buffer)
     {
         synchronized (sCachedIntBuffer)
         {
-            for (int i = 0; i < sCachedIntBuffer.length; i++) 
+            for (int i = sCachedIntBuffer.length-1; i >= 0; --i) 
             {
                 if (sCachedIntBuffer[i] == null || buffer.length > sCachedIntBuffer[i].length) {
                     sCachedIntBuffer[i] = buffer;
@@ -1041,46 +904,102 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             }
         }
     }
-
-    /** 检查数组的大小，并根据需要进行扩展
-	 * @param buffer要检查的数组。
-	 * @param size所需的大小。
-	 * @如果当前大小大于所需大小，则返回相同的数组实例。
-	 否则，将创建并返回一个*新实例。
-	 */
-    private static int[] checkSortBuffer(int[] buffer, int size)
-    {
-        if (buffer == null || size > buffer.length) {
-            return ArrayUtils.newUnpaddedIntArray(GrowingArrayUtils.growSize(size));
-        }
-        return buffer;
-    }
 	
-	/* 获取一个空列表 */
-	private static List obtainList()
+	/* 获取临时span数组 */
+	private static GrowingArray obtainSpanArray(int elementCount)
 	{
-		synchronized(sListBuffer)
+		GrowingArray result = null;
+		synchronized(sCachedSpanBuffer)
 		{
-			if(sListCount > 0){
-				List buffer = sListBuffer[--sListCount];
-				sListBuffer[sListCount] = null;
-				return buffer;
+			int candidateIndex = -1;
+			for(int i = sCachedSpanBuffer.length-1; i >= 0; --i)
+			{
+				if (sCachedSpanBuffer[i] != null)
+                {
+                    if (sCachedSpanBuffer[i].array.length >= elementCount) {
+                        candidateIndex = i;
+                        break;
+                    } else if (candidateIndex == -1) {
+                        candidateIndex = i;
+                    }
+                }
+				if (candidateIndex != -1) {
+					result = sCachedSpanBuffer[candidateIndex];
+					sCachedSpanBuffer[candidateIndex] = null;
+				}
 			}
 		}
-		return new LinkedList();
+		if(result == null){
+			result = new GrowingArray(elementCount);
+		}
+		else if(result.array.length < elementCount){
+			result.resizeFor(elementCount);
+		}
+		return result;
 	}
-	
-	/* 回收一个列表 */
-	private static void recyleList(List buffer)
+	/* 回收临时span数组 */
+	private static void recyleSpanArray(GrowingArray buffer)
 	{
 		buffer.clear();
-		synchronized(sListBuffer)
+		synchronized(sCachedSpanBuffer)
 		{
-			if(sListCount < sListBuffer.length){
-				sListBuffer[sListCount++] = buffer;
-			}
+			for(int i = sCachedSpanBuffer.length-1; i >= 0; --i)
+			{
+				if(sCachedSpanBuffer[i] == null || sCachedSpanBuffer[i].array.length < buffer.array.length){
+					sCachedSpanBuffer[i] = buffer;
+				}
+			}		
 		}
 	}
+	
+	/* 获取临时排序数组 */
+	private static GrowingIntArray obtainIntArray(int elementCount)
+	{
+		GrowingIntArray result = null;
+		synchronized (sCachedIntBuffer2)
+        {
+            //如果找不到第一个可用的tmp数组，请尝试查找长度至少为elementCount的tmp数组
+            int candidateIndex = -1;
+            for (int i = sCachedIntBuffer2.length - 1; i >= 0; --i)
+            {
+                if (sCachedIntBuffer2[i] != null)
+                {
+                    if (sCachedIntBuffer2[i].array.length >= elementCount) {
+                        candidateIndex = i;
+                        break;
+                    } else if (candidateIndex == -1) {
+                        candidateIndex = i;
+                    }
+                }
+            }
+            if (candidateIndex != -1) {
+                result = sCachedIntBuffer2[candidateIndex];
+                sCachedIntBuffer2[candidateIndex] = null;
+            }
+        }
+		if(result == null){
+			result = new GrowingIntArray(elementCount);
+		}
+		else if(result.array.length < elementCount){
+			result.resizeFor(elementCount);
+		}
+		return result;
+	}
+	/* 回收临时排序数组 */
+	private static void recyleIntArray(GrowingIntArray buffer)
+	{
+		buffer.clear();
+		synchronized(sCachedIntBuffer2)
+		{
+			for(int i = sCachedIntBuffer2.length - 1; i >= 0; --i)
+			{
+				if(sCachedIntBuffer2[i] == null || sCachedIntBuffer2[i].array.length < buffer.array.length){
+					sCachedIntBuffer2[i] = buffer;
+				}
+			}		
+		}
+	}
+	
 	
     //将数组表示为堆，堆的每个节点最多有两个子节点，节点从按层次从上至下，从左至右，按数组中的顺序排列
     //将下标为0的元素作为根节点，而根节点的左右子节点下标分别为1，2，并且下层的子节点下标为3，4，5，6，一直这样排列下去
@@ -1104,8 +1023,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 如果优先级相同，跨度将按照插入顺序排序。
 	 具有较低插入顺序的*范围将在具有较高插入顺序的范围之前。*
 	 * @param array跨度要排序的数组。
-	 * @ param priority的优先级
-	 * @ param insertionOrder对象类型的插入顺序。
+	 * @param priority的优先级
+	 * @param insertionOrder对象类型的插入顺序。
 	 * @param <T> 
 	 */
     static final <T> void sort(T[] array, int[] priority, int[] insertionOrder) 
@@ -1138,8 +1057,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 * @param index 要维护的元素的索引。
 	 * @param array 要排序的数组。
 	 * @param size当前堆大小。
-	 * @ param priority 数组元素的优先级。
-	 * @ param insertionOrder 数组元素的插入顺序。
+	 * @param priority 数组元素的优先级。
+	 * @param insertionOrder 数组元素的插入顺序。
 	 */
     private static final <T> void siftDown(int index, T[] array, int size, int[] priority, int[] insertionOrder) 
     {
@@ -1206,11 +1125,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 
     //此函数递归遍历节点i之下的节点并寻找在指定范围内的节点偏移量
     //由于二叉树是用数组表示的，因此对树的遍历类似于递归二分数组
-    //我更愿意称nextSpanTransitionRec是二分查找法的升级版，原二分查找法是找数组中指定的值，这个函数就是在指定范围内找数组中的值
-    //注意，每个节点包含st和en，虽然mSpanStarts可以这样找，但mSpanEnds是未预料的，因此无论如何仍要遍历所有节点
-
-    //可以理解为它就是将数组分为一个个的二分范围，然后从最大的范围开始，遍历之下的范围(及范围内的节点)
-    //由于先遍历左子节点，再遍历右子节点，并且是先分下去，然后返回，遍历顺序实际是按数组顺序进行的
     /*  
 	 例如一列数 0，1，2，3，4，5，6
 	 若表示为二叉树则是如下的结果:
@@ -1231,7 +1145,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	 9、从4返回到5，5被执行！
 	 10、5继续向右分发到6，6被执行！
 	 11、最后从6返回到5返回到3，递归遍历完成
-	 */
+	*/
 
     //虽然函数相当于顺序遍历节点i之下的所有节点，但会利用已有条件来判断并舍弃遍历某部分的节点，并把st或en在范围内的节点的limit边界记录下来
     //每次遍历一个节点，就返回它的limit边界，此limit边界可以是自己的st或en，但大于start并且不超过上个节点的limit，并且此limit边界会限制之后的节点的limit边界
@@ -1341,31 +1255,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         return mFilters;
     }
 	
-
-    //树的基本术语:
-    //Tree 树是由节点和边组成的且不存在着任何环的一种数据结构
-    //Node 节点，节点是组成树的每一个元素
-    //Root 根，树的顶端节点
-    //Child 孩子，一个节点直接指向的下一个节点称为该结点的孩子
-    //Parent 父亲，若一个节点被指向，那么直接指向它的上个节点被称为它的父亲
-    //Siblings 兄弟，具有同一个父亲(Parent)的孩子(Child)之间互称为兄弟(Sibling)
-    //Ancestor 祖先，节点的祖先(Ancestor)是从根（Root）到该节点所经分支(Branch)上的所有节点
-    //Descendant 子孙，反之，以某节点为根的子树中的任一节点都称为该节点的子孙(Ancestor)
-    //Leaf 叶子（终端节点）没有孩子的节点(也就是度为0的节点)称为叶子(Leaf)或终端节点
-    //Branch 分支(非终端节点) 至少有一个孩子的节点称为分支(Branch)或非终端节点
-    //Degree 度，节点所拥有的子树个数称为节点的度(Degree)
-    //Edge 边，一个节点和另一个节点之间的连接被称之为边
-    //Path 路径，连接节点和其后代的节点之间的(节点,边)的序列
-    //Level 层次，节点的层次(Level)从根(Root)开始定义起，根为第0层，根的孩子为第1层。以此类推，若某节点在第i层，那么其子树的根就在第i+1层。
-    //Height of node 节点的高度是该节点和某个叶子之间存在的最长路径上的边的个数
-    //Height of tree 树的高度是其根节点的高度
-    //Depth of node 节点的 深度 是从树的根节点到该节点的边的个数。（注：树的深度指的是树中节点的最大层次。）
-    //Forest 森林是n(>=0)棵互不相交的树的集合
-
-    //若将顺序排列的一组数无限二分，可构成一颗二叉树，而二叉树的根节点必然在数组中间，从根节点分发出来的左子节点和右子节点便是二分的结果
+	
     /*
-	 例如一列数 0，1，2，3，4，5，6
-	 若表示为二叉树则是如下的结果:
+	  若将顺序排列的一组数无限二分，可构成一颗二叉树，而二叉树的根节点必然在数组中间，从根节点分发出来的左子节点和右子节点便是二分的结果
+	  例如一列数 0，1，2，3，4，5，6
+	  若表示为二叉树则是如下的结果:
 	            3
 	          ↙  ↘
 	        1        5
@@ -1377,6 +1271,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     //为了快速搜索，这些数组采用了二分搜索法结构，这种结构是对一棵完美二叉树的有序遍历，这是一种有点不寻常但很有利的方法
     //包含值的节点的索引为0 <= i < n(其中n = mSpanCount)，从而将访问值的逻辑保留为连续数组
     //其他平衡二叉树方法(例如完全二叉树)需要对节点索引进行一些洗牌
+	//任何递归方法操作节点时，范围越小越快，而大范围操作时，其效率不如循环遍历所有节点，考虑编辑器通常是小范围修改文本，所以无所谓
 
     //这个结构的基本性质:
     //整颗树像一个等腰三角形
@@ -1466,7 +1361,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
             mIndexOfSpan = new IdentityHashMap<Object, Integer>();
         }
         //从被修改的下标开始，遍历之后的span，将span与正确的index重新绑定
-        for (int i = mLowWaterMark; i < mSpanCount; i++) 
+        for (int i = mLowWaterMark; i < mSpanCount; ++i) 
         {
             //每次从mIndexOfSpan拿出当前span的index，若没有此span或index是错误的，重新放入正确的span和index
             Integer existing = mIndexOfSpan.get(mSpans[i]);
@@ -1478,123 +1373,53 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         mLowWaterMark = Integer.MAX_VALUE;
 	}
 	
-	//节点按spanStarts的大小正序排列，小量节点修改后使用
+	//节点按spanStarts的大小升序排列
 	private void sortNodes(int i)
 	{
         //这是一个简单的插入排序，因为我们希望它大部分已被排序
-		//为什么使用插入排序呢，因为已经排序的部分不会打乱，可以节省时间
-        //每次向后从数组中拿出一个元素，并与其之前的元素比较，直到找到一个正确的位置，将其插入这里，这样每次排序之后，在i之前的内容都是排好序的    
-		for (i=i<1 ? 1:i; i < mSpanCount; i++) 
+		for (i = i < 1 ? 1 : i; i < mSpanCount; ++i) 
         {
-            //如果当前元素比前面的元素更小，主动进行本次排序
-            //注意，i之前的元素必然按顺序排列，因此只用与i-1比较就知道需不需要排序
+            //i之前的元素必然按顺序排列，因此只用与i-1比较就知道需不需要排序
             if (mSpanStarts[i] < mSpanStarts[i - 1])
             {
                 Object span = mSpans[i];
                 int start = mSpanStarts[i];
                 int end = mSpanEnds[i];
                 int flags = mSpanFlags[i];
-                int insertionOrder = mSpanOrder[i];
-                int j = i;
-
-                //将j之前的元素与其比较，直到找到一个比它还小的元素才停止，并将其插入到这里
-                do {
-                    //由于此span必然在j之前，所以最后需要将其插入到正确位置，并还需要之前的元素顺序不变
-                    //因此只要还没有找到位置，那么j-1位置的元素就要向后挪一位，空出位置
-                    mSpans[j] = mSpans[j - 1];
-                    mSpanStarts[j] = mSpanStarts[j - 1];
-                    mSpanEnds[j] = mSpanEnds[j - 1];
-                    mSpanFlags[j] = mSpanFlags[j - 1];
-                    mSpanOrder[j] = mSpanOrder[j - 1];
-                    j--;
-                    //之后判断j-2位置的元素是否小于start，如果是就break
-                } while (j > 0 && start < mSpanStarts[j - 1]);
-
-                //最后将span插入这里(也就是j-1的位置)
-                mSpans[j] = span;
-                mSpanStarts[j] = start;
-                mSpanEnds[j] = end;
-                mSpanFlags[j] = flags;
-                mSpanOrder[j] = insertionOrder;
-                invalidateIndex(j);
+                int order = mSpanOrder[i];
+                
+				//由于在i之前的内容都是排好序的，因此使用二分查找法在前面查找插入位置
+				int low = 0;   
+				int high = i - 1;   
+				while (low <= high)
+				{   
+					int middle = (low + high) >> 1;   			  
+					if (start < mSpanStarts[middle])
+						high = middle - 1;   
+					else 
+						low = middle + 1;
+				}  
+				
+				//将low ~ i之间的元素全部后移一位
+				int count = i - low;
+				System.arraycopy(mSpans, low, mSpans, low+1, count);
+				System.arraycopy(mSpanStarts, low, mSpanStarts, low+1, count);
+				System.arraycopy(mSpanEnds, low, mSpanEnds, low+1, count);
+				System.arraycopy(mSpanFlags, low, mSpanFlags, low+1, count);
+				System.arraycopy(mSpanOrder, low, mSpanOrder, low+1, count);
+				
+				//将元素i插入low的位置
+				mSpans[low] = span;
+                mSpanStarts[low] = start;
+                mSpanEnds[low] = end;
+                mSpanFlags[low] = flags;
+                mSpanOrder[low] = order;
+				invalidateIndex(low);
             }
         }
 	}
 	
-	//节点按spanStarts的大小正序排列，当大量节点乱序时使用
-	private void quickSortNodes()
-	{
-		//这是一个简单的快速排序，我们认为它大部分没有排序
-		//为什么使用快速排序呢，因为已经排序的部分不会打乱，可以节省时间
-		unckSort(0,mSpanCount-1);
-		//大量的修改后，直接从0开始吧。
-		invalidateIndex(0);
-	}
-	
-	//递归二分数组
-	private void unckSort(int low, int high)
-	{
-		if (low < high){
-			int middle = getMiddle(low, high);    //将数组一分为二
-			unckSort(low, middle - 1);    // 对左边进行递归排序
-			unckSort(middle + 1, high);    // 对右边进行递归排序
-		}
-		//继续递归分裂，直至每个小数组只有两个元素
-		//则只有low<high，才能继续
-		//当一个数组只有两个元素，则此时排序，只是比较两个元素大小
-		//因为整个数组都是按序分的
-		//所以每个小数组排好序，则大数组也排好了
-	}
-	
-	//找到第一个元素所在小数组的中点，将它移到中点位置，并将小于和大于它的元素分别移至它的左边和右边
-	private int getMiddle(int low, int high)
-	{
-		//数组的第一个值作为中点（分界点或关键数据）
-		Object span = mSpans[low];
-		int mid = mSpanStarts[low]; 
-		int end = mSpanEnds[low];
-		int flags = mSpanFlags[low];
-		int order = mSpanOrder[low];
-		
-		while (low < high)
-		{
-			while (low < high && mSpanStarts[high] >= mid){
-				high--;
-			}
-			//从右边开始找一个小于中点的数，挪至左边
-			//将其移动到list[low],此时list[low]==list[high]
-			mSpans[low] = mSpans[high];
-			mSpanStarts[low] = mSpanStarts[high];
-			mSpanEnds[low] = mSpanEnds[high];
-			mSpanFlags[low] = mSpanFlags[high];
-			mSpanOrder[low] = mSpanOrder[high];
-			
-			while (low < high && mSpanStarts[low] <= mid){
-				low++;
-			}
-			//从左边开始找一个大于中点的数，将这个大于中点的数挪至右边
-			//可以挪到list[high]，因为list[high]已经挪到左边了
-			mSpans[high] = mSpans[low];
-			mSpanStarts[high] = mSpanStarts[low];
-			mSpanEnds[high] = mSpanEnds[low];
-			mSpanFlags[high] = mSpanFlags[low];
-			mSpanOrder[high] = mSpanOrder[low];
-			
-			//一直交换下去，直至low和high相遇，
-			//low说：我左边都比中点小
-			//high说：我右边都比中点大
-		}
-		
-		//所以可以把中点插入这里,这样中点就移动到中间了
-		mSpans[low] = span;
-		mSpanStarts[low] = mid;
-		mSpanEnds[low] = end;
-		mSpanFlags[low] = flags;
-		mSpanOrder[low] = order;
-		return low; // 返回中点的位置
-	}
-
-    //在跨度结构的任何突变后恢复二元区间树不变量(修改的内容越少恢复会越快)
+    //在跨度结构被修改后恢复二元区间树不变量(修改的内容越少恢复会越快)
     private void restoreInvariants(int i) 
     {
         if (mSpanCount == 0) return;
@@ -1603,23 +1428,6 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 		//这是一个简单的插入排序，因为我们希望它大部分已被排序
         sortNodes(i);
 		
-        //不变量2: 使max是每个节点及其后代的最大跨度端点
-        //从根节点开始，修正所有子节点的max值
-        calcMax(treeRoot());
-
-        //不变量3: mIndexOfSpan映射的索引修正
-        correctIndexOfSpan();
-    }
-	
-	//在跨度结构的任何突变后恢复二元区间树不变量(修改内容太多时使用)
-	private void quickRestoreInvariants() 
-    {
-        if (mSpanCount == 0) return;
-
-		//不变量1: span starts按顺序排列
-		//这是一个简单的快速排序，我们认为它大部分没有排序
-        quickSortNodes();
-
         //不变量2: 使max是每个节点及其后代的最大跨度端点
         //从根节点开始，修正所有子节点的max值
         calcMax(treeRoot());
@@ -1658,9 +1466,9 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 	
 	private InputFilter[] mFilters = NO_FILTERS; //过滤器列表
 	private static final InputFilter[] NO_FILTERS = new InputFilter[0];
-    private static final int[][] sCachedIntBuffer = new int[6][0]; //回收用于排序span的数组
-	private static final List[] sListBuffer = new List[6]; //回收用于获取span的列表
-	private static int sListCount = 0; //记录列表数
+	private static final int[][] sCachedIntBuffer = new int[6][0];
+	private static final GrowingArray[] sCachedSpanBuffer = new GrowingArray[6];
+	private static final GrowingIntArray[] sCachedIntBuffer2 = new GrowingIntArray[6];
 	
     //这些值与Spanned中的公共SPAN_MARK/POINT值紧密相关
 	//每个span有spanStart和spanEnd，而我们可以给两端点各设置MARK，POINT，PARAGRAPH其中的一个标志

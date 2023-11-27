@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import static com.editor.text2.builder.listener.myEditCompletorListener.*;
 import com.editor.text.base.*;
+import com.editor.text2.base.share3.*;
+import android.text.style.*;
 
 
 public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClickListener
@@ -346,7 +348,7 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 			mContent.setAdapter(adapter);
 			mContent.setOnItemClickListener(this);
 			mContent.setOnItemLongClickListener(this);
-			final pos p = getSelectionStartPos();
+			final pos p = null;
 			int x = (int) p.x;
 			int y = (int) (p.y+getLineHeight());
 
@@ -635,7 +637,8 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		//bug: 子线程的时间不同步，等任务开始时，下标可能超出范围
 		Runnable run1 = OpenWindow();
 		//mPool.execute(run1);
-		Runnable run2 = ReDrawText(BlockLayout.tryLine_Start(text,start), BlockLayout.tryLine_End(text,start+lengthAfter));
+		BaseLayout layout = getLayout();
+		Runnable run2 = ReDrawText(layout.getOffsetToLeftOf(start), layout.getOffsetToRightOf(start+lengthAfter));
 		//mPool.execute(run2);
 		if(lengthAfter>0){
 			Insert(start,lengthAfter);
@@ -760,4 +763,40 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		return super.performClick();
 	}
 
+	@Override
+	public void onSelectionChanged(int start, int end, int oldStart, int oldEnd, CharSequence editor)
+	{
+		super.onSelectionChanged(start, end, oldStart, oldEnd, editor);
+		/*if(start == end)
+		{
+			range bindowRange = StringChecker.Bindow.checkIndexInBindowRange2(editor, start, '{', '}');
+			if(bindowRange != null)
+			{
+				if(lastBindowStart != bindowRange.start){
+					((Spannable)editor).setSpan(bindowStartSpan, bindowRange.start, bindowRange.start+1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+					lastBindowStart = bindowRange.start;
+				}
+				if(lastBindowEnd != bindowRange.end){
+					((Spannable)editor).setSpan(bindowEndSpan, bindowRange.end, bindowRange.end+1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+					lastBindowEnd = bindowRange.end;
+				}
+			}	
+			else if(lastBindowStart != -1 || lastBindowEnd != -1){
+				((Spannable)editor).removeSpan(bindowStartSpan);
+				((Spannable)editor).removeSpan(bindowEndSpan);
+				lastBindowStart = lastBindowEnd = -1;
+			}
+		}
+		else if(lastBindowStart != -1 || lastBindowEnd != -1){
+			((Spannable)editor).removeSpan(bindowStartSpan);
+			((Spannable)editor).removeSpan(bindowEndSpan);
+			lastBindowStart = lastBindowEnd = -1;
+		}*/
+	}
+	
+	private static final int SelectedColor = 0x75515a6b;
+	private static final Object bindowStartSpan = new BackgroundColorSpan(SelectedColor);
+	private static final Object bindowEndSpan = new BackgroundColorSpan(SelectedColor);
+	private int lastBindowStart = -1, lastBindowEnd = -1;
+	
 }

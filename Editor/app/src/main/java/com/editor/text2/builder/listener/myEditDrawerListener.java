@@ -11,6 +11,8 @@ import android.text.style.*;
 import com.editor.text.base.*;
 import android.util.*;
 import android.graphics.*;
+import com.editor.text.span.*;
+import android.view.*;
 
 
 public abstract class myEditDrawerListener extends myEditListener implements EditDrawerListener
@@ -320,45 +322,24 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 		protected void init(){}
 	}
 	
-	public static class ForegroundColorSpanX extends ForegroundColorSpan
+	public static class ForegroundColorSpanX extends myForegroundColorSpan implements ClickableSpanX
 	{
 		public ForegroundColorSpanX(int color){
 			super(color);
 		}
-
+		
 		@Override
-		public int hashCode(){
-			return getForegroundColor();
-		}
-
-		@Override
-		public boolean equals(Object obj)
-		{
-			if(obj instanceof ForegroundColorSpan && ((ForegroundColorSpan)obj).getForegroundColor()==getForegroundColor()){
-				return true;
-			}
-			return false;
-		}
+		public void onClick(View editor){}
 	}
-	public static class BackgroundColorSpanX extends BackgroundColorSpan
+	
+	public static class BackgroundColorSpanX extends myBackgroundColorSpan implements ClickableSpanX
 	{
 		public BackgroundColorSpanX(int color){
 			super(color);
 		}
 
 		@Override
-		public int hashCode(){
-			return getBackgroundColor();
-		}
-
-		@Override
-		public boolean equals(Object obj)
-		{
-			if(obj instanceof BackgroundColorSpan && ((BackgroundColorSpan)obj).getBackgroundColor()==getBackgroundColor()){
-				return true;
-			}
-			return false;
-		}
+		public void onClick(View editor){}
 	}
 	
 	public static class Colors

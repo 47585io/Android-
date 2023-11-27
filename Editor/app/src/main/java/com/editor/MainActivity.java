@@ -14,6 +14,7 @@ import com.editor.text2.*;
 import java.util.concurrent.*;
 import android.util.*;
 import com.editor.view.*;
+import com.editor.text.span.*;
 
 public class MainActivity extends Activity implements Runnable
 {
@@ -62,7 +63,7 @@ public class MainActivity extends Activity implements Runnable
 		Code.setPool(mPool);
 		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
 		setContentView(Code);
-		//test2("/storage/emulated/0/Linux/3.java");
+		//test2("/storage/emulated/0/Linux/2.java");
 		//test3();
 	}
 	
@@ -131,12 +132,12 @@ public class MainActivity extends Activity implements Runnable
 		E.getLayoutParams().height=2180;
 		Random rand = new Random();
 		Editable editor = E.getText();
-		for(int i = 0;i<1000;i+=10){
-			editor.setSpan(new ForegroundColorSpan(rand.nextInt()),i,i+10,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-			E.getText().setSpan(new BackgroundColorSpan(rand.nextInt()),i+5,i+10,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+		for(int i = 0;i<2000;i++){
+			editor.setSpan(new myForegroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+			editor.setSpan(new myBackgroundColorSpan(rand.nextInt()),i,i+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 		}
 		//editor.insert(1,"56");
-		Log.w("Span" ,nextSpan(editor));
+		//Log.w("Span" ,nextSpan(editor));
 	}
 	
 	public void test3()

@@ -14,6 +14,9 @@ import java.util.*;
 import static com.editor.text2.builder.words.Words.*;
 import static com.editor.text2.builder.listener.myEditDrawerListener.*;
 import com.editor.text.base.*;
+import android.text.style.*;
+import android.view.*;
+import android.widget.*;
 
 
 public class CodeEditBuilder implements EditBuilder
@@ -351,7 +354,7 @@ public class CodeEditBuilder implements EditBuilder
 								&& getKey().contains(nowWord.toString()))
 							{
 								//如果当前累计的字符串是一个关键字并且后面没有a～z这些字符，就把它加进nodes
-								wordIndex node= obtainNode(nowIndex - nowWord.length() + 1, nowIndex + 1, new ForegroundColorSpanX(Colors.KeyWord));
+								wordIndex node= obtainNode(nowIndex - nowWord.length() + 1, nowIndex + 1, new ForegroundColorSpanX(Colors.KeyWord));	
 								nodes.add(node);
 								String Word=nowWord.toString();
 								if (Word.equals("class")

@@ -1,4 +1,5 @@
 package com.editor.text.base;
+import java.lang.annotation.*;
 
 public final class GrowingArrayUtils
 {
@@ -214,6 +215,125 @@ public final class GrowingArrayUtils
 			return currentSize*2;
 		}
         return currentSize * 12/10;
+	}
+	
+	
+	public static class GrowingArray<E>
+	{
+		public int size;
+		public Object[] array;
+		
+		public GrowingArray(int opticay){
+			size = 0;
+			array = ArrayUtils.newUnpaddedArray(Object.class, growSize(opticay));
+		}
+		public void add(E element)
+		{
+			if (size + 1 > array.length) {
+				Object[] newArray = ArrayUtils.newUnpaddedArray(Object.class, growSize(size));
+				System.arraycopy(array, 0, newArray, 0, size);
+				array = newArray;
+			}
+			array[size++] = element;
+		}
+		public void add(int index, E element)
+		{
+			if (size + 1 <= array.length) {
+				System.arraycopy(array, index, array, index + 1, size - index);
+				array[index] = element;
+				size++;
+				return;
+			}
+			Object[] newArray = ArrayUtils.newUnpaddedArray(Object.class, growSize(size));
+			System.arraycopy(array, 0, newArray, 0, index);
+			newArray[index] = element;
+			System.arraycopy(array, index, newArray, index + 1, size - index);
+			array = newArray;
+			size++;
+		}
+		public void remove(int index){
+			System.arraycopy(array,index+1,array,index,size-index-1);
+			array[--size] = null;
+		}
+		public E[] popArray(){
+			return (E[])array;
+		}
+		public int size(){
+			return size;
+		}
+		public void resizeFor(int opticay)
+		{
+			if(opticay > array.length)
+			{
+				Object[] oldArray = array;
+				array = ArrayUtils.newUnpaddedArray(Object.class, growSize(opticay));
+				System.arraycopy(oldArray,0,array,0,size);			
+			}
+		}
+		public void clear()
+		{
+			for(int i=0;i<size;++i){
+				array[i] = null;
+			}
+			size = 0;
+		}
+	}
+	
+	public static class GrowingIntArray
+	{
+		public int size;
+		public int[] array;
+
+		public GrowingIntArray(int opticay){
+			size = 0;
+			array = ArrayUtils.newUnpaddedIntArray(growSize(opticay));
+		}
+		public void add(int element)
+		{
+			if (size + 1 > array.length) {
+				int[] newArray = ArrayUtils.newUnpaddedIntArray(growSize(size));
+				System.arraycopy(array, 0, newArray, 0, size);
+				array = newArray;
+			}
+			array[size++] = element;
+		}
+		public void add(int index, int element)
+		{
+			if (size + 1 <= array.length) {
+				System.arraycopy(array, index, array, index + 1, size - index);
+				array[index] = element;
+				size++;
+				return;
+			}
+			int[] newArray = ArrayUtils.newUnpaddedIntArray(growSize(size));
+			System.arraycopy(array, 0, newArray, 0, index);
+			newArray[index] = element;
+			System.arraycopy(array, index, newArray, index + 1, size - index);
+			array = newArray;
+			size++;
+		}
+		public void remove(int index){
+			System.arraycopy(array,index+1,array,index,size-index-1);
+			size--;
+		}
+		public int[] popArray(){
+			return array;
+		}
+		public int size(){
+			return size;
+		}
+		public void resizeFor(int opticay)
+		{
+			if(opticay > array.length)
+			{
+				int[] oldArray = array;
+				array = ArrayUtils.newUnpaddedIntArray(growSize(opticay));
+				System.arraycopy(oldArray,0,array,0,size);			
+			}
+		}
+		public void clear(){
+			size = 0;
+		}
 	}
 	
 }

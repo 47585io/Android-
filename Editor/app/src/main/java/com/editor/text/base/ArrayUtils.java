@@ -136,18 +136,18 @@ public class ArrayUtils
         return -1;
     }
 	
-	public static int indexOf(char[] array, char value, int index)
+	public static int indexOf(char[] array, char value, int index, int end)
 	{
         if (array == null || index<0) return -1;
-        for (; index < array.length; index++) {
+        for (; index < end; index++) {
             if (array[index]==value) return index;
         }
         return -1;
     }
-	public static int lastIndexOf(char[] array, char value, int index)
+	public static int lastIndexOf(char[] array, char value, int index, int begin)
 	{
         if (array == null || index>=array.length) return -1;
-        for (;index>=0; index--) {
+        for (;index >= begin; index--) {
             if (array[index]==value) return index;
         }
         return -1;
@@ -231,26 +231,46 @@ public class ArrayUtils
 		list[low] = tmp; // 中点位置
 		return low; // 返回中点的位置
 	}
-
-
+	
+	public static <T> void quickSort(int[] list, int size)
+	{
+		if (size > 0 && size < list.length){
+			//查看数组是否为空
+			//开始分裂排序
+			unckSort(list, 0, size - 1);
+		}
+	}
+	private static void unckSort(int[] list, int low, int high)
+	{
+		if (low < high){
+			int middle = getMiddle(list, low, high);    //将list数组一分为二
+			unckSort(list, low, middle - 1);    // 对左边进行递归排序
+			unckSort(list, middle + 1, high);    // 对右边进行递归排序
+		}
+		//继续递归分裂，直至每个小数组只有两个元素
+		//则只有low<high，才能继续
+		//当一个数组只有两个元素，则此时排序，只是比较两个元素大小
+		//因为整个数组都是按序分的
+		//所以每个小数组排好序，则大数组也排好了
+	}
 	private static int getMiddle(int[] list, int low, int high)
 	{
 		//数组的第一个值作为中点（分界点或关键数据）
 		int tmp = list[low]; 
 		while (low < high)
 		{
-			while (low < high && list[high] >= tmp){
-				high--;
-			}
 			//从右边开始找一个小于中点的数，挪至左边
 			//将其移动到list[low],此时list[low]==list[high]
+			while (low < high && list[high] >= tmp){
+				high--;
+			}		
 			list[low] = list[high]; 
 			
+			//从左边开始找一个大于中点的数，将这个大于中点的数挪至右边
+			//可以挪到list[high]，因为list[high]已经挪到左边了
 			while (low < high && list[low] <= tmp){
 				low++;
 			}
-			//从左边开始找一个大于中点的数，将这个大于中点的数挪至右边
-			//可以挪到list[high]，因为list[high]已经挪到左边了
 			list[high] = list[low]; 
 			
 			//一直交换下去，直至row和high相遇，
@@ -271,17 +291,39 @@ public class ArrayUtils
 		
 		int low = 0;   
 		int high = size - 1;   
+		int middle = 0;
 		while (low <= high)
 		{   
-			int middle = (low + high) / 2;   
+			middle = (low + high) / 2;   
 			if (com.compare(list[middle],value)==0) 
-				return middle;   
+				break;
 			else if (com.compare(list[middle],value)<0)
 				high = middle - 1;   
 			else 
 				low = middle + 1;
 		}  
-		return -1;  
+		return middle;  
 	}
-
+	public static int binarySearch(int[] list, int value, int size)
+	{
+		if (size <= 0 || size > list.length){
+			return -1;
+		}
+		
+		int low = 0;   
+		int high = size - 1;   
+		int middle = 0;
+		while (low <= high)
+		{   
+			middle = (low + high) / 2;   
+			if (value == list[middle]) 
+				break;   
+			else if (value < list[middle])
+				high = middle - 1;   
+			else 
+				low = middle + 1;
+		}  
+		return middle;
+	}
+	
 }
