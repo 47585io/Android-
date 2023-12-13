@@ -387,7 +387,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		//进行绘制，将文本和光标画到画布上
 		mCursor.draw(canvas,mPaint);
 		long l = System.currentTimeMillis();
-		mLayout.draw(canvas);	
+		mLayout.draw(canvas,mCursor.getCursorOffsetVertical());	
 		long n = System.currentTimeMillis();
 		//Toast.makeText(getContext(),(n-l)+"", 5).show();
 	}
@@ -491,6 +491,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 			canvas.drawPath(mCursorPath,paint);
 			paint.setColor(saveColor);
+		}
+		public float getCursorOffsetVertical()
+		{
+			if(mSelectionStart == mSelectionEnd || cursorStart == mSelectionEnd){
+				return mSelectionStartY;
+			}
+			return mSelectionEndY;
 		}
 	}
 

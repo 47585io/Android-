@@ -71,7 +71,7 @@ public abstract class BaseLayout
 		isSpannedText = need && mText instanceof Spanned;
 	}
 	
-	public void draw(Canvas canvas)
+	public void draw(Canvas canvas, float cursorOffsetVertical)
 	{
 		//获取可视区域
 		Rect rect = RecylePool.obtainRect();
@@ -87,12 +87,12 @@ public abstract class BaseLayout
 		int start = getLineStart(startLine);
 		int end = getLineStart(endLine+1);
 		//绘制指定范围内的文本
-		onDraw(start,end,startLine,endLine,canvas,rect);
+		onDraw(start,end,startLine,endLine,cursorOffsetVertical,canvas,rect);
 		RecylePool.recyleRect(rect);
 	}
 	
 	/* 绘制指定范围内的行和文本，绘制过程中记得测量宽度 */
-	private void onDraw(int start, int end, int startLine, int endLine, Canvas canvas, Rect See)
+	private void onDraw(int start, int end, int startLine, int endLine, float cursorOffsetVertical, Canvas canvas, Rect See)
 	{
 		//使用当前画笔的属性初始化数据
 		CharSequence text =  mText;
@@ -109,7 +109,7 @@ public abstract class BaseLayout
 		int saveColor = textPaint.getColor();
 		textPaint.setColor(mLineColor);
 		spanPaint.setColor(mHighlightLineColor);
-		drawLineNumber(startLine,endLine,-1,-leftPadding,startLine*lineHeight-font.ascent,lineHeight,canvas,textPaint,spanPaint,See);
+		drawLineNumber(startLine,endLine,(int)(cursorOffsetVertical/lineHeight),-leftPadding,startLine*lineHeight-font.ascent,lineHeight,canvas,textPaint,spanPaint,See);
 		textPaint.setColor(saveColor);
 		spanPaint.setColor(saveColor);
 
