@@ -38,5 +38,4 @@ public class EmptyArray
         }
         return (T[]) cache;
     }
-	
 }

@@ -274,7 +274,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			int middle = id;
 			while (low <= high)
 			{   
-				middle = (low + high) / 2;   
+				middle = (low + high) >> 1;   
 				if (index == mBlockStarts[middle]) 
 					break;   
 				else if (index < mBlockStarts[middle])
@@ -504,7 +504,7 @@ public class EditableBlockList extends Object implements EditableBlock
 			}
 			//最后删除，意义一致，span在下个文本块中正常扩展，行数测量正确
 			//另一个好处是，该方案可以保证span在删除时不被完全移除，spanIsRemoved可以不要了
-			deleteForBlocks(i,i,MaxCount,srcLen,false);
+			deleteForBlocks(i,i,MaxCount,srcLen,true);
 		}
 	}
 

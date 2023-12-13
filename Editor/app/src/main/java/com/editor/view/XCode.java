@@ -13,6 +13,7 @@ import com.editor.text.base.*;
 import static com.editor.text2.builder.listener.myEditCompletorListener.*;
 import com.editor.text2.builder.listener.*;
 import android.graphics.*;
+import android.graphics.drawable.*;
 
 
 public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWindowLisrener
@@ -56,6 +57,7 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 		super(cont);
 		mWindow = new myWindow(cont);
 		mWindow.setBackgroundColor(0xff1e2126);
+		setBackgroundDrawable(new ColorDrawable(0xff222222));
 		//mWindow.setFocusable(false);
 	}
 	

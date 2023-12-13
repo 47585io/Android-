@@ -9,9 +9,9 @@ public class myForegroundColorSpan implements TextStyleSpan
 	public myForegroundColorSpan(int color){
 		mColor = color;
 	}
-	
+
 	@Override
-	public void updatedDrawState(TextPaint paint){
+	public void updateDrawState(TextPaint paint){
 		mSaveColor = paint.getColor();
 		paint.setColor(mColor);
 	}
@@ -24,7 +24,7 @@ public class myForegroundColorSpan implements TextStyleSpan
 	public int getForegroundColor(){
 		return mColor;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj){
 		return obj instanceof myForegroundColorSpan && mColor == ((myForegroundColorSpan)obj).mColor;

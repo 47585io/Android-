@@ -3,6 +3,7 @@ import com.editor.text2.base.share4.*;
 import com.editor.text2.base.share1.*;
 import android.text.*;
 import java.util.*;
+import com.editor.text.base.*;
 
 public class StringChecker
 {
@@ -35,23 +36,24 @@ public class StringChecker
 	
 	public static class Bindow
 	{
-		public static range checkIndexInBindowRange(CharSequence text, int index, char stBindow, char enBindow)
+		public static range checkIndexInBindowRange(char[] text, int index, char stBindow, char enBindow)
 		{
+			int queryStart = 0, queryEnd = text.length;
 			//括号的范围包含括号内的内容，括号本身，以及紧挨括号的位置
-			if(index > 0 && index <= text.length() && text.charAt(index-1) == enBindow){
+			if(index > queryStart && index <= queryEnd && text[index-1] == enBindow){
 				index--;
 			}
-			int start = TextUtils.lastIndexOf(text,stBindow,index);
+			int start = ArrayUtils.lastIndexOf(text,stBindow,index,queryStart);
 			if(start < 0){
 				return null;
 			}
-			int end = TextUtils.indexOf(text,enBindow,index);
+			int end = ArrayUtils.indexOf(text,enBindow,index,queryEnd);
 			if(end < 0){
 				return null;
 			}
 			
 			//临近的后括号不应该是end，因为这样我会多找一次
-			int nearStart = end == index ? TextUtils.lastIndexOf(text,enBindow,index-1) : TextUtils.lastIndexOf(text,enBindow,index);	
+			int nearStart = end == index ? ArrayUtils.lastIndexOf(text,enBindow,index-1,queryStart) : ArrayUtils.lastIndexOf(text,enBindow,index,queryEnd);	
 			if(nearStart > -1 && nearStart > start)
 			{
 				//我前面是后括号，意味着我所在的括号范围的前括号在更前面
@@ -60,8 +62,8 @@ public class StringChecker
 				nearStart--;
 				while(true)
 				{
-					int bindowStart = TextUtils.lastIndexOf(text,stBindow,nearStart);	
-					int bindowEnd = TextUtils.lastIndexOf(text,enBindow,nearStart);
+					int bindowStart = ArrayUtils.lastIndexOf(text,stBindow,nearStart,queryStart);	
+					int bindowEnd = ArrayUtils.lastIndexOf(text,enBindow,nearStart,queryStart);
 					if(bindowStart < 0){
 						//没有前括号了，可能文本中的括号不能完美配对
 						return null;
@@ -82,7 +84,7 @@ public class StringChecker
 					}
 				}
 			}
-			int nearEnd = start == index ? TextUtils.indexOf(text,stBindow,index+1) : TextUtils.indexOf(text,stBindow,index);
+			int nearEnd = start == index ? ArrayUtils.indexOf(text,stBindow,index+1,queryEnd) : ArrayUtils.indexOf(text,stBindow,index,queryEnd);
 			if(nearEnd > -1 && nearEnd < end)
 			{
 				//我后面是前括号，意味着我所在的括号范围的后括号在更后面
@@ -91,8 +93,8 @@ public class StringChecker
 				nearEnd++;
 				while(true)
 				{
-					int bindowStart = TextUtils.indexOf(text,stBindow,nearEnd);	
-					int bindowEnd = TextUtils.indexOf(text,enBindow,nearEnd);
+					int bindowStart = ArrayUtils.indexOf(text,stBindow,nearEnd,queryEnd);	
+					int bindowEnd = ArrayUtils.indexOf(text,enBindow,nearEnd,queryEnd);
 					if(bindowEnd < 0){
 						return null;
 					}

@@ -6,17 +6,18 @@ import android.text.*;
 import com.editor.text.span.*;
 import android.util.*;
 import android.text.style.*;
+import java.util.*;
 
 
 /* 
-  简单的Layout，尽可能节省时间，所以不会使用nextSpanTranstion，并使用少量getSpans
-  只绘制TextStyleSpan，为预算好宽高的文本附加样式，不会处理字体大小，边距 
+  简单的Layout，尽可能节省时间，所以不会使用nextSpanTranstion，并尽量少用getSpans
+  只绘制TextStyleSpan，为预算好宽高的文本附加样式，不会处理字体大小，边距 ，或大块背景图案
 */
 public abstract class BaseLayout
 {
 	public static final char FN = '\n', FT = '\t', SPACE = ' ';
-	public static final float LineSpcing = 1.2f;
-	public static final int LineColor = 0xff666666;
+	public static final int TextColor = 0xffabb2bf , LineColor = 0xff666666;
+	public static final float LineSpcing = 1.2f, CursorWidthSpacing = 0.12f;
 	
 	private static int TabSize = 4;
 	private static final char[] SPACEARR = new char[]{' '};
@@ -28,6 +29,8 @@ public abstract class BaseLayout
 	
 	private boolean isSpannedText;
 	private int mLineColor;
+	private int mHighlightLineColor;
+	
 	private float mWidth;
 	private float mLineSpacing;
 	private float mCursorWidthSpacing;
@@ -40,8 +43,10 @@ public abstract class BaseLayout
 		
 		mWidth = 0;
 		mLineColor = lineColor;
+		mHighlightLineColor = paint.getColor();
+		
 		mLineSpacing = lineSpacing;
-		mCursorWidthSpacing = 0.1f;
+		mCursorWidthSpacing = CursorWidthSpacing;
 		isSpannedText = base instanceof Spanned;
 	}
 	
@@ -63,7 +68,7 @@ public abstract class BaseLayout
 		}
 	}
 	public final void needDrawSpans(boolean need){
-		isSpannedText = need;
+		isSpannedText = need && mText instanceof Spanned;
 	}
 	
 	public void draw(Canvas canvas)
@@ -86,7 +91,7 @@ public abstract class BaseLayout
 		RecylePool.recyleRect(rect);
 	}
 	
-	/* 绘制指定范围内的行和文本，绘制过程中记得测量宽度，这是方案1，效率没有方案2高 */
+	/* 绘制指定范围内的行和文本，绘制过程中记得测量宽度 */
 	private void onDraw(int start, int end, int startLine, int endLine, Canvas canvas, Rect See)
 	{
 		//使用当前画笔的属性初始化数据
@@ -103,8 +108,10 @@ public abstract class BaseLayout
 		//绘制行数
 		int saveColor = textPaint.getColor();
 		textPaint.setColor(mLineColor);
-		onDrawLineNumber(startLine,endLine,-leftPadding,lineHeight,font.ascent,canvas,textPaint,See);
+		spanPaint.setColor(mHighlightLineColor);
+		drawLineNumber(startLine,endLine,-1,-leftPadding,startLine*lineHeight-font.ascent,lineHeight,canvas,textPaint,spanPaint,See);
 		textPaint.setColor(saveColor);
+		spanPaint.setColor(saveColor);
 
 		//获取文本和所有字符的宽度
 		int length = end-start;
@@ -162,34 +169,20 @@ public abstract class BaseLayout
 					Spanned sp = (Spanned) text;
 					TextStyleSpan[] spans = sp.getSpans(start+csStart,start+csEnd,TextStyleSpan.class);
 					int spanCount = spans.length;
-					if(spanCount > 0)
-					{
-						//小的数组被舍弃，获取更大的
-						if(spanStarts.length < spanCount){
-							spanStarts = RecylePool.obtainIntArray(spanCount);
-						}
-						if(spanEnds.length < spanCount){
-							spanEnds = RecylePool.obtainIntArray(spanCount);		
-						}
-						for(int k=0;k<spanCount;++k)
-						{
-							//将span偏移到数组范围(start~end)
-							spanStarts[k] = sp.getSpanStart(spans[k]) - start;
-							spanEnds[k] = sp.getSpanEnd(spans[k]) - start;
-							//超出范围的内容不绘制
-							if(spanStarts[k] < csStart){
-								spanStarts[k] = csStart;
-							}
-							if(spanEnds[k] > csEnd){
-								spanEnds[k] = csEnd;
-							}
-						}
-						//绘制这行的可见范围内的文本，包含span
-						drawSingleLineText(chars, widths, csStart, csEnd, spans, spanStarts, spanEnds, spanCount, x, y, lineHeight, font.ascent, canvas, textPaint, spanPaint);
+					//小的数组被舍弃，获取更大的
+					if(spanStarts.length < spanCount){
+						spanStarts = RecylePool.obtainIntArray(spanCount);
 					}
-					else{
-						drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-font.ascent,canvas,textPaint);
+					if(spanEnds.length < spanCount){
+						spanEnds = RecylePool.obtainIntArray(spanCount);		
 					}
+					for(int k=0;k<spanCount;++k){
+						//将span偏移到数组范围(start~end)
+						spanStarts[k] = sp.getSpanStart(spans[k]) - start;
+						spanEnds[k] = sp.getSpanEnd(spans[k]) - start;
+					}
+					//绘制这行的可见范围内的文本，包含span
+					drawSingleLineText(chars, widths, now, next, csStart, csEnd, spans, spanStarts, spanEnds, spanCount, x, y, lineHeight, font.ascent, canvas, textPaint, spanPaint);	
 				}
 				else{
 					drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-font.ascent,canvas,textPaint);
@@ -206,6 +199,7 @@ public abstract class BaseLayout
 				mWidth = w;
 			}
 		}
+		
 		RecylePool.recyleFont(font);
 		RecylePool.recyleCharArray(chars);
 		RecylePool.recyleFloatArray(widths);
@@ -217,38 +211,91 @@ public abstract class BaseLayout
 			RecylePool.recyleIntArray(spanEnds);
 		}
 	}
-
+	
 	/* 以单行绘制chars中指定范围的文本和span，span的范围被附加在数组范围中，以0开始 */
-	private static void drawSingleLineText(char[] chars, float[] widths, int start, int end, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, float ascent, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
+	private static void drawSingleLineText(char[] chars, float[] widths, int lineStart, int lineEnd, int csStart, int csEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, float ascent, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
 	{
-		//遍历spans，先绘制背景的span
-		for(int i=0;i<spanCount;++i)
+		drawBackground(widths,lineStart,lineEnd,spans,spanStarts,spanEnds,spanCount,0,y,lineHeight,canvas,textPaint,spanPaint);
+		drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-ascent,canvas,textPaint);
+		drawForeground(chars,widths,csStart,csEnd,spans,spanStarts,spanEnds,spanCount,x,y-ascent,canvas,textPaint,spanPaint);
+	}
+	
+	/* 以单行绘制背景的span */
+	private static void drawBackground(float[] widths, int lineStart, int lineEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
+	{
+		for(int k=0;k<spanCount;++k)
 		{
-			//单点的span画不出来
-			if(spanEnds[i] > spanStarts[i] && spans[i] instanceof BackgroundSpanX)
+			if(spans[k] instanceof BackgroundSpanX)
 			{
-				spans[i].updatedDrawState(spanPaint);
-				float xStart = x+togetherWidth(widths,start,spanStarts[i]);
-				float width = togetherWidth(widths,spanStarts[i],spanEnds[i]);
-				((BackgroundSpanX)spans[i]).draw(xStart,y,xStart+width,y+lineHeight,canvas,spanPaint);
-				spans[i].restoreDrawState(spanPaint);
-			}
-		}
-		//绘制文本和前景的span
-		drawTextWithCharcterStop(chars,widths,FT,start,end,x,y-ascent,canvas,textPaint);
-		for(int i=0;i<spanCount;++i)
-		{
-			if(spanEnds[i] > spanStarts[i] && !(spans[i] instanceof BackgroundSpanX))
-			{
-				spans[i].updatedDrawState(spanPaint);
-				float xStart = x+togetherWidth(widths,start,spanStarts[i]);
-				drawTextWithCharcterStop(chars,widths,FT,spanStarts[i],spanEnds[i],xStart,y-ascent,canvas,spanPaint);
-				spans[i].restoreDrawState(spanPaint);
+				//超出行的范围的内容不绘制，背景的span使用行的范围判断，因为这需要包含可见区域外的部分，以使绘制图形完整
+				if(spanStarts[k] < lineStart){
+					spanStarts[k] = lineStart;
+				}
+				if(spanEnds[k] > lineEnd){
+					spanEnds[k] = lineEnd;
+				}
+				//单点的span画不出来
+				if(spanEnds[k] > spanStarts[k])
+				{
+					spans[k].updateDrawState(spanPaint);
+					float xStart = x+togetherWidth(widths,lineStart,spanStarts[k]);
+					float width = togetherWidth(widths,spanStarts[k],spanEnds[k]);
+					((BackgroundSpanX)spans[k]).draw(xStart,y,xStart+width,y+lineHeight,canvas,spanPaint);
+					spans[k].restoreDrawState(spanPaint);
+				}
 			}
 		}
 	}
 	
-	/* 绘制被中断符分隔的文本，中断符并不绘制，但是跳过中断符时也会算上中断符的宽度 */
+	/* 以单行绘制前景的span */
+	private static void drawForeground(char[] chars, float[] widths, int csStart, int csEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
+	{
+		for(int k=0;k<spanCount;++k)
+		{
+			if(!(spans[k] instanceof BackgroundSpanX))
+			{
+				//超出本行可见范围的内容不绘制
+				if(spanStarts[k] < csStart){
+					spanStarts[k] = csStart;
+				}
+				if(spanEnds[k] > csEnd){
+					spanEnds[k] = csEnd;
+				}
+				if(spanEnds[k] > spanStarts[k])
+				{
+					spans[k].updateDrawState(spanPaint);
+					float xStart = x+togetherWidth(widths,csStart,spanStarts[k]);
+					drawTextWithCharcterStop(chars,widths,FT,spanStarts[k],spanEnds[k],xStart,y,canvas,spanPaint);
+					spans[k].restoreDrawState(spanPaint);
+				}
+			}
+		}
+	}
+	
+	/* 在指定的位置开始绘制一列范围内的行数 */
+	private static void drawLineNumber(int startLine, int endLine, int highlightLine, float x, float y, float lineHeight, Canvas canvas, TextPaint paint, TextPaint highlightPaint, Rect See)
+	{
+		String line = String.valueOf(endLine);
+		float lineWidth = paint.measureText(line,0,line.length());
+		if(See.left > x+lineWidth){
+			//如果x位置已经超出了行的宽度，就不用绘制了
+			return ;
+		}
+ 
+		//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
+		for(;startLine<=endLine;++startLine)
+		{
+			line = String.valueOf(startLine);
+			if(startLine ==  highlightLine){
+				canvas.drawText(line,x,y,highlightPaint);
+			}else{
+				canvas.drawText(line,x,y,paint);
+			}
+			y+=lineHeight;
+		}
+	}
+	
+	/* 绘制单行被中断符分隔的文本，中断符并不绘制，但是跳过中断符时也会算上中断符的宽度 */
 	private static void drawTextWithCharcterStop(char[] chars, float[] widths, char c, int start, int end, float x, float y, Canvas canvas, TextPaint paint)
 	{
 		int en = end;
@@ -279,28 +326,7 @@ public abstract class BaseLayout
 		}
 		return width;
 	}
-	
-	/* 在指定的位置绘制行数 */
-	private static void onDrawLineNumber(int startLine, int endLine, float leftPadding, float lineHeight, float ascent, Canvas canvas, TextPaint paint, Rect See)
-	{
-		String line = String.valueOf(endLine);
-		float lineWidth = paint.measureText(line,0,line.length());
-		if(See.left > lineWidth+leftPadding){
-			//如果x位置已经超出了行的宽度，就不用绘制了
-			return ;
-		}
 
-		float y = startLine*lineHeight;
-		y -= ascent;  
-		//从起始行开始，绘制到末尾行，每绘制一行y+lineHeight
-		for(;startLine<=endLine;++startLine)
-		{
-			line = String.valueOf(startLine);
-			canvas.drawText(line,leftPadding,y,paint);
-			y+=lineHeight;
-		}
-	}
-	
 	public final CharSequence getText(){
 		return mText;
 	}

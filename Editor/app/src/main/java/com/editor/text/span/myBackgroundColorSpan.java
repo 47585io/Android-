@@ -1,4 +1,5 @@
 package com.editor.text.span;
+
 import android.graphics.*;
 import android.text.*;
 
@@ -12,7 +13,7 @@ public class myBackgroundColorSpan implements BackgroundSpanX
 	}
 
 	@Override
-	public void updatedDrawState(TextPaint paint){
+	public void updateDrawState(TextPaint paint){
 		mSaveColor = paint.getColor();
 		paint.setColor(mColor);
 	}
@@ -35,7 +36,7 @@ public class myBackgroundColorSpan implements BackgroundSpanX
 	public int hashCode(){
 		return mColor;
 	}
-	
+
 	@Override
 	public void draw(float left, float top, float right, float bottom, Canvas canvas, TextPaint paint){
 		canvas.drawRect(left,top,right,bottom,paint);

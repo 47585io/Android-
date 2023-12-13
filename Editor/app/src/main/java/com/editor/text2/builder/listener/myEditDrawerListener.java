@@ -32,7 +32,6 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	{
 		mNodes.start();
 		wordIndex[] nodes = howToFindNodes(start,end,text,lib);
-		nodes = mergeSpans(nodes);
 		nodes = replaceSpans(start,end,text,nodes);
 		return nodes;
 	}
@@ -110,40 +109,6 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 			removeNodes.toArray(newNodes);
 			System.arraycopy(nodes,0,newNodes,removeCount,nodeCount);
 			nodes = newNodes;
-		}
-		return nodes;
-	}
-	
-	//合并范围连续的span
-	private wordIndex[] mergeSpans(wordIndex[] nodes)
-	{
-		int nodeCount = nodes.length;
-		//由于是连续寻找的，因此范围连续的span应该彼此相邻
-		for(int i=0;i<nodeCount;++i)
-		{
-			wordIndex node = nodes[i];
-			Object span = node.span;
-			int st = node.start;
-			int en = node.end;
-			int fl = node.flags;
-			for(int j=i+1;j<nodeCount;++j)
-			{
-				wordIndex other = nodes[j];
-				int ost = other.start;
-				int oen = other.end;
-				if(!(ost>en || oen<st) && 
-				   span.equals(other.span) && other.flags==fl){
-					st = st<=ost ? st:ost;
-					en = en>=oen ? en:oen;
-					other.start = -1;
-					++i;
-				}
-				else{
-					break;
-				}
-			}
-			node.start = st;
-			node.end = en;
 		}
 		return nodes;
 	}
@@ -345,18 +310,19 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 	public static class Colors
 	{
 		public static String Foreground ="#abb2bf";//灰白
-		public static String Background = "#222222";
+		public static String Background = "#222222";//浅灰
 		public static final int zhuShi =0xff585f65;//深灰
 		public static final int Str=0xff98c379;//青草奶油
-		public static final int FuHao =0xff99c8ea;//蓝
-		public static final int Number=0xffff9090;//橙红柚子
+		public static final int FuHao =0xff57adbb;//淡湖绿
+		public static final int Number=0xffcd9861;
 		public static final int KeyWord=0xffcc80a9;//桃红乌龙
 		public static final int Const =0xffcd9861;//枯叶黄
-		public static final int Villber =0xffff9090;
-		public static final int Function =0xff99c8ea;
-		public static final int Type=0xffd4b876;
-		public static final int Attribute=0xffcd9861;//枣
+		public static final int Villber =0xffde6868;//枣红
+		public static final int Function =0xff61afef;//天空蓝
+		public static final int Type=0xffd4b876;//金币
+		public static final int Attribute=0xffcd9861;
 		public static final int Tag=0xffde6868;
+		public static final int hh = 0xffff9090;//橙红柚子;
 		
 		public static String textForeColor(String src,String fgcolor){
 			src=Replace(src);

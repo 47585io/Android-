@@ -25,8 +25,8 @@ public class FileList
 	private int sortFilelistSize;
 	private FileChangeLisrener mFileListener;
 	
-	public static String Path_Spilt="/";
-	public static String End_Path="/storage/emulated/0";
+	private static final String Path_Spilt="/";
+	private static final String End_Path="/storage/emulated/0";
 	private static final FileSort sorter = new FileSort();
 	
 	public FileList()
@@ -110,7 +110,7 @@ public class FileList
 	{
 		sortFilelist = nowDir.listFiles();
 		sortFilelistSize = sortFilelist.length;
-		ArrayUtils.quickSort(sortFilelist,sortFilelistSize,sorter);
+		Arrays.sort(sortFilelist,sorter);
 		if(mFileListener!=null){
 			mFileListener.Refresh(sortFilelist);
 		}

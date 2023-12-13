@@ -25,7 +25,7 @@ public class MainActivity extends Activity implements Runnable
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-		getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
+		//getWindow().setBackgroundDrawable(new ColorDrawable(0xff222222));
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
         runOnUiThread(this);

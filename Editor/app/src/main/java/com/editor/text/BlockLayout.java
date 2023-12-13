@@ -157,7 +157,7 @@ public class BlockLayout extends BaseLayout implements BlockListener
 		int middle = 0;
 		while (low <= high)
 		{   
-			middle = (low + high) / 2;   
+			middle = (low + high) >> 1;   
 			if (line == mStartLines[middle]) 
 				break;   
 			else if (line < mStartLines[middle])

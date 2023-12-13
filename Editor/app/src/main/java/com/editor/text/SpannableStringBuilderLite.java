@@ -143,7 +143,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
 				if (mSpanStarts[i] > mGapStart) mSpanStarts[i] += delta;
 				if (mSpanEnds[i] > mGapStart) mSpanEnds[i] += delta;
 			}
-            //重新计算节点最大范围
+            //节点顺序不变，重新计算节点最大范围
             calcMax(treeRoot());
         }
     }
@@ -154,11 +154,11 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         if (where == mGapStart)
             return;
         if (where < mGapStart) {
-            //如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与其位置置换
+            //如果要移动到的位置在当前间隙缓冲区之前，仅需将间隙缓冲区与前面的内容(where~mGapStart之间的内容)的位置置换
             int overlap = mGapStart - where;
             System.arraycopy(mText, where, mText, mGapStart + mGapLength - overlap, overlap);
         } else {
-            //否则，按相反的顺序置换
+            //否则，和后面的内容的位置置换
             int overlap = where - mGapStart;
             System.arraycopy(mText, where + mGapLength - overlap, mText, mGapStart, overlap);
         }
@@ -204,8 +204,8 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
                 mSpanStarts[i] = start;
                 mSpanEnds[i] = end;
             }
-            //重新计算节点最大范围
-            calcMax(treeRoot());
+            //若spanStart为POINT且start == where，则会打乱顺序，必须刷新
+            restoreInvariants(1);
         }
         //最后才将mGapStart修改
         mGapStart = where;
@@ -311,7 +311,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
         { 
             //修正所有在删除文本范围内的节点的端点，范围之前或之后的span不修正，纯插入时不需要span修正
 			//修正节点可能导致spanStarts和SpanMax错误，但IndexOfSpan仍是正确的
-			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和SpanMax，最好是在添加span之后一起刷新
+			//这并不影响之后添加span，因此我们暂时不刷新spanStarts和spanMax，最好是在添加span之后一起刷新
             updatedCount = updatedIntervalBounds(start, mGapStart-nbNewChars, treeRoot());
         }
 	
@@ -1448,7 +1448,7 @@ public class SpannableStringBuilderLite implements CharSequence, GetChars, Spann
     private int mGapLength; //空闲间隙的长度
 
     //用数组表示二叉树，所有数组中相同下标的内容代表同一节点的数据
-    //mSpanStarts是最重要的，其总是正序排列，而节点之下的最大区间是用mSpanMax表示的
+    //mSpanStarts是最重要的，其总是升序排列，而节点之下的最大区间是用mSpanMax表示的
     //虽然如此，但遍历时仍只管mSpanCount之前的内容，所有的数组中，实际也只有前mSpanCount个元素有效，之后的空间预留用于添加新元素
     //另外二叉树的顺序是从mSpanCount最高位的值这个下标开始二分得到的，因此二叉树可能大于mSpanCount
 	

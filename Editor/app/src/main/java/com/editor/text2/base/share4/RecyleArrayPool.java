@@ -3,46 +3,51 @@ import com.editor.text.base.*;
 
 public abstract class RecyleArrayPool<T>
 {
-	private T[][] mArray;
+	private T[] mArray;
+	private int[] mArraySize;
 	private int count;
 	private int maxCount;
-	
+
 	public RecyleArrayPool(){
-		mArray = EmptyArray.emptyArray(T[].class);
+		newInstance(GrowingArrayUtils.growSize(10));
 		maxCount = 10;
 	}
 	
 	synchronized public void setMaxCount(int count){
 		maxCount = count;
 	}
-	synchronized public void recyle(T[] array)
+	synchronized public void recyle(T array, int size)
 	{
 		if(count+1 > maxCount){
 			return;
 		}
 		if(count+1 > mArray.length){
-			mArray = newInstance(GrowingArrayUtils.growSize(count+1));
+			newInstance(GrowingArrayUtils.growSize(count+1));
 		}
-		if(array.length < mArray[count].length)
+		if(size < mArraySize[count])
 		{
-			int index = findIndexBySize(array.length);
+			int index = findIndexBySize(size);
 			System.arraycopy(mArray,index,mArray,index+1,count-index);
+			System.arraycopy(mArraySize,index,mArraySize,index+1,count-index);
 			mArray[index] = array;
+			mArraySize[index] = size;
 		}
 		else{
 			mArray[count] = array;
+			mArraySize[count] = size;
 		}
 		count++;
 	}
-	synchronized public T[] obtain(int size)
+	synchronized public T obtain(int size)
 	{
-		if(mArray[count-1].length<size){
+		if(mArraySize[count-1]<size){
 			return newArray(GrowingArrayUtils.growSize(size));
 		}
 		int index = findIndexBySize(size);
-		T[] array = mArray[index];
+		T array = mArray[index];
 		System.arraycopy(mArray,index+1,mArray,index,count-index-1);
-		count--;
+		System.arraycopy(mArraySize,index+1,mArraySize,index,count-index-1);
+		mArray[--count] = null;
 		return array;
 	}
 	
@@ -54,17 +59,17 @@ public abstract class RecyleArrayPool<T>
 		while (low <= high)
 		{   
 			middle = (low + high) / 2;   
-			if (size == mArray[middle].length) 
+			if (size == mArraySize[middle]) 
 				break;   
-			else if (size < mArray[middle].length)
+			else if (size < mArraySize[middle])
 				high = middle - 1;   
 			else 
 				low = middle + 1;
 		}  
 		return middle;
 	}
-	
-	abstract protected T[][] newInstance(int size)
-	
-	abstract protected T[] newArray(int size)
+
+	abstract protected T[] newInstance(int size)
+
+	abstract protected T newArray(int size)
 }

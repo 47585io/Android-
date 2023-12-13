@@ -17,15 +17,14 @@ import com.editor.text.span.*;
 
 public class Edit extends View implements TextWatcher,SelectionWatcher
 {
-
-	private Cursor mCursor;
-	private ScrollBar mScrollBar;
-	private TextPaint mPaint;
 	
+	private TextPaint mPaint;
 	private BlockLayout mLayout;
 	private EditableBlockList mText;
 	private InputConnection mInput;
 	
+	private Cursor mCursor;
+	private ScrollBar mScrollBar;
 	private TextWatcher mTextWatcher;
 	private SelectionWatcher mSelectionWatcher;
 	
@@ -55,7 +54,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	private static final void configPaint(TextPaint paint)
 	{
 		paint.setTextSize(40);
-		paint.setColor(0xffaaaaaa);
+		paint.setColor(BaseLayout.TextColor);
 		paint.setTypeface(Typeface.MONOSPACE);
 	}
 	public void setText(CharSequence text,int start,int end)
@@ -68,7 +67,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			mLayout = new BlockLayout(mText,mPaint,lineColor,lineSpacing);
 		}
 		else{
-			mLayout = new BlockLayout(mText,mPaint,0xff666666,1.2f);
+			mLayout = new BlockLayout(mText,mPaint,BaseLayout.LineColor,BaseLayout.LineSpcing);
 		}
 	}
 	
@@ -126,6 +125,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public int getTextWatcherDepth(){
 		return mText.getTextWatcherDepth();
 	}
+	
 	
 /*
  _______________________________________
@@ -382,28 +382,20 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 */
 
 	@Override
-	public void draw(Canvas canvas)
-	{
-		//批量编辑时，不可绘制
-		if(batchEditCount == 0){
-			super.draw(canvas);
-		}
-	}
-	@Override
 	protected void onDraw(Canvas canvas)
 	{
 		//进行绘制，将文本和光标画到画布上
-		mCursor.drawBackground(canvas,mPaint);
+		mCursor.draw(canvas,mPaint);
 		long l = System.currentTimeMillis();
 		mLayout.draw(canvas);	
 		long n = System.currentTimeMillis();
 		//Toast.makeText(getContext(),(n-l)+"", 5).show();
-		mCursor.drawForeground(canvas,mPaint);
 	}
+	
 	@Override
 	public void onDrawForeground(Canvas canvas){
 		//在绘制前景时，绘制滚动条
-		mScrollBar.draw(canvas);
+		mScrollBar.draw(canvas,mPaint);
 	}
 
 	/* 获取光标坐标 */
@@ -424,8 +416,8 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 */
 
 	private static final int CursorGlintTime = 60;
-	private static final int CursorColor = 0xff99c8ea;
-	private static final int SelectionColor = 0x5099c8ea;
+	private static final int CursorColor = 0xff52abff;
+	private static final int SelectionColor = 0xff3e4451;
 	private static final int LineBoundsColor = 0x25616263;
 
 	/* 光标 */
@@ -457,18 +449,21 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 					mSelectionEndX = start == end ? mSelectionStartX : mLayout.getOffsetHorizontal(end);
 					mSelectionEndY = start == end ? mSelectionStartY : mLayout.getOffsetVertical(end);
 				}
-				
 				//当光标位置变化，制作新的Path和Rect
-				mCursorPath.rewind();
-				if(mSelectionStart == mSelectionEnd){
-					mLayout.getCursorPath(mSelectionStart,mCursorPath);
-				}
-				else{
-					mLayout.getSelectionPath(mSelectionStart,mSelectionEnd,mCursorPath);
-				}
-				mLineBounds.set(0,(int)mSelectionStartY,(int)mLayout.getWidth(),(int)(mSelectionStartY+mLayout.getLineHeight()));
+				makePath();
 				Edit.this.onSelectionChanged(start,end,ost,oen,mText);
 			}
+		}
+		public void makePath()
+		{
+			mCursorPath.rewind();
+			if(mSelectionStart == mSelectionEnd){
+				mLayout.getCursorPath(mSelectionStart,mCursorPath);
+			}else{
+				mLayout.getSelectionPath(mSelectionStart,mSelectionEnd,mCursorPath);
+			}
+			mLineBounds.set(0,(int)mSelectionStartY,(int)mLayout.getWidth(),(int)(mSelectionStartY+mLayout.getLineHeight()));
+			
 		}
 		public void sendInputContent(CharSequence text, int newCursorPosition, int before, int after)
 		{
@@ -483,24 +478,16 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				mText.replace(mSelectionStart-before,mSelectionEnd+after,"",0,0);
 			}
 		}
-		public void drawBackground(Canvas canvas, Paint paint)
-		{
-			if(mSelectionStart == mSelectionEnd)
-			{
-				int saveColor = paint.getColor();
-				paint.setColor(LineBoundsColor);
-				canvas.drawRect(mLineBounds,paint);
-				paint.setColor(saveColor);
-			}
-		}
-		public void drawForeground(Canvas canvas, Paint paint)
+		public void draw(Canvas canvas, Paint paint)
 		{
 			int saveColor = paint.getColor();
-			if(mSelectionStart == mSelectionEnd){			
-				paint.setColor(CursorColor);			
+			if(mSelectionStart == mSelectionEnd){
+				paint.setColor(LineBoundsColor);
+				canvas.drawRect(mLineBounds,paint);
+				paint.setColor(CursorColor);
 			}
-			else{		
-				paint.setColor(SelectionColor);			
+			else{
+				paint.setColor(SelectionColor);
 			}
 			canvas.drawPath(mCursorPath,paint);
 			paint.setColor(saveColor);
@@ -572,6 +559,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			}
 		}
 		scrollTo(tox,toy);
+		
+		if(mSelectionWatcher != null){
+			mSelectionWatcher.onSelectionChanged(start,end,oldStart,oldEnd,editor);
+		}
 	}
 
 /*
@@ -584,14 +575,12 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 
     private static final int minScrollLen = 100;
 	private static final int scrollWidth = 10;
-	private static final int ScrollGnoeTime = 1000;
+	private static final int ScrollGnoeTime = 500;
 	private static final int ScrollColor = 0x99aaaaaa;
 	
-
     /* 滚动条 */
     private final class ScrollBar
 	{
-		private Drawable mScrollDrawable;
 		private Rect mHScrollRect,mVScrollRect;
 		private boolean canDraw;
 		private Runnable mLastRunnable;
@@ -601,42 +590,39 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			mVScrollRect = new Rect();
 		}
 
-		public void setVRect()
+		private void setScroll(int scrollx, int scrolly)
 		{
-			int x = getScrollX();
-			int y = getScrollY();
-			int w = getWidth();
-			int h = getHeight();
-
-			float by = computeVerticalScrollRange();
-			float biliy = y/by*h;
-			float leny = h/by*h;
-			leny = leny<minScrollLen ? minScrollLen:leny;
-
-			int left = x+w-scrollWidth;
-			int top = (int) (y+biliy);
-			int right = x+w;
-			int bottom = (int) (top+leny);
+			int width = getWidth();
+			int height = getHeight();
+			
+			//滚动条长度按当前View高度相对于整个内容高度的比例算，但又不能小于minScrollLen
+			//滚动条top坐标用当前滚动y相对于总共可滚动的高度的比例算，再把这个比例映射到滚动条的图像在View上可以滚动的距离
+			float layoutHeight = mLayout.getHeight() + ExpandHeight;
+			float vScrollLen = height / layoutHeight * height;
+			vScrollLen = vScrollLen < minScrollLen ? minScrollLen : vScrollLen;
+			float vScrollViewTop = scrolly / (layoutHeight - height) * (height - vScrollLen);
+			
+			int left = scrollx + width - scrollWidth;
+			int top = (int)(scrolly + vScrollViewTop);
+			int right = scrollx + width;
+			int bottom = (int)(top + vScrollLen);
 			mVScrollRect.set(left,top,right,bottom);
-		}
-		public void setHRect()
-		{
-			int x = getScrollX();
-			int y = getScrollY();
-			int w = getWidth();
-			int h = getHeight();
-
-			float rx = computeHorizontalScrollRange();
-			float bilix = x/rx*w;
-			float lenx = w/rx*w;
-			lenx = lenx<minScrollLen ? minScrollLen:lenx;
-
-			int left = (int) (x+bilix);
-			int top = y+h-scrollWidth;
-			int right = (int) (left+lenx);
-			int bottom = y+h;
+			
+			float lineMargin = mLayout.getLineMargin();
+			//layout的宽度应该加上lineMargin
+			float layoutWidth = mLayout.getWidth() + ExpandWidth + lineMargin;
+			float hScrollLen = width / layoutWidth * width;
+			hScrollLen = hScrollLen < minScrollLen ? minScrollLen : hScrollLen;
+			//当滚动到-LineMargin时，此时比例应该为全部的0
+			float hScrollViewLeft = (scrollx+lineMargin) / (layoutWidth - width) * (width - hScrollLen);
+			
+		    left = (int)(scrollx + hScrollViewLeft);
+		    top = scrolly + height - scrollWidth;
+			right = (int)(left + hScrollLen);
+			bottom = scrolly + height;
 			mHScrollRect.set(left,top,right,bottom);
 		}
+
 		public Rect getVRect(){
 			return mVScrollRect;
 		}
@@ -644,32 +630,27 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			return mHScrollRect;
 		}
 
-		public void draw(Canvas canvas)
+		public void draw(Canvas canvas, Paint paint)
 		{
 			if(canDraw){
-			    drawScrollBar(canvas,mHScrollRect);
-			    drawScrollBar(canvas,mVScrollRect);
+				int saveColor = paint.getColor();
+				paint.setColor(ScrollColor);
+			    canvas.drawRect(mHScrollRect,paint);
+				canvas.drawRect(mVScrollRect,paint);
+				paint.setColor(saveColor);
 			}
-		}
-		private void drawScrollBar(Canvas canvas, Rect r)
-		{
-			canvas.save();
-			canvas.clipRect(r);
-			canvas.translate(r.left,r.top);
-			mScrollDrawable.draw(canvas);
-			canvas.restore();
 		}
 
 		/* 将滚动条移动一个距离，需要移动多少真实距离呢 */
-		public void moveScroll(float dx,float dy)
+		public void moveScroll(float dx, float dy)
 		{
 			int x = getScrollX();
 			int y = getScrollY();
 			int w = getWidth();
 			int h = getHeight();
 
-			float rx = computeHorizontalScrollRange();
-			float by = computeVerticalScrollRange();
+			float rx = mLayout.getWidth() + ExpandWidth;
+			float by = mLayout.getHeight() + ExpandHeight;
 
 			float lenx = mHScrollRect.left-x+dx;
 			float leny = mVScrollRect.top-y+dy;
@@ -684,11 +665,30 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 
 		public void setVisllble(int flag)
 		{
-			if(flag==GONE){
-				canDraw = false;
+			Handler handler = getHandler();
+			if(flag==GONE)
+			{
+				if(handler != null)
+				{
+					mLastRunnable = new Runnable()
+					{
+						public void run(){
+							canDraw = false;
+						}
+					};
+					handler.postDelayed(mLastRunnable, ScrollGnoeTime);
+				}
+				else{
+					canDraw = false;
+				}
 			}
-			else if(flag==VISIBLE){
+			else if(flag==VISIBLE)
+			{
 				canDraw = true;
+				if(handler != null && mLastRunnable != null){
+					handler.removeCallbacks(mLastRunnable);
+					mLastRunnable = null;
+				}
 			}
 		}
 
@@ -699,8 +699,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		super.onScrollChanged(l, t, oldl, oldt);
 		mScrollBar.setVisllble(VISIBLE);
-		mScrollBar.setHRect();
-		mScrollBar.setVRect();
+		mScrollBar.setScroll(l, t);
 		mScrollBar.setVisllble(GONE);
 		//只在视图滚动时，才设置滚动条的Rect，并移除上次还未执行的Runnable，并将要在之后消失
 	}
@@ -739,6 +738,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	/* 长按产生的锚点 */
 	private int cursorStart;
 	private float cursorX,cursorY;
+	
+	/* 编辑器当前缩放倍数 */
+	private float mScaleLayout = 1f;
+	private static final float MinScale = 0.5f, MaxScale = 2f;
 
 	private static final int TouchSlop = 15;
 	private static final int ExpandWidth = 500, ExpandHeight = 1000;
@@ -843,13 +846,13 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 				if(event.getPointerCount()==2 && event.findPointerIndex(id)!=-1)
 				{
 					//双指缩放自己
-					double len = (float) (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
-					double hlen = (float) (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
+					double len = (Math.pow(nowX-nowX2,2)+Math.pow(nowY-nowY2,2));
+					double hlen = (Math.pow(lastX-lastX2,2)+Math.pow(lastY-lastY2,2));
 					double scale = len/hlen;
 					//根据手指间的距离计算缩放倍数，将textSize缩放
 					if(scale<0.99 || scale>1.01){
 						//太小的变化不需要去检查
-					   // mLayout.setScale((float)scale);
+					    scaleLayout((float)scale);
 					}
 					useFlag = notClick;
 					//缩放不是点击或长按
@@ -984,5 +987,24 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	public void setPerformClickSpanEnabled(boolean enabled){
 		performClickSpan = enabled;
 	}
-	
+	public void scaleLayout(float scale)
+	{
+		TextPaint paint = mPaint;
+		float lastSacle = mScaleLayout;
+		float textSize = paint.getTextSize()/mScaleLayout;
+
+		//首先我们缩放文本的大小
+		mScaleLayout *= scale;
+		mScaleLayout = mScaleLayout<MinScale ? MinScale:mScaleLayout;
+		mScaleLayout = mScaleLayout>MaxScale ? MaxScale:mScaleLayout;
+		paint.setTextSize(textSize*mScaleLayout);
+		
+		//scale改变了，就额外缩放光标，并且滚动位置应该保持不变
+		float x = getScrollX();
+		float y = getScrollY();
+		scale = mScaleLayout/lastSacle;
+		mCursor.makePath();
+		scrollTo((int)(x*scale),(int)(y*scale));
+	}
+
 }

@@ -307,6 +307,7 @@ public class CodeEditBuilder implements EditBuilder
 								{
 									getFunc().add(func);
 									node.span = new ForegroundColorSpanX(Colors.Function);
+									node.flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 									nodes.add(node);
 									nodes.add(obtainNode(nowIndex,nowIndex+1,new ForegroundColorSpanX(Colors.FuHao)));
 									nowWord.delete(0, nowWord.length());
