@@ -58,7 +58,7 @@ public class MainActivity extends Activity implements Runnable
 	public void run()
 	{
 		LinkedBlockingQueue queue = new LinkedBlockingQueue();
-		mPool = new ThreadPoolExecutor(5, 1000, 0, TimeUnit.SECONDS, queue);
+		mPool = new ThreadPoolExecutor(5, 100, 0, TimeUnit.SECONDS, queue);
 		XCode Code = new XCode(this);
 		Code.setPool(mPool);
 		Code.loadFileInThread("/storage/emulated/0/Linux/2.java");
@@ -142,7 +142,7 @@ public class MainActivity extends Activity implements Runnable
 	
 	public void test3()
 	{
-		SpannableStringBuilderLite li = new SpannableStringBuilderLite("123456");
+		SpannableStringBuilderTemplete li = new SpannableStringBuilderTemplete("123456");
 		for(int i = 0;i<1000;i+=1){
 			li.setSpan(new Integer(0),0,6,Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 		}
@@ -166,6 +166,12 @@ public class MainActivity extends Activity implements Runnable
 			builder.append(',');
 		}
 		return builder.toString();
+	}
+	
+	class L extends SpannableStringBuilder{
+		public L(CharSequence text){
+			super(text);
+		}
 	}
 	
 }

@@ -16,3 +16,4 @@ public class SpanUtils
 		return EmptyArray.emptyArray(kind);
 	}
 }
+

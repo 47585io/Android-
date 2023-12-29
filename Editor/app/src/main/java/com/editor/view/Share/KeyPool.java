@@ -20,7 +20,7 @@ public class KeyPool
 	{
 		GrowingArrayUtils.append(mKeyPool,mKeySize++,keycode);
 		int i = contians();
-		if(i!=-1){
+		if(i != -1){
 		    popkeys(mKeyBinders[i].length);
 			mKeyBinderListeners[i].onKeyBindTrigger();
 		}
@@ -54,7 +54,7 @@ public class KeyPool
 		return false;
 	}
 
-	public void putKeyBinder(int... keys, KeyBinderListener li)
+	public void putKeyBinder(KeyBinderListener li, int... keys)
 	{
 		GrowingArrayUtils.append(mKeyBinders,mKeyBinderSize,keys);
 		GrowingArrayUtils.append(mKeyBinderListeners,mKeyBinderSize,li);
@@ -63,7 +63,7 @@ public class KeyPool
 	public void removeKeyBinder(KeyBinderListener li)
 	{
 		int i = ArrayUtils.indexOf(mKeyBinderListeners,li,0);
-		if(i!=-1){
+		if(i != -1){
 			GrowingArrayUtils.remove(mKeyBinders,mKeyBinderSize,i);
 			GrowingArrayUtils.remove(mKeyBinderListeners,mKeyBinderSize,i);
 			mKeyBinderSize--;

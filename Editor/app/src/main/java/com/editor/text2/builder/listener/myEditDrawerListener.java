@@ -126,6 +126,7 @@ public abstract class myEditDrawerListener extends myEditListener implements Edi
 				int flag = node.flags & SPAN_SET_REMOVE_MASK;
 				if(flag==SPAN_SET){
 					node.flags &= ~SPAN_SET_REMOVE_MASK;
+					//node.flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 					editor.setSpan(node.span,node.start,node.end,node.flags);
 				}
 				else if(flag==SPAN_REMOVE){

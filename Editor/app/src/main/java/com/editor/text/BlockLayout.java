@@ -10,11 +10,11 @@ public class BlockLayout extends BaseLayout implements BlockListener
 	private boolean isModify;
 	//EditableBlockList中对Block的修改事件和AfterBlocksChanged是连续发送的，中间不会发送文本事件
 	//也就是说，但凡涉及修改，每一次文本块事件都是连续的，立即修改立即刷新，不论文本事件回调深度如何
-	
-	//每个文本块的行数
+
 	private EditableBlockList mText;
-	private int[] mLines;
-	private int[] mStartLines;
+	private int[] mLines;        //每个文本块的行数
+	private int[] mStartLines;   //每个文本块的起始行数
+	private int[][] mLineIndexs; //每个文本块内的每一行相对于文本块起始位置的偏移量
 	
 	public BlockLayout(EditableBlockList base, TextPaint paint, int lineColor, float lineSpacing)
 	{
@@ -146,6 +146,17 @@ public class BlockLayout extends BaseLayout implements BlockListener
 			mLines[id] = mLines[id]+line;
 			isModify = true;
 		}
+	}
+	
+	private int reflow(int id, int start, int end)
+	{
+		int delta = end-start;
+		GetChars text = mText.getBlock(id);
+		char[] chars = RecylePool.obtainCharArray(delta);
+		TextUtils.getChars(text,start,end,chars,0);
+		
+		RecylePool.recyleCharArray(chars);
+		return 0;
 	}
 	
 	/* 寻找第line个换行符所在的文本块 */

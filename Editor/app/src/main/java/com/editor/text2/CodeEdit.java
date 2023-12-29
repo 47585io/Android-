@@ -3,11 +3,13 @@ package com.editor.text2;
 import android.content.*;
 import android.graphics.*;
 import android.text.*;
+import android.util.*;
 import android.view.*;
 import android.widget.*;
 import android.widget.AdapterView.*;
-import com.editor.*;
 import com.editor.text.*;
+import com.editor.text.base.*;
+import com.editor.text.span.*;
 import com.editor.text2.base.share1.*;
 import com.editor.text2.base.share2.*;
 import com.editor.text2.base.share4.*;
@@ -16,13 +18,9 @@ import com.editor.text2.builder.listener.baselistener.*;
 import com.editor.text2.builder.words.*;
 import java.util.*;
 import java.util.concurrent.*;
+
 import static com.editor.text2.builder.listener.myEditCompletorListener.*;
-import com.editor.text.base.*;
-import com.editor.text2.base.share3.*;
-import android.text.style.*;
-import com.editor.text.span.*;
 import android.os.*;
-import com.editor.text2.builder.listener.*;
 
 
 public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClickListener
@@ -66,10 +64,10 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 		super.config();
 		setLuagua("java");
 	}
-	
 	public void setPool(ThreadPoolExecutor pool){
 		mPool = pool;
 	}
+	
 	public Words getWordLib(){
 		return mWordLib;
 	}
@@ -125,7 +123,10 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 			@Override
 			public void run()
 			{
+				long last = System.currentTimeMillis();
 				onDrawNodes(start,end,getText(),nodes);
+				long now = System.currentTimeMillis();
+				Log.w("draw takes time",""+(now-last));
 				invalidate();
 			}
 		};
@@ -778,5 +779,17 @@ public class CodeEdit extends Edit implements OnItemClickListener,OnItemLongClic
 	private static final Object bindowEndSpan = new myBackgroundColorSpan(SelectedColor);
 	private int lastBindowStart = -1, lastBindowEnd = -1;
 	private Runnable mLastSelectionRunnable;
+
+	
+	@Override
+	public boolean post(Runnable action)
+	{
+		Handler han = getHandler();
+		if(han!=null){
+			return han.post(action);
+		}
+		action.run();
+		return true;
+	}
 	
 }

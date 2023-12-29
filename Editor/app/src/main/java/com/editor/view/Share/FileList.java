@@ -19,7 +19,6 @@ import com.editor.text.base.*;
  */
 public class FileList
 {
-
 	private File nowDir;
 	private File[] sortFilelist;
 	private int sortFilelistSize;
@@ -175,5 +174,5 @@ public class FileList
 		public void Rename(File[] files,int index)
 
 	}
-
+	
 }

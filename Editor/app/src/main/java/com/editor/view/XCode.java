@@ -14,11 +14,103 @@ import static com.editor.text2.builder.listener.myEditCompletorListener.*;
 import com.editor.text2.builder.listener.*;
 import android.graphics.*;
 import android.graphics.drawable.*;
+import com.editor.text.span.*;
+import android.text.*;
 
 
 public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWindowLisrener
 {
+	private View mTitle;
+	private PageHandler mPageHandler;
+	private View mDownBar;
+	private ViewGroup mWindow;
+	private ThreadPoolExecutor mPool;
+	
+	public XCode(Context cont)
+	{
+		super(cont);
+		init(cont);
+		config();
+		load();
+	}
+	private void init(Context cont){
+		mWindow = new myWindow(cont);
+		mPageHandler = new PageHandler(cont);
+	}
+	private void config(){
+		mWindow.setBackgroundColor(0xff1e2126);
+		setBackgroundDrawable(new ColorDrawable(/*0xffffffff*/0xff222222));
+	}
+	private void load(){
+		//addView(mPageHandler);
+	}
+	public void setPool(ThreadPoolExecutor pool){
+		mPool = pool;
+	}
+	
+	public void loadFileInThread(final String path)
+	{
+		Runnable run = new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				final CodeEdit E = new CodeEdit(getContext());
+				myReader reader = new myReader(path);
+				String text = reader.r("UTF-8");
+				E.setText(text,0,text.length());
+				int len = text.length();
+				if(len<=1000000){
+					E.reDrawText(0,len);
+				}
+				
+				E.setPool(mPool);
+				E.setWindowListener(XCode.this);
+				Runnable run2 = new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						addView(E);
+						//mPageHandler.addView(E,path);
+						E.getLayoutParams().width=1080;
+						E.getLayoutParams().height=2180;
+					    int len = E.getText().length();
+						if(len>1000000){
+							E.reDrawTextContinuous(0,len);
+						}
+					}
+				};
+				post(run2);
+			}
+		};
+		mPool.execute(run);
+	}
+	
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b)
+	{
+		if(getChildCount()>0){
+			getChildAt(0).layout(l,t,r,b);
+		}
+	}
+	
+	private static class myWindow extends ViewGroup
+	{
+		public myWindow(Context cont){
+			super(cont);
+		}
 
+		@Override
+		public boolean dispatchKeyEvent(KeyEvent event){
+			return false;
+		}
+
+		@Override
+		protected void onLayout(boolean p1, int l, int t, int r, int b){}
+
+	}
+	
 	@Override
 	public void callOnOpenWindow(int x, int y, int width, int height)
 	{
@@ -43,95 +135,6 @@ public class XCode extends ViewGroup implements myEditCompletorListener.onOpenWi
 		parms.width = r-l;
 		parms.height = b-t;
 		content.layout(l,t,r,b);
-	}
-	
-	private View mTitle;
-	private View mPageHandler;
-	private View mDownBar;
-	private ViewGroup mWindow;
-	private ThreadPoolExecutor mPool;
-	
-	
-	public XCode(Context cont)
-	{
-		super(cont);
-		mWindow = new myWindow(cont);
-		mWindow.setBackgroundColor(0xff1e2126);
-		setBackgroundDrawable(new ColorDrawable(0xff222222));
-		//mWindow.setFocusable(false);
-	}
-	
-	public void loadFileInThread(final String path)
-	{
-		Runnable run = new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				final CodeEdit E = new CodeEdit(getContext());
-				myReader reader = new myReader(path);
-				String text = reader.r("UTF-8");
-				E.setText(text,0,text.length());
-				E.setPool(mPool);
-				
-				Runnable run2 = new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						addView(E);
-						addView(mWindow);
-						E.setWindowListener(XCode.this);
-						E.setPool(mPool);
-						E.getLayoutParams().height=2180;
-					    int len = E.getText().length();
-						if(len<100000){
-							E.reDrawText(0,len);
-						}else{
-							E.reDrawTextContinuous(0,len);
-						}
-					}
-				};
-				post(run2);
-			}
-		};
-		mPool.execute(run);
-	}
-	
-	public void setPool(ThreadPoolExecutor pool){
-		mPool = pool;
-	}
-
-	@Override
-	protected void onLayout(boolean changed, int l, int t, int r, int b)
-	{
-		if(getChildCount()==0){
-			return;
-		}
-		getChildAt(0).layout(0,0,r-l,b-t);
-	}
-
-	@Override
-	protected void dispatchDraw(Canvas canvas)
-	{
-		// TODO: Implement this method
-		super.dispatchDraw(canvas);
-	}
-	
-	private static class myWindow extends ViewGroup
-	{
-		public myWindow(Context cont){
-			super(cont);
-		}
-
-		@Override
-		public boolean dispatchKeyEvent(KeyEvent event){
-			return false;
-		}
-
-		@Override
-		protected void onLayout(boolean p1, int l, int t, int r, int b){}
-
 	}
 	
 }

@@ -18,8 +18,6 @@ public interface EditableBlock extends Editable
 	
 	public<T> T[] quickGetSpans(int queryStart, int queryEnd, Class<T> kind)
 	
-	public int getSpanCount()
-	
 	/* 创建EditableBlock的工厂 */
 	public static class BlockFactory
 	{

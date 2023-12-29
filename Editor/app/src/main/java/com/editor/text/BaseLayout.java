@@ -7,6 +7,7 @@ import com.editor.text.span.*;
 import android.util.*;
 import android.text.style.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 
 /* 
@@ -15,9 +16,9 @@ import java.util.*;
 */
 public abstract class BaseLayout
 {
-	public static final char FN = '\n', FT = '\t', SPACE = ' ';
+	public static final char FN = '\n', FT = '\t', SPACE = ' ', FREE = '_', USE = '-';
 	public static final int TextColor = 0xffabb2bf , LineColor = 0xff666666;
-	public static final float LineSpcing = 1.2f, CursorWidthSpacing = 0.12f;
+	public static final float LineSpcing = 1.15f, CursorWidthSpacing = 0.12f;
 	
 	private static int TabSize = 4;
 	private static final char[] SPACEARR = new char[]{' '};
@@ -123,6 +124,8 @@ public abstract class BaseLayout
 		//在绘制期间存储span的范围，累计最大的
 		int[] spanStarts = EmptyArray.INT;
 		int[] spanEnds = EmptyArray.INT;
+		//在绘制期间存储span的绘制范围的标记，累计最大的
+		char[] textRangeTable = EmptyArray.CHAR;
 		
 		//一行行进行绘制
 		float x = 0;
@@ -169,20 +172,29 @@ public abstract class BaseLayout
 					Spanned sp = (Spanned) text;
 					TextStyleSpan[] spans = sp.getSpans(start+csStart,start+csEnd,TextStyleSpan.class);
 					int spanCount = spans.length;
-					//小的数组被舍弃，获取更大的
-					if(spanStarts.length < spanCount){
-						spanStarts = RecylePool.obtainIntArray(spanCount);
+					if(spanCount > 0)
+					{
+						//小的数组被舍弃，获取更大的
+						if(textRangeTable.length < csEnd-csStart){
+							textRangeTable = RecylePool.obtainCharArray(csEnd-csStart<RecylePool.TABLE_SIZE ? RecylePool.TABLE_SIZE: csEnd-csStart);
+						}
+						if(spanStarts.length < spanCount){
+							spanStarts = RecylePool.obtainIntArray(spanCount<RecylePool.SPAN_SIZE ? RecylePool.SPAN_SIZE : spanCount);
+						}
+						if(spanEnds.length < spanCount){
+							spanEnds = RecylePool.obtainIntArray(spanCount<RecylePool.SPAN_SIZE ? RecylePool.SPAN_SIZE : spanCount);		
+						}
+						for(int k=0;k<spanCount;++k){
+							//将span偏移到数组范围(start~end)
+							spanStarts[k] = sp.getSpanStart(spans[k]) - start;
+							spanEnds[k] = sp.getSpanEnd(spans[k]) - start;
+						}
+						//绘制这行的可见范围内的文本，包含span
+						drawSingleLineText(chars, widths, textRangeTable, now, next, csStart, csEnd, spans, spanStarts, spanEnds, spanCount, x, y, lineHeight, font.ascent, canvas, textPaint, spanPaint);	
 					}
-					if(spanEnds.length < spanCount){
-						spanEnds = RecylePool.obtainIntArray(spanCount);		
+					else{
+						drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-font.ascent,canvas,textPaint);
 					}
-					for(int k=0;k<spanCount;++k){
-						//将span偏移到数组范围(start~end)
-						spanStarts[k] = sp.getSpanStart(spans[k]) - start;
-						spanEnds[k] = sp.getSpanEnd(spans[k]) - start;
-					}
-					//绘制这行的可见范围内的文本，包含span
-					drawSingleLineText(chars, widths, now, next, csStart, csEnd, spans, spanStarts, spanEnds, spanCount, x, y, lineHeight, font.ascent, canvas, textPaint, spanPaint);	
 				}
 				else{
 					drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-font.ascent,canvas,textPaint);
@@ -210,19 +222,15 @@ public abstract class BaseLayout
 		if(spanEnds.length > 0){
 			RecylePool.recyleIntArray(spanEnds);
 		}
+		if(textRangeTable.length > 0){
+			RecylePool.recyleCharArray(textRangeTable);
+		}
 	}
 	
 	/* 以单行绘制chars中指定范围的文本和span，span的范围被附加在数组范围中，以0开始 */
-	private static void drawSingleLineText(char[] chars, float[] widths, int lineStart, int lineEnd, int csStart, int csEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, float ascent, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
+	private static void drawSingleLineText(char[] chars, float[] widths, char[] table, int lineStart, int lineEnd, int csStart, int csEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, float ascent, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
 	{
-		drawBackground(widths,lineStart,lineEnd,spans,spanStarts,spanEnds,spanCount,0,y,lineHeight,canvas,textPaint,spanPaint);
-		drawTextWithCharcterStop(chars,widths,FT,csStart,csEnd,x,y-ascent,canvas,textPaint);
-		drawForeground(chars,widths,csStart,csEnd,spans,spanStarts,spanEnds,spanCount,x,y-ascent,canvas,textPaint,spanPaint);
-	}
-	
-	/* 以单行绘制背景的span */
-	private static void drawBackground(float[] widths, int lineStart, int lineEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, float lineHeight, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
-	{
+		//先绘制背景的span
 		for(int k=0;k<spanCount;++k)
 		{
 			if(spans[k] instanceof BackgroundSpanX)
@@ -238,19 +246,17 @@ public abstract class BaseLayout
 				if(spanEnds[k] > spanStarts[k])
 				{
 					spans[k].updateDrawState(spanPaint);
-					float xStart = x+togetherWidth(widths,lineStart,spanStarts[k]);
+					float xStart = togetherWidth(widths,lineStart,spanStarts[k]);
 					float width = togetherWidth(widths,spanStarts[k],spanEnds[k]);
 					((BackgroundSpanX)spans[k]).draw(xStart,y,xStart+width,y+lineHeight,canvas,spanPaint);
 					spans[k].restoreDrawState(spanPaint);
 				}
 			}
 		}
-	}
-	
-	/* 以单行绘制前景的span */
-	private static void drawForeground(char[] chars, float[] widths, int csStart, int csEnd, TextStyleSpan[] spans, int[] spanStarts, int[] spanEnds, int spanCount, float x, float y, Canvas canvas, TextPaint textPaint, TextPaint spanPaint)
-	{
-		for(int k=0;k<spanCount;++k)
+		
+		//反向绘制文本的span，并用范围填充表，每个字符只能被绘制一次
+		Arrays.fill(table,0,csEnd-csStart,FREE);
+		for(int k=spanCount-1;k>-1;--k)
 		{
 			if(!(spans[k] instanceof BackgroundSpanX))
 			{
@@ -261,15 +267,20 @@ public abstract class BaseLayout
 				if(spanEnds[k] > csEnd){
 					spanEnds[k] = csEnd;
 				}
+				//尽可能去除span的重叠范围，最好可以不用绘制
+				checkSpanRange(spanStarts,spanEnds,k,table,csStart);
 				if(spanEnds[k] > spanStarts[k])
 				{
 					spans[k].updateDrawState(spanPaint);
 					float xStart = x+togetherWidth(widths,csStart,spanStarts[k]);
-					drawTextWithCharcterStop(chars,widths,FT,spanStarts[k],spanEnds[k],xStart,y,canvas,spanPaint);
+					drawTextWithRangeTable(chars,widths,FT,spanStarts[k],spanEnds[k],xStart,y-ascent,canvas,spanPaint,table,csStart);
 					spans[k].restoreDrawState(spanPaint);
 				}
 			}
 		}
+	
+		//检查本行剩余的未绘制文本，并绘制出来
+		drawTextWithRangeTable(chars,widths,FT,csStart,csEnd,x,y-ascent,canvas,textPaint,table,csStart);
 	}
 	
 	/* 在指定的位置开始绘制一列范围内的行数 */
@@ -295,6 +306,30 @@ public abstract class BaseLayout
 		}
 	}
 	
+	/* 绘制单行文本，不绘制已绘制的位置，并用范围填充表 */
+	private static void drawTextWithRangeTable(char[] chars, float[] widths, char c, int start, int end, float x, float y, Canvas canvas, TextPaint paint, char[] table, int begin)
+	{
+		int length = end-begin;
+		for(int i=start-begin;i<length;++i)
+		{
+			if(table[i] == FREE)
+			{
+				int j = i+1;
+				table[i] = USE;
+				for(;j<length;++j)
+				{
+					if(table[j] == USE){
+						break;
+					}
+					table[j] = USE;
+				}
+				float xStart = x+togetherWidth(widths,start,i+begin);
+				drawTextWithCharcterStop(chars,widths,FT,i+begin,j+begin,xStart,y,canvas,paint);
+				i = j;
+			}
+		}
+	}
+	
 	/* 绘制单行被中断符分隔的文本，中断符并不绘制，但是跳过中断符时也会算上中断符的宽度 */
 	private static void drawTextWithCharcterStop(char[] chars, float[] widths, char c, int start, int end, float x, float y, Canvas canvas, TextPaint paint)
 	{
@@ -317,6 +352,26 @@ public abstract class BaseLayout
 		}
 	}
 	
+	/* 下标为i的span在表中的可视范围还有多少 */
+	private static void checkSpanRange(int[] spanStarts, int[] spanEnds, int i, char[] table, int begin)
+	{
+		int start = spanStarts[i]-begin;
+		int end = spanEnds[i]-begin;
+		//两端点尽可能地往内缩
+		for(;start<end;++start){
+			if(table[start]==FREE){
+				break;
+			}
+		}
+		for(;end>start;--end){
+			if(table[end-1]==FREE){
+				break;
+			}
+		}
+		spanStarts[i] = start+begin;
+		spanEnds[i] = end+begin;
+	}
+	
 	/* 累计数组中的指定范围内的字符的宽度 */
 	private static float togetherWidth(float[] widths, int start, int end)
 	{
@@ -326,7 +381,7 @@ public abstract class BaseLayout
 		}
 		return width;
 	}
-
+	
 	public final CharSequence getText(){
 		return mText;
 	}
@@ -538,6 +593,7 @@ public abstract class BaseLayout
 	/* 回收池 */
 	protected static final class RecylePool
 	{
+		private static final int SPAN_SIZE = 10, TABLE_SIZE = 80;
 		private static final char[][] sCharArrays = new char[6][0];
 		private static final int[][] sIntArrays = new int[6][0];
 		private static final float[][] sFloatArrays = new float[6][0];

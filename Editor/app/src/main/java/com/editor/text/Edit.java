@@ -13,6 +13,7 @@ import android.widget.*;
 import com.editor.text.base.*;
 import java.util.*;
 import com.editor.text.span.*;
+import java.util.concurrent.*;
 
 
 public class Edit extends View implements TextWatcher,SelectionWatcher
@@ -360,7 +361,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			mTextWatcher.onTextChanged(text,start,lenghtBefore,lengthAfter);
 		}
 		int index = start+lengthAfter;
-		mCursor.setSelection(index,index);	
+		mCursor.setSelection(index,index,false);	
 	}
 	public void afterTextChanged(Editable text)
 	{
@@ -386,9 +387,9 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	{
 		//进行绘制，将文本和光标画到画布上
 		mCursor.draw(canvas,mPaint);
-		long l = System.currentTimeMillis();
-		mLayout.draw(canvas,mCursor.getCursorOffsetVertical());	
-		long n = System.currentTimeMillis();
+		//long l = System.currentTimeMillis();	
+		mLayout.draw(canvas,mCursor.getCursorOffsetVertical());
+		//long n = System.currentTimeMillis();
 		//Toast.makeText(getContext(),(n-l)+"", 5).show();
 	}
 	
@@ -433,37 +434,34 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 			mCursorPath = new Path();
 			mLineBounds = new Rect();
 		}
-		public void setSelection(int start,int end)
+		public void setSelection(int start, int end, boolean refresh)
 		{
-			if(start!=mSelectionStart || end!=mSelectionEnd)
+			if(refresh || start != mSelectionStart || end != mSelectionEnd)
 			{
 				int ost = mSelectionStart;
 				int oen = mSelectionEnd;
-				if(start != mSelectionStart){
+				if(refresh || start != mSelectionStart){
 					mSelectionStart = start;
 					mSelectionStartX = mLayout.getOffsetHorizontal(start);
 					mSelectionStartY = mLayout.getOffsetVertical(start);
 				}
-				if(end != mSelectionEnd){
+				if(refresh || end != mSelectionEnd){
 					mSelectionEnd = end;
 					mSelectionEndX = start == end ? mSelectionStartX : mLayout.getOffsetHorizontal(end);
 					mSelectionEndY = start == end ? mSelectionStartY : mLayout.getOffsetVertical(end);
 				}
 				//当光标位置变化，制作新的Path和Rect
-				makePath();
-				Edit.this.onSelectionChanged(start,end,ost,oen,mText);
+				mCursorPath.rewind();
+				if(mSelectionStart == mSelectionEnd){
+					mLayout.getCursorPath(mSelectionStart,mCursorPath);
+				}else{
+					mLayout.getSelectionPath(mSelectionStart,mSelectionEnd,mCursorPath);
+				}
+				mLineBounds.set(0,(int)mSelectionStartY,(int)mLayout.getWidth(),(int)(mSelectionStartY+mLayout.getLineHeight()));
+				if(!refresh){
+					Edit.this.onSelectionChanged(start,end,ost,oen,mText);
+				}
 			}
-		}
-		public void makePath()
-		{
-			mCursorPath.rewind();
-			if(mSelectionStart == mSelectionEnd){
-				mLayout.getCursorPath(mSelectionStart,mCursorPath);
-			}else{
-				mLayout.getSelectionPath(mSelectionStart,mSelectionEnd,mCursorPath);
-			}
-			mLineBounds.set(0,(int)mSelectionStartY,(int)mLayout.getWidth(),(int)(mSelectionStartY+mLayout.getLineHeight()));
-			
 		}
 		public void sendInputContent(CharSequence text, int newCursorPosition, int before, int after)
 		{
@@ -502,10 +500,10 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 	}
 
 	public void setSelection(int start, int end){
-		mCursor.setSelection(start,end);
+		mCursor.setSelection(start,end,false);
 	}
 	public void setSelection(int index){
-		mCursor.setSelection(index,index);
+		mCursor.setSelection(index,index,false);
 	}
 	public int getSelectionStart(){
 		return mCursor.mSelectionStart;
@@ -1010,7 +1008,7 @@ public class Edit extends View implements TextWatcher,SelectionWatcher
 		float x = getScrollX();
 		float y = getScrollY();
 		scale = mScaleLayout/lastSacle;
-		mCursor.makePath();
+		mCursor.setSelection(mCursor.mSelectionStart,mCursor.mSelectionEnd,true);
 		scrollTo((int)(x*scale),(int)(y*scale));
 	}
 

@@ -98,7 +98,7 @@ public class PageHandler extends ViewGroup
 		for (index = 0;index < getChildCount();index++)
 		{
 			View p = getChildAt(index);
-			if ( p.getTag().equals(Page.getTag())){
+			if (p.getTag().equals(Page.getTag())){
 			    return index;
 			}
 		}

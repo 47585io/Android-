@@ -139,7 +139,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		EditableBlock block = mEditableFactory.newEditable("");
 		mBlocks = GrowingArrayUtils.insert(mBlocks,mBlockSize,i,block);
 		mBlockStarts = GrowingArrayUtils.insert(mBlockStarts,mBlockSize,i,0);
-		mIndexOfBlocks.put(block,i);
+		//其实可以暂时不添加，等之后刷新
+		//mIndexOfBlocks.put(block,i);
 		mBlockSize++;
 	}
 	/* 移除指定位置的文本块 */
@@ -149,7 +150,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		int length = block.length();
 		replaceSpans(i,0,length,"",0,0,true);
 		mBlocks = GrowingArrayUtils.remove(mBlocks,mBlockSize,i);
-		mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
+		//其实可以暂时不移除，等之后刷新
+		//mBlockStarts = GrowingArrayUtils.remove(mBlockStarts,mBlockSize,i);
 		mIndexOfBlocks.remove(block);
 		mBlockSize--;
 		mLength -= length;
@@ -160,6 +162,7 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(count == 0){
 			return;
 		}
+		//潜在优化: 批量增删
 		for(int k=0;k<count;++k){
 			addBlock(i+k);
 		}
@@ -265,7 +268,9 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		int nowIndex = mBlockStarts[id];
 
-		if(Math.abs(nowIndex-index) > count*14)
+		int did = nowIndex-index;
+		int abs = did >= 0 ? did : -did;
+		if(abs > count*14)
 		{
 			//如果误差太大，使用二分查找法先找到最接近的位置
 			//这可能在某些情况下并非最好的算法，但却是最坏的情况下最好的算法
@@ -668,13 +673,8 @@ public class EditableBlockList extends Object implements EditableBlock
 		for(int i=mLowBlockStartMark; i<mBlockSize; ++i){
 			mBlockStarts[i] = mBlockStarts[i-1]+mBlocks[i-1].length();
 		}
-		for(int i=mLowBlockIndexMark; i<mBlockSize; ++i)
-		{
-			EditableBlock block = mBlocks[i];
-			Integer index = mIndexOfBlocks.get(block);
-			if(index==null || index!=i){
-				mIndexOfBlocks.put(block,i);
-			}
+		for(int i=mLowBlockIndexMark; i<mBlockSize; ++i){
+			mIndexOfBlocks.put(mBlocks[i], i);
 		}
 		mLowBlockStartMark = Integer.MAX_VALUE;
 		mLowBlockIndexMark = Integer.MAX_VALUE;
@@ -1077,14 +1077,15 @@ public class EditableBlockList extends Object implements EditableBlock
 		if(spans.length==0){
 			return;
 		}
-		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
-		final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(spans.length);
-		for(int i=0;i<spans.length;++i){
+		int length = spans.length;
+		final int[] prioSortBuffer = SpannableStringBuilderLite.obtain(length);
+		final int[] orderSortBuffer = SpannableStringBuilderLite.obtain(length);
+		for(int i=0;i<length;++i){
 			SpanRange spanRange = mSpanInBlocks.get(spans[i]);
 			prioSortBuffer[i] = spanRange.headBlock().getSpanFlags(spans[i]) & SPAN_PRIORITY;
 			orderSortBuffer[i] = spanRange.getOrder();
 		}
-		SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer);
+		SpannableStringBuilderLite.sort(spans,prioSortBuffer,orderSortBuffer,length);
 		SpannableStringBuilderLite.recycle(prioSortBuffer);
 		SpannableStringBuilderLite.recycle(orderSortBuffer);
 	}
@@ -1125,7 +1126,6 @@ public class EditableBlockList extends Object implements EditableBlock
 		}
 		return spanRange.headBlock().getSpanFlags(p1);
 	}
-	@Override
 	public int getSpanCount(){
 		return mSpanCount;
 	}
